@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load skill_tags %}
+
+{% block title %}Recommended Roles | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Include job seeker sidebar -->
+        {% include 'job_seekers/components/sidebar.html' with active_page='recommendations' %}
+        
+        <!-- Main content -->
+        <div class="w-full lg:w-3/4">
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h2 class="text-2xl font-bold mb-2">Your Recommended Roles</h2>
+                <p class="text-base-content/70 mb-6">Based on your skills and experience, we recommend these roles for you.</p>
+                
+                <div class="alert alert-info mb-6">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <p class="font-bold">Why we're recommending these roles</p>
+                        <p class="text-sm">Our AI has analyzed your skills, experience, and career preferences to suggest roles that match your profile.</p>
+                    </div>
+                </div>
+                
+                {% if recommendations %}
+                    <!-- Filter controls -->
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <div class="form-control">
+                            <div class="input-group">
+                                <input type="text" placeholder="Search roles..." class="input input-bordered" id="role-search">
+                                <button class="btn btn-square">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown">
+                            <label tabindex="0" class="btn">
+                                <i class="fas fa-filter mr-2"></i> Filters
+                            </label>
+                            <ul tabindex="0" class="dropdown-content z-10 menu p-2 shadow bg-base-100 rounded-box w-52">
+                                <li><a>All Roles</a></li>
+                                <li><a>Recent Recommendations</a></li>
+                                <li><a>High Match Score</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Recommendations Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="recommendations-container">
+                        {% for recommendation in recommendations %}
+                            <div class="card bg-base-100 shadow-md h-full recommendation-card">
+                                <div class="card-body">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="card-title text-lg role-title">{{ recommendation.role_title }}</h3>
+                                        <div class="badge badge-primary">{{ recommendation.match_score|default:"85" }}% Match</div>
+                                    </div>
+                                    
+                                    <div class="divider my-2"></div>
+                                    
+                                    <div class="space-y-3">
+                                        <div>
+                                            <p class="font-medium">Why this role matches you:</p>
+                                            <p class="text-sm">{{ recommendation.explanation }}</p>
+                                        </div>
+                                        
+                                        {% if recommendation.required_skills %}
+                                            <div>
+                                                <p class="font-medium">Key skills for this role:</p>
+                                                <div class="flex flex-wrap gap-1 mt-1">
+                                                    {% for skill in recommendation.required_skills|split:"," %}
+                                                        <span class="badge badge-outline">{{ skill|strip }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if recommendation.salary_range %}
+                                            <div>
+                                                <p class="font-medium">Typical salary range:</p>
+                                                <p class="text-sm">{{ recommendation.salary_range }}</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="card-actions justify-end mt-4">
+                                        <a href="#" class="btn btn-outline btn-sm">
+                                            <i class="fas fa-search mr-2"></i> Find Jobs
+                                        </a>
+                                        <button class="btn btn-primary btn-sm">
+                                            <i class="fas fa-thumbs-up mr-2"></i> Interested
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="flex flex-col items-center justify-center h-64 text-base-content/70">
+                        <i class="fas fa-briefcase text-5xl mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">No role recommendations yet</h3>
+                        <p>Complete your profile and upload your resume to get personalized recommendations</p>
+                        <a href="{% url 'job_seekers:settings' %}" class="btn btn-primary mt-4">
+                            <i class="fas fa-user-edit mr-2"></i> Update Profile
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Simple search functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('role-search');
+    const recommendationsContainer = document.getElementById('recommendations-container');
+    const cards = recommendationsContainer ? recommendationsContainer.querySelectorAll('.recommendation-card') : [];
+    
+    if (searchInput && cards.length) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            cards.forEach(card => {
+                const titleElement = card.querySelector('.role-title');
+                const title = titleElement ? titleElement.textContent.toLowerCase() : '';
+                
+                if (title.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

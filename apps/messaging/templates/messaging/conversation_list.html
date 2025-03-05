@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Include appropriate sidebar based on user type -->
+        {% if user.user_type == 'job_seeker' %}
+            {% include 'job_seekers/components/sidebar.html' with active_page='messages' %}
+        {% else %}
+            {% include 'recruiters/components/sidebar.html' with active_page='messages' %}
+        {% endif %}
+        
+        <!-- Main content -->
+        <div class="w-full lg:w-3/4">
+            <h1 class="text-2xl font-bold mb-6">Messages</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Conversations list -->
+                <div class="md:col-span-2">
+                    <div class="bg-base-200 rounded-box p-6 shadow-md">
+                        <h2 class="text-xl font-bold mb-4">Your Conversations</h2>
+                        
+                        {% if conversations %}
+                            <div class="space-y-4">
+                                {% for conversation in conversations %}
+                                    <div class="bg-base-100 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                        <a href="{% url 'messaging:conversation_detail' conversation.id %}" class="block">
+                                            <div class="flex items-center gap-4">
+                                                <div class="avatar placeholder">
+                                                    <div class="bg-neutral text-neutral-content rounded-full w-12">
+                                                        <span>{{ conversation.other_participant.get_initials }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <div class="flex justify-between items-center">
+                                                        <h3 class="font-semibold">
+                                                            {{ conversation.other_participant.get_full_name }}
+                                                        </h3>
+                                                        <span class="text-xs text-base-content/60">
+                                                            {{ conversation.updated_at|timesince }} ago
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    {% if conversation.job_opening %}
+                                                        <div class="badge badge-outline mt-1">
+                                                            {{ conversation.job_opening.title }}
+                                                        </div>
+                                                    {% endif %}
+                                                    
+                                                    {% with last_message=conversation.messages.last %}
+                                                        {% if last_message %}
+                                                            <p class="text-sm text-base-content/70 mt-2 truncate">
+                                                                {% if last_message.sender == request.user %}
+                                                                    <span class="text-xs font-medium">You:</span>
+                                                                {% endif %}
+                                                                {{ last_message.content }}
+                                                            </p>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                </div>
+                                                
+                                                {% if conversation.unread_count > 0 %}
+                                                    <div class="badge badge-primary">{{ conversation.unread_count }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <div class="text-5xl mb-4">💬</div>
+                                <h3 class="text-xl font-semibold mb-2">No conversations yet</h3>
+                                
+                                {% if request.user.user_type == 'recruiter' %}
+                                    <p class="text-base-content/70 mb-4">
+                                        Start a conversation by reaching out to potential candidates for your job openings
+                                    </p>
+                                    <a href="{% url 'jobs:list' %}" class="btn btn-primary">
+                                        View My Job Openings
+                                    </a>
+                                {% else %}
+                                    <p class="text-base-content/70 mb-4">
+                                        Messages from recruiters interested in your profile will appear here
+                                    </p>
+                                    <div class="text-center mt-4">
+                                        <p class="text-sm mb-2">No conversations yet.</p>
+                                        {% if user.user_type == 'recruiter' %}
+                                            <a href="{% url 'recruiters:profile' %}" class="btn btn-primary">
+                                        {% else %}
+                                            <a href="{% url 'job_seekers:profile' %}" class="btn btn-primary">
+                                        {% endif %}
+                                            View My Profile
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Notifications panel - moved to right side -->
+                <div class="md:col-span-1">
+                    <div class="bg-base-200 rounded-box p-4 shadow-md">
+                        <h2 class="text-xl font-bold mb-4">Notifications</h2>
+                        
+                        {% if notifications %}
+                            <div class="space-y-3">
+                                {% for notification in notifications %}
+                                    <div class="bg-base-100 p-3 rounded-lg shadow-sm flex items-start gap-3">
+                                        <div class="indicator">
+                                            {% if not notification.is_read %}
+                                                <span class="indicator-item badge badge-primary badge-xs"></span>
+                                            {% endif %}
+                                            <div class="avatar placeholder">
+                                                <div class="bg-neutral text-neutral-content rounded-full w-8">
+                                                    <span class="text-xs">{{ notification.user.get_initials }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm">{{ notification.content }}</p>
+                                            <p class="text-xs text-base-content/60">{{ notification.created_at|timesince }} ago</p>
+                                            <a href="{{ notification.link }}" class="text-xs text-primary hover:underline">View</a>
+                                        </div>
+                                        <button 
+                                            class="btn btn-ghost btn-xs"
+                                            hx-post="{% url 'messaging:mark_notification_read' notification.id %}"
+                                            hx-swap="outerHTML"
+                                            hx-target="closest div"
+                                        >
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-4 text-center">
+                                <a href="{% url 'messaging:notifications' %}" class="btn btn-outline btn-sm">View All</a>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p class="text-base-content/70">No new notifications</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

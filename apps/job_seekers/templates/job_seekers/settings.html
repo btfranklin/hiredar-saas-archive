@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Settings | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Include job seeker sidebar -->
+        {% include 'job_seekers/components/sidebar.html' with active_page='settings' %}
+        
+        <!-- Main content -->
+        <div class="w-full lg:w-3/4">
+            <h1 class="text-2xl font-bold mb-6">Account Settings</h1>
+            
+            <!-- Account Info Form -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h2 class="text-xl font-bold mb-6">Account Information</h2>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %} mb-4">
+                            <i class="{% if message.tags == 'success' %}fas fa-check-circle{% elif message.tags == 'error' %}fas fa-exclamation-circle{% else %}fas fa-info-circle{% endif %} mr-2"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post" action="{% url 'authentication:settings' %}" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">First Name</span>
+                            </label>
+                            <input type="text" name="first_name" value="{{ user.first_name }}" class="input input-bordered" required>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Last Name</span>
+                            </label>
+                            <input type="text" name="last_name" value="{{ user.last_name }}" class="input input-bordered" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Email Address</span>
+                        </label>
+                        <input type="email" name="email" value="{{ user.email }}" class="input input-bordered" required>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Location</span>
+                        </label>
+                        <input type="text" name="location" value="{{ user.location|default:'' }}" class="input input-bordered">
+                    </div>
+                    
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-primary">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Password Change -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <h2 class="text-xl font-bold mb-6">Change Password</h2>
+                
+                <form method="post" action="{% url 'authentication:change_password' %}" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Current Password</span>
+                        </label>
+                        <input type="password" name="old_password" class="input input-bordered" required>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">New Password</span>
+                        </label>
+                        <input type="password" name="new_password1" class="input input-bordered" required>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Confirm New Password</span>
+                        </label>
+                        <input type="password" name="new_password2" class="input input-bordered" required>
+                    </div>
+                    
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-primary">
+                            Change Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

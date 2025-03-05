@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}Account Connections | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-8 px-4">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">{% trans "Social Account Connections" %}</h1>
+        
+        {% if form.accounts %}
+            <div class="card bg-base-100 shadow-xl mb-8">
+                <div class="card-body">
+                    <h2 class="card-title">{% trans "Connected Accounts" %}</h2>
+                    <p class="mb-4">{% blocktrans %}You can sign in to your account using any of the following third-party accounts:{% endblocktrans %}</p>
+                    
+                    <form method="post" action="{% url 'socialaccount_connections' %}">
+                        {% csrf_token %}
+                        
+                        <div class="overflow-x-auto mb-4">
+                            <table class="table table-zebra w-full">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Provider" %}</th>
+                                        <th>{% trans "Account" %}</th>
+                                        <th>{% trans "Disconnect" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for base_account in form.accounts %}
+                                        {% with base_account.get_provider_account as account %}
+                                            <tr>
+                                                <td>
+                                                    <span class="font-semibold">{{ account.get_brand.name }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if account.get_profile_url %}
+                                                        <a href="{{ account.get_profile_url }}" target="_blank" rel="noopener noreferrer" class="link link-primary">
+                                                            {{ account.get_display_name }}
+                                                        </a>
+                                                    {% else %}
+                                                        {{ account.get_display_name }}
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="form-control">
+                                                        <label class="cursor-pointer label justify-start">
+                                                            <input type="checkbox" name="account" value="{{ base_account.id }}" class="checkbox checkbox-sm checkbox-error" />
+                                                        </label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endwith %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn btn-error btn-sm">{% trans "Disconnect" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>{% trans "You currently have no social network accounts connected to this account." %}</span>
+            </div>
+        {% endif %}
+        
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">{% trans "Add a 3rd Party Account" %}</h2>
+                
+                {% get_providers as socialaccount_providers %}
+                {% if socialaccount_providers %}
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        {% for provider in socialaccount_providers %}
+                            <a href="{% provider_login_url provider.id process='connect' %}" class="btn btn-outline">
+                                <span>{{ provider.name }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="text-center mt-8">
+            {% if user.user_type == 'job_seeker' %}
+                <a href="{% url 'job_seekers:settings' %}" class="btn btn-primary">{% trans "Back to Settings" %}</a>
+            {% else %}
+                <a href="{% url 'recruiters:settings' %}" class="btn btn-primary">{% trans "Back to Settings" %}</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

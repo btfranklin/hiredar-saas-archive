@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}Hiredar - AI-Powered Job Matching{% endblock %}</title>
+    
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSRF Token handling for JavaScript -->
+    <script>
+        // Function to get CSRF token from cookie or meta tag
+        function getCSRFToken() {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, 'csrftoken='.length) === 'csrftoken=') {
+                        cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
+                        break;
+                    }
+                }
+            }
+            // If cookie not found, try meta tag
+            if (!cookieValue) {
+                const metaTag = document.querySelector('meta[name="csrf-token"]');
+                if (metaTag) {
+                    cookieValue = metaTag.getAttribute('content');
+                }
+            }
+            return cookieValue;
+        }
+
+        // Setup AJAX headers for all requests to include CSRF token
+        document.addEventListener('DOMContentLoaded', function() {
+            // For HTMX requests
+            document.body.addEventListener('htmx:configRequest', function(event) {
+                event.detail.headers['X-CSRFToken'] = getCSRFToken();
+            });
+            
+            // For regular AJAX requests
+            if (window.jQuery) {
+                $.ajaxSetup({
+                    beforeSend: function(xhr, settings) {
+                        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", getCSRFToken());
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    
+    <!-- Custom CSS -->
+    <style>
+        /* Add custom styles here */
+        .hero-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        
+        /* Style for Django messages that doesn't affect layout */
+        .django-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .django-messages .alert {
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col bg-base-100">
+    <!-- Header/Navbar -->
+    <header class="bg-base-100 shadow-md">
+        <div class="navbar container mx-auto">
+            <div class="navbar-start">
+                <a href="{% url 'core:home' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
+            </div>
+            <div class="navbar-center hidden lg:flex">
+                <ul class="menu menu-horizontal px-1">
+                    {% if not user.is_authenticated %}
+                    <li><a href="{% url 'core:home' %}">Home</a></li>
+                    <li><a href="{% url 'authentication:login' %}">Log In</a></li>
+                    <li>
+                        <details>
+                            <summary>Sign Up</summary>
+                            <ul class="p-2 bg-base-100 rounded-t-none">
+                                <li><a href="{% url 'authentication:job_seeker_signup' %}">Job Seeker</a></li>
+                                <li><a href="{% url 'authentication:recruiter_signup' %}">Recruiter</a></li>
+                            </ul>
+                        </details>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="navbar-end">
+                {% if user.is_authenticated %}
+                    <!-- Notification Icon -->
+                    <div class="dropdown dropdown-end mr-2">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                            <div class="indicator">
+                                <i class="fas fa-bell text-lg"></i>
+                                {% with unread_count=user.get_unread_notifications_count %}
+                                    {% if unread_count > 0 %}
+                                        <span class="badge badge-xs badge-primary indicator-item">{{ unread_count }}</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                        <div tabindex="0" class="dropdown-content card card-compact w-64 p-2 shadow bg-base-100 z-[1]">
+                            <div class="card-body">
+                                <h3 class="font-bold text-lg">Notifications</h3>
+                                <div class="divider my-0"></div>
+                                {% with recent_notifications=user.get_recent_notifications %}
+                                    {% if recent_notifications %}
+                                        <ul class="menu bg-base-100 w-full">
+                                            {% for notification in recent_notifications %}
+                                                <li>
+                                                    <a href="{{ notification.link }}" class="flex justify-between items-start py-2">
+                                                        <div>
+                                                            <p class="text-sm {% if not notification.is_read %}font-semibold{% endif %}">
+                                                                {{ notification.content }}
+                                                            </p>
+                                                            <p class="text-xs text-base-content/60">{{ notification.created_at|timesince }} ago</p>
+                                                        </div>
+                                                        {% if not notification.is_read %}
+                                                            <span class="badge badge-primary badge-xs"></span>
+                                                        {% endif %}
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="card-actions mt-2">
+                                            <a href="{% url 'messaging:notifications' %}" class="btn btn-primary btn-sm btn-block">View All</a>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-center py-2 text-base-content/70">No new notifications</p>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-10">
+                                <span>{{ user.get_initials }}</span>
+                            </div>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content menu menu-sm mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                            {% if user.user_type == 'recruiter' %}
+                                <li><a href="{% url 'recruiters:profile' %}">Profile</a></li>
+                            {% else %}
+                                <li><a href="{% url 'job_seekers:profile' %}">Profile</a></li>
+                            {% endif %}
+                            <li><a href="{% url 'messaging:conversations' %}">Messages</a></li>
+                            {% if user.user_type == 'job_seeker' %}
+                                <li><a href="{% url 'job_seekers:settings' %}">Settings</a></li>
+                            {% else %}
+                                <li><a href="{% url 'recruiters:settings' %}">Settings</a></li>
+                            {% endif %}
+                            <li><a href="{% url 'authentication:logout' %}">Logout</a></li>
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Django Messages - Styled as notifications that don't affect layout -->
+    {% if messages %}
+    <div class="django-messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} shadow-lg">
+                <div class="flex items-center">
+                    {% if message.tags == 'success' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    {% elif message.tags == 'error' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                </div>
+                <div class="flex-none">
+                    <button onclick="this.parentElement.parentElement.remove()" class="btn btn-sm btn-ghost">✕</button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Auto-hide messages after 5 seconds -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const messages = document.querySelectorAll('.django-messages .alert');
+                messages.forEach(function(message) {
+                    message.style.opacity = '0';
+                    message.style.transition = 'opacity 0.5s ease';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                });
+            }, 5000);
+        });
+    </script>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-10 bg-base-200 text-base-content">
+        <div>
+            <div class="grid grid-flow-col gap-4">
+                <a class="link link-hover">About Us</a>
+                <a class="link link-hover">Contact</a>
+                <a class="link link-hover">Privacy Policy</a>
+                <a class="link link-hover">Terms of Service</a>
+            </div>
+            <div>
+                <p>Copyright © {% now "Y" %} Hiredar - All rights reserved</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Custom JavaScript -->
+    {% block extra_scripts %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

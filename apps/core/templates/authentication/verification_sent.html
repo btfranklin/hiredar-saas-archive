@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}Verify Your Email | Hiredar{% endblock %}
+
+{% block content %}
+<div class="hero min-h-screen bg-base-200">
+    <div class="hero-content flex-col">
+        <div class="card flex-shrink-0 w-full max-w-md shadow-2xl bg-base-100">
+            <div class="card-body">
+                <h2 class="text-2xl font-bold text-center mb-4">{% trans "Verify Your Email Address" %}</h2>
+                
+                <div class="alert alert-info mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>
+                    {% blocktrans %}We have sent an email to you for verification. Follow the link provided to finalize the signup process. If you do not see the verification email in your main inbox, check your spam folder. Please contact us if you do not receive the verification email within a few minutes.{% endblocktrans %}
+                    </span>
+                </div>
+                
+                <p>{% blocktrans %}If you do not receive the confirmation email within a few minutes, please check your spam folder.{% endblocktrans %}</p>
+                <div class="mt-6">
+                    <a href="{% url 'core:home' %}" class="btn btn-primary">{% trans "Back to Home" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

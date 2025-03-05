@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load skill_tags %}
+
+{% block title %}Your Profile | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Include Job Seeker Sidebar -->
+        {% include 'job_seekers/components/sidebar.html' with active_page='profile' show_edit_button=True %}
+        
+        <!-- Main content -->
+        <div class="w-full lg:w-2/3 xl:w-3/4">
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h2 class="text-2xl font-bold mb-6">About Me</h2>
+                
+                {% if job_seeker_profile.bio %}
+                    <p>{{ job_seeker_profile.bio }}</p>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>No bio information provided.</span>
+                        
+                        {% if user == request.user %}
+                            <a href="{% url 'job_seekers:settings' %}" class="btn btn-sm btn-primary ml-4">Add Bio</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Skills Section -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h2 class="text-2xl font-bold mb-6">Skills</h2>
+                
+                {% if job_seeker_profile.skills.all %}
+                    <div class="flex flex-wrap gap-2">
+                        {% for skill in job_seeker_profile.skills.all %}
+                            <div class="badge badge-lg">{{ skill.name }}</div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>No skills added yet.</span>
+                        
+                        {% if user == request.user %}
+                            <a href="{% url 'job_seekers:settings' %}" class="btn btn-sm btn-primary ml-4">Add Skills</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Experience Section -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h2 class="text-2xl font-bold mb-6">Experience</h2>
+                
+                {% if job_seeker_profile.experiences.all %}
+                    <div class="space-y-6">
+                        {% for experience in job_seeker_profile.experiences.all %}
+                            <div class="card bg-base-100 shadow-sm">
+                                <div class="card-body">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="text-lg font-bold">{{ experience.title }}</h3>
+                                            <p class="text-base-content/70">{{ experience.company }}</p>
+                                        </div>
+                                        <span class="text-sm">
+                                            {{ experience.start_date|date:"M Y" }} - 
+                                            {% if experience.current %}
+                                                Present
+                                            {% else %}
+                                                {{ experience.end_date|date:"M Y" }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="mt-2">{{ experience.description }}</p>
+                                    
+                                    {% if experience.skills.all %}
+                                        <div class="flex flex-wrap gap-2 mt-3">
+                                            {% for skill in experience.skills.all %}
+                                                <div class="badge badge-outline">{{ skill.name }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>No work experience added yet.</span>
+                        
+                        {% if user == request.user %}
+                            <a href="{% url 'job_seekers:settings' %}" class="btn btn-sm btn-primary ml-4">Add Experience</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Education Section -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <h2 class="text-2xl font-bold mb-6">Education</h2>
+                
+                {% if job_seeker_profile.education.all %}
+                    <div class="space-y-6">
+                        {% for education in job_seeker_profile.education.all %}
+                            <div class="card bg-base-100 shadow-sm">
+                                <div class="card-body">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="text-lg font-bold">{{ education.degree }}</h3>
+                                            <p class="text-base-content/70">{{ education.institution }}</p>
+                                        </div>
+                                        <span class="text-sm">
+                                            {{ education.start_date|date:"Y" }} - 
+                                            {% if education.current %}
+                                                Present
+                                            {% else %}
+                                                {{ education.end_date|date:"Y" }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    {% if education.description %}
+                                        <p class="mt-2">{{ education.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>No education history added yet.</span>
+                        
+                        {% if user == request.user %}
+                            <a href="{% url 'job_seekers:settings' %}" class="btn btn-sm btn-primary ml-4">Add Education</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

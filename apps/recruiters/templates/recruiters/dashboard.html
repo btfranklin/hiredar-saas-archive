@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Recruiter Dashboard | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Include Recruiter Sidebar -->
+        {% include 'recruiters/components/sidebar.html' with active_page='dashboard' %}
+        
+        <!-- Main content -->
+        <div class="w-full lg:w-3/4">
+            <!-- Welcome Card & Stats -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">Welcome, {{ user.first_name }}!</h2>
+                        <p class="text-base-content/70">{{ current_date|date:"l, F j, Y" }}</p>
+                    </div>
+                    
+                    {% with rec_profile=user.recruiter_profile %}
+                        <div class="mt-4 md:mt-0">
+                            <div class="flex items-center">
+                                <div class="badge {% if rec_profile.is_subscribed %}badge-success{% else %}badge-warning{% endif %} mr-2">
+                                    {% if rec_profile.is_subscribed %}
+                                        Active Subscription
+                                    {% else %}
+                                        No Active Subscription
+                                    {% endif %}
+                                </div>
+                                
+                                <span class="text-base font-medium">
+                                    {{ rec_profile.get_subscription_tier_display }}
+                                </span>
+                            </div>
+                            
+                            {% if not rec_profile.is_subscribed %}
+                                <a href="#" class="btn btn-primary btn-sm mt-2">
+                                    <i class="fas fa-arrow-up mr-1"></i> Upgrade Now
+                                </a>
+                            {% elif rec_profile.subscription_ends_at %}
+                                <p class="text-xs text-base-content/70 mt-1">
+                                    Renews on {{ rec_profile.subscription_ends_at|date:"F j, Y" }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endwith %}
+                </div>
+                
+                <div class="stats shadow">
+                    <div class="stat">
+                        <div class="stat-figure text-primary">
+                            <i class="fas fa-briefcase text-2xl"></i>
+                        </div>
+                        <div class="stat-title">Active Jobs</div>
+                        <div class="stat-value">{{ active_jobs_count|default:"0" }}</div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-figure text-secondary">
+                            <i class="fas fa-users text-2xl"></i>
+                        </div>
+                        <div class="stat-title">Total Candidates</div>
+                        <div class="stat-value text-secondary">{{ candidates_count|default:"0" }}</div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-figure text-accent">
+                            <i class="fas fa-envelope-open text-2xl"></i>
+                        </div>
+                        <div class="stat-title">Messages</div>
+                        <div class="stat-value text-accent">{{ unread_messages_count|default:"0" }}</div>
+                        <div class="stat-desc">Unread messages</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="{% url 'jobs:create' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="card-body items-center text-center p-4">
+                            <i class="fas fa-plus-circle text-primary text-3xl mb-2"></i>
+                            <h3 class="card-title text-base">Post a Job</h3>
+                            <p class="text-sm">Create a new job opening</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'jobs:list' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="card-body items-center text-center p-4">
+                            <i class="fas fa-search text-secondary text-3xl mb-2"></i>
+                            <h3 class="card-title text-base">Find Candidates</h3>
+                            <p class="text-sm">Search for qualified candidates</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'messaging:conversations' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="card-body items-center text-center p-4">
+                            <i class="fas fa-envelope text-accent text-3xl mb-2"></i>
+                            <h3 class="card-title text-base">Messages</h3>
+                            <p class="text-sm">Check your conversations</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Active Jobs -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Active Job Openings</h2>
+                    <a href="{% url 'jobs:list' %}" class="text-primary hover:underline">View all</a>
+                </div>
+                
+                {% if active_jobs %}
+                    <div class="overflow-x-auto">
+                        <table class="table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Job Title</th>
+                                    <th>Posted</th>
+                                    <th>Candidates</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in active_jobs %}
+                                    <tr>
+                                        <td>
+                                            <div class="font-bold">{{ job.title }}</div>
+                                            <div class="text-sm opacity-70">{{ job.location }}</div>
+                                        </td>
+                                        <td>{{ job.created_at|date:"M j, Y" }}</td>
+                                        <td>
+                                            <div class="flex items-center">
+                                                <span class="badge badge-primary badge-lg">{{ job.candidates_count }}</span>
+                                                {% if job.new_candidates_count > 0 %}
+                                                    <span class="badge badge-sm badge-accent ml-2">+{{ job.new_candidates_count }} new</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="badge badge-success">Active</div>
+                                        </td>
+                                        <td>
+                                            <div class="flex space-x-2">
+                                                <a href="{% url 'jobs:detail' job.id %}" class="btn btn-sm btn-ghost">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'jobs:candidates' %}?job_id={{ job.id }}" class="btn btn-sm btn-ghost">
+                                                    <i class="fas fa-users"></i>
+                                                </a>
+                                                <a href="{% url 'jobs:edit' job.id %}" class="btn btn-sm btn-ghost">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>You don't have any active job openings.</span>
+                        <a href="{% url 'jobs:create' %}" class="btn btn-sm btn-primary ml-4">Post a Job</a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Recent Candidates -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Recent Candidates</h2>
+                    <a href="{% url 'jobs:list' %}" class="text-primary hover:underline">View all jobs</a>
+                </div>
+                
+                {% if recent_candidates %}
+                    <div class="space-y-4">
+                        {% for candidate in recent_candidates %}
+                            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="card-body p-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex items-center">
+                                            <div class="avatar placeholder mr-3">
+                                                <div class="bg-neutral text-neutral-content rounded-full w-12">
+                                                    <span>{{ candidate.job_seeker.get_initials }}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <h3 class="font-bold">{{ candidate.job_seeker.get_full_name }}</h3>
+                                                <p class="text-sm text-base-content/70">{{ candidate.job_seeker.job_title }}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="badge badge-primary badge-lg">{{ candidate.match_percentage }}% Match</div>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center mt-3">
+                                        <div class="text-sm">
+                                            <span class="font-medium">For:</span> {{ candidate.job.title }}
+                                        </div>
+                                        
+                                        <div class="flex space-x-2">
+                                            <a href="{% url 'job_seekers:profile' candidate.job_seeker.id %}" class="btn btn-sm btn-outline">
+                                                View Profile
+                                            </a>
+                                            <a href="{% url 'messaging:create' %}?recipient={{ candidate.job_seeker.id }}" class="btn btn-sm btn-primary">
+                                                Contact
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>No candidate matches found yet.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

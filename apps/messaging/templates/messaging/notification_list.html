@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center mb-6">
+        <a href="{% url 'messaging:conversations' %}" class="btn btn-ghost btn-sm mr-4">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+        <h1 class="text-2xl font-bold">Notifications</h1>
+    </div>
+    
+    <div class="bg-base-200 rounded-box p-6 shadow-md">
+        {% if notifications %}
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-base-content/70">You have {{ notifications|length }} notification{{ notifications|length|pluralize }}</p>
+                <button 
+                    class="btn btn-outline btn-sm"
+                    hx-post="{% url 'messaging:mark_all_read' %}"
+                    hx-confirm="Mark all notifications as read?"
+                    hx-swap="none"
+                    hx-on::after-request="window.location.reload()"
+                >
+                    Mark all as read
+                </button>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div class="space-y-4" id="notifications-container">
+                {% for notification in notifications %}
+                    <div class="bg-base-100 p-4 rounded-lg shadow-sm flex items-start gap-4 {% if not notification.is_read %}border-l-4 border-primary{% endif %}">
+                        <div class="avatar placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-10">
+                                <span class="text-xs">{{ notification.user.get_initials }}</span>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium">{{ notification.content }}</p>
+                                    <p class="text-xs text-base-content/60 mt-1">{{ notification.created_at|date:"M d, Y" }} at {{ notification.created_at|date:"g:i a" }}</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    {% if notification.link %}
+                                        <a href="{{ notification.link }}" class="btn btn-ghost btn-xs">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    {% endif %}
+                                    <button 
+                                        class="btn btn-ghost btn-xs"
+                                        hx-post="{% url 'messaging:mark_notification_read' notification.id %}"
+                                        hx-swap="none"
+                                        hx-on::after-request="this.closest('.border-primary').classList.remove('border-primary', 'border-l-4')"
+                                    >
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% if notification.notification_type == 'message' %}
+                                <div class="mt-2">
+                                    <a href="{{ notification.link }}" class="btn btn-primary btn-sm">
+                                        Reply
+                                    </a>
+                                </div>
+                            {% elif notification.notification_type == 'application' %}
+                                <div class="mt-2">
+                                    <a href="{{ notification.link }}" class="btn btn-primary btn-sm">
+                                        View Application
+                                    </a>
+                                </div>
+                            {% elif notification.notification_type == 'match' %}
+                                <div class="mt-2">
+                                    <a href="{{ notification.link }}" class="btn btn-primary btn-sm">
+                                        View Match
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="text-5xl mb-4">🔔</div>
+                <h3 class="text-xl font-semibold mb-2">No notifications</h3>
+                <p class="text-base-content/70">
+                    You're all caught up! Check back later for updates.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

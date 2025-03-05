@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up as Recruiter | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+    <div class="max-w-md mx-auto bg-base-200 rounded-lg shadow-xl p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">Sign Up as Recruiter</h1>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    {% for error in form.non_field_errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div>
+                <label class="label" for="{{ form.first_name.id_for_label }}">
+                    <span class="label-text">First Name</span>
+                </label>
+                <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" class="input input-bordered w-full {% if form.first_name.errors %}input-error{% endif %}" value="{{ form.first_name.value|default:'' }}">
+                {% if form.first_name.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.first_name.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="label" for="{{ form.last_name.id_for_label }}">
+                    <span class="label-text">Last Name</span>
+                </label>
+                <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" class="input input-bordered w-full {% if form.last_name.errors %}input-error{% endif %}" value="{{ form.last_name.value|default:'' }}">
+                {% if form.last_name.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.last_name.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="label" for="{{ form.email.id_for_label }}">
+                    <span class="label-text">Email</span>
+                </label>
+                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" class="input input-bordered w-full {% if form.email.errors %}input-error{% endif %}" value="{{ form.email.value|default:'' }}">
+                {% if form.email.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.email.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="label" for="{{ form.password.id_for_label }}">
+                    <span class="label-text">Password</span>
+                </label>
+                <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" class="input input-bordered w-full {% if form.password.errors %}input-error{% endif %}">
+                {% if form.password.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.password.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Company Information section removed -->
+            
+            <div class="pt-2">
+                <button type="submit" class="btn btn-primary w-full">Sign Up</button>
+            </div>
+        </form>
+        
+        <div class="divider">or</div>
+        
+        <div class="space-y-3">
+            <a href="{% url 'socialaccount_signup' %}" class="btn btn-outline w-full">
+                <i class="fab fa-google mr-2"></i> Sign Up with Google
+            </a>
+        </div>
+        
+        <div class="text-center mt-6">
+            <p>Already have an account? <a href="{% url 'authentication:login' %}" class="text-primary hover:underline">Log in</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

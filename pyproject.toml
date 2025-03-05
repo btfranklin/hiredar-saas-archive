@@ -1,0 +1,62 @@
+[project]
+name = "hiredar"
+version = "0.1.0"
+description = "AI-powered job matching platform"
+authors = [
+    {name = "B.T. Franklin", email = "brandon.franklin@gmail.com"},
+]
+dependencies = [
+    "django>=5.0.0",
+    "django-allauth>=0.60.0",
+    "django-htmx>=1.17.2",
+    "pymupdf>=1.23.8",  # For PDF parsing
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",  # Required by django-allauth
+    "pyjwt>=2.8.0",  # Required by django-allauth
+    "cryptography>=42.0.0",  # Required by django-allauth
+    "pillow>=10.2.0",  # Required for ImageField
+    "django-q2>=1.7.6",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "-e file:///${PROJECT_ROOT}/#egg=pylint-plugins",
+    "django-stubs>=2.0.0",
+    "django-stubs-ext>=2.0.0",
+    "mypy>=1.8.0",  # Make sure mypy itself is installed
+]
+[dependency-groups]
+dev = [
+    "pylint>=3.3.4",
+    "pylint-django>=2.6.1",
+]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+mypy_path = "."
+explicit_package_bases = true
+namespace_packages = true
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "hiredar.settings"
+
+[[tool.mypy.overrides]]
+module = "django.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "allauth.*"
+ignore_missing_imports = true

@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Candidate Matches | {{ job_opening.title }} | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <div class="flex flex-col md:flex-row md:items-start justify-between">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <a href="{% url 'jobs:detail' job_opening.id %}" class="link link-hover text-base-content/70">
+                        <i class="fas fa-chevron-left text-xs"></i> Back to Job
+                    </a>
+                </div>
+                <h1 class="text-3xl font-bold">Candidates for {{ job_opening.title }}</h1>
+                <p class="text-base-content/70 mt-1">{{ job_opening.company }} • {{ job_opening.location }}</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <span class="badge {% if job_opening.status == 'active' %}badge-success{% elif job_opening.status == 'draft' %}badge-warning{% else %}badge-neutral{% endif %} badge-lg">
+                    {{ job_opening.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {% if not candidate_matches %}
+        <div class="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-info shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div>
+                <h3 class="font-bold">No matches found</h3>
+                <div class="text-sm">Our AI is still looking for suitable candidates for this position.</div>
+            </div>
+        </div>
+    {% else %}
+        <div class="stats shadow mb-8">
+            <div class="stat">
+                <div class="stat-title">Total Candidates</div>
+                <div class="stat-value">{{ candidate_matches.count }}</div>
+                <div class="stat-desc">Matched by our AI</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Top Matches</div>
+                <div class="stat-value">{{ top_matches.count }}</div>
+                <div class="stat-desc">60%+ match score</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Wildcard Matches</div>
+                <div class="stat-value">{{ wildcard_matches.count }}</div>
+                <div class="stat-desc">30-59% match score</div>
+            </div>
+        </div>
+
+        {% if top_matches %}
+            <div class="mb-10">
+                <h2 class="text-2xl font-bold mb-4">Top Matches</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for match in top_matches %}
+                        <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
+                            <div class="card-body">
+                                <div class="flex justify-between items-start">
+                                    <h3 class="card-title">{{ match.job_seeker.user_profile.get_user_full_name }}</h3>
+                                    <div class="badge badge-success">{{ match.match_score }}% Match</div>
+                                </div>
+                                
+                                <div class="my-2">
+                                    {% if match.job_seeker.current_position %}
+                                        <p class="text-base-content/70">{{ match.job_seeker.current_position }}</p>
+                                    {% endif %}
+                                    
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        {% for skill in match.job_seeker.skills.all|slice:":5" %}
+                                            <span class="badge badge-outline">{{ skill.name }}</span>
+                                        {% endfor %}
+                                        {% if match.job_seeker.skills.count > 5 %}
+                                            <span class="badge badge-outline">+{{ match.job_seeker.skills.count|add:"-5" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <p class="text-sm text-base-content/80">{{ match.match_explanation }}</p>
+                                
+                                <div class="card-actions justify-end mt-2">
+                                    <a href="{% url 'jobs:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-primary">
+                                        View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if wildcard_matches %}
+            <div>
+                <h2 class="text-2xl font-bold mb-4">Wildcard Matches</h2>
+                <p class="text-base-content/70 mb-4">These candidates might not be perfect matches, but have relevant skills that could make them suitable.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for match in wildcard_matches %}
+                        <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
+                            <div class="card-body">
+                                <div class="flex justify-between items-start">
+                                    <h3 class="card-title">{{ match.job_seeker.user_profile.get_user_full_name }}</h3>
+                                    <div class="badge">{{ match.match_score }}% Match</div>
+                                </div>
+                                
+                                <div class="my-2">
+                                    {% if match.job_seeker.current_position %}
+                                        <p class="text-base-content/70">{{ match.job_seeker.current_position }}</p>
+                                    {% endif %}
+                                    
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        {% for skill in match.job_seeker.skills.all|slice:":5" %}
+                                            <span class="badge badge-outline">{{ skill.name }}</span>
+                                        {% endfor %}
+                                        {% if match.job_seeker.skills.count > 5 %}
+                                            <span class="badge badge-outline">+{{ match.job_seeker.skills.count|add:"-5" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <p class="text-sm text-base-content/80">{{ match.match_explanation }}</p>
+                                
+                                <div class="card-actions justify-end mt-2">
+                                    <a href="{% url 'jobs:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-outline">
+                                        View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %} 

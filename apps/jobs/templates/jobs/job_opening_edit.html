@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Job Opening | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar -->
+        <div class="w-full lg:w-1/4">
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <h2 class="text-xl font-bold mb-4">Job Status</h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold">Active</h3>
+                        <p class="text-sm text-base-content/70">The job opening is publicly visible and can receive applications.</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold">Draft</h3>
+                        <p class="text-sm text-base-content/70">The job is saved but not publicly visible yet.</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold">Closed</h3>
+                        <p class="text-sm text-base-content/70">The job opening is no longer accepting applications.</p>
+                    </div>
+                </div>
+                
+                {% if job_opening.candidate_matches.exists %}
+                    <div class="divider"></div>
+                    
+                    <div>
+                        <h3 class="font-semibold">Candidate Matches</h3>
+                        <p class="text-sm text-base-content/70 mb-2">You have {{ job_opening.candidate_matches.count }} potential candidates for this position.</p>
+                        <a href="{% url 'jobs:candidates' job_opening.id %}" class="btn btn-sm btn-outline w-full">
+                            <i class="fas fa-users mr-2"></i> View Candidates
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="w-full lg:w-3/4">
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <h1 class="text-2xl font-bold mb-6">Edit Job Opening</h1>
+                
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div class="form-control">
+                        <label class="label" for="id_title">
+                            <span class="label-text font-medium">Job Title</span>
+                        </label>
+                        <input type="text" id="id_title" name="title" class="input input-bordered w-full" value="{{ job_opening.title }}" required>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label" for="id_status">
+                            <span class="label-text font-medium">Status</span>
+                        </label>
+                        <select id="id_status" name="status" class="select select-bordered w-full">
+                            {% for value, text in job_opening.STATUS_CHOICES %}
+                                <option value="{{ value }}" {% if job_opening.status == value %}selected{% endif %}>{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label" for="id_location">
+                            <span class="label-text font-medium">Location</span>
+                        </label>
+                        <input type="text" id="id_location" name="location" class="input input-bordered w-full" value="{{ job_opening.location }}" required>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Remote Work</span>
+                        </label>
+                        <label class="cursor-pointer flex items-center gap-2">
+                            <input type="checkbox" id="id_is_remote" name="is_remote" class="checkbox" value="True" {% if job_opening.is_remote %}checked{% endif %}>
+                            <span>This position allows remote work</span>
+                        </label>
+                    </div>
+                    
+                    <div class="divider">Job Description & Requirements</div>
+                    
+                    <div class="form-control">
+                        <label class="label" for="id_description">
+                            <span class="label-text font-medium">Job Description</span>
+                        </label>
+                        <textarea id="id_description" name="description" class="textarea textarea-bordered h-32" required>{{ job_opening.description }}</textarea>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label" for="id_requirements">
+                            <span class="label-text font-medium">Requirements</span>
+                        </label>
+                        <textarea id="id_requirements" name="requirements" class="textarea textarea-bordered h-32" required>{{ job_opening.requirements }}</textarea>
+                    </div>
+                    
+                    <div class="divider">Experience & Compensation</div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label" for="id_experience_min">
+                                <span class="label-text font-medium">Minimum Experience (years)</span>
+                            </label>
+                            <input type="number" id="id_experience_min" name="experience_min" class="input input-bordered w-full" min="0" value="{{ job_opening.experience_min }}" required>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label" for="id_experience_max">
+                                <span class="label-text font-medium">Maximum Experience (years, optional)</span>
+                            </label>
+                            <input type="number" id="id_experience_max" name="experience_max" class="input input-bordered w-full" min="0" value="{{ job_opening.experience_max|default:'' }}">
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label" for="id_salary_min">
+                                <span class="label-text font-medium">Minimum Salary ($ thousands, optional)</span>
+                            </label>
+                            <input type="number" id="id_salary_min" name="salary_min" class="input input-bordered w-full" min="0" step="5" value="{{ job_opening.salary_min|default:'' }}">
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label" for="id_salary_max">
+                                <span class="label-text font-medium">Maximum Salary ($ thousands, optional)</span>
+                            </label>
+                            <input type="number" id="id_salary_max" name="salary_max" class="input input-bordered w-full" min="0" step="5" value="{{ job_opening.salary_max|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="divider">Skills</div>
+                    
+                    <div class="form-control">
+                        <label class="label" for="id_skills">
+                            <span class="label-text font-medium">Required Skills (comma separated)</span>
+                        </label>
+                        <input type="text" id="id_skills" name="skills" class="input input-bordered w-full" 
+                               value="{% for skill in job_opening.skills.all %}{{ skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                               placeholder="Python, Django, JavaScript, React, etc.">
+                        <div class="text-sm text-base-content/70 mt-1">
+                            Separate skills with commas. These are used for candidate matching.
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end gap-2 mt-8">
+                        <a href="{% url 'jobs:detail' job_opening.id %}" class="btn btn-ghost">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

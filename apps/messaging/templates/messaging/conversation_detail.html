@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Message Conversation | Hiredar{% endblock %}
+
+{% block extra_head %}
+<style>
+    .message-container {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    .message-bubble {
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+    .message-bubble.sent {
+        background-color: hsl(var(--p) / 0.2);
+        border-radius: 1rem 1rem 0 1rem;
+    }
+    .message-bubble.received {
+        background-color: hsl(var(--b2) / 1);
+        border-radius: 1rem 1rem 1rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Include appropriate sidebar based on user type -->
+        {% if user.user_type == 'job_seeker' %}
+            {% include 'job_seekers/components/sidebar.html' with active_page='messages' %}
+        {% else %}
+            {% include 'recruiters/components/sidebar.html' with active_page='messages' %}
+        {% endif %}
+        
+        <!-- Main content -->
+        <div class="w-full lg:w-3/4">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'messaging:conversations' %}" class="btn btn-ghost btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Messages
+                    </a>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-12">
+                            <span>{{ other_participant.get_initials }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">{{ other_participant.get_full_name }}</h2>
+                        {% if job_opening %}
+                            <div class="badge badge-outline">{{ job_opening.title }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <!-- Messages container -->
+                <div class="message-container mb-4 p-2" id="message-container">
+                    {% if conversation.messages.all %}
+                        {% for message in conversation.messages.all %}
+                            <div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %} mb-4">
+                                <div class="message-bubble p-3 {% if message.sender == request.user %}sent ml-auto{% else %}received{% endif %}">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="font-medium text-sm">
+                                            {% if message.sender == request.user %}
+                                                You
+                                            {% else %}
+                                                {{ other_participant.get_full_name }}
+                                            {% endif %}
+                                        </span>
+                                        <span class="text-xs text-base-content/60 ml-2">
+                                            {{ message.created_at|date:"M d, g:i a" }}
+                                        </span>
+                                    </div>
+                                    <p>{{ message.content }}</p>
+                                    {% if message.is_read and message.sender == request.user %}
+                                        <div class="text-right">
+                                            <span class="text-xs text-base-content/60">Read</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-8">
+                            <p class="text-base-content/70">No messages yet. Start the conversation!</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Message form -->
+                <form 
+                    hx-post="{% url 'messaging:send_message' conversation.id %}"
+                    hx-swap="none"
+                    hx-on::after-request="this.reset(); document.getElementById('message-container').scrollTop = document.getElementById('message-container').scrollHeight;"
+                    class="flex gap-2"
+                >
+                    {% csrf_token %}
+                    <input 
+                        type="text" 
+                        name="message" 
+                        placeholder="Type your message..." 
+                        class="input input-bordered flex-1" 
+                        required
+                    >
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        <span class="ml-2">Send</span>
+                    </button>
+                </form>
+            </div>
+            
+            {% if job_opening %}
+            <div class="mt-6 bg-base-200 rounded-box p-4 shadow-md">
+                <h2 class="text-lg font-bold mb-3">Job Details</h2>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <h3 class="font-semibold">{{ job_opening.title }}</h3>
+                        <p class="text-sm text-base-content/70">{{ job_opening.recruiter.company_name }}</p>
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            <div class="badge badge-outline">{{ job_opening.location }}</div>
+                            {% if job_opening.salary_min and job_opening.salary_max %}
+                                <div class="badge badge-outline">${{ job_opening.salary_min|floatformat:0 }}k - ${{ job_opening.salary_max|floatformat:0 }}k</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <a href="{% url 'jobs:detail' job_opening.id %}" class="btn btn-outline btn-sm">
+                            View Job
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageContainer = document.getElementById('message-container');
+        if (messageContainer) {
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+        
+        // Set up HTMX event to append new messages
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.successful && evt.detail.xhr.status === 200) {
+                try {
+                    const response = JSON.parse(evt.detail.xhr.responseText);
+                    if (response.success && response.message_html) {
+                        const messageContainer = document.getElementById('message-container');
+                        messageContainer.insertAdjacentHTML('beforeend', response.message_html);
+                        messageContainer.scrollTop = messageContainer.scrollHeight;
+                    }
+                } catch (e) {
+                    console.error('Error parsing response:', e);
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 
