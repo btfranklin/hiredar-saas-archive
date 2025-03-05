@@ -1,6 +1,7 @@
 """Models for the authentication app."""
 
-from typing import Any, Optional, TypeVar
+import uuid
+from typing import Any, TypeVar
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -29,8 +30,6 @@ class UserManager(BaseUserManager[T]):
         # Generate username if not provided
         if "username" not in extra_fields:
             # Create a username based on email
-            import uuid
-
             base_username = email.split("@")[0]
             # Truncate to ensure it fits within max_length with uuid
             if len(base_username) > 10:

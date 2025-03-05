@@ -4,7 +4,7 @@ Signal handlers for the authentication app.
 This module contains signal handlers for User model.
 """
 
-from typing import Any, Type, cast
+from typing import Any, Type
 
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
