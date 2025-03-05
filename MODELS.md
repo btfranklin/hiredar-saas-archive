@@ -22,7 +22,7 @@ classDiagram
         +email: EmailField
         +first_name: CharField
         +last_name: CharField
-        +user_type: CharField
+        +user_type: CharField("job_seeker", "recruiter", "admin")
         +bio: TextField
         +location: CharField
         +is_staff: BooleanField
@@ -120,7 +120,7 @@ The custom User model that serves as the base for all user accounts.
 | `email` | EmailField | Primary login field, must be unique |
 | `first_name` | CharField | User's first name |
 | `last_name` | CharField | User's last name |
-| `user_type` | CharField | Either "job_seeker" or "recruiter" |
+| `user_type` | CharField | One of "job_seeker", "recruiter", or "admin" |
 | `bio` | TextField | Brief user biography |
 | `location` | CharField | User's location |
 | `is_staff` | BooleanField | Whether user can access admin site |
@@ -135,6 +135,12 @@ The custom User model that serves as the base for all user accounts.
 | `to_dict()` | Converts user instance to a dictionary |
 | `get_initials()` | Gets user initials for avatar display |
 | `get_absolute_url()` | Returns URL for the user's profile |
+| `clean()` | Validates that only admin users can have staff privileges |
+
+**Business Rules:**
+- Only users with `user_type="admin"` can have `is_staff=True`
+- Setting `is_staff=True` on a non-admin user will automatically change their `user_type` to "admin"
+- These rules are enforced through model validation, admin customization, and a pre-save signal
 
 ## Job Seekers App
 

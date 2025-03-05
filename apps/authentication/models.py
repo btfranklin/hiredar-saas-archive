@@ -7,6 +7,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -24,19 +25,20 @@ class UserManager(BaseUserManager[T]):
         if not email:
             raise ValueError(_("The Email field must be set"))
         email = self.normalize_email(email)
-        
+
         # Generate username if not provided
-        if 'username' not in extra_fields:
+        if "username" not in extra_fields:
             # Create a username based on email
             import uuid
-            base_username = email.split('@')[0]
+
+            base_username = email.split("@")[0]
             # Truncate to ensure it fits within max_length with uuid
             if len(base_username) > 10:
                 base_username = base_username[:10]
             # Add unique suffix to ensure uniqueness
             username = f"{base_username}_{str(uuid.uuid4())[:8]}"
-            extra_fields['username'] = username
-            
+            extra_fields["username"] = username
+
         user = self.model(email=email, **extra_fields)
         if password:
             user.set_password(password)
@@ -67,7 +69,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_type = models.CharField(
         _("user type"),
         max_length=20,
-        choices=[("job_seeker", "Job Seeker"), ("recruiter", "Recruiter")],
+        choices=[
+            ("job_seeker", "Job Seeker"),
+            ("recruiter", "Recruiter"),
+            ("admin", "Administrator"),
+        ],
         default="job_seeker",
     )
     bio = models.TextField(_("bio"), blank=True)
@@ -135,3 +141,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_absolute_url(self) -> str:
         """Get the absolute URL for this user"""
         return reverse("accounts:profile")
+
+    def clean(self) -> None:
+        """
+        Validate the user object before saving.
+
+        Ensures that only users with user_type 'admin' can have is_staff=True.
+        """
+        super().clean()
+        if self.is_staff and self.user_type != "admin":
+            raise ValidationError(
+                {"is_staff": "Only administrators can have staff privileges."}
+            )

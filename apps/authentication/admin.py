@@ -6,8 +6,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.http import HttpRequest
 
-from apps.authentication.forms import (CustomUserChangeForm,
-                                       CustomUserCreationForm)
+from apps.authentication.forms import CustomUserChangeForm, CustomUserCreationForm
 from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 
@@ -112,3 +111,18 @@ class CustomUserAdmin(UserAdmin):
 
         # Only staff users can delete users
         return user.is_staff
+
+    def save_model(
+        self, request: HttpRequest, obj: User, form: Any, change: bool
+    ) -> None:
+        """
+        Custom save_model to enforce business rules.
+
+        Ensures that only users with user_type 'admin' can have staff privileges.
+        """
+        # If the user is being given staff privileges, ensure they're an admin
+        if obj.is_staff and obj.user_type != "admin":
+            # Automatically set user_type to admin if giving staff privileges
+            obj.user_type = "admin"
+
+        super().save_model(request, obj, form, change)
