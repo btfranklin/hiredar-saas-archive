@@ -120,6 +120,11 @@ class CustomLoginView(SuccessMessageMixin, LoginView):
 
         # User is authenticated, redirect based on user type
         user = cast(AuthenticatedUser, self.request.user)
+
+        # If the user is an admin or has staff privileges, redirect to admin interface
+        if user.user_type == "admin" or user.is_staff:
+            return reverse("admin:index")
+
         if user.user_type == "recruiter":
             return reverse("recruiters:dashboard")
         return reverse("job_seekers:dashboard")

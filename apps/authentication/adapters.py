@@ -17,6 +17,11 @@ class AccountAdapter(DefaultAccountAdapter):
         assert request.user.is_authenticated, "User must be authenticated"
         user = cast(AuthenticatedUser, request.user)
 
+        # If the user is an admin or has staff privileges, redirect to admin interface
+        if user.user_type == "admin" or user.is_staff:
+            return reverse("admin:index")
+
+        # Otherwise redirect based on user type
         if user.user_type == "recruiter":
             return reverse("recruiters:dashboard")
         return reverse("job_seekers:dashboard")
@@ -25,6 +30,10 @@ class AccountAdapter(DefaultAccountAdapter):
         """Return the appropriate profile creation URL based on user type."""
         assert request.user.is_authenticated, "User must be authenticated"
         user = cast(AuthenticatedUser, request.user)
+
+        # If the user is an admin, redirect to admin interface
+        if user.user_type == "admin" or user.is_staff:
+            return reverse("admin:index")
 
         if user.user_type == "recruiter":
             return reverse("recruiters:profile")
