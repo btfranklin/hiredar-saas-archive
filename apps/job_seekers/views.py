@@ -24,12 +24,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     template_name = "job_seekers/dashboard.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """Ensure only job seekers can access this view."""
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "job_seeker":
             return redirect("core:home")
-        
+
         # Check if job seeker profile exists, if not redirect to profile creation
         try:
             # This will raise RelatedObjectDoesNotExist if profile doesn't exist
@@ -37,7 +39,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         except Exception:
             # Redirect to profile creation page
             return redirect("job_seekers:profile_create")
-            
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -53,7 +55,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         # Get unread notifications
         context["notifications"] = Notification.objects.filter(
-            user=cast(Any, user),  # Cast to Any to avoid type incompatibility with the model field
+            user=cast(
+                Any, user
+            ),  # Cast to Any to avoid type incompatibility with the model field
             is_read=False,
         ).order_by("-created_at")[:5]
 
@@ -65,7 +69,9 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
     template_name = "job_seekers/profile.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """Ensure only job seekers can access this view."""
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "job_seeker":
@@ -78,7 +84,9 @@ class ProfileCreateView(LoginRequiredMixin, TemplateView):
 
     template_name = "job_seekers/profile_create.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """Ensure only job seekers can access this view."""
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "job_seeker":
@@ -91,7 +99,9 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 
     template_name = "job_seekers/settings.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """Ensure only job seekers can access this view."""
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "job_seeker":
@@ -102,22 +112,22 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 class ResumeUploadView(LoginRequiredMixin, View):
     """
     View for handling resume uploads from job seekers.
-    
+
     This view accepts resume file uploads, saves them to the media directory,
     and queues an asynchronous task to process the resume and update the profile.
     """
-    
+
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
         """Handle POST requests for resume uploads."""
         user = cast(AuthenticatedUser, request.user)
-        
+
         # Ensure user is a job seeker
         if user.user_type != "job_seeker":
             return JsonResponse(
                 {"success": False, "message": "Only job seekers can upload resumes."},
                 status=403,
             )
-        
+
         # Get the uploaded file
         resume_file = request.FILES.get("resume")
         if not resume_file:
@@ -125,32 +135,32 @@ class ResumeUploadView(LoginRequiredMixin, View):
                 {"success": False, "message": "No resume file provided."},
                 status=400,
             )
-        
+
         # Validate file type (PDF only)
-        filename = getattr(resume_file, 'name', '')
+        filename = getattr(resume_file, "name", "")
         if not filename.lower().endswith(".pdf"):
             return JsonResponse(
                 {"success": False, "message": "Only PDF files are accepted."},
                 status=400,
             )
-        
+
         try:
             # Generate a unique filename
             unique_filename = f"{uuid.uuid4()}_{filename}"
-            
+
             # Save the file
             file_path = save_resume_file(resume_file, unique_filename)
-            
+
             # Get job seeker profile ID
-            job_seeker_profile = getattr(user, 'job_seeker_profile', None)
+            job_seeker_profile = getattr(user, "job_seeker_profile", None)
             if job_seeker_profile is None:
                 return JsonResponse(
                     {"success": False, "message": "Job seeker profile not found."},
                     status=400,
                 )
-                
+
             profile_id = job_seeker_profile.pk
-            
+
             # Queue the resume processing task
             task_id = async_task(
                 handle_resume_upload_task,
@@ -158,19 +168,21 @@ class ResumeUploadView(LoginRequiredMixin, View):
                 profile_id,
                 filename,
             )
-            
+
             # Return success response with task ID and status URL
             status_url = reverse("job_seekers:task_status", kwargs={"task_id": task_id})
             redirect_url = reverse("job_seekers:dashboard")
-            
-            return JsonResponse({
-                "success": True,
-                "message": "Resume uploaded successfully. Processing in progress.",
-                "task_id": task_id,
-                "status_url": status_url,
-                "redirect_url": redirect_url,
-            })
-            
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Resume uploaded successfully. Processing in progress.",
+                    "task_id": task_id,
+                    "status_url": status_url,
+                    "redirect_url": redirect_url,
+                }
+            )
+
         except Exception as e:
             return JsonResponse(
                 {"success": False, "message": f"Error uploading resume: {str(e)}"},
@@ -181,45 +193,53 @@ class ResumeUploadView(LoginRequiredMixin, View):
 class TaskStatusView(LoginRequiredMixin, View):
     """
     View for checking the status of asynchronous tasks.
-    
+
     This view returns the current status of a task by its ID.
     """
-    
-    def get(self, request: HttpRequest, task_id: str, *args: Any, **kwargs: Any) -> JsonResponse:
+
+    def get(
+        self, request: HttpRequest, task_id: str, *args: Any, **kwargs: Any
+    ) -> JsonResponse:
         """Get the status of a task by its ID."""
         user = cast(AuthenticatedUser, request.user)
-        
+
         # Ensure user is a job seeker
         if user.user_type != "job_seeker":
             return JsonResponse(
-                {"success": False, "message": "Unauthorized"}, 
-                status=403
+                {"success": False, "message": "Unauthorized"}, status=403
             )
-        
+
         try:
             # Get the task result
             task_result = result(task_id)
-            
+
             if task_result is None:
                 # Task is still running
-                return JsonResponse({
-                    "success": True,
-                    "status": "running",
-                    "message": "Task is still running",
-                    "progress": 50,  # Default to 50% if we don't know the exact progress
-                })
-            
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "status": "running",
+                        "message": "Task is still running",
+                        "progress": 50,  # Default to 50% if we don't know the exact progress
+                    }
+                )
+
             # Task has completed (might be success or error)
-            return JsonResponse({
-                "success": True,
-                "status": task_result.get("status", "error"),
-                "message": task_result.get("message", ""),
-                "profile_data": task_result.get("profile_data", {}),
-            })
-            
+            return JsonResponse(
+                {
+                    "success": True,
+                    "status": task_result.get("status", "error"),
+                    "message": task_result.get("message", ""),
+                    "profile_data": task_result.get("profile_data", {}),
+                }
+            )
+
         except Exception as e:
-            return JsonResponse({
-                "success": False,
-                "status": "error",
-                "message": f"Error checking task status: {str(e)}",
-            }, status=500)
+            return JsonResponse(
+                {
+                    "success": False,
+                    "status": "error",
+                    "message": f"Error checking task status: {str(e)}",
+                },
+                status=500,
+            )
