@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Hiredar - AI-Powered Job Matching Platform{% endblock %}
 
@@ -19,7 +20,7 @@
                 </div>
             </div>
             <div class="hidden md:block">
-                <img src="https://placehold.co/600x400" alt="Job Matching" class="rounded-lg shadow-xl w-full">
+                <img src="{% static 'img/hero-image.png' %}" alt="Job Matching" class="rounded-lg shadow-xl w-full">
             </div>
         </div>
     </div>
