@@ -1,6 +1,5 @@
 """Views for the job_seekers app."""
 
-import json
 import uuid
 from typing import Any, cast
 
@@ -8,8 +7,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponseBase, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
 from django_q.tasks import async_task, result
 
@@ -162,12 +159,7 @@ class ResumeUploadView(LoginRequiredMixin, View):
             profile_id = job_seeker_profile.pk
 
             # Queue the resume processing task
-            task_id = async_task(
-                handle_resume_upload_task,
-                file_path,
-                profile_id,
-                filename,
-            )
+            task_id = async_task(handle_resume_upload_task, file_path, profile_id)
 
             # Return success response with task ID and status URL
             status_url = reverse("job_seekers:task_status", kwargs={"task_id": task_id})

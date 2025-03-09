@@ -18,6 +18,9 @@ class JobSeekerProfile(models.Model):
     desired_role = models.CharField(max_length=100, null=True, blank=True)
     current_position = models.CharField(max_length=100, null=True, blank=True)
     about_me = models.TextField(null=True, blank=True)
+    resume_xml = models.TextField(
+        null=True, blank=True, help_text="XML representation of the parsed resume"
+    )
 
     # Social links
     linkedin_url = models.URLField(blank=True)

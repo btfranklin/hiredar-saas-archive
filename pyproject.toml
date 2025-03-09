@@ -10,12 +10,15 @@ dependencies = [
     "django-allauth>=0.60.0",
     "django-htmx>=1.17.2",
     "pymupdf>=1.23.8",  # For PDF parsing
-    "python-dotenv>=1.0.0",
-    "requests>=2.31.0",  # Required by django-allauth
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",  # Required by django-allauth
     "pyjwt>=2.8.0",  # Required by django-allauth
     "cryptography>=42.0.0",  # Required by django-allauth
     "pillow>=10.2.0",  # Required for ImageField
     "django-q2>=1.7.6",
+    "pdfplumber>=0.11.5",
+    "promptdown>=0.9.0",
+    "openai>=1.65.4",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
