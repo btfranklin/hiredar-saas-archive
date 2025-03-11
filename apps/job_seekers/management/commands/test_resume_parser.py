@@ -7,7 +7,9 @@ Usage:
 
 import logging
 import os
+import sys
 import time
+import xml.etree.ElementTree as ET
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -31,10 +33,27 @@ class Command(BaseCommand):
             help="Path to a sample resume PDF file for testing",
         )
 
+        # Add option to save XML to file
+        parser.add_argument(
+            "--save-xml",
+            action="store_true",
+            help="Save the generated XML to a file",
+        )
+
+        # Option to continue on error instead of exiting
+        parser.add_argument(
+            "--continue-on-error",
+            action="store_true",
+            help="Continue processing even if steps fail (default is to exit on first error)",
+        )
+
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS("Starting resume parser test"))
 
         resume_path = options.get("resume_path")
+        save_xml = options.get("save_xml", False)
+        continue_on_error = options.get("continue_on_error", False)
+
         if not resume_path:
             self.stdout.write(
                 self.style.WARNING("No resume path provided. Using sample test data.")
@@ -43,15 +62,28 @@ class Command(BaseCommand):
             return
 
         if not os.path.exists(resume_path):
-            raise CommandError(f"Resume file not found: {resume_path}")
+            self.stdout.write(self.style.ERROR(f"Resume file not found: {resume_path}"))
+            sys.exit(1)
 
         # Step 1: Extract text from PDF
         self.stdout.write("Step 1: Extracting text from PDF...")
         start_time = time.time()
-        raw_text = extract_text_from_pdf(resume_path)
-        if not raw_text:
-            self.stdout.write(self.style.ERROR("Failed to extract text from PDF"))
-            return
+        raw_text = ""  # Initialize with empty string to avoid None
+
+        try:
+            raw_text = extract_text_from_pdf(resume_path)
+            if not raw_text:
+                self.stdout.write(
+                    self.style.ERROR("Failed to extract text from PDF (empty result)")
+                )
+                if not continue_on_error:
+                    sys.exit(1)
+                raw_text = ""  # Ensure it's not None
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Error extracting text from PDF: {e}"))
+            if not continue_on_error:
+                sys.exit(1)
+            raw_text = ""  # Ensure it's not None
 
         pdf_time = time.time() - start_time
         self.stdout.write(
@@ -59,72 +91,140 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"Extracted {len(raw_text)} characters")
         self.stdout.write("Sample text:")
-        self.stdout.write(raw_text[:300] + "..." if len(raw_text) > 300 else raw_text)
+        sample_text = raw_text[:300] + "..." if len(raw_text) > 300 else raw_text
+        self.stdout.write(sample_text)
 
         # Step 2: Use LLM to convert raw text to structured XML
         self.stdout.write("\nStep 2: Converting to XML with LLM...")
         start_time = time.time()
-        xml_content = convert_text_to_xml(raw_text)
-        if not xml_content:
-            self.stdout.write(
-                self.style.ERROR("Failed to process resume text with LLM")
-            )
-            return
+        xml_content = "<resume></resume>"  # Initialize with minimal valid XML
+
+        try:
+            xml_content = convert_text_to_xml(raw_text)
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Error generating XML: {e}"))
+            if not continue_on_error:
+                sys.exit(1)
+            # xml_content already has minimal default value
 
         llm_time = time.time() - start_time
         self.stdout.write(
             self.style.SUCCESS(f"XML generated successfully ({llm_time:.2f}s)")
         )
         self.stdout.write(f"XML length: {len(xml_content)} characters")
+
+        # Optionally save the XML to a file for inspection
+        if save_xml:
+            xml_file_path = resume_path + ".xml"
+            try:
+                with open(xml_file_path, "w", encoding="utf-8") as f:
+                    f.write(xml_content)
+                self.stdout.write(self.style.SUCCESS(f"Saved XML to {xml_file_path}"))
+            except Exception as e:
+                self.stdout.write(
+                    self.style.WARNING(f"Failed to save XML to file: {e}")
+                )
+
+        # Display a preview of the XML
         self.stdout.write("Sample XML:")
-        self.stdout.write(
-            xml_content[:300] + "..." if len(xml_content) > 300 else xml_content
+        sample_xml = (
+            xml_content[:500] + "..." if len(xml_content) > 500 else xml_content
         )
+        self.stdout.write(sample_xml)
+
+        # Validate XML structure
+        try:
+            root = ET.fromstring(xml_content)
+            if root.tag != "resume":
+                self.stdout.write(
+                    self.style.WARNING(f"Root element is '{root.tag}', not 'resume'")
+                )
+        except ET.ParseError as e:
+            self.stdout.write(self.style.ERROR(f"XML validation error: {e}"))
+            # Show problematic XML area
+            try:
+                line_no, col_no = e.position
+                lines = xml_content.split("\n")
+                if 0 <= line_no - 1 < len(lines):
+                    self.stdout.write(self.style.ERROR("Error location:"))
+                    start_line = max(0, line_no - 3)
+                    end_line = min(len(lines), line_no + 2)
+                    for i in range(start_line, end_line):
+                        prefix = f"{i+1}: "
+                        if i == line_no - 1:
+                            self.stdout.write(self.style.ERROR(f"{prefix}{lines[i]}"))
+                            # Add pointer to the error position
+                            pointer = " " * (len(prefix) + col_no - 1) + "^"
+                            self.stdout.write(self.style.ERROR(pointer))
+                        else:
+                            self.stdout.write(f"{prefix}{lines[i]}")
+            except (AttributeError, ValueError, IndexError) as e:
+                self.stdout.write(
+                    self.style.ERROR(f"Could not show error location: {e}")
+                )
+
+            if not continue_on_error:
+                sys.exit(1)
 
         # Step 3: Extract information from XML using the parser
         self.stdout.write("\nStep 3: Parsing XML to extract structured data...")
         start_time = time.time()
-        resume_data = parse_resume_xml(xml_content)
-        parse_time = time.time() - start_time
+        resume_data = {}  # Initialize with empty dict
 
-        self.stdout.write(
-            self.style.SUCCESS(f"XML parsed successfully ({parse_time:.2f}s)")
-        )
+        try:
+            resume_data = parse_resume_xml(xml_content)
+            parse_time = time.time() - start_time
+            self.stdout.write(
+                self.style.SUCCESS(f"XML parsed successfully ({parse_time:.2f}s)")
+            )
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Error parsing XML: {e}"))
+            parse_time = time.time() - start_time
+            if not continue_on_error:
+                sys.exit(1)
+            # resume_data already has empty dict default value
 
         # Display extracted information
-        if resume_data is None:
-            self.stdout.write(self.style.ERROR("Failed to parse XML data"))
-            resume_data = {}  # Use empty dict to avoid further errors
-
         if resume_data.get("skills"):
             self.stdout.write(f'Skills: {", ".join(resume_data["skills"][:10])}')
             if len(resume_data["skills"]) > 10:
                 self.stdout.write(f'  ... and {len(resume_data["skills"]) - 10} more')
+        else:
+            self.stdout.write(self.style.WARNING("No skills were extracted"))
 
-        if resume_data.get("experience") and len(resume_data["experience"]) > 0:
-            most_recent = resume_data["experience"][0]  # Assuming sorted by recency
+        if resume_data.get("current_position"):
+            self.stdout.write(f"Current position: {resume_data['current_position']}")
+        else:
+            self.stdout.write(self.style.WARNING("No current position was extracted"))
+
+        if resume_data.get("years_of_experience") is not None:
             self.stdout.write(
-                f"Most recent title: {most_recent.get('title', 'Unknown')}"
+                f"Years of experience: {resume_data['years_of_experience']}"
+            )
+        else:
+            self.stdout.write(
+                self.style.WARNING("No years of experience were calculated")
             )
 
-        if resume_data.get("experience"):
-            years = sum(
-                exp.get("duration_years", 0) for exp in resume_data["experience"]
-            )
-            self.stdout.write(f"Years of experience: {years:.1f}")
-
-        if resume_data.get("summary"):
-            bio = resume_data["summary"]
-            self.stdout.write(
+        if resume_data.get("about_me"):
+            bio = resume_data["about_me"]
+            bio_summary = (
                 f"Summary: {bio[:100]}..."
                 if bio and len(bio) > 100
                 else f"Summary: {bio}"
             )
+            self.stdout.write(bio_summary)
+        else:
+            self.stdout.write(self.style.WARNING("No personal summary was extracted"))
 
-        if resume_data.get("education") and len(resume_data["education"]) > 0:
+        if resume_data.get("education") and resume_data["education"]:
             edu = resume_data["education"][0]
             self.stdout.write(
-                f"Education: {edu.get('degree', '')} from {edu.get('institution', '')}"
+                f"Education: {edu.get('degree', '(no degree)')} from {edu.get('institution', '(no institution)')}"
+            )
+        else:
+            self.stdout.write(
+                self.style.WARNING("No education information was extracted")
             )
 
         # Total processing time
@@ -132,6 +232,25 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f"\nTotal processing time: {total_time:.2f}s")
         )
-        self.stdout.write(
-            self.style.SUCCESS("Resume parser test completed successfully")
-        )
+
+        # Final status report
+        missing_data = []
+        if not resume_data.get("skills"):
+            missing_data.append("skills")
+        if not resume_data.get("current_position"):
+            missing_data.append("current position")
+        if resume_data.get("years_of_experience") is None:
+            missing_data.append("years of experience")
+
+        if missing_data:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Resume parsed with missing data: {', '.join(missing_data)}"
+                )
+            )
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Resume parser test completed successfully with all key data extracted"
+                )
+            )

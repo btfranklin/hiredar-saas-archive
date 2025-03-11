@@ -229,7 +229,35 @@ class Command(BaseCommand):
             result = process_resume_sync(saved_path, profile)
 
             if not result["success"]:
-                self.stdout.write(self.style.ERROR(f"  - ERROR: {result['message']}"))
+                # Display detailed error information
+                error_type = result.get("error_type", "unknown")
+                error_msg = result.get("message", "Unknown error")
+
+                # Show which step failed
+                pipeline_steps = result.get("pipeline_steps", {})
+                failed_at = "unknown step"
+                for step, completed in pipeline_steps.items():
+                    if not completed:
+                        failed_at = step.replace("_", " ")
+                        break
+
+                self.stdout.write(
+                    self.style.ERROR(f"  - ERROR in {failed_at}: {error_msg}")
+                )
+
+                # Show detailed exception information at higher verbosity
+                if verbosity >= 2 and "exception" in result:
+                    self.stdout.write(
+                        self.style.ERROR(f"  - Exception: {result['exception']}")
+                    )
+
+                # Always clean up temporary file if it exists
+                if saved_path:
+                    try:
+                        default_storage.delete(saved_path)
+                    except Exception:
+                        pass
+
                 return False
 
             if verbosity >= 1:
@@ -238,21 +266,36 @@ class Command(BaseCommand):
                 )
 
             # Show detailed processing information at higher verbosity levels
-            if verbosity >= 2 and result.get("processing_time"):
-                self.stdout.write(
-                    f"  - Processing time: {result['processing_time']:.2f}s"
-                )
+            if verbosity >= 2:
+                # Show pipeline steps completion
+                pipeline_steps = result.get("pipeline_steps", {})
+                for step, completed in pipeline_steps.items():
+                    step_name = step.replace("_", " ")
+                    self.stdout.write(f"  - {step_name}: {'✓' if completed else '✗'}")
+
+                # Show processing time if available
+                if result.get("processing_time"):
+                    self.stdout.write(
+                        f"  - Processing time: {result['processing_time']:.2f}s"
+                    )
 
             return True
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  - ERROR: {str(e)}"))
+            self.stdout.write(self.style.ERROR(f"  - CRITICAL ERROR: {str(e)}"))
             if verbosity >= 2:
-                traceback.print_exc()
-            # Clean up if needed
+                # Show full traceback for higher verbosity
+                import traceback
+
+                self.stdout.write(self.style.ERROR("  - Traceback:"))
+                for line in traceback.format_exc().splitlines():
+                    self.stdout.write(self.style.ERROR(f"    {line}"))
+
+            # Always clean up temporary file if it exists
             if saved_path:
                 try:
                     default_storage.delete(saved_path)
                 except Exception:
                     pass
+
             return False
