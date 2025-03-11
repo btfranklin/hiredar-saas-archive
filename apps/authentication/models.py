@@ -1,6 +1,8 @@
 """Models for the authentication app."""
 
+import inspect
 import uuid
+import warnings
 from typing import Any, TypeVar
 
 from django.contrib.auth.models import (
@@ -56,6 +58,41 @@ class UserManager(BaseUserManager[T]):
             raise ValueError(_("Superuser must have is_superuser=True."))
 
         return self.create_user(email, password, **extra_fields)
+
+    def create(self, **kwargs: Any) -> T:
+        """
+        Override the default create method to discourage direct User creation.
+
+        Direct User.objects.create() calls bypass username generation and password hashing.
+        Always use User.objects.create_user() instead.
+        """
+
+        # Get the calling frame
+        frame = inspect.currentframe()
+        if frame:
+            frame = frame.f_back  # Get the frame that called this method
+            if frame:
+                filename = frame.f_code.co_filename
+                lineno = frame.f_lineno
+                caller = f"{filename}:{lineno}"
+            else:
+                caller = "unknown location"
+        else:
+            caller = "unknown location"
+
+        warnings.warn(
+            f"Direct User.objects.create() called from {caller}. "
+            "This bypasses username generation and proper password hashing. "
+            "Use User.objects.create_user() instead.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+        # If you want to make this a hard error instead of a warning, uncomment the following:
+        # raise ValueError("Direct User creation is not allowed. Use User.objects.create_user() instead.")
+
+        # Still allow the creation to proceed (but with a warning)
+        return super().create(**kwargs)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
