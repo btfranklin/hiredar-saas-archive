@@ -100,6 +100,7 @@ python manage.py test_resume_parser /path/to/test/resume.pdf
 ```
 
 This command:
+
 1. Extracts text from the provided PDF
 2. Sends the text to the LLM API
 3. Parses the resulting XML
@@ -143,6 +144,7 @@ apps/job_seekers/views.py::ResumeUploadView.post()
 ## XML Data Extraction
 
 The LLM generates a structured XML representation of the resume that includes:
+
 - Personal information (name, email, phone, location, summary)
 - Skills list
 - Work experience (job titles, companies, dates, descriptions)
@@ -155,7 +157,7 @@ This XML is then parsed to extract relevant information for the JobSeekerProfile
 
 ### Data Model Enhancements
 
-- [ ] Create separate models for Experience, Education, and Skills 
+- [ ] Create separate models for Experience, Education, and Skills
 - [ ] Create relationships between these models and JobSeekerProfile
 - [ ] Update the parser to create and link these model instances
 
