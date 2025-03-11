@@ -1,51 +1,44 @@
 """
-Resume parsing utilities.
+XML parsing utilities for resume processing.
 
-This module contains functions for extracting and processing resume data.
+This module contains functions for parsing XML resume representations
+and extracting structured data.
 """
 
 import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Any
-
-import pdfplumber
-
-from apps.job_seekers.models import JobSeekerProfile
+from typing import Any, Dict, List, Optional
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
 
-def extract_text_from_pdf(file_path: str) -> str | None:
+def parse_resume_xml(xml_content: str) -> Optional[Dict[str, Any]]:
     """
-    Extract text content from a PDF file.
+    Parse XML resume representation into a structured dictionary.
 
     Args:
-        file_path: Path to the PDF file
+        xml_content: XML string representation of a resume
 
     Returns:
-        The extracted text content or None if extraction fails
+        Dictionary containing structured resume data, or None if parsing fails
     """
     try:
-        text_content = []
-
-        with pdfplumber.open(file_path) as pdf:
-            # Extract text from each page
-            for page in pdf.pages:
-                text = page.extract_text()
-                if text:
-                    text_content.append(text)
-
-        # Join all the text with newlines
-        return "\n".join(text_content)
-
+        result = {
+            "skills": extract_skills(xml_content),
+            "current_position": extract_most_recent_title(xml_content),
+            "years_of_experience": calculate_years_experience(xml_content),
+            "about_me": extract_bio(xml_content),
+            "education": extract_education(xml_content),
+        }
+        return result
     except Exception as e:
-        logger.error(f"Error extracting text from PDF: {str(e)}")
+        logger.error(f"Error parsing XML resume: {str(e)}")
         return None
 
 
-def extract_skills_from_xml(xml_content: str) -> list[str]:
+def extract_skills(xml_content: str) -> List[str]:
     """
     Extract skills from the XML resume representation.
 
@@ -72,7 +65,7 @@ def extract_skills_from_xml(xml_content: str) -> list[str]:
         return []
 
 
-def extract_most_recent_title(xml_content: str) -> str | None:
+def extract_most_recent_title(xml_content: str) -> Optional[str]:
     """
     Extract the most recent job title from the XML resume.
 
@@ -163,7 +156,7 @@ def calculate_years_experience(xml_content: str) -> int:
         return 0
 
 
-def extract_bio(xml_content: str) -> str | None:
+def extract_bio(xml_content: str) -> Optional[str]:
     """
     Extract a personal summary/bio from the XML resume.
 
@@ -188,7 +181,7 @@ def extract_bio(xml_content: str) -> str | None:
         return None
 
 
-def extract_education(xml_content: str) -> list[dict[str, Any]]:
+def extract_education(xml_content: str) -> List[Dict[str, Any]]:
     """
     Extract education information from the XML resume.
 
@@ -237,48 +230,3 @@ def extract_education(xml_content: str) -> list[dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error extracting education from XML: {str(e)}")
         return []
-
-
-def update_profile_from_xml(profile: JobSeekerProfile, xml_content: str) -> bool:
-    """
-    Update a JobSeekerProfile with information extracted from XML resume.
-
-    Args:
-        profile: The JobSeekerProfile instance to update
-        xml_content: XML string representation of a resume
-
-    Returns:
-        Boolean indicating success or failure
-    """
-    try:
-        # Extract and update skills
-        skills = extract_skills_from_xml(xml_content)
-        if skills:
-            profile.skills = ", ".join(skills)
-
-        # Extract and update current position
-        current_title = extract_most_recent_title(xml_content)
-        if current_title:
-            profile.current_position = current_title
-
-        # Calculate and update years of experience
-        years_exp = calculate_years_experience(xml_content)
-        if years_exp > 0:
-            profile.years_of_experience = years_exp
-
-        # Extract and update bio/about me
-        bio = extract_bio(xml_content)
-        if bio:
-            profile.about_me = bio
-
-        # Store the full XML representation
-        profile.resume_xml = xml_content
-
-        # Save all changes
-        profile.save()
-
-        return True
-
-    except Exception as e:
-        logger.error(f"Error updating profile from XML: {str(e)}")
-        return False

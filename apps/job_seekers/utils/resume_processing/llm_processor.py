@@ -1,13 +1,13 @@
 """
-Utilities for interacting with LLM APIs.
+LLM integration for resume processing.
 
-This module contains functions for sending text to LLM services
+This module contains functions for sending resume text to LLM services
 and processing the responses.
 """
 
 import logging
 import os
-from typing import Any, Iterable, cast
+from typing import Any, Iterable, Optional, cast
 
 import requests
 from dotenv import load_dotenv
@@ -21,7 +21,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-def convert_text_resume_to_xml(resume_text: str) -> str | None:
+def convert_text_to_xml(resume_text: str) -> Optional[str]:
     """
     Convert plain resume text into a structured XML representation using an LLM.
 
@@ -31,14 +31,15 @@ def convert_text_resume_to_xml(resume_text: str) -> str | None:
     Returns:
         A structured XML representation of the resume, or None if processing fails
     """
-
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         logger.error("No API key found. Set OPENAI_API_KEY environment variable.")
         return None
 
     prompt_path = os.path.join(
-        os.path.dirname(__file__), "prompts", "convert_resume_to_xml.prompt.md"
+        os.path.dirname(os.path.dirname(__file__)),
+        "prompts",
+        "convert_resume_to_xml.prompt.md",
     )
     structured_prompt = StructuredPrompt.from_promptdown_file(prompt_path)
     structured_prompt.apply_template_values(

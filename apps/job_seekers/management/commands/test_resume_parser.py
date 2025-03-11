@@ -11,14 +11,9 @@ import time
 
 from django.core.management.base import BaseCommand, CommandError
 
-from apps.job_seekers.utils.llm_api import convert_text_resume_to_xml
-from apps.job_seekers.utils.resume_parser import (
-    calculate_years_experience,
-    extract_bio,
-    extract_most_recent_title,
-    extract_skills_from_xml,
-    extract_text_from_pdf,
-)
+from apps.job_seekers.utils.resume_processing.extraction import extract_text_from_pdf
+from apps.job_seekers.utils.resume_processing.llm_processor import convert_text_to_xml
+from apps.job_seekers.utils.resume_processing.xml_parser import parse_resume_xml
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -69,7 +64,7 @@ class Command(BaseCommand):
         # Step 2: Use LLM to convert raw text to structured XML
         self.stdout.write("\nStep 2: Converting to XML with LLM...")
         start_time = time.time()
-        xml_content = convert_text_resume_to_xml(raw_text)
+        xml_content = convert_text_to_xml(raw_text)
         if not xml_content:
             self.stdout.write(
                 self.style.ERROR("Failed to process resume text with LLM")
@@ -86,26 +81,56 @@ class Command(BaseCommand):
             xml_content[:300] + "..." if len(xml_content) > 300 else xml_content
         )
 
-        # Step 3: Extract skills and other information
-        self.stdout.write("\nStep 3: Extracting information from XML...")
+        # Step 3: Extract information from XML using the parser
+        self.stdout.write("\nStep 3: Parsing XML to extract structured data...")
+        start_time = time.time()
+        resume_data = parse_resume_xml(xml_content)
+        parse_time = time.time() - start_time
 
-        skills = extract_skills_from_xml(xml_content)
-        self.stdout.write(f'Skills: {", ".join(skills)}')
-
-        title = extract_most_recent_title(xml_content)
-        self.stdout.write(f"Most recent title: {title}")
-
-        years = calculate_years_experience(xml_content)
-        self.stdout.write(f"Years of experience: {years}")
-
-        bio = extract_bio(xml_content)
         self.stdout.write(
-            f"Bio: {bio[:100]}..." if bio and len(bio) > 100 else f"Bio: {bio}"
+            self.style.SUCCESS(f"XML parsed successfully ({parse_time:.2f}s)")
         )
 
+        # Display extracted information
+        if resume_data is None:
+            self.stdout.write(self.style.ERROR("Failed to parse XML data"))
+            resume_data = {}  # Use empty dict to avoid further errors
+
+        if resume_data.get("skills"):
+            self.stdout.write(f'Skills: {", ".join(resume_data["skills"][:10])}')
+            if len(resume_data["skills"]) > 10:
+                self.stdout.write(f'  ... and {len(resume_data["skills"]) - 10} more')
+
+        if resume_data.get("experience") and len(resume_data["experience"]) > 0:
+            most_recent = resume_data["experience"][0]  # Assuming sorted by recency
+            self.stdout.write(
+                f"Most recent title: {most_recent.get('title', 'Unknown')}"
+            )
+
+        if resume_data.get("experience"):
+            years = sum(
+                exp.get("duration_years", 0) for exp in resume_data["experience"]
+            )
+            self.stdout.write(f"Years of experience: {years:.1f}")
+
+        if resume_data.get("summary"):
+            bio = resume_data["summary"]
+            self.stdout.write(
+                f"Summary: {bio[:100]}..."
+                if bio and len(bio) > 100
+                else f"Summary: {bio}"
+            )
+
+        if resume_data.get("education") and len(resume_data["education"]) > 0:
+            edu = resume_data["education"][0]
+            self.stdout.write(
+                f"Education: {edu.get('degree', '')} from {edu.get('institution', '')}"
+            )
+
         # Total processing time
+        total_time = pdf_time + llm_time + parse_time
         self.stdout.write(
-            self.style.SUCCESS(f"\nTotal processing time: {pdf_time + llm_time:.2f}s")
+            self.style.SUCCESS(f"\nTotal processing time: {total_time:.2f}s")
         )
         self.stdout.write(
             self.style.SUCCESS("Resume parser test completed successfully")
