@@ -149,7 +149,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.ERROR(f"FAILURE: {failure_count} resumes")
             if failure_count
-            else f"FAILURE: 0 resumes"
+            else "FAILURE: 0 resumes"
         )
         self.stdout.write("=" * 50)
 
@@ -170,7 +170,7 @@ class Command(BaseCommand):
 
         try:
             # Use the UserManager's create_user method
-            user = User.objects.create_user(
+            user = User.objects.create_user(  # type: ignore
                 email=email,
                 password="testpassword123",
                 first_name=f"Test{counter}",
