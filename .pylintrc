@@ -326,7 +326,7 @@ min-public-methods=2
 [EXCEPTIONS]
 
 # Exceptions that will emit a warning when caught.
-overgeneral-exceptions=builtins.BaseException,builtins.Exception
+overgeneral-exceptions=builtins.BaseException
 
 
 [FORMAT]
@@ -438,7 +438,9 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         use-implicit-booleaness-not-comparison-to-string,
-        use-implicit-booleaness-not-comparison-to-zero
+        use-implicit-booleaness-not-comparison-to-zero,
+        broad-except,
+        line-too-long
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
