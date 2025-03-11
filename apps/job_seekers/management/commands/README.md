@@ -66,11 +66,33 @@ python manage.py delete_job_seekers --all -v 2
 ```
 
 This command is useful for:
+
 - Cleaning up test data after testing the resume ingestion pipeline
 - Resetting the system to a clean state before batch ingesting new resumes
 - Removing old test users that may have accumulated during development
 
 **⚠️ CAUTION:** Using the `--all` flag will delete ALL job seeker users, including any that may have been created by real users. Use with care, especially in production environments.
+
+### List Job Seekers
+
+The `list_job_seekers` command displays a list of all job seeker users with basic information.
+
+```bash
+# List all job seekers (shows ID, Name, Username)
+python manage.py list_job_seekers
+
+# List only test users
+python manage.py list_job_seekers --test-only
+
+# List with detailed information (adds Email, Position, Skills, Experience)
+python manage.py list_job_seekers -v 2
+```
+
+This command is useful for:
+- Quickly seeing all job seekers in the system
+- Identifying test users by their usernames (which start with "test_user_")
+- Checking the results of batch ingestion
+- Verifying which test users exist before deletion
 
 ## Verbosity Levels
 
@@ -88,11 +110,13 @@ All commands support Django's standard verbosity levels:
 A common workflow when testing the resume processing pipeline:
 
 1. **Clean up old test data**:
+
    ```bash
    python manage.py delete_job_seekers --force
    ```
 
 2. **Batch ingest a directory of sample resumes**:
+
    ```bash
    python manage.py ingest_resumes /path/to/sample/resumes -v 2
    ```
@@ -104,6 +128,7 @@ A common workflow when testing the resume processing pipeline:
 When a particular resume isn't being processed correctly:
 
 1. **Test the specific resume**:
+
    ```bash
    python manage.py test_resume_parser /path/to/problematic/resume.pdf -v 3
    ```
@@ -191,6 +216,48 @@ Deleted 10 job seeker user(s) and 10 profile(s)
 # Verifying deletion
 Only deleting test users (email starts with 'test_user_'). Use --all to delete all job seekers.
 No job seeker users to delete.
+```
+
+### List Job Seekers
+
+```
+# Default output
+Found 5 job seeker user(s):
+--------------------------------------------------------------------------------
+ID     Name                      Username
+--------------------------------------------------------------------------------
+12     Test User 1               test_user_1_a1b2c3d4
+15     Test User 2               test_user_2_e5f6g7h8
+1      John Smith                jsmith_12345678
+4      Maria Rodriguez           mrodriguez_87654321
+9      Ahmed Hassan              ahassan_abcdef12
+--------------------------------------------------------------------------------
+
+# Verbose output (-v 2)
+Found 5 job seeker user(s):
+--------------------------------------------------------------------------------
+ID     Name                      Username                     Email                           Current Position
+--------------------------------------------------------------------------------
+12     Test User 1               test_user_1_a1b2c3d4         test_user_1_a1b2c3d4@example.c Senior Developer
+    Experience: 5 years
+    Skills: JavaScript, React, Node.js, TypeScript, CSS (+3 more)
+
+15     Test User 2               test_user_2_e5f6g7h8         test_user_2_e5f6g7h8@example.c UX Designer
+    Experience: 3 years
+    Skills: Figma, Adobe XD, UI Design, User Research, Prototyping (+2 more)
+
+1      John Smith                jsmith_12345678              john.smith@example.com          Software Engineer
+    Experience: 8 years
+    Skills: Python, Django, JavaScript, SQL, AWS (+5 more)
+
+4      Maria Rodriguez           mrodriguez_87654321          maria.rodriguez@example.com     Data Scientist
+    Experience: 4 years
+    Skills: Python, R, SQL, Machine Learning, TensorFlow (+7 more)
+
+9      Ahmed Hassan              ahassan_abcdef12             a.hassan@example.com            Product Manager
+    Experience: 6 years
+    Skills: Agile, Scrum, Product Development, UX, Market Research (+4 more)
+--------------------------------------------------------------------------------
 ```
 
 ## Troubleshooting
