@@ -14,9 +14,10 @@ Follow these guidelines:
 1. Identify personal details: name, email, phone, location
 2. Extract skills, listing both technical and soft skills
 3. Parse work experience with dates, company names, job titles, and descriptions
-4. Include education details with institution names, degrees, dates, and GPAs if provided
+4. Include education details with institution names, degrees, and dates
 5. Add any certifications, publications, or other achievements
 6. Find any mentions of desired roles or industries
+7. Omit any information that isn't explicitly provided. Never make anything up.
 </task>
 
 <response_format>
@@ -43,10 +44,6 @@ Output ONLY valid, well-formed XML with clear hierarchy. Use this structure:
       <startDate></startDate>
       <endDate></endDate>
       <description></description>
-      <achievements>
-        <achievement></achievement>
-        <!-- Repeat for each achievement -->
-      </achievements>
     </job>
     <!-- Repeat for each job -->
   </experience>
@@ -54,10 +51,8 @@ Output ONLY valid, well-formed XML with clear hierarchy. Use this structure:
     <institution>
       <name></name>
       <degree></degree>
-      <field></field>
       <startDate></startDate>
       <endDate></endDate>
-      <gpa></gpa>
     </institution>
     <!-- Repeat for each institution -->
   </education>
