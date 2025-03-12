@@ -1,8 +1,7 @@
 """
 Resume processing pipeline orchestration.
 
-This module defines the complete resume processing pipeline and provides
-both synchronous and asynchronous execution options.
+This module defines the complete resume processing pipeline for processing resumes.
 """
 
 import logging
@@ -27,307 +26,111 @@ from apps.job_seekers.utils.resume_processing.xml_parser import parse_resume_xml
 logger = logging.getLogger(__name__)
 
 
-def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> dict[str, Any]:
+def process_resume(file_path: str, profile: JobSeekerProfile) -> dict[str, Any]:
     """
-    Process a resume file synchronously, updating the job seeker profile.
+    Process a resume file and update a JobSeekerProfile.
+
+    This function orchestrates the complete resume processing pipeline:
+    1. Extract text from PDF
+    2. Convert to structured XML using LLM
+    3. Parse XML to extract key information
+    4. Update the JobSeekerProfile with extracted information
 
     Args:
-        file_path: Path to the resume file
-        profile: The JobSeekerProfile to update
+        file_path: Path to the resume file (absolute or relative to MEDIA_ROOT)
+        profile: JobSeekerProfile instance to update
 
     Returns:
-        Dictionary with success status and result details.
-        In case of failure, includes detailed error information.
+        Dictionary with processing results
     """
-    # Get absolute path to the file
-    try:
-        absolute_path = default_storage.path(file_path)
-
-        if not os.path.exists(absolute_path):
-            error_msg = f"File not found: {file_path}"
-            logger.error(error_msg)
-            return {
-                "success": False,
-                "message": error_msg,
-                "error_type": "file_not_found",
-            }
-    except Exception as e:
-        error_msg = f"Error accessing file: {str(e)}"
-        logger.error(error_msg)
-        return {
-            "success": False,
-            "message": error_msg,
-            "error_type": "file_access_error",
-        }
-
-    # Track each step of the pipeline
-    pipeline_steps = {
-        "text_extraction": False,
-        "xml_conversion": False,
-        "xml_parsing": False,
-        "profile_update": False,
-    }
-
-    # Variable to hold XML content, initialized as None to handle errors properly
+    pipeline_steps = []
+    resume_text: str | None = None
     xml_content: str | None = None
 
     try:
-        # Step 1: Extract text from PDF
-        logger.info("Extracting text from %s", os.path.basename(absolute_path))
-        try:
-            raw_text = extract_text_from_pdf(absolute_path)
-            if not raw_text:
-                error_msg = "Failed to extract text from PDF (empty result)"
-                logger.error(error_msg)
-                return {
-                    "success": False,
-                    "message": error_msg,
-                    "error_type": "text_extraction_error",
-                    "pipeline_steps": pipeline_steps,
-                }
-            pipeline_steps["text_extraction"] = True
-            logger.info("Successfully extracted %s characters from PDF", len(raw_text))
-        except Exception as e:
-            error_msg = f"Error extracting text from PDF: {str(e)}"
-            logger.error(error_msg)
+        # Step 1: Get the absolute file path
+        if not os.path.isabs(file_path):
+            abs_file_path = default_storage.path(file_path)
+        else:
+            abs_file_path = file_path
+        pipeline_steps.append("file_path_resolved")
+
+        # Step 2: Extract text from PDF
+        logger.info("Extracting text from PDF: %s", file_path)
+        resume_text = extract_text_from_pdf(abs_file_path)
+        if not resume_text:
             return {
                 "success": False,
-                "message": error_msg,
+                "message": "Failed to extract any text from PDF",
                 "error_type": "text_extraction_error",
                 "pipeline_steps": pipeline_steps,
-                "exception": str(e),
             }
 
-        # Step 2: Convert text to structured XML using LLM
-        logger.info("Converting text to structured XML using LLM")
-        try:
-            xml_content = convert_text_to_xml(raw_text)
-            pipeline_steps["xml_conversion"] = True
-            logger.info("Successfully generated XML (%s characters)", len(xml_content))
-        except ET.ParseError as e:
-            error_msg = f"Error converting text to XML: {str(e)}"
-            logger.error(error_msg)
-            logger.error(traceback.format_exc())
+        text_preview = resume_text[:100] + "..."
+        logger.info("Extracted text (preview): %s", text_preview)
+        pipeline_steps.append("text_extracted")
 
-            # Only attempt to log and save XML if we have content
-            result = {
-                "success": False,
-                "message": error_msg,
-                "error_type": "xml_conversion_error",
-                "pipeline_steps": pipeline_steps,
-                "exception": str(e),
-            }
+        # Step 3: Convert text to XML via LLM
+        logger.info("Converting text to XML via LLM")
+        xml_content = convert_text_to_xml(resume_text)
+        pipeline_steps.append("xml_generated")
 
-            # Check if xml_content is available (set in llm_processor.py before validation error)
-            if xml_content:
-                # Use the centralized error reporting and save diagnostic file
-                log_xml_error(e, xml_content)
-                diagnostic_path = save_diagnostic_xml(
-                    e, xml_content, absolute_path, "conversion"
-                )
-
-                # Include diagnostic path in result if available
-                if diagnostic_path:
-                    result["diagnostic_file"] = diagnostic_path
-
-            return result
-
-        except Exception as e:
-            error_msg = f"Error converting text to XML: {str(e)}"
-            logger.error(error_msg)
-            logger.error(traceback.format_exc())
-            return {
-                "success": False,
-                "message": error_msg,
-                "error_type": "xml_conversion_error",
-                "pipeline_steps": pipeline_steps,
-                "exception": str(e),
-            }
-
-        # At this point we can be sure xml_content is not None (if it was, we'd have returned from an exception handler)
-        assert xml_content is not None, "XML content should not be None at this point"
-
-        # Step 3: Parse XML into structured data
-        logger.info("Parsing XML into structured data")
+        # Step 4: Parse XML
+        logger.info("Parsing XML")
         try:
             parsed_data = parse_resume_xml(xml_content)
-            pipeline_steps["xml_parsing"] = True
-            logger.info("Successfully parsed XML data")
+            pipeline_steps.append("xml_parsed")
         except ET.ParseError as e:
-            error_msg = f"Error parsing XML data: {str(e)}"
-            logger.error(error_msg)
-            logger.error(traceback.format_exc())
-
-            # Use the centralized error reporting and save diagnostic file
+            # Log the XML error
             log_xml_error(e, xml_content)
+            # Save diagnostic file
             diagnostic_path = save_diagnostic_xml(
-                e, xml_content, absolute_path, "parsing"
+                e, xml_content, abs_file_path, "parsing"
             )
-
-            # Include diagnostic path in result if available
-            result = {
-                "success": False,
-                "message": error_msg,
-                "error_type": "xml_parsing_error",
-                "pipeline_steps": pipeline_steps,
-                "exception": str(e),
-            }
-
-            if diagnostic_path:
-                result["diagnostic_file"] = diagnostic_path
-
-            return result
-
-        except ValueError as e:
-            error_msg = f"Error parsing XML data: {str(e)}"
-            logger.error(error_msg)
-            logger.error(traceback.format_exc())
-
-            # Save the XML with a note about the error
-            try:
-                base_filename = os.path.basename(absolute_path)
-                diagnostic_path = os.path.join(
-                    os.path.dirname(absolute_path),
-                    f"{base_filename}.failed_xml_structure.xml",
-                )
-
-                # Add error information as XML comments
-                diagnostic_xml = f"<!-- XML STRUCTURE ERROR: {str(e)} -->\n"
-                diagnostic_xml += "<!-- This error indicates a problem with the XML structure, not the syntax -->\n"
-                diagnostic_xml += xml_content
-
-                with open(diagnostic_path, "w", encoding="utf-8") as f:
-                    f.write(diagnostic_xml)
-                logger.info("Saved problematic XML to %s", diagnostic_path)
-
-                result = {
-                    "success": False,
-                    "message": error_msg,
-                    "error_type": "xml_structure_error",
-                    "pipeline_steps": pipeline_steps,
-                    "exception": str(e),
-                    "diagnostic_file": diagnostic_path,
-                }
-
-                return result
-
-            except Exception as save_error:
-                logger.warning("Could not save diagnostic XML file: %s", save_error)
-
-                return {
-                    "success": False,
-                    "message": error_msg,
-                    "error_type": "xml_structure_error",
-                    "pipeline_steps": pipeline_steps,
-                    "exception": str(e),
-                }
-
-        except Exception as e:
-            error_msg = f"Error parsing XML data: {str(e)}"
-            logger.error(error_msg)
-            logger.error(traceback.format_exc())
             return {
                 "success": False,
-                "message": error_msg,
-                "error_type": "xml_parsing_error",
+                "message": f"Error parsing XML: {str(e)}",
+                "error_type": "xml_parse_error",
+                "diagnostic_file": diagnostic_path,
                 "pipeline_steps": pipeline_steps,
-                "exception": str(e),
             }
 
-        # Step 4: Update profile with parsed data
-        logger.info("Updating profile for user %s", profile.user.username)
-        try:
-            update_success = update_profile(profile, parsed_data, xml_content)
-            if not update_success:
-                error_msg = "Failed to update profile with extracted data"
-                logger.error(error_msg)
-                return {
-                    "success": False,
-                    "message": error_msg,
-                    "error_type": "profile_update_error",
-                    "pipeline_steps": pipeline_steps,
-                }
-            pipeline_steps["profile_update"] = True
-            logger.info("Successfully updated profile")
-        except Exception as e:
-            error_msg = f"Error updating profile: {str(e)}"
-            logger.error(error_msg)
-            return {
-                "success": False,
-                "message": error_msg,
-                "error_type": "profile_update_error",
-                "pipeline_steps": pipeline_steps,
-                "exception": str(e),
-            }
+        # Step 5: Update profile
+        logger.info("Updating profile for user %s", profile.user.email)
+        update_success = update_profile(profile, parsed_data, xml_content)
+        pipeline_steps.append("profile_updated")
 
-        # Clean up temp file
-        try:
+        # Step 6: Delete the temporary file if it's in MEDIA_ROOT
+        if not os.path.isabs(file_path):
+            logger.info("Deleting temporary file: %s", file_path)
             default_storage.delete(file_path)
-        except Exception as e:
-            # Log but don't fail the overall process for cleanup errors
-            logger.warning("Error cleaning up temporary file: %s", str(e))
+            pipeline_steps.append("temp_file_deleted")
 
+        # Return success response
+        logger.info("Resume processing completed successfully")
         return {
-            "success": True,
+            "success": update_success,
             "message": "Resume processed successfully",
+            "profile_data": parsed_data,
             "pipeline_steps": pipeline_steps,
-            "profile_data": {
-                "skills": profile.skills_list,
-                "years_of_experience": profile.years_of_experience,
-                "current_position": profile.current_position,
-            },
         }
 
     except Exception as e:
-        # This is a catch-all for unexpected errors
-        error_msg = f"Unexpected error in resume processing pipeline: {str(e)}"
-        logger.error(error_msg)
+        logger.error("Error processing resume: %s", str(e))
         logger.error(traceback.format_exc())
+
+        # Save diagnostic information if possible
+        diagnostic_info = {}
+        if resume_text:
+            diagnostic_info["text_sample"] = resume_text[:500] + "..."
+        if xml_content:
+            diagnostic_info["xml_sample"] = xml_content[:500] + "..."
+
         return {
             "success": False,
-            "message": error_msg,
-            "error_type": "unexpected_error",
+            "message": f"Error processing resume: {str(e)}",
+            "error_type": "processing_error",
+            "diagnostic_info": diagnostic_info,
             "pipeline_steps": pipeline_steps,
-            "exception": str(e),
-        }
-
-
-async def process_resume_async(file_path: str, profile_id: int) -> dict[str, Any]:
-    """
-    Process a resume file asynchronously in a Django Q task.
-
-    This is a wrapper around the synchronous function that handles the task context.
-
-    Args:
-        file_path: Path to the resume file
-        profile_id: ID of the JobSeekerProfile to update
-
-    Returns:
-        Dictionary with task result
-    """
-    # Get the profile
-    try:
-        try:
-            profile = JobSeekerProfile.objects.get(id=profile_id)
-        except JobSeekerProfile.DoesNotExist:
-            error_msg = f"Profile not found: id={profile_id}"
-            logger.error(error_msg)
-            return {
-                "success": False,
-                "message": error_msg,
-                "error_type": "profile_not_found",
-            }
-
-        # Process the resume
-        return process_resume_sync(file_path, profile)
-
-    except Exception as e:
-        error_msg = f"Unexpected error in async resume processing: {str(e)}"
-        logger.error(error_msg)
-        logger.error(traceback.format_exc())
-        return {
-            "success": False,
-            "message": error_msg,
-            "error_type": "async_task_error",
             "exception": str(e),
         }

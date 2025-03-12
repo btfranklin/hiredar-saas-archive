@@ -12,7 +12,8 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 
-from apps.job_seekers.utils.resume_processing import process_resume_async
+from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.utils.resume_processing.pipeline import process_resume
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def save_resume_file(resume_file: UploadedFile, filename: str) -> str:
     return path
 
 
-async def handle_resume_upload_task(
+def handle_resume_upload_task(
     uploaded_file_path: str, job_seeker_profile_id: int
 ) -> dict[str, Any]:
     """
@@ -53,17 +54,28 @@ async def handle_resume_upload_task(
     """
     try:
         # Process the resume using the unified pipeline
-        result = await process_resume_async(uploaded_file_path, job_seeker_profile_id)
+        try:
+            profile = JobSeekerProfile.objects.get(id=job_seeker_profile_id)
+        except JobSeekerProfile.DoesNotExist:
+            error_msg = f"Profile not found: id={job_seeker_profile_id}"
+            logger.error(error_msg)
+            return {
+                "status": "error",
+                "message": error_msg,
+            }
+
+        # Process the resume
+        result = process_resume(uploaded_file_path, profile)
 
         return {
-            "status": "success" if result["success"] else "error",
+            "status": "success" if result.get("success", False) else "error",
             "message": result.get("message", ""),
             "profile_data": result.get("profile_data", {}),
         }
 
     except Exception as e:
         # Log the error
-        logger.error(f"Error processing resume: {str(e)}", exc_info=True)
+        logger.error("Error processing resume: %s", str(e), exc_info=True)
         return {
             "status": "error",
             "message": f"Error processing resume: {str(e)}",

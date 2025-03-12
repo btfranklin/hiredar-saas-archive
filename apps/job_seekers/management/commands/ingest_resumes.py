@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.utils.resume_processing.pipeline import process_resume_sync
+from apps.job_seekers.utils.resume_processing.pipeline import process_resume
 
 
 class Command(BaseCommand):
@@ -226,7 +226,7 @@ class Command(BaseCommand):
             if verbosity >= 2:
                 self.stdout.write("  - Processing resume through pipeline...")
 
-            result = process_resume_sync(saved_path, profile)
+            result = process_resume(saved_path, profile)
 
             if not result["success"]:
                 # Display detailed error information
