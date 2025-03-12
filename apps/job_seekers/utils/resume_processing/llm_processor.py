@@ -68,9 +68,9 @@ def convert_text_to_xml(resume_text: str) -> str:
     # Make the API call with proper error handling
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=cast(Iterable[Any], messages),
-            temperature=0.2,  # Lower temperature for more deterministic output
+            temperature=0.7,  # Lower temperature for more deterministic output
         )
 
         # Extract the XML content from the response
