@@ -25,20 +25,15 @@ readme = "README.md"
 license = {text = "MIT"}
 
 
-[tool.pdm]
-distribution = false
-
-[tool.pdm.dev-dependencies]
-dev = [
-    "-e file:///${PROJECT_ROOT}/#egg=pylint-plugins",
-    "django-stubs>=2.0.0",
-    "django-stubs-ext>=2.0.0",
-    "mypy>=1.8.0",  # Make sure mypy itself is installed
-]
 [dependency-groups]
 dev = [
     "pylint>=3.3.4",
     "pylint-django>=2.6.1",
+    "django-stubs>=2.0.0",
+    "django-stubs-ext>=2.0.0",
+    "mypy>=1.8.0",
+    "pytest>=8.3.5",
+    "pytest-django>=4.10.0",
 ]
 
 [tool.mypy]
@@ -63,3 +58,22 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "allauth.*"
 ignore_missing_imports = true
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "-e file:///${PROJECT_ROOT}/#egg=pylint-plugins",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "hiredar.settings"
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+testpaths = ["apps"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
