@@ -230,7 +230,6 @@ class Command(BaseCommand):
 
             if not result["success"]:
                 # Display detailed error information
-                error_type = result.get("error_type", "unknown")
                 error_msg = result.get("message", "Unknown error")
 
                 # Show which step failed
@@ -284,9 +283,6 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"  - CRITICAL ERROR: {str(e)}"))
             if verbosity >= 2:
-                # Show full traceback for higher verbosity
-                import traceback
-
                 self.stdout.write(self.style.ERROR("  - Traceback:"))
                 for line in traceback.format_exc().splitlines():
                     self.stdout.write(self.style.ERROR(f"    {line}"))
