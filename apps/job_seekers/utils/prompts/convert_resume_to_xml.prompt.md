@@ -67,7 +67,7 @@ Output ONLY valid, well-formed XML with clear hierarchy. Use this structure:
 </resume>
 ```
 
-Do not include any explanatory text before or after the XML. Your entire response should be valid XML. Do not wrap your response in triple-tick (```) format. Just output the XML directly.
+Do not include any explanatory text before or after the XML. Your entire response should be valid XML.
 </response_format>
 
 ## Conversation
