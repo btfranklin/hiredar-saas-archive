@@ -1,14 +1,15 @@
 """
 Unit tests for the XML error reporting utilities.
+
+Tests the XML error reporting functions used to diagnose and format XML parsing errors.
 """
 
 import os
 import tempfile
-import unittest
 import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase
 
 from apps.job_seekers.utils.resume_processing.xml_error_reporting import (
     create_marked_xml,
@@ -34,11 +35,21 @@ class MockParseError(ET.ParseError):
         return self._position
 
 
-class XMLErrorReportingTests(TestCase):
-    """Test cases for the XML error reporting utilities."""
+class XMLErrorReportingTests(SimpleTestCase):
+    """
+    Test cases for the XML error reporting utilities.
+
+    Tests various functions used to handle, format, and report XML parsing errors:
+    - Position extraction from parse errors
+    - Context gathering around error locations
+    - Formatting of errors for console output
+    - Logging of XML errors
+    - Creation of marked XML with error indicators
+    - Saving diagnostic XML files
+    """
 
     def setUp(self):
-        """Set up test data."""
+        """Set up test data for each test method."""
         self.test_xml = """<resume>
   <personal>
     <name>John Doe</name>
@@ -55,7 +66,7 @@ class XMLErrorReportingTests(TestCase):
         self.error = MockParseError("mismatched tag: line 9, column 12", (9, 12))
 
     def test_get_error_position(self):
-        """Test extracting position from parse error."""
+        """Test extracting line and column position from parse error."""
         # Test with error that has position
         self.assertEqual(get_error_position(self.error), (9, 12))
 
@@ -64,7 +75,7 @@ class XMLErrorReportingTests(TestCase):
         self.assertIsNone(get_error_position(error_no_pos))
 
     def test_get_error_context(self):
-        """Test getting context around an error."""
+        """Test getting context lines around an error position in XML."""
         context = get_error_context(self.test_xml, 10, 12, context_lines=1)
 
         # Check result has expected structure
@@ -81,7 +92,7 @@ class XMLErrorReportingTests(TestCase):
         self.assertTrue(context["context_lines"][1]["is_error_line"])
 
     def test_format_error_for_console(self):
-        """Test formatting error for console output."""
+        """Test formatting XML errors for console display with visual indicators."""
         lines = format_error_for_console(self.error, self.test_xml)
 
         # Check that output contains expected information
@@ -98,7 +109,7 @@ class XMLErrorReportingTests(TestCase):
 
     @patch("apps.job_seekers.utils.resume_processing.xml_error_reporting.logger")
     def test_log_xml_error(self, mock_logger):
-        """Test logging of XML error."""
+        """Test logging of XML errors with proper formatting."""
         log_xml_error(self.error, self.test_xml)
 
         # Check that logger was called with expected messages
@@ -107,7 +118,7 @@ class XMLErrorReportingTests(TestCase):
         self.assertIn("XML Error", mock_logger.error.call_args_list[0][0][0])
 
     def test_create_marked_xml(self):
-        """Test creation of XML with error markers."""
+        """Test creation of XML with visual error markers for diagnostics."""
         marked_xml = create_marked_xml(self.error, self.test_xml)
 
         # Check that output contains error markers
@@ -122,7 +133,7 @@ class XMLErrorReportingTests(TestCase):
         )
 
     def test_save_diagnostic_xml(self):
-        """Test saving diagnostic XML to file."""
+        """Test saving diagnostic XML to file with error annotations."""
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             test_file = os.path.join(temp_dir, "test_resume.pdf")
@@ -144,7 +155,3 @@ class XMLErrorReportingTests(TestCase):
                     content = f.read()
                     self.assertIn("<!-- XML PARSING ERROR:", content)
                     self.assertIn("❌", content)
-
-
-if __name__ == "__main__":
-    unittest.main()
