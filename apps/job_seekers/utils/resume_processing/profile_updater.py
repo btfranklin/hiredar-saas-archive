@@ -6,7 +6,7 @@ data extracted from resumes.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from apps.job_seekers.models import JobSeekerProfile
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def update_profile(
-    profile: JobSeekerProfile, parsed_data: Dict[str, Any], xml_content: str
+    profile: JobSeekerProfile, parsed_data: dict[str, Any], xml_content: str
 ) -> bool:
     """
     Update a JobSeekerProfile with parsed resume data.
@@ -57,5 +57,5 @@ def update_profile(
 
         return True
     except Exception as e:
-        logger.error(f"Error updating profile from parsed data: {str(e)}")
+        logger.error("Error updating profile from parsed data: %s", str(e))
         return False
