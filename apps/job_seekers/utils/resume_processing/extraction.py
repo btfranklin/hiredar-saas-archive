@@ -5,7 +5,6 @@ This module contains functions for extracting text content from resume PDFs.
 """
 
 import logging
-from typing import Optional
 
 import pdfplumber
 
@@ -13,7 +12,7 @@ import pdfplumber
 logger = logging.getLogger(__name__)
 
 
-def extract_text_from_pdf(file_path: str) -> Optional[str]:
+def extract_text_from_pdf(file_path: str) -> str | None:
     """
     Extract text content from a PDF file.
 
@@ -37,5 +36,5 @@ def extract_text_from_pdf(file_path: str) -> Optional[str]:
         return "\n".join(text_content)
 
     except Exception as e:
-        logger.error(f"Error extracting text from PDF: {str(e)}")
+        logger.error("Error extracting text from PDF: %s", str(e))
         return None

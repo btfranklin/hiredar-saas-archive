@@ -8,13 +8,13 @@ and extracting structured data.
 import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
 
-def parse_resume_xml(xml_content: str) -> Dict[str, Any]:
+def parse_resume_xml(xml_content: str) -> dict[str, Any]:
     """
     Parse XML resume representation into a structured dictionary.
 
@@ -37,18 +37,18 @@ def parse_resume_xml(xml_content: str) -> Dict[str, Any]:
     try:
         root = ET.fromstring(xml_content)
     except ET.ParseError as e:
-        logger.error(f"XML parsing error: {e}")
+        logger.error("XML parsing error: %s", e)
         # Log a sample of the problematic XML for diagnosis
         content_sample = (
             xml_content[:500] + "..." if len(xml_content) > 500 else xml_content
         )
-        logger.error(f"Invalid XML sample: {content_sample}")
+        logger.error("Invalid XML sample: %s", content_sample)
         # Re-raise to ensure the error propagates
         raise
 
     # Check for required elements (basic validation)
     if root.tag != "resume":
-        logger.error(f"XML root element is '{root.tag}', expected 'resume'")
+        logger.error("XML root element is '%s', expected 'resume'", root.tag)
         raise ValueError(
             f"Invalid XML structure: root element is '{root.tag}', expected 'resume'"
         )
@@ -69,7 +69,7 @@ def parse_resume_xml(xml_content: str) -> Dict[str, Any]:
     return result
 
 
-def warn_missing_sections(result: Dict[str, Any]) -> None:
+def warn_missing_sections(result: dict[str, Any]) -> None:
     """
     Log warnings for any missing key sections in the resume.
 
@@ -86,7 +86,7 @@ def warn_missing_sections(result: Dict[str, Any]) -> None:
         logger.warning("No years of experience were calculated from the resume")
 
 
-def extract_skills(xml_content: str) -> List[str]:
+def extract_skills(xml_content: str) -> list[str]:
     """
     Extract skills from the XML resume representation.
 
@@ -112,7 +112,7 @@ def extract_skills(xml_content: str) -> List[str]:
     return skills
 
 
-def extract_most_recent_title(xml_content: str) -> Optional[str]:
+def extract_most_recent_title(xml_content: str) -> str | None:
     """
     Extract the most recent job title from the XML resume.
 
@@ -195,7 +195,7 @@ def calculate_years_experience(xml_content: str) -> int:
     return total_years
 
 
-def extract_bio(xml_content: str) -> Optional[str]:
+def extract_bio(xml_content: str) -> str | None:
     """
     Extract a personal summary/bio from the XML resume.
 
@@ -218,7 +218,7 @@ def extract_bio(xml_content: str) -> Optional[str]:
     return None
 
 
-def extract_education(xml_content: str) -> List[Dict[str, Any]]:
+def extract_education(xml_content: str) -> list[dict[str, Any]]:
     """
     Extract education information from the XML resume.
 
