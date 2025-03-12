@@ -8,7 +8,8 @@ both synchronous and asynchronous execution options.
 import logging
 import os
 import traceback
-from typing import Any, Dict
+import xml.etree.ElementTree as ET
+from typing import Any
 
 from django.core.files.storage import default_storage
 
@@ -16,13 +17,17 @@ from apps.job_seekers.models import JobSeekerProfile
 from apps.job_seekers.utils.resume_processing.extraction import extract_text_from_pdf
 from apps.job_seekers.utils.resume_processing.llm_processor import convert_text_to_xml
 from apps.job_seekers.utils.resume_processing.profile_updater import update_profile
+from apps.job_seekers.utils.resume_processing.xml_error_reporting import (
+    log_xml_error,
+    save_diagnostic_xml,
+)
 from apps.job_seekers.utils.resume_processing.xml_parser import parse_resume_xml
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
 
-def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, Any]:
+def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> dict[str, Any]:
     """
     Process a resume file synchronously, updating the job seeker profile.
 
@@ -63,9 +68,12 @@ def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, 
         "profile_update": False,
     }
 
+    # Variable to hold XML content, initialized as None to handle errors properly
+    xml_content: str | None = None
+
     try:
         # Step 1: Extract text from PDF
-        logger.info(f"Extracting text from {os.path.basename(absolute_path)}")
+        logger.info("Extracting text from %s", os.path.basename(absolute_path))
         try:
             raw_text = extract_text_from_pdf(absolute_path)
             if not raw_text:
@@ -78,7 +86,7 @@ def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, 
                     "pipeline_steps": pipeline_steps,
                 }
             pipeline_steps["text_extraction"] = True
-            logger.info(f"Successfully extracted {len(raw_text)} characters from PDF")
+            logger.info("Successfully extracted %s characters from PDF", len(raw_text))
         except Exception as e:
             error_msg = f"Error extracting text from PDF: {str(e)}"
             logger.error(error_msg)
@@ -95,7 +103,35 @@ def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, 
         try:
             xml_content = convert_text_to_xml(raw_text)
             pipeline_steps["xml_conversion"] = True
-            logger.info(f"Successfully generated XML ({len(xml_content)} characters)")
+            logger.info("Successfully generated XML (%s characters)", len(xml_content))
+        except ET.ParseError as e:
+            error_msg = f"Error converting text to XML: {str(e)}"
+            logger.error(error_msg)
+            logger.error(traceback.format_exc())
+
+            # Only attempt to log and save XML if we have content
+            result = {
+                "success": False,
+                "message": error_msg,
+                "error_type": "xml_conversion_error",
+                "pipeline_steps": pipeline_steps,
+                "exception": str(e),
+            }
+
+            # Check if xml_content is available (set in llm_processor.py before validation error)
+            if xml_content:
+                # Use the centralized error reporting and save diagnostic file
+                log_xml_error(e, xml_content)
+                diagnostic_path = save_diagnostic_xml(
+                    e, xml_content, absolute_path, "conversion"
+                )
+
+                # Include diagnostic path in result if available
+                if diagnostic_path:
+                    result["diagnostic_file"] = diagnostic_path
+
+            return result
+
         except Exception as e:
             error_msg = f"Error converting text to XML: {str(e)}"
             logger.error(error_msg)
@@ -108,12 +144,84 @@ def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, 
                 "exception": str(e),
             }
 
+        # At this point we can be sure xml_content is not None (if it was, we'd have returned from an exception handler)
+        assert xml_content is not None, "XML content should not be None at this point"
+
         # Step 3: Parse XML into structured data
         logger.info("Parsing XML into structured data")
         try:
             parsed_data = parse_resume_xml(xml_content)
             pipeline_steps["xml_parsing"] = True
             logger.info("Successfully parsed XML data")
+        except ET.ParseError as e:
+            error_msg = f"Error parsing XML data: {str(e)}"
+            logger.error(error_msg)
+            logger.error(traceback.format_exc())
+
+            # Use the centralized error reporting and save diagnostic file
+            log_xml_error(e, xml_content)
+            diagnostic_path = save_diagnostic_xml(
+                e, xml_content, absolute_path, "parsing"
+            )
+
+            # Include diagnostic path in result if available
+            result = {
+                "success": False,
+                "message": error_msg,
+                "error_type": "xml_parsing_error",
+                "pipeline_steps": pipeline_steps,
+                "exception": str(e),
+            }
+
+            if diagnostic_path:
+                result["diagnostic_file"] = diagnostic_path
+
+            return result
+
+        except ValueError as e:
+            error_msg = f"Error parsing XML data: {str(e)}"
+            logger.error(error_msg)
+            logger.error(traceback.format_exc())
+
+            # Save the XML with a note about the error
+            try:
+                base_filename = os.path.basename(absolute_path)
+                diagnostic_path = os.path.join(
+                    os.path.dirname(absolute_path),
+                    f"{base_filename}.failed_xml_structure.xml",
+                )
+
+                # Add error information as XML comments
+                diagnostic_xml = f"<!-- XML STRUCTURE ERROR: {str(e)} -->\n"
+                diagnostic_xml += "<!-- This error indicates a problem with the XML structure, not the syntax -->\n"
+                diagnostic_xml += xml_content
+
+                with open(diagnostic_path, "w", encoding="utf-8") as f:
+                    f.write(diagnostic_xml)
+                logger.info("Saved problematic XML to %s", diagnostic_path)
+
+                result = {
+                    "success": False,
+                    "message": error_msg,
+                    "error_type": "xml_structure_error",
+                    "pipeline_steps": pipeline_steps,
+                    "exception": str(e),
+                    "diagnostic_file": diagnostic_path,
+                }
+
+                return result
+
+            except Exception as save_error:
+                logger.warning("Could not save diagnostic XML file: %s", save_error)
+
+                return {
+                    "success": False,
+                    "message": error_msg,
+                    "error_type": "xml_structure_error",
+                    "pipeline_steps": pipeline_steps,
+                    "exception": str(e),
+                }
+
         except Exception as e:
             error_msg = f"Error parsing XML data: {str(e)}"
             logger.error(error_msg)
@@ -127,7 +235,7 @@ def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, 
             }
 
         # Step 4: Update profile with parsed data
-        logger.info(f"Updating profile for user {profile.user.username}")
+        logger.info("Updating profile for user %s", profile.user.username)
         try:
             update_success = update_profile(profile, parsed_data, xml_content)
             if not update_success:
@@ -157,7 +265,7 @@ def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, 
             default_storage.delete(file_path)
         except Exception as e:
             # Log but don't fail the overall process for cleanup errors
-            logger.warning(f"Error cleaning up temporary file: {str(e)}")
+            logger.warning("Error cleaning up temporary file: %s", str(e))
 
         return {
             "success": True,
@@ -184,7 +292,7 @@ def process_resume_sync(file_path: str, profile: JobSeekerProfile) -> Dict[str, 
         }
 
 
-async def process_resume_async(file_path: str, profile_id: int) -> Dict[str, Any]:
+async def process_resume_async(file_path: str, profile_id: int) -> dict[str, Any]:
     """
     Process a resume file asynchronously in a Django Q task.
 

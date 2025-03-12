@@ -11,10 +11,14 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from apps.job_seekers.utils.resume_processing.extraction import extract_text_from_pdf
 from apps.job_seekers.utils.resume_processing.llm_processor import convert_text_to_xml
+from apps.job_seekers.utils.resume_processing.xml_error_reporting import (
+    format_error_for_console,
+    save_diagnostic_xml,
+)
 from apps.job_seekers.utils.resume_processing.xml_parser import parse_resume_xml
 
 # Setup logging
@@ -141,26 +145,19 @@ class Command(BaseCommand):
                 )
         except ET.ParseError as e:
             self.stdout.write(self.style.ERROR(f"XML validation error: {e}"))
-            # Show problematic XML area
-            try:
-                line_no, col_no = e.position
-                lines = xml_content.split("\n")
-                if 0 <= line_no - 1 < len(lines):
-                    self.stdout.write(self.style.ERROR("Error location:"))
-                    start_line = max(0, line_no - 3)
-                    end_line = min(len(lines), line_no + 2)
-                    for i in range(start_line, end_line):
-                        prefix = f"{i+1}: "
-                        if i == line_no - 1:
-                            self.stdout.write(self.style.ERROR(f"{prefix}{lines[i]}"))
-                            # Add pointer to the error position
-                            pointer = " " * (len(prefix) + col_no - 1) + "^"
-                            self.stdout.write(self.style.ERROR(pointer))
-                        else:
-                            self.stdout.write(f"{prefix}{lines[i]}")
-            except (AttributeError, ValueError, IndexError) as e:
+
+            # Use centralized error reporting to show detailed error location
+            self.stdout.write("\n")  # Add a newline for clarity
+            for line in format_error_for_console(e, xml_content):
+                self.stdout.write(self.style.ERROR(line))
+
+            # Save the failed XML to a file with error indicators
+            error_xml_path = save_diagnostic_xml(e, xml_content, resume_path, "parsing")
+            if error_xml_path:
                 self.stdout.write(
-                    self.style.ERROR(f"Could not show error location: {e}")
+                    self.style.SUCCESS(
+                        f"Saved XML with error markers to {error_xml_path}"
+                    )
                 )
 
             if not continue_on_error:
