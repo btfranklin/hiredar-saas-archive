@@ -44,10 +44,10 @@ def update_profile(
         if years_experience:
             profile.years_of_experience = years_experience
 
-        # Update about me / bio
-        about_me = parsed_data.get("about_me")
-        if about_me:
-            profile.about_me = about_me
+        # Update professional summary
+        professional_summary = parsed_data.get("professional_summary")
+        if professional_summary:
+            profile.professional_summary = professional_summary
 
         # Store the XML for potential future use
         profile.resume_xml = xml_content

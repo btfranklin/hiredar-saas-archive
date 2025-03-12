@@ -59,7 +59,7 @@ def parse_resume_xml(xml_content: str) -> dict[str, Any]:
         "skills": extract_skills(xml_content),
         "current_position": extract_most_recent_title(xml_content),
         "years_of_experience": calculate_years_experience(xml_content),
-        "about_me": extract_bio(xml_content),
+        "professional_summary": extract_professional_summary(xml_content),
         "education": extract_education(xml_content),
     }
 
@@ -195,15 +195,15 @@ def calculate_years_experience(xml_content: str) -> int:
     return total_years
 
 
-def extract_bio(xml_content: str) -> str | None:
+def extract_professional_summary(xml_content: str) -> str | None:
     """
-    Extract a personal summary/bio from the XML resume.
+    Extract a professional summary from the XML resume.
 
     Args:
         xml_content: XML string representation of a resume
 
     Returns:
-        Personal summary as a string or None
+        Professional summary as a string or None
 
     Raises:
         ET.ParseError: If the XML is not well-formed

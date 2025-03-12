@@ -17,7 +17,11 @@ class JobSeekerProfile(models.Model):
     years_of_experience = models.PositiveIntegerField(null=True, blank=True)
     desired_role = models.CharField(max_length=100, null=True, blank=True)
     current_position = models.CharField(max_length=100, null=True, blank=True)
-    about_me = models.TextField(null=True, blank=True)
+    professional_summary = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Professional summary highlighting experience and qualifications",
+    )
     resume_xml = models.TextField(
         null=True, blank=True, help_text="XML representation of the parsed resume"
     )

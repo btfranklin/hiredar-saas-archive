@@ -30,7 +30,7 @@ Output ONLY valid, well-formed XML with clear hierarchy. Use this structure:
     <email></email>
     <phone></phone>
     <location></location>
-    <summary></summary>
+    <professionalSummary></professionalSummary>
   </personal>
   <skills>
     <skill></skill>

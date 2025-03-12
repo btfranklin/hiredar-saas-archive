@@ -25,7 +25,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
                     "current_position",
                     "desired_role",
                     "years_of_experience",
-                    "about_me",
+                    "professional_summary",
                 )
             },
         ),

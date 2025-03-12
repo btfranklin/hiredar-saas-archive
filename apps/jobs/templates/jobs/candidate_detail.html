@@ -106,12 +106,12 @@
             <!-- About Section -->
             <div class="card bg-base-100 shadow-md">
                 <div class="card-body">
-                    <h2 class="card-title">About</h2>
+                    <h2 class="card-title">Professional Summary</h2>
                     <div class="prose max-w-full">
-                        {% if job_seeker.about_me %}
-                            {{ job_seeker.about_me|linebreaks }}
+                        {% if job_seeker.professional_summary %}
+                            {{ job_seeker.professional_summary|linebreaks }}
                         {% else %}
-                            <p class="text-base-content/70">No information provided</p>
+                            <p class="text-base-content/70">No professional summary provided</p>
                         {% endif %}
                     </div>
                 </div>
