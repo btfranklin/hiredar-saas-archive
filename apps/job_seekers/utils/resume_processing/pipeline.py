@@ -46,6 +46,7 @@ def process_resume(file_path: str, profile: JobSeekerProfile) -> dict[str, Any]:
     pipeline_steps = []
     resume_text: str | None = None
     xml_content: str | None = None
+    parsed_data: dict[str, Any] | None = None
 
     try:
         # Step 1: Get the absolute file path
@@ -70,12 +71,12 @@ def process_resume(file_path: str, profile: JobSeekerProfile) -> dict[str, Any]:
         logger.info("Extracted text (preview): %s", text_preview)
         pipeline_steps.append("text_extracted")
 
-        # Step 3: Convert text to XML via LLM
+        # Step 3: Convert resume text to XML via LLM
         logger.info("Converting text to XML via LLM")
         xml_content = convert_text_to_xml(resume_text)
         pipeline_steps.append("xml_generated")
 
-        # Step 4: Parse XML
+        # Step 4: Parse XML string into a structured dictionary
         logger.info("Parsing XML")
         try:
             parsed_data = parse_resume_xml(xml_content)
