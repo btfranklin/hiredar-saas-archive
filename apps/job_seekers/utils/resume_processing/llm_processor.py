@@ -7,6 +7,7 @@ and processing the responses.
 
 import logging
 import os
+import re
 import xml.etree.ElementTree as ET
 from typing import Any, Iterable, cast
 
@@ -32,7 +33,7 @@ def convert_text_to_xml(resume_text: str) -> str:
         resume_text: The plain text extracted from a resume PDF
 
     Returns:
-        A structured XML representation of the resume
+        A structured XML representation of the resume, as a string
 
     Raises:
         ValueError: If the API key is missing or the LLM response is invalid
@@ -83,27 +84,7 @@ def convert_text_to_xml(resume_text: str) -> str:
             raise ValueError(error_msg)
 
         # Apply sanitization to fix common issues
-        xml_content, was_sanitized = sanitize_xml_if_needed(xml_content)
-        if was_sanitized:
-            logger.info("Applied XML sanitization to fix potential issues")
-
-        # Check for basic XML structure - log but don't immediately fail
-        if not xml_content.strip().startswith("<resume>"):
-            logger.warning(
-                "LLM response does not start with <resume> tag even after sanitization"
-            )
-            # Log a snippet of what we received for diagnostic purposes
-            logger.warning("Response begins with: %s...", xml_content[:100])
-
-        if not xml_content.strip().endswith("</resume>"):
-            logger.warning(
-                "LLM response does not end with </resume> tag even after sanitization"
-            )
-            # Log a snippet of what we received for diagnostic purposes
-            logger.warning(
-                "Response ends with: %s",
-                xml_content[-100:] if len(xml_content) > 100 else xml_content,
-            )
+        xml_content = sanitize_xml_if_needed(xml_content)
 
         # Store a reference to the XML content before attempting to validate it
         # This ensures it's available to the caller even if validation fails
@@ -143,7 +124,7 @@ def convert_text_to_xml(resume_text: str) -> str:
         raise
 
 
-def sanitize_xml_if_needed(xml_content: str) -> tuple[str, bool]:
+def sanitize_xml_if_needed(xml_content: str) -> str:
     """
     Apply basic XML sanitization if necessary.
 
@@ -157,9 +138,8 @@ def sanitize_xml_if_needed(xml_content: str) -> tuple[str, bool]:
         xml_content: The XML content to sanitize
 
     Returns:
-        Tuple of (sanitized_xml, was_modified)
+        The sanitized XML content, as a string
     """
-    original_xml = xml_content
     was_modified = False
 
     # Handle Markdown code blocks
@@ -214,24 +194,13 @@ def sanitize_xml_if_needed(xml_content: str) -> tuple[str, bool]:
 
     # Handle ampersands in all contexts (not just followed by space)
     # We need to be careful not to double-escape already escaped ampersands
-    import re
-
     # This pattern matches & that isn't part of an entity like &amp; or &quot;
     pattern = r"&(?!amp;|quot;|lt;|gt;|apos;|#\d+;|#x[0-9a-fA-F]+;)"
     if re.search(pattern, xml_content):
         xml_content = re.sub(pattern, "&amp;", xml_content)
         was_modified = True
 
-    # If we modified the XML, log it
     if was_modified:
-        logger.debug(
-            "Original XML sample: %s",
-            original_xml[:100] if len(original_xml) > 100 else original_xml,
-        )
-        logger.debug(
-            "Sanitized XML sample: %s",
-            xml_content[:100] if len(xml_content) > 100 else xml_content,
-        )
         logger.info("Applied XML sanitization to fix potential issues")
 
-    return xml_content, was_modified
+    return xml_content
