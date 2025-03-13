@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 from django.contrib.messages import constants as messages
@@ -63,6 +64,13 @@ INSTALLED_APPS = [
     "apps.messaging.apps.MessagingConfig",
     "apps.core.apps.CoreConfig",
 ]
+
+# Enable Django to find tests in the proper directories
+# Add the apps directory to the Python path
+# This helps Django's test discovery find the test modules
+apps_path = os.path.join(BASE_DIR, "apps")
+if apps_path not in sys.path:
+    sys.path.insert(0, apps_path)
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
