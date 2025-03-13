@@ -32,8 +32,6 @@ dev = [
     "django-stubs>=2.0.0",
     "django-stubs-ext>=2.0.0",
     "mypy>=1.8.0",
-    "pytest>=8.3.5",
-    "pytest-django>=4.10.0",
 ]
 
 [tool.mypy]
