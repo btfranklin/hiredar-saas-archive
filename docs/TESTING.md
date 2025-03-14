@@ -30,9 +30,8 @@ python manage.py test apps.job_seekers.tests.test_xml_sanitization.XMLSanitizati
 
 Tests are organized within each app in the project, following these conventions:
 
-- Tests are located in either:
-  - A `tests.py` file in the app directory, or
-  - Multiple files in a `tests/` directory within the app
+- Tests are located in a `tests/` directory within each app
+- Each test directory contains an `__init__.py` file
 - Test files are named with a `test_` prefix (e.g., `test_models.py`, `test_views.py`)
 - Test classes inherit from Django's `TestCase` or `SimpleTestCase`
 - Test methods are named with a `test_` prefix
@@ -41,13 +40,32 @@ Example test structure:
 
 ```
 apps/
+├── authentication/
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── test_models.py
+│   │   └── test_views.py
 ├── job_seekers/
 │   ├── tests/
 │   │   ├── __init__.py
 │   │   ├── test_xml_sanitization.py
 │   │   └── test_xml_error_reporting.py
-├── authentication/
-│   ├── tests.py
+├── jobs/
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_models.py
+├── messaging/
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_models.py
+├── core/
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_views.py
+└── recruiters/
+    ├── tests/
+        ├── __init__.py
+        └── test_models.py
 ```
 
 ## Test Types
@@ -82,6 +100,11 @@ When writing tests for the Hiredar project:
 5. **Test real functionality**:
    - Test behavior, not implementation details
    - Focus on testing requirements and edge cases
+
+6. **Group tests logically**:
+   - Use separate files for testing different components (models, views, forms, etc.)
+   - Keep related tests in the same file
+   - Use descriptive class names that reflect what's being tested
 
 ## Test Configuration
 

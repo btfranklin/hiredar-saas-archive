@@ -1,15 +1,17 @@
+"""Tests for job models."""
+
 from django.test import TestCase
 
 from apps.authentication.models import User
+from apps.jobs.models import JobOpening
 from apps.recruiters.models import RecruiterProfile
-
-from .models import JobOpening
-
-# Create your tests here.
 
 
 class JobOpeningModelTest(TestCase):
+    """Test cases for the JobOpening model."""
+
     def setUp(self):
+        """Set up test data."""
         # Create a test user with recruiter profile - the profile will be created automatically by the signal
         self.test_user = User.objects.create_user(  # type: ignore
             email="recruiter@example.com",

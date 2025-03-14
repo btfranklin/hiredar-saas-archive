@@ -1,15 +1,19 @@
+"""Tests for messaging models."""
+
 from typing import cast
 
 from django.test import TestCase
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile
-
-from .models import Conversation, Message
+from apps.messaging.models import Conversation, Message
 
 
 class ConversationModelTest(TestCase):
+    """Test cases for the Conversation model."""
+
     def setUp(self):
+        """Set up test data."""
         # Create test users using create_user method
         self.user1 = User.objects.create_user(  # type: ignore
             email="conv_user1@example.com",
@@ -47,7 +51,10 @@ class ConversationModelTest(TestCase):
 
 
 class MessageModelTest(TestCase):
+    """Test cases for the Message model."""
+
     def setUp(self):
+        """Set up test data."""
         # Create test users using create_user method with unique emails
         self.user1 = User.objects.create_user(  # type: ignore
             email="msg_user1@example.com",
