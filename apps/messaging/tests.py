@@ -10,19 +10,25 @@ from .models import Conversation, Message
 
 class ConversationModelTest(TestCase):
     def setUp(self):
-        # Create test users
-        self.user1 = cast(User, User.objects.create(
-            email="user1@example.com", password="password123",
-            user_type="job_seeker", first_name="Test", last_name="User1"
-        ))
-        self.user2 = cast(User, User.objects.create(
-            email="user2@example.com", password="password123",
-            user_type="job_seeker", first_name="Test", last_name="User2"
-        ))
-        
-        # Create job seeker profiles
-        self.profile1 = JobSeekerProfile.objects.create(user=self.user1)
-        self.profile2 = JobSeekerProfile.objects.create(user=self.user2)
+        # Create test users using create_user method
+        self.user1 = User.objects.create_user(  # type: ignore
+            email="conv_user1@example.com",
+            password="password123",
+            user_type="job_seeker",
+            first_name="Test",
+            last_name="User1",
+        )
+        self.user2 = User.objects.create_user(  # type: ignore
+            email="conv_user2@example.com",
+            password="password123",
+            user_type="job_seeker",
+            first_name="Test",
+            last_name="User2",
+        )
+
+        # Get the automatically created profiles
+        self.profile1 = JobSeekerProfile.objects.get(user=self.user1)
+        self.profile2 = JobSeekerProfile.objects.get(user=self.user2)
 
         # Create a conversation with User objects (not profiles)
         self.conversation = Conversation.objects.create()
@@ -42,19 +48,25 @@ class ConversationModelTest(TestCase):
 
 class MessageModelTest(TestCase):
     def setUp(self):
-        # Create test users
-        self.user1 = cast(User, User.objects.create(
-            email="user1@example.com", password="password123",
-            user_type="job_seeker", first_name="Test", last_name="User1"
-        ))
-        self.user2 = cast(User, User.objects.create(
-            email="user2@example.com", password="password123",
-            user_type="job_seeker", first_name="Test", last_name="User2"
-        ))
-        
-        # Create job seeker profiles
-        self.profile1 = JobSeekerProfile.objects.create(user=self.user1)
-        self.profile2 = JobSeekerProfile.objects.create(user=self.user2)
+        # Create test users using create_user method with unique emails
+        self.user1 = User.objects.create_user(  # type: ignore
+            email="msg_user1@example.com",
+            password="password123",
+            user_type="job_seeker",
+            first_name="Test",
+            last_name="User1",
+        )
+        self.user2 = User.objects.create_user(  # type: ignore
+            email="msg_user2@example.com",
+            password="password123",
+            user_type="job_seeker",
+            first_name="Test",
+            last_name="User2",
+        )
+
+        # Get the automatically created profiles
+        self.profile1 = JobSeekerProfile.objects.get(user=self.user1)
+        self.profile2 = JobSeekerProfile.objects.get(user=self.user2)
 
         # Create a conversation with User objects (not profiles)
         self.conversation = Conversation.objects.create()
