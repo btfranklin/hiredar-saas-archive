@@ -168,6 +168,29 @@ The LLM generates a structured XML representation of the resume that includes:
 
 This XML is then parsed to extract relevant information for the JobSeekerProfile.
 
+### Date Formatting
+
+The extracted date information from the XML is formatted consistently across different sections:
+
+- **Experience Dates**:
+  - For jobs with both start and end dates: `Dates: [StartDate] - [EndDate]`
+  - For current positions: `Dates: [StartDate] - Present`
+  - For jobs with only start date: `Start Date: [StartDate]`
+  - For jobs with only end date: `End Date: [EndDate]`
+
+- **Education Dates**:
+  - For education with both start and end dates: `Dates: [StartDate] - [EndDate]`
+  - For education with only start date: `Start Date: [StartDate]`
+  - For education with only end date: `End Date: [EndDate]`
+
+- **Certification Dates**:
+  - For certifications with a single date: `Date: [Date]`
+  - For certifications with both start and end dates: `Dates: [StartDate] - [EndDate]`
+  - For certifications with only start date: `Start Date: [StartDate]`
+  - For certifications with only end date: `End Date: [EndDate]`
+
+This consistent date formatting improves readability of the extracted information in the job seeker profile and provides a clear temporal context for each experience, education, and certification entry.
+
 ## Future Improvements (TODOs)
 
 ### Data Model Enhancements
@@ -438,3 +461,82 @@ def calculate_total_experience(experiences: List[dict]) -> float:
     """Calculate total years of experience from experience entries."""
     # Implementation details...
     return total_years 
+```
+
+### Extracting Formatted Dates from XML
+
+```python
+# In apps/job_seekers/utils/resume_processing/xml_parser.py
+
+def extract_experience(xml_content: str) -> str | None:
+    """
+    Extract all work experience as a formatted text block from the XML resume.
+    
+    Returns formatted string with date information using the following format:
+    - For jobs with both start and end dates: "Dates: StartDate - EndDate"
+    - For current positions: "Dates: StartDate - Present"
+    - For jobs with only start date: "Start Date: StartDate"
+    - For jobs with only end date: "End Date: EndDate"
+    """
+    root = ET.fromstring(xml_content)
+    # Find the experience section
+    experience_elem = root.find(".//experience")
+    if experience_elem is None:
+        return None
+        
+    # Find all job elements
+    job_elements = experience_elem.findall("job")
+    if not job_elements:
+        return None
+        
+    # Build formatted text blocks for each job
+    experience_text = []
+    for job in job_elements:
+        job_parts = []
+        
+        # Add position and company
+        if job.find("title") is not None and job.find("title").text:
+            job_parts.append(f"Position: {job.find('title').text.strip()}")
+        if job.find("company") is not None and job.find("company").text:
+            job_parts.append(f"Company: {job.find('company').text.strip()}")
+            
+        # Format dates according to the new requirements
+        start_date = job.find("startDate")
+        end_date = job.find("endDate")
+        
+        start_date_text = start_date.text.strip() if start_date is not None and start_date.text else None
+        end_date_text = end_date.text.strip() if end_date is not None and end_date.text else None
+        
+        if start_date_text and end_date_text:
+            if end_date_text.lower() == "present":
+                job_parts.append(f"Dates: {start_date_text} - Present")
+            else:
+                job_parts.append(f"Dates: {start_date_text} - {end_date_text}")
+        elif start_date_text:
+            job_parts.append(f"Start Date: {start_date_text}")
+        elif end_date_text:
+            job_parts.append(f"End Date: {end_date_text}")
+            
+        # Add description
+        if job.find("description") is not None and job.find("description").text:
+            job_parts.append(f"Description: {job.find('description').text.strip()}")
+            
+        # Add this job entry to the full experience text
+        if job_parts:
+            experience_text.append("\n".join(job_parts))
+            
+    if not experience_text:
+        return None
+        
+    return "\n\n".join(experience_text)
+```
+
+### Testing Extraction Results
+
+Use the `diagnose_resume` management command to test extraction results:
+
+```bash
+python manage.py diagnose_resume /path/to/test/resume.pdf
+```
+
+This will show formatted output including the consistent date formatting for all sections. 
