@@ -40,7 +40,7 @@ The error reporting system is integrated at these key locations:
 2. **Processing Pipeline**: In `pipeline.py`, handles XML parsing errors and conversion errors with diagnostic file creation
    - Now properly handles cases where XML isn't available after conversion failure
    - Includes robust null checking to prevent UnboundLocalError exceptions
-3. **Test Command**: In `test_resume_parser.py`, provides detailed console output for XML validation issues
+3. **Diagnostic Command**: In `diagnose_resume.py`, provides detailed console output for XML validation issues
 
 ## XML Sanitization
 

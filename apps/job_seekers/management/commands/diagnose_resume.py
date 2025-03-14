@@ -1,8 +1,8 @@
 """
-Management command to test the resume parsing functionality.
+Management command to diagnose resume parsing issues and test the resume parsing functionality.
 
 Usage:
-    python manage.py test_resume_parser /path/to/test/resume.pdf
+    python manage.py diagnose_resume /path/to/test/resume.pdf
 """
 
 import logging
@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Test the resume parsing functionality with a sample resume"
+    help = (
+        "Diagnose resume parsing issues and test the functionality with a sample resume"
+    )
 
     def add_arguments(self, parser):
         # Optional path to a test resume PDF
@@ -34,7 +36,7 @@ class Command(BaseCommand):
             "resume_path",
             nargs="?",
             type=str,
-            help="Path to a sample resume PDF file for testing",
+            help="Path to a sample resume PDF file for diagnostics",
         )
 
         # Add option to save XML to file
@@ -52,7 +54,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS("Starting resume parser test"))
+        self.stdout.write(self.style.SUCCESS("Starting resume parsing diagnostic"))
 
         resume_path = options.get("resume_path")
         save_xml = options.get("save_xml", False)
@@ -248,6 +250,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write(
                 self.style.SUCCESS(
-                    "Resume parser test completed successfully with all key data extracted"
+                    "Resume parsed successfully with all essential data extracted"
                 )
             )

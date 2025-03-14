@@ -102,9 +102,9 @@ The resume processing utilities are organized in a modular structure:
 
 Two management commands are provided for testing the resume processing functionality:
 
-1. **Test Resume Parser**:
+1. **Diagnose Resume**:
 ```bash
-python manage.py test_resume_parser /path/to/test/resume.pdf
+python manage.py diagnose_resume /path/to/test/resume.pdf
 ```
 
 This command:

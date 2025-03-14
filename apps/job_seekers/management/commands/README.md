@@ -4,16 +4,16 @@ This directory contains Django management commands for the job seekers app, prim
 
 ## Available Commands
 
-### Test Resume Parser
+### Diagnose Resume
 
-The `test_resume_parser` command allows you to test the resume parsing functionality on a single resume file.
+The `diagnose_resume` command allows you to diagnose resume parsing issues and test the functionality on a single resume file.
 
 ```bash
 # Basic usage
-python manage.py test_resume_parser /path/to/resume.pdf
+python manage.py diagnose_resume /path/to/resume.pdf
 
 # With increased verbosity
-python manage.py test_resume_parser /path/to/resume.pdf -v 2
+python manage.py diagnose_resume /path/to/resume.pdf -v 2
 ```
 
 This command will:
@@ -23,7 +23,7 @@ This command will:
 3. Parse the resulting XML to extract structured data
 4. Display the extracted information, such as skills, experience, education, etc.
 
-This is useful for testing changes to the resume processing pipeline and for troubleshooting issues with specific resume formats.
+This is useful for diagnosing issues with the resume processing pipeline and for troubleshooting problems with specific resume formats.
 
 ### Batch Ingest Resumes
 
@@ -128,10 +128,10 @@ A common workflow when testing the resume processing pipeline:
 
 When a particular resume isn't being processed correctly:
 
-1. **Test the specific resume**:
+1. **Diagnose the specific resume**:
 
    ```bash
-   python manage.py test_resume_parser /path/to/problematic/resume.pdf -v 3
+   python manage.py diagnose_resume /path/to/problematic/resume.pdf -v 3
    ```
 
 2. **Analyze the output** to identify where the processing fails:
