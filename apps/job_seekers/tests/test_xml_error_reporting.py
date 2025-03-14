@@ -132,7 +132,8 @@ class XMLErrorReportingTests(SimpleTestCase):
             "<!-- XML ERROR: generic error (position unknown) -->", marked_xml_no_pos
         )
 
-    def test_save_diagnostic_xml(self):
+    @patch("apps.job_seekers.utils.resume_processing.xml_error_reporting.logger.info")
+    def test_save_diagnostic_xml(self, mock_info):
         """Test saving diagnostic XML to file with error annotations."""
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -155,3 +156,8 @@ class XMLErrorReportingTests(SimpleTestCase):
                     content = f.read()
                     self.assertIn("<!-- XML PARSING ERROR:", content)
                     self.assertIn("❌", content)
+
+                # Verify that the info log message would have been generated
+                mock_info.assert_called_once_with(
+                    "Saved diagnostic XML to %s", diagnostic_path
+                )
