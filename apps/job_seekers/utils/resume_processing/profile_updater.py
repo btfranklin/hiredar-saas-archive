@@ -5,6 +5,7 @@ This module contains functions for updating job seeker profiles with
 data extracted from resumes.
 """
 
+import json
 import logging
 from typing import Any
 
@@ -49,12 +50,30 @@ def update_profile(
         if professional_summary:
             profile.professional_summary = professional_summary
 
+        # Update full experience text
+        experience_text = parsed_data.get("experience")
+        if experience_text:
+            profile.experience = experience_text
+
+        # Update social links from personal details if available
+        personal_details = parsed_data.get("personal_details", {})
+
+        # We could potentially add more links processing here if they're provided in the resume
+
+        # Store certifications as JSON if available
+        certifications = parsed_data.get("certifications", [])
+        if certifications:
+            logger.info("Extracted %d certifications from resume", len(certifications))
+            # We're storing this information in the XML for now, but it can be extracted later
+            # when needed for display or matching purposes
+
         # Store the XML for potential future use
         profile.resume_xml = xml_content
 
         # Save the profile
         profile.save()
 
+        logger.info("Profile updated successfully with parsed resume data")
         return True
     except Exception as e:
         logger.error("Error updating profile from parsed data: %s", str(e))

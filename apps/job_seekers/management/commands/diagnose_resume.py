@@ -205,8 +205,8 @@ class Command(BaseCommand):
                 self.style.WARNING("No years of experience were calculated")
             )
 
-        if resume_data.get("about_me"):
-            bio = resume_data["about_me"]
+        if resume_data.get("professional_summary"):
+            bio = resume_data["professional_summary"]
             bio_summary = (
                 f"Summary: {bio[:100]}..."
                 if bio and len(bio) > 100
@@ -214,7 +214,9 @@ class Command(BaseCommand):
             )
             self.stdout.write(bio_summary)
         else:
-            self.stdout.write(self.style.WARNING("No personal summary was extracted"))
+            self.stdout.write(
+                self.style.WARNING("No professional summary was extracted")
+            )
 
         if resume_data.get("education") and resume_data["education"]:
             edu = resume_data["education"][0]
@@ -225,6 +227,56 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING("No education information was extracted")
             )
+
+        # Display the new extracted information
+
+        # Display personal details
+        self.stdout.write("\nPersonal Details:")
+        personal_details = resume_data.get("personal_details", {})
+        if personal_details:
+            for field, value in personal_details.items():
+                if value:
+                    self.stdout.write(f"  {field.capitalize()}: {value}")
+                else:
+                    self.stdout.write(self.style.WARNING(f"  No {field} extracted"))
+        else:
+            self.stdout.write(self.style.WARNING("  No personal details extracted"))
+
+        # Display experience
+        self.stdout.write("\nExperience:")
+        experience = resume_data.get("experience")
+        if experience:
+            # Show a preview for readability
+            preview = (
+                experience.split("\n\n")[0] if "\n\n" in experience else experience
+            )
+            self.stdout.write(f"  {preview}")
+            if experience != preview:
+                self.stdout.write("  ... (more experience entries available)")
+        else:
+            self.stdout.write(
+                self.style.WARNING("  No experience information extracted")
+            )
+
+        # Display certifications
+        self.stdout.write("\nCertifications:")
+        certifications = resume_data.get("certifications", [])
+        if certifications:
+            for i, cert in enumerate(certifications[:3]):
+                self.stdout.write(
+                    f"  {i+1}. {cert.get('name', 'Unknown certification')}"
+                )
+                if cert.get("issuer"):
+                    self.stdout.write(f"     Issuer: {cert['issuer']}")
+                if cert.get("date"):
+                    self.stdout.write(f"     Date: {cert['date']}")
+
+            if len(certifications) > 3:
+                self.stdout.write(
+                    f"  ... and {len(certifications) - 3} more certifications"
+                )
+        else:
+            self.stdout.write(self.style.WARNING("  No certifications extracted"))
 
         # Total processing time
         total_time = pdf_time + llm_time + parse_time

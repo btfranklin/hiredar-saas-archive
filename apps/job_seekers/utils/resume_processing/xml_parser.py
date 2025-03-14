@@ -61,6 +61,9 @@ def parse_resume_xml(xml_content: str) -> dict[str, Any]:
         "years_of_experience": calculate_years_experience(xml_content),
         "professional_summary": extract_professional_summary(xml_content),
         "education": extract_education(xml_content),
+        "experience": extract_experience(xml_content),
+        "personal_details": extract_personal_details(xml_content),
+        "certifications": extract_certifications(xml_content),
     }
 
     # Warn about missing key sections
@@ -210,8 +213,18 @@ def extract_professional_summary(xml_content: str) -> str | None:
     """
     root = ET.fromstring(xml_content)
 
-    # Find the personal summary element
+    # First, try to find a dedicated professional summary element
+    summary_elem = root.find(".//professionalSummary")
+    if summary_elem is not None and summary_elem.text:
+        return summary_elem.text.strip()
+
+    # Next, try to find it within the personal section
     summary_elem = root.find(".//personal/summary")
+    if summary_elem is not None and summary_elem.text:
+        return summary_elem.text.strip()
+
+    # Finally, try to find it directly in the personal section as professionalSummary
+    summary_elem = root.find(".//personal/professionalSummary")
     if summary_elem is not None and summary_elem.text:
         return summary_elem.text.strip()
 
@@ -265,3 +278,174 @@ def extract_education(xml_content: str) -> list[dict[str, Any]]:
             education_entries.append(entry)
 
     return education_entries
+
+
+def extract_experience(xml_content: str) -> str | None:
+    """
+    Extract all work experience as a formatted text block from the XML resume.
+
+    Args:
+        xml_content: XML string representation of a resume
+
+    Returns:
+        Formatted string containing work experience information or None if not found
+
+    Raises:
+        ET.ParseError: If the XML is not well-formed
+    """
+    root = ET.fromstring(xml_content)
+
+    # Find the experience section
+    experience_elem = root.find(".//experience")
+    if experience_elem is None:
+        return None
+
+    # Find all job elements
+    job_elements = experience_elem.findall("job")
+    if not job_elements:
+        return None
+
+    # Build a formatted text representation of the experience
+    experience_text = []
+
+    for job in job_elements:
+        job_parts = []
+
+        # Extract job title
+        title_elem = job.find("title")
+        if title_elem is not None and title_elem.text:
+            job_parts.append(f"Position: {title_elem.text.strip()}")
+
+        # Extract company
+        company_elem = job.find("company")
+        if company_elem is not None and company_elem.text:
+            job_parts.append(f"Company: {company_elem.text.strip()}")
+
+        # Extract dates
+        start_date = job.find("startDate")
+        end_date = job.find("endDate")
+
+        date_text = ""
+        if start_date is not None and start_date.text:
+            date_text = f"From: {start_date.text.strip()}"
+
+            if end_date is not None and end_date.text:
+                date_text += f" To: {end_date.text.strip()}"
+            else:
+                date_text += " To: Present"
+
+        if date_text:
+            job_parts.append(date_text)
+
+        # Extract description
+        description_elem = job.find("description")
+        if description_elem is not None and description_elem.text:
+            job_parts.append(f"Description: {description_elem.text.strip()}")
+
+        # Add this job entry to the full experience text
+        if job_parts:
+            experience_text.append("\n".join(job_parts))
+
+    if not experience_text:
+        return None
+
+    return "\n\n".join(experience_text)
+
+
+def extract_personal_details(xml_content: str) -> dict[str, str | None]:
+    """
+    Extract personal details from the XML resume.
+
+    Args:
+        xml_content: XML string representation of a resume
+
+    Returns:
+        Dictionary containing name, email, phone, and location
+
+    Raises:
+        ET.ParseError: If the XML is not well-formed
+    """
+    root = ET.fromstring(xml_content)
+
+    # Initialize the results dictionary with None values
+    result: dict[str, str | None] = {
+        "name": None,
+        "email": None,
+        "phone": None,
+        "location": None,
+    }
+
+    # Find the personal section
+    personal_elem = root.find(".//personal")
+    if personal_elem is None:
+        return result
+
+    # Extract name
+    name_elem = personal_elem.find("name")
+    if name_elem is not None and name_elem.text:
+        result["name"] = name_elem.text.strip()
+
+    # Extract email
+    email_elem = personal_elem.find("email")
+    if email_elem is not None and email_elem.text:
+        result["email"] = email_elem.text.strip()
+
+    # Extract phone
+    phone_elem = personal_elem.find("phone")
+    if phone_elem is not None and phone_elem.text:
+        result["phone"] = phone_elem.text.strip()
+
+    # Extract location
+    location_elem = personal_elem.find("location")
+    if location_elem is not None and location_elem.text:
+        result["location"] = location_elem.text.strip()
+
+    return result
+
+
+def extract_certifications(xml_content: str) -> list[dict[str, str | None]]:
+    """
+    Extract certifications from the XML resume.
+
+    Args:
+        xml_content: XML string representation of a resume
+
+    Returns:
+        List of certification entries as dictionaries
+
+    Raises:
+        ET.ParseError: If the XML is not well-formed
+    """
+    root = ET.fromstring(xml_content)
+
+    # Find all certification elements
+    certification_elements = root.findall(".//certifications/certification")
+    certifications: list[dict[str, str | None]] = []
+
+    for cert in certification_elements:
+        entry: dict[str, str | None] = {
+            "name": None,
+            "issuer": None,
+            "date": None,
+        }
+
+        # Extract certification name
+        name_elem = cert.find("name")
+        if name_elem is not None and name_elem.text:
+            entry["name"] = name_elem.text.strip()
+
+        # Extract issuer
+        issuer_elem = cert.find("issuer")
+        if issuer_elem is not None and issuer_elem.text:
+            entry["issuer"] = issuer_elem.text.strip()
+
+        # Extract date
+        date_elem = cert.find("date")
+        if date_elem is not None and date_elem.text:
+            entry["date"] = date_elem.text.strip()
+
+        # Only add if we have at least a name
+        if entry["name"]:
+            certifications.append(entry)
+
+    return certifications
