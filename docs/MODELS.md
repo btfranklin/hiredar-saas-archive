@@ -166,7 +166,6 @@ Extended profile for job seekers with career-related information.
 | Method | Description |
 |--------|-------------|
 | `skills_list` | Property that returns a list of skill names |
-| `get_matched_skills_count()` | Calculate how many required skills this job seeker has |
 
 ## Recruiters App
 

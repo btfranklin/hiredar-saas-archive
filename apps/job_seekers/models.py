@@ -40,25 +40,3 @@ class JobSeekerProfile(models.Model):
         if not self.skills:
             return []
         return [skill.strip() for skill in self.skills.split(",") if skill.strip()]
-
-    def get_matched_skills_count(self, required_skills: list[str]) -> dict[str, int]:
-        """
-        Calculate how many of the required skills this job seeker has.
-
-        Args:
-            required_skills: List of required skill names
-
-        Returns:
-            Dictionary with matched and total skill counts
-        """
-        if not required_skills:
-            return {"matched": 0, "total": 0}
-
-        skills_list = self.skills_list
-        matched = sum(
-            1
-            for skill in required_skills
-            if skill.lower() in [s.lower() for s in skills_list]
-        )
-
-        return {"matched": matched, "total": len(required_skills)}
