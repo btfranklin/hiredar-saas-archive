@@ -10,23 +10,6 @@
         
         <!-- Main content -->
         <div class="w-full lg:w-2/3 xl:w-3/4">
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-2xl font-bold mb-6">About</h2>
-                
-                {% if recruiter_profile.bio %}
-                    <p>{{ recruiter_profile.bio }}</p>
-                {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <span>No bio information provided.</span>
-                        
-                        {% if user == request.user %}
-                            <a href="{% url 'recruiters:settings' %}" class="btn btn-sm btn-primary ml-4">Add Bio</a>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            </div>
-            
             <!-- Active Job Openings -->
             <div class="bg-base-200 rounded-box p-6 shadow-md">
                 <h2 class="text-2xl font-bold mb-6">Active Job Openings</h2>

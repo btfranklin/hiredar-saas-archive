@@ -23,7 +23,6 @@ classDiagram
         +first_name: CharField
         +last_name: CharField
         +user_type: CharField("job_seeker", "recruiter", "admin")
-        +bio: TextField
         +location: CharField
         +is_staff: BooleanField
         +is_active: BooleanField
@@ -37,7 +36,8 @@ classDiagram
         +years_of_experience: PositiveIntegerField
         +desired_role: CharField
         +current_position: CharField
-        +about_me: TextField
+        +professional_summary: TextField
+        +resume_xml: TextField
         +linkedin_url: URLField
         +github_url: URLField
         +portfolio_url: URLField
@@ -121,7 +121,6 @@ The custom User model that serves as the base for all user accounts.
 | `first_name` | CharField | User's first name |
 | `last_name` | CharField | User's last name |
 | `user_type` | CharField | One of "job_seeker", "recruiter", or "admin" |
-| `bio` | TextField | Brief user biography |
 | `location` | CharField | User's location |
 | `is_staff` | BooleanField | Whether user can access admin site |
 | `is_active` | BooleanField | Whether user account is active |
@@ -157,7 +156,8 @@ Extended profile for job seekers with career-related information.
 | `years_of_experience` | PositiveIntegerField | Total years of experience |
 | `desired_role` | CharField | Desired job role |
 | `current_position` | CharField | Current job position |
-| `about_me` | TextField | Detailed description about the job seeker |
+| `professional_summary` | TextField | Detailed description about the job seeker's qualifications and experience |
+| `resume_xml` | TextField | XML representation of the parsed resume |
 | `linkedin_url` | URLField | LinkedIn profile URL |
 | `github_url` | URLField | GitHub profile URL |
 | `portfolio_url` | URLField | Portfolio website URL |
@@ -236,6 +236,16 @@ Model for AI-generated role recommendations for job seekers.
 | `description` | TextField | Description of the recommended role |
 | `confidence_score` | DecimalField | AI confidence score between 0 and 100 |
 | `created_at` | DateTimeField | When the recommendation was created |
+
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| No specific methods beyond default | |
+
+**Business Rules:**
+| Rule | Description |
+|------|-------------|
+| Ordering | Role recommendations are ordered by confidence score (descending) |
 
 ## Messaging App
 

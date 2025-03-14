@@ -112,7 +112,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         ],
         default="job_seeker",
     )
-    bio = models.TextField(_("bio"), blank=True)
     location = models.CharField(_("location"), max_length=100, blank=True)
     is_staff = models.BooleanField(
         _("staff status"),
@@ -160,7 +159,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "user_type": self.user_type,
-            "bio": self.bio or None,
             "location": self.location or None,
         }
 

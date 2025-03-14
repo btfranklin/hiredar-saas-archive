@@ -31,7 +31,7 @@ class CustomUserCreationForm(UserCreationForm):
         # Ensure cleaned_data is not None before proceeding
         if cleaned_data is None:
             return {}
-            
+
         user_type = cleaned_data.get("user_type")
 
         if user_type not in ["job_seeker", "recruiter"]:
@@ -47,28 +47,28 @@ class CustomUserChangeForm(UserChangeForm):
         """Meta class for CustomUserChangeForm."""
 
         model = User
-        fields = ("email", "first_name", "last_name", "bio", "location")
+        fields = ("email", "first_name", "last_name", "location")
 
 
 class CustomAuthenticationForm(AuthenticationForm):
     """
     Custom authentication form that uses email for authentication.
     """
-    
-    username = forms.EmailField(widget=forms.EmailInput(attrs={'autofocus': True}))
+
+    username = forms.EmailField(widget=forms.EmailInput(attrs={"autofocus": True}))
     remember = forms.BooleanField(required=False, initial=False)
-    
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the form with request for authentication."""
         super().__init__(*args, **kwargs)
-        
+
         # Change field label from 'Username' to 'Email'
-        self.fields['username'].label = 'Email'
-        
+        self.fields["username"].label = "Email"
+
         # Apply styling to form fields
         for field_name, field in self.fields.items():
             field.widget.attrs["class"] = "form-control"
-            
+
     def clean(self) -> dict[str, Any]:
         """Authenticate using email as username."""
         username = self.cleaned_data.get("username")

@@ -417,9 +417,9 @@ def update_profile(user_id: int, resume_data: dict) -> JobSeekerProfile:
             most_recent = resume_data["experience"][0]  # Assuming sorted by recency
             profile.current_title = most_recent.get("title", "")
             
-        # Update summary/bio
+        # Update professional summary
         if resume_data.get("summary"):
-            profile.bio = resume_data["summary"]
+            profile.professional_summary = resume_data["summary"]
             
         # Calculate total experience
         if resume_data.get("experience"):
