@@ -85,19 +85,25 @@ def warn_missing_sections(result: dict[str, Any]) -> None:
     if not result.get("current_position"):
         logger.warning("No current position was extracted from the resume")
 
-    if not result.get("years_of_experience"):
+    if result.get("years_of_experience") is None:
         logger.warning("No years of experience were calculated from the resume")
 
+    if not result.get("education"):
+        logger.warning("No education information was extracted from the resume")
 
-def extract_skills(xml_content: str) -> list[str]:
+    if not result.get("experience"):
+        logger.warning("No experience information was extracted from the resume")
+
+
+def extract_skills(xml_content: str) -> str | None:
     """
-    Extract skills from the XML resume representation.
+    Extract skills from the XML resume representation and format as a string.
 
     Args:
         xml_content: XML string representation of a resume
 
     Returns:
-        List of skill names
+        Formatted string of skills or None if no skills found
 
     Raises:
         ET.ParseError: If the XML is not well-formed
@@ -112,7 +118,11 @@ def extract_skills(xml_content: str) -> list[str]:
         if skill_elem.text:
             skills.append(skill_elem.text.strip())
 
-    return skills
+    if not skills:
+        return None
+
+    # Convert the list of skills to a formatted string
+    return ", ".join(skills)
 
 
 def extract_most_recent_title(xml_content: str) -> str | None:
@@ -231,15 +241,15 @@ def extract_professional_summary(xml_content: str) -> str | None:
     return None
 
 
-def extract_education(xml_content: str) -> list[dict[str, Any]]:
+def extract_education(xml_content: str) -> str | None:
     """
-    Extract education information from the XML resume.
+    Extract education information from the XML resume and format as a string.
 
     Args:
         xml_content: XML string representation of a resume
 
     Returns:
-        List of education entries as dictionaries
+        Formatted string containing education information or None if not found
 
     Raises:
         ET.ParseError: If the XML is not well-formed
@@ -248,36 +258,59 @@ def extract_education(xml_content: str) -> list[dict[str, Any]]:
 
     # Find all institution elements
     institution_elements = root.findall(".//education/institution")
-    education_entries = []
+
+    if not institution_elements:
+        return None
+
+    education_blocks = []
 
     for institution in institution_elements:
-        entry = {}
+        entry_parts = []
 
+        # Extract institution name
         name_elem = institution.find("name")
         if name_elem is not None and name_elem.text:
-            entry["institution"] = name_elem.text.strip()
+            entry_parts.append(f"Institution: {name_elem.text.strip()}")
 
+        # Extract degree
         degree_elem = institution.find("degree")
         if degree_elem is not None and degree_elem.text:
-            entry["degree"] = degree_elem.text.strip()
+            entry_parts.append(f"Degree: {degree_elem.text.strip()}")
 
+        # Extract field
         field_elem = institution.find("field")
         if field_elem is not None and field_elem.text:
-            entry["field"] = field_elem.text.strip()
+            entry_parts.append(f"Field: {field_elem.text.strip()}")
 
-        # Include dates if available
+        # Include dates if available - using the new format
         start_date_elem = institution.find("startDate")
-        if start_date_elem is not None and start_date_elem.text:
-            entry["start_date"] = start_date_elem.text.strip()
-
         end_date_elem = institution.find("endDate")
-        if end_date_elem is not None and end_date_elem.text:
-            entry["end_date"] = end_date_elem.text.strip()
 
-        if entry:  # Only add if we have some data
-            education_entries.append(entry)
+        start_date = (
+            start_date_elem.text.strip()
+            if start_date_elem is not None and start_date_elem.text
+            else None
+        )
+        end_date = (
+            end_date_elem.text.strip()
+            if end_date_elem is not None and end_date_elem.text
+            else None
+        )
 
-    return education_entries
+        if start_date and end_date:
+            entry_parts.append(f"Dates: {start_date} - {end_date}")
+        elif start_date:
+            entry_parts.append(f"Start Date: {start_date}")
+        elif end_date:
+            entry_parts.append(f"End Date: {end_date}")
+
+        if entry_parts:  # Only add if we have some data
+            education_blocks.append("\n".join(entry_parts))
+
+    if not education_blocks:
+        return None
+
+    return "\n\n".join(education_blocks)
 
 
 def extract_experience(xml_content: str) -> str | None:
@@ -321,21 +354,29 @@ def extract_experience(xml_content: str) -> str | None:
         if company_elem is not None and company_elem.text:
             job_parts.append(f"Company: {company_elem.text.strip()}")
 
-        # Extract dates
+        # Extract dates - using the new format
         start_date = job.find("startDate")
         end_date = job.find("endDate")
 
-        date_text = ""
-        if start_date is not None and start_date.text:
-            date_text = f"From: {start_date.text.strip()}"
+        start_date_text = (
+            start_date.text.strip()
+            if start_date is not None and start_date.text
+            else None
+        )
+        end_date_text = (
+            end_date.text.strip() if end_date is not None and end_date.text else None
+        )
 
-            if end_date is not None and end_date.text:
-                date_text += f" To: {end_date.text.strip()}"
+        # Format dates according to the new requirements
+        if start_date_text and end_date_text:
+            if end_date_text.lower() == "present":
+                job_parts.append(f"Dates: {start_date_text} - Present")
             else:
-                date_text += " To: Present"
-
-        if date_text:
-            job_parts.append(date_text)
+                job_parts.append(f"Dates: {start_date_text} - {end_date_text}")
+        elif start_date_text:
+            job_parts.append(f"Start Date: {start_date_text}")
+        elif end_date_text:
+            job_parts.append(f"End Date: {end_date_text}")
 
         # Extract description
         description_elem = job.find("description")
@@ -403,15 +444,15 @@ def extract_personal_details(xml_content: str) -> dict[str, str | None]:
     return result
 
 
-def extract_certifications(xml_content: str) -> list[dict[str, str | None]]:
+def extract_certifications(xml_content: str) -> str | None:
     """
-    Extract certifications from the XML resume.
+    Extract certifications from the XML resume and format as a string.
 
     Args:
         xml_content: XML string representation of a resume
 
     Returns:
-        List of certification entries as dictionaries
+        Formatted string containing certification information or None if not found
 
     Raises:
         ET.ParseError: If the XML is not well-formed
@@ -420,32 +461,59 @@ def extract_certifications(xml_content: str) -> list[dict[str, str | None]]:
 
     # Find all certification elements
     certification_elements = root.findall(".//certifications/certification")
-    certifications: list[dict[str, str | None]] = []
+
+    if not certification_elements:
+        return None
+
+    certification_blocks = []
 
     for cert in certification_elements:
-        entry: dict[str, str | None] = {
-            "name": None,
-            "issuer": None,
-            "date": None,
-        }
+        cert_parts = []
 
         # Extract certification name
         name_elem = cert.find("name")
         if name_elem is not None and name_elem.text:
-            entry["name"] = name_elem.text.strip()
+            cert_parts.append(f"Certification: {name_elem.text.strip()}")
 
         # Extract issuer
         issuer_elem = cert.find("issuer")
         if issuer_elem is not None and issuer_elem.text:
-            entry["issuer"] = issuer_elem.text.strip()
+            cert_parts.append(f"Issuer: {issuer_elem.text.strip()}")
 
         # Extract date
         date_elem = cert.find("date")
         if date_elem is not None and date_elem.text:
-            entry["date"] = date_elem.text.strip()
+            cert_parts.append(f"Date: {date_elem.text.strip()}")
 
-        # Only add if we have at least a name
-        if entry["name"]:
-            certifications.append(entry)
+        # Check for start/end dates if available (some XML formats might use these)
+        start_date_elem = cert.find("startDate")
+        end_date_elem = cert.find("endDate")
 
-    return certifications
+        start_date = (
+            start_date_elem.text.strip()
+            if start_date_elem is not None and start_date_elem.text
+            else None
+        )
+        end_date = (
+            end_date_elem.text.strip()
+            if end_date_elem is not None and end_date_elem.text
+            else None
+        )
+
+        # Only add date information if we haven't already found a single date
+        if (start_date or end_date) and not date_elem:
+            if start_date and end_date:
+                cert_parts.append(f"Dates: {start_date} - {end_date}")
+            elif start_date:
+                cert_parts.append(f"Date: {start_date}")
+            elif end_date:
+                cert_parts.append(f"Date: {end_date}")
+
+        # Only add if we have at least some parts
+        if cert_parts:
+            certification_blocks.append("\n".join(cert_parts))
+
+    if not certification_blocks:
+        return None
+
+    return "\n\n".join(certification_blocks)

@@ -185,9 +185,12 @@ class Command(BaseCommand):
 
         # Display extracted information
         if resume_data.get("skills"):
-            self.stdout.write(f'Skills: {", ".join(resume_data["skills"][:10])}')
-            if len(resume_data["skills"]) > 10:
-                self.stdout.write(f'  ... and {len(resume_data["skills"]) - 10} more')
+            skills_preview = (
+                resume_data["skills"][:100] + "..."
+                if len(resume_data["skills"]) > 100
+                else resume_data["skills"]
+            )
+            self.stdout.write(f"Skills: {skills_preview}")
         else:
             self.stdout.write(self.style.WARNING("No skills were extracted"))
 
@@ -218,19 +221,25 @@ class Command(BaseCommand):
                 self.style.WARNING("No professional summary was extracted")
             )
 
-        if resume_data.get("education") and resume_data["education"]:
-            edu = resume_data["education"][0]
-            self.stdout.write(
-                f"Education: {edu.get('degree', '(no degree)')} from {edu.get('institution', '(no institution)')}"
+        # Education is now a formatted string
+        self.stdout.write("\nEducation:")
+        if resume_data.get("education"):
+            # Show a preview or the entire education section
+            education_preview = (
+                resume_data["education"][:200] + "..."
+                if len(resume_data["education"]) > 200
+                else resume_data["education"]
             )
+            for line in education_preview.splitlines():
+                self.stdout.write(f"  {line}")
+            if len(resume_data["education"]) > 200:
+                self.stdout.write("  ... (more education details available)")
         else:
             self.stdout.write(
-                self.style.WARNING("No education information was extracted")
+                self.style.WARNING("  No education information was extracted")
             )
 
-        # Display the new extracted information
-
-        # Display personal details
+        # Display personal details (still a dictionary)
         self.stdout.write("\nPersonal Details:")
         personal_details = resume_data.get("personal_details", {})
         if personal_details:
@@ -242,39 +251,37 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING("  No personal details extracted"))
 
-        # Display experience
+        # Experience is already a formatted string
         self.stdout.write("\nExperience:")
-        experience = resume_data.get("experience")
-        if experience:
+        if resume_data.get("experience"):
             # Show a preview for readability
-            preview = (
-                experience.split("\n\n")[0] if "\n\n" in experience else experience
+            experience_preview = (
+                resume_data["experience"][:300] + "..."
+                if len(resume_data["experience"]) > 300
+                else resume_data["experience"]
             )
-            self.stdout.write(f"  {preview}")
-            if experience != preview:
-                self.stdout.write("  ... (more experience entries available)")
+            for line in experience_preview.splitlines():
+                self.stdout.write(f"  {line}")
+            if len(resume_data["experience"]) > 300:
+                self.stdout.write("  ... (more experience details available)")
         else:
             self.stdout.write(
                 self.style.WARNING("  No experience information extracted")
             )
 
-        # Display certifications
+        # Certifications is now a formatted string
         self.stdout.write("\nCertifications:")
-        certifications = resume_data.get("certifications", [])
-        if certifications:
-            for i, cert in enumerate(certifications[:3]):
-                self.stdout.write(
-                    f"  {i+1}. {cert.get('name', 'Unknown certification')}"
-                )
-                if cert.get("issuer"):
-                    self.stdout.write(f"     Issuer: {cert['issuer']}")
-                if cert.get("date"):
-                    self.stdout.write(f"     Date: {cert['date']}")
-
-            if len(certifications) > 3:
-                self.stdout.write(
-                    f"  ... and {len(certifications) - 3} more certifications"
-                )
+        if resume_data.get("certifications"):
+            # Show a preview or the entire certifications section
+            certifications_preview = (
+                resume_data["certifications"][:200] + "..."
+                if len(resume_data["certifications"]) > 200
+                else resume_data["certifications"]
+            )
+            for line in certifications_preview.splitlines():
+                self.stdout.write(f"  {line}")
+            if len(resume_data["certifications"]) > 200:
+                self.stdout.write("  ... (more certification details available)")
         else:
             self.stdout.write(self.style.WARNING("  No certifications extracted"))
 

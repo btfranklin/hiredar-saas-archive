@@ -30,10 +30,10 @@ def update_profile(
         True if update was successful, False otherwise
     """
     try:
-        # Update skills
-        skills = parsed_data.get("skills", [])
-        if skills:
-            profile.skills = ",".join(skills)
+        # Update skills (now a formatted string)
+        skills_text = parsed_data.get("skills")
+        if skills_text:
+            profile.skills = skills_text
 
         # Update current position
         current_position = parsed_data.get("current_position")
@@ -55,17 +55,9 @@ def update_profile(
         if experience_text:
             profile.experience = experience_text
 
-        # Update social links from personal details if available
+        # Update personal details if available (still a dictionary)
         personal_details = parsed_data.get("personal_details", {})
-
-        # We could potentially add more links processing here if they're provided in the resume
-
-        # Store certifications as JSON if available
-        certifications = parsed_data.get("certifications", [])
-        if certifications:
-            logger.info("Extracted %d certifications from resume", len(certifications))
-            # We're storing this information in the XML for now, but it can be extracted later
-            # when needed for display or matching purposes
+        # We could potentially add more personal details processing here
 
         # Store the XML for potential future use
         profile.resume_xml = xml_content

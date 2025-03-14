@@ -21,7 +21,7 @@ Follow these guidelines:
 </task>
 
 <response_format>
-Output ONLY valid, well-formed XML with clear hierarchy. Use this structure:
+Output *ONLY* valid, well-formed XML with clear hierarchy. Use this structure:
 
 ```xml
 <resume>
@@ -41,8 +41,8 @@ Output ONLY valid, well-formed XML with clear hierarchy. Use this structure:
       <title></title>
       <company></company>
       <location></location>
-      <startDate></startDate>
-      <endDate></endDate>
+      <startDate>Mth YYYY</startDate>
+      <endDate>Mth YYYY</endDate>
       <description></description>
     </job>
     <!-- Repeat for each job -->
@@ -51,8 +51,8 @@ Output ONLY valid, well-formed XML with clear hierarchy. Use this structure:
     <institution>
       <name></name>
       <degree></degree>
-      <startDate></startDate>
-      <endDate></endDate>
+      <startDate>YYYY</startDate>
+      <endDate>YYYY</endDate>
     </institution>
     <!-- Repeat for each institution -->
   </education>
