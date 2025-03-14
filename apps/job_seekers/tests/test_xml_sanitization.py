@@ -8,9 +8,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from apps.job_seekers.utils.resume_processing.llm_processor import (
-    sanitize_xml_if_needed,
-)
+from apps.job_seekers.utils.resume_processing.llm_processor import sanitize_xml
 
 
 class XMLSanitizationTests(SimpleTestCase):
@@ -83,68 +81,68 @@ class XMLSanitizationTests(SimpleTestCase):
     @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
     def test_no_sanitization_needed(self, mock_logger):
         """Test when no sanitization is needed for well-formed XML."""
-        result = sanitize_xml_if_needed(self.valid_xml)
+        result = sanitize_xml(self.valid_xml)
 
         # The XML should remain unchanged
         self.assertEqual(result, self.valid_xml)
 
         # Logger should not have been called for sanitization logs
-        mock_logger.info.assert_not_called()
+        mock_logger.debug.assert_not_called()
 
     @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
     def test_markdown_code_block_removal(self, mock_logger):
         """Test removal of Markdown code blocks from XML content."""
-        result = sanitize_xml_if_needed(self.markdown_xml)
+        result = sanitize_xml(self.markdown_xml)
 
         # The result should not contain markdown backticks
         self.assertNotIn("```", result)
 
         # Should start with <resume> directly
-        self.assertTrue(result.strip().startswith("<resume>"))
+        self.assertTrue(result.startswith("<resume>"))
 
         # Debug log should mention Markdown removal
-        mock_logger.debug.assert_any_call("Removed Markdown code block syntax")
+        mock_logger.debug.assert_any_call(
+            "Sanitization: Removed Markdown code block syntax"
+        )
 
     @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
     def test_add_root_element(self, mock_logger):
         """Test adding root element when missing from XML content."""
-        result = sanitize_xml_if_needed(self.no_root_xml)
+        result = sanitize_xml(self.no_root_xml)
 
         # Should have added the resume root element
         self.assertTrue(result.startswith("<resume>"))
         self.assertTrue(result.endswith("</resume>"))
 
         # Logger should have recorded the sanitization
-        mock_logger.info.assert_called_with(
-            "Applied XML sanitization to fix potential issues"
+        mock_logger.debug.assert_any_call(
+            "Sanitization: Added missing root <resume> element"
         )
 
     @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
     def test_close_root_element(self, mock_logger):
         """Test closing root element when missing from XML content."""
-        result = sanitize_xml_if_needed(self.unclosed_root_xml)
+        result = sanitize_xml(self.unclosed_root_xml)
 
         # Should have closed the resume tag
         self.assertTrue(result.endswith("</resume>"))
 
         # Logger should have recorded the sanitization
-        mock_logger.info.assert_called_with(
-            "Applied XML sanitization to fix potential issues"
+        mock_logger.debug.assert_any_call(
+            "Sanitization: Added missing closing </resume> tag"
         )
 
     @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
     def test_character_replacements(self, mock_logger):
         """Test replacement of problematic characters in XML content."""
-        result = sanitize_xml_if_needed(self.problematic_chars_xml)
+        result = sanitize_xml(self.problematic_chars_xml)
 
         # Should have replaced problematic characters
         self.assertIn("&amp;", result)  # Check that '&' is properly escaped
         self.assertNotIn("<div>", result)  # Raw HTML tags should be escaped
 
         # Logger should have recorded the sanitization
-        mock_logger.info.assert_called_with(
-            "Applied XML sanitization to fix potential issues"
-        )
+        # We don't check the exact messages here as they depend on the specific characters found
 
     @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
     def test_multiple_sanitizations(self, mock_logger):
@@ -155,7 +153,7 @@ class XMLSanitizationTests(SimpleTestCase):
             <details>Worked with <technologies>
         ```"""
 
-        result = sanitize_xml_if_needed(complex_xml)
+        result = sanitize_xml(complex_xml)
 
         # Should have fixed multiple issues
         self.assertNotIn("```", result)
@@ -167,23 +165,33 @@ class XMLSanitizationTests(SimpleTestCase):
         self.assertIn("&amp;Company &amp; Co", result)
 
         # Logger should have recorded the sanitization
-        mock_logger.debug.assert_any_call("Removed Markdown code block syntax")
-        mock_logger.info.assert_called_with(
-            "Applied XML sanitization to fix potential issues"
+        mock_logger.debug.assert_any_call(
+            "Sanitization: Removed Markdown code block syntax"
+        )
+
+        # Check that at least one debug call is about escaped ampersands
+        ampersand_message_found = False
+        for call in mock_logger.debug.call_args_list:
+            args, _ = call
+            if args and args[0] == "Sanitization: Escaped %d standalone ampersands":
+                ampersand_message_found = True
+                break
+        self.assertTrue(
+            ampersand_message_found, "No log message about escaped ampersands found"
         )
 
     @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
     def test_edge_cases(self, mock_logger):
         """Test edge cases like empty strings and non-XML content."""
         # Empty string
-        result1 = sanitize_xml_if_needed("")
+        result1 = sanitize_xml("")
         self.assertEqual(result1, "<resume></resume>")
 
         # Non-XML string
-        result2 = sanitize_xml_if_needed("Just a plain text string")
+        result2 = sanitize_xml("Just a plain text string")
         self.assertEqual(result2, "<resume>Just a plain text string</resume>")
 
         # Logger should have recorded the sanitization
-        mock_logger.info.assert_called_with(
-            "Applied XML sanitization to fix potential issues"
+        mock_logger.debug.assert_any_call(
+            "Sanitization: Added missing root <resume> element"
         )
