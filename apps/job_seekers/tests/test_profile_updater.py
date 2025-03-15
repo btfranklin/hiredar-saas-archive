@@ -5,7 +5,6 @@ Tests the profile updater functionality used to update job seeker profiles
 with data parsed from resumes.
 """
 
-import xml.etree.ElementTree as ET
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
@@ -170,7 +169,8 @@ class ProfileUpdaterTests(TestCase):
         # Just check it's a number (integer), not trying to validate the exact calculation
         self.assertIsInstance(years, int)
 
-    def test_update_profile_with_all_fields(self):
+    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    def test_update_profile_with_all_fields(self, mock_logger):
         """Test updating a profile with complete parsed data."""
         # Parse the XML to get all data fields
         education_text = extract_education(self.test_xml)
@@ -211,7 +211,13 @@ class ProfileUpdaterTests(TestCase):
 
         self.assertEqual(self.profile.resume_xml, self.test_xml)
 
-    def test_update_profile_with_minimal_data(self):
+        # Verify that the success message was logged
+        mock_logger.info.assert_called_with(
+            "Profile updated successfully with parsed resume data"
+        )
+
+    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    def test_update_profile_with_minimal_data(self, mock_logger):
         """Test updating a profile with minimal parsed data."""
         # Parse the minimal XML
         skills_text = extract_skills(self.minimal_xml)
@@ -239,7 +245,13 @@ class ProfileUpdaterTests(TestCase):
         self.assertNotEqual(self.profile.experience, "Some experience")
         self.assertNotEqual(self.profile.professional_summary, "Some summary")
 
-    def test_update_profile_incomplete_data(self):
+        # Verify that the success message was logged
+        mock_logger.info.assert_called_with(
+            "Profile updated successfully with parsed resume data"
+        )
+
+    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    def test_update_profile_incomplete_data(self, mock_logger):
         """Test updating a profile with incomplete XML (missing sections)."""
         # Parse the incomplete XML
         summary = extract_professional_summary(self.incomplete_xml)
@@ -265,7 +277,13 @@ class ProfileUpdaterTests(TestCase):
         self.assertEqual(self.profile.professional_summary, summary)
         self.assertEqual(self.profile.resume_xml, self.incomplete_xml)
 
-    def test_update_profile_without_education(self):
+        # Verify that the success message was logged
+        mock_logger.info.assert_called_with(
+            "Profile updated successfully with parsed resume data"
+        )
+
+    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    def test_update_profile_without_education(self, mock_logger):
         """Test updating a profile with parsed data that has no education."""
         # Prepare parsed data without education
         parsed_data = {
@@ -291,7 +309,13 @@ class ProfileUpdaterTests(TestCase):
         self.assertEqual(self.profile.experience, "Some experience text")
         self.assertEqual(self.profile.professional_summary, "Professional summary text")
 
-    def test_update_profile_exception_handling(self):
+        # Verify that the success message was logged
+        mock_logger.info.assert_called_with(
+            "Profile updated successfully with parsed resume data"
+        )
+
+    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    def test_update_profile_exception_handling(self, mock_logger):
         """Test that exceptions during profile updating are handled correctly."""
         # Make the save method raise an exception
         self.profile.save.side_effect = Exception("Test exception")
@@ -304,3 +328,8 @@ class ProfileUpdaterTests(TestCase):
 
         # Verify the result indicates failure
         self.assertFalse(result)
+
+        # Verify that the error was logged
+        mock_logger.error.assert_called_with(
+            "Error updating profile from parsed data: %s", "Test exception"
+        )
