@@ -10,44 +10,39 @@
         
         <!-- Main content -->
         <div class="w-full lg:w-3/4">
-            <!-- Welcome Card & Stats -->
+            <!-- Stats Card -->
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold">Welcome, {{ user.first_name }}!</h2>
-                        <p class="text-base-content/70">{{ current_date|date:"l, F j, Y" }}</p>
-                    </div>
-                    
-                    {% with rec_profile=user.recruiter_profile %}
-                        <div class="mt-4 md:mt-0">
-                            <div class="flex items-center">
-                                <div class="badge {% if rec_profile.is_subscribed %}badge-success{% else %}badge-warning{% endif %} mr-2">
-                                    {% if rec_profile.is_subscribed %}
-                                        Active Subscription
-                                    {% else %}
-                                        No Active Subscription
-                                    {% endif %}
-                                </div>
-                                
-                                <span class="text-base font-medium">
-                                    {{ rec_profile.get_subscription_tier_display }}
-                                </span>
-                            </div>
-                            
-                            {% if not rec_profile.is_subscribed %}
-                                <a href="#" class="btn btn-primary btn-sm mt-2">
-                                    <i class="fas fa-arrow-up mr-1"></i> Upgrade Now
-                                </a>
-                            {% elif rec_profile.subscription_ends_at %}
-                                <p class="text-xs text-base-content/70 mt-1">
-                                    Renews on {{ rec_profile.subscription_ends_at|date:"F j, Y" }}
-                                </p>
+                <!-- Subscription Status - Small Badge at Top -->
+                {% with rec_profile=user.recruiter_profile %}
+                <div class="flex justify-end mb-4">
+                    <div class="flex items-center">
+                        <div class="badge {% if rec_profile.is_subscribed %}badge-success{% else %}badge-warning{% endif %} mr-2">
+                            {% if rec_profile.is_subscribed %}
+                                Active Subscription
+                            {% else %}
+                                No Active Subscription
                             {% endif %}
                         </div>
-                    {% endwith %}
+                        
+                        <span class="text-sm font-medium">
+                            {{ rec_profile.get_subscription_tier_display }}
+                        </span>
+                        
+                        {% if not rec_profile.is_subscribed %}
+                            <a href="#" class="btn btn-primary btn-xs ml-2">
+                                <i class="fas fa-arrow-up mr-1"></i> Upgrade
+                            </a>
+                        {% elif rec_profile.subscription_ends_at %}
+                            <span class="text-xs text-base-content/70 ml-2">
+                                Renews: {{ rec_profile.subscription_ends_at|date:"M j, Y" }}
+                            </span>
+                        {% endif %}
+                    </div>
                 </div>
+                {% endwith %}
                 
-                <div class="stats shadow">
+                <!-- Stats -->
+                <div class="stats shadow w-full">
                     <div class="stat">
                         <div class="stat-figure text-primary">
                             <i class="fas fa-briefcase text-2xl"></i>
