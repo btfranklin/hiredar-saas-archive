@@ -17,9 +17,9 @@
                 {% if job_seeker_profile.professional_summary %}
                     <p>{{ job_seeker_profile.professional_summary }}</p>
                 {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <span>No professional summary provided.</span>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span>No professional summary found.</span>
                     </div>
                 {% endif %}
             </div>
@@ -35,9 +35,9 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <span>No skills added yet.</span>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span>No skills found.</span>
                     </div>
                 {% endif %}
             </div>
@@ -53,9 +53,9 @@
                         </div>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <span>No work experience added yet.</span>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span>No work experience found.</span>
                     </div>
                 {% endif %}
             </div>
@@ -71,9 +71,9 @@
                         </div>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <span>No education history added yet.</span>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span>No education history found.</span>
                     </div>
                 {% endif %}
             </div>
