@@ -27,7 +27,7 @@ class JobSeekerSignupView(CreateView):
 
     template_name = "job_seekers/signup.html"
     model = User
-    fields = ["first_name", "last_name", "email", "password"]
+    fields = ["email", "password"]  # Simplified to only require email and password
 
     def get_success_url(self) -> str:
         """Return the profile creation URL."""
@@ -49,6 +49,8 @@ class JobSeekerSignupView(CreateView):
         user.username = f"{username_base}_{random_suffix}"
         user.set_password(form.cleaned_data["password"])
         user.user_type = "job_seeker"
+        # Default name until resume is parsed
+        user.name = "New User"
         user.save()
 
         # Log in the user with allauth's backend
@@ -71,7 +73,7 @@ class RecruiterSignupView(CreateView):
 
     template_name = "recruiters/signup.html"
     model = User
-    fields = ["first_name", "last_name", "email", "password"]
+    fields = ["email", "name", "password"]  # Include name field for recruiters
 
     def get_success_url(self) -> str:
         """Return the recruiter dashboard URL."""
@@ -85,6 +87,12 @@ class RecruiterSignupView(CreateView):
             form.add_error("email", "A user with this email already exists")
             return cast(HttpResponseRedirect, self.form_invalid(form))
 
+        # Validate that name is provided for recruiters
+        name = form.cleaned_data.get("name", "").strip()
+        if not name or name == "New User":
+            form.add_error("name", "Please provide your name")
+            return cast(HttpResponseRedirect, self.form_invalid(form))
+
         user = form.save(commit=False)
         # Generate a unique username based on email to avoid collisions
         username_base = email.split("@")[0]
@@ -93,6 +101,7 @@ class RecruiterSignupView(CreateView):
         user.username = f"{username_base}_{random_suffix}"
         user.set_password(form.cleaned_data["password"])
         user.user_type = "recruiter"
+        user.name = name  # Use the validated name
         user.save()
 
         # Log in the user with allauth's backend

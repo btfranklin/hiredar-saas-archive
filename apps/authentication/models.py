@@ -40,6 +40,10 @@ class UserManager(BaseUserManager[T]):
             username = f"{base_username}_{str(uuid.uuid4())[:8]}"
             extra_fields["username"] = username
 
+        # Set default name if not provided
+        if "name" not in extra_fields:
+            extra_fields["name"] = "New User"
+
         user = self.model(email=email, **extra_fields)
         if password:
             user.set_password(password)
@@ -100,8 +104,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     username = models.CharField(_("username"), max_length=150, unique=True)
     email = models.EmailField(_("email address"), unique=True)
-    first_name = models.CharField(_("first name"), max_length=150, blank=True)
-    last_name = models.CharField(_("last name"), max_length=150, blank=True)
+    name = models.CharField(_("name"), max_length=255, default="New User")
     user_type = models.CharField(
         _("user type"),
         max_length=20,
@@ -131,7 +134,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    REQUIRED_FIELDS = (
+        []
+    )  # Email is already the USERNAME_FIELD, no need for additional required fields
 
     class Meta:
         """Meta class for User model."""
@@ -145,31 +150,28 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self) -> str:
         """Return the user's full name."""
-        full_name = f"{self.first_name} {self.last_name}"
-        return full_name.strip()
+        return self.name
 
     def get_short_name(self) -> str:
-        """Return the user's first name."""
-        return self.first_name
+        """Return the user's name."""
+        return self.name
 
     def to_dict(self) -> dict[str, Any]:
         """Convert user instance to a dictionary."""
         return {
             "email": self.email,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
+            "name": self.name,
             "user_type": self.user_type,
             "location": self.location or None,
         }
 
     def get_initials(self) -> str:
         """Get user initials for avatar display"""
-        if self.first_name and self.last_name:
-            return f"{self.first_name[0]}{self.last_name[0]}".upper()
-        if self.first_name:
-            return self.first_name[0].upper()
-        if self.last_name:
-            return self.last_name[0].upper()
+        parts = self.name.split()
+        if len(parts) >= 2:
+            return f"{parts[0][0]}{parts[-1][0]}".upper()
+        elif len(parts) == 1 and parts[0]:
+            return parts[0][0].upper()
         return "U"  # Default for users with no name parts
 
     def get_absolute_url(self) -> str:

@@ -14,10 +14,8 @@ class UserType(TypedDict):
     """Type definition for user data."""
 
     email: str
-    first_name: str
-    last_name: str
+    name: str
     user_type: Literal["job_seeker", "recruiter"]
-    bio: str | None
     location: str | None
 
 
@@ -25,10 +23,8 @@ class AuthenticatedUser(AbstractBaseUser):
     """Type definition for an authenticated user."""
 
     email: str
-    first_name: str
-    last_name: str
+    name: str
     user_type: Literal["job_seeker", "recruiter"]
-    bio: str | None
     location: str | None
     job_seeker_profile: "JobSeekerProfile | None"
     recruiter_profile: "RecruiterProfile | None"

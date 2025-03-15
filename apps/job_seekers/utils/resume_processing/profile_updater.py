@@ -5,7 +5,6 @@ This module contains functions for updating job seeker profiles with
 data extracted from resumes.
 """
 
-import json
 import logging
 from typing import Any
 
@@ -60,9 +59,17 @@ def update_profile(
         if education_text:
             profile.education = education_text
 
-        # Update personal details if available (still a dictionary)
+        # Update personal details if available
         personal_details = parsed_data.get("personal_details", {})
-        # We could potentially add more personal details processing here
+        if personal_details.get("name"):
+            # Update the user's name from parsed data
+            profile.user.name = personal_details["name"]
+            profile.user.save()
+
+        # Also update user location if provided
+        if personal_details.get("location") and not profile.user.location:
+            profile.user.location = personal_details["location"]
+            profile.user.save()
 
         # Store the XML for potential future use
         profile.resume_xml = xml_content

@@ -84,7 +84,7 @@ class Command(BaseCommand):
             position = getattr(profile, "current_position", "") if profile else ""
 
             # Format the name
-            name = f"{user.first_name} {user.last_name}".strip()
+            name = f"{user.name}".strip()
             if not name:
                 name = "(No name)"
 

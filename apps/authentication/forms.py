@@ -23,7 +23,7 @@ class CustomUserCreationForm(UserCreationForm):
         """Meta class for CustomUserCreationForm."""
 
         model = User
-        fields = ("email", "first_name", "last_name", "user_type")
+        fields = ("email", "name", "user_type")
 
     def clean(self) -> dict[str, Any]:
         """Clean and validate the form data."""
@@ -47,7 +47,7 @@ class CustomUserChangeForm(UserChangeForm):
         """Meta class for CustomUserChangeForm."""
 
         model = User
-        fields = ("email", "first_name", "last_name", "location")
+        fields = ("email", "name", "location")
 
 
 class CustomAuthenticationForm(AuthenticationForm):
@@ -92,8 +92,7 @@ class CustomAuthenticationForm(AuthenticationForm):
 class SignupForm(forms.Form):
     """Form for user signup."""
 
-    first_name = forms.CharField(max_length=30, required=True)
-    last_name = forms.CharField(max_length=30, required=True)
+    name = forms.CharField(max_length=255, required=False)
     email = forms.EmailField(required=True)
     user_type = forms.ChoiceField(
         choices=[("job_seeker", "Job Seeker"), ("recruiter", "Recruiter")],
@@ -103,9 +102,9 @@ class SignupForm(forms.Form):
 
     def signup(self, request: Any, user: User) -> User:
         """Save the user's signup data."""
-        user.first_name = self.cleaned_data["first_name"]
-        user.last_name = self.cleaned_data["last_name"]
+        if self.cleaned_data.get("name"):
+            user.name = self.cleaned_data["name"]
         user.email = self.cleaned_data["email"]
         user.user_type = cast(str, self.cleaned_data["user_type"])
-        user.save(update_fields=["first_name", "last_name", "email", "user_type"])
+        user.save(update_fields=["name", "email", "user_type"])
         return user

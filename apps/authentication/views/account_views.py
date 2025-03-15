@@ -41,8 +41,7 @@ class UpdateAccountView(LoginRequiredMixin, View):
         try:
             # Update User model fields
             user = cast(AuthenticatedUser, request.user)
-            user.first_name = request.POST.get("first_name", "")
-            user.last_name = request.POST.get("last_name", "")
+            user.name = request.POST.get("name", "")
             user.email = request.POST.get("email", "")
             user.location = request.POST.get("location", "")
             user.save()

@@ -19,22 +19,14 @@
             {% endif %}
             
             <div>
-                <label class="label" for="{{ form.first_name.id_for_label }}">
-                    <span class="label-text">First Name</span>
+                <label class="label" for="{{ form.name.id_for_label }}">
+                    <span class="label-text">Your Name</span>
                 </label>
-                <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" class="input input-bordered w-full {% if form.first_name.errors %}input-error{% endif %}" value="{{ form.first_name.value|default:'' }}">
-                {% if form.first_name.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.first_name.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div>
-                <label class="label" for="{{ form.last_name.id_for_label }}">
-                    <span class="label-text">Last Name</span>
-                </label>
-                <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" class="input input-bordered w-full {% if form.last_name.errors %}input-error{% endif %}" value="{{ form.last_name.value|default:'' }}">
-                {% if form.last_name.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.last_name.errors.0 }}</div>
+                <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                       class="input input-bordered w-full {% if form.name.errors %}input-error{% endif %}" 
+                       value="" placeholder="Enter your full name" required>
+                {% if form.name.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.name.errors.0 }}</div>
                 {% endif %}
             </div>
             
