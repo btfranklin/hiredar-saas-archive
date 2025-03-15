@@ -120,22 +120,12 @@ class Command(BaseCommand):
                         )
                     )
 
-                    # Display profile information at higher verbosity
-                    if verbosity >= 2:
-                        self.stdout.write(
-                            f"  - Current position: {profile.current_position}"
-                        )
-                        self.stdout.write(
-                            f"  - Years of experience: {profile.years_of_experience}"
-                        )
-                        skills_display = (
-                            ", ".join(profile.skills_list[:5])
-                            if profile.skills_list
-                            else "None"
-                        )
-                        if len(profile.skills_list) > 5:
-                            skills_display += "..."
-                        self.stdout.write(f"  - Skills: {skills_display}")
+                    # Print the updated profile details
+                    self.stdout.write(
+                        f"Profile updated successfully for {user.email}:\n"
+                        f"  - Name: {user.name}\n"
+                        f"  - Most recent title: {profile.most_recent_title}"
+                    )
             else:
                 failure_count += 1
                 self.stdout.write(

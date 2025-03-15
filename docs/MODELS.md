@@ -36,7 +36,7 @@ classDiagram
         +certifications: TextField
         +years_of_experience: PositiveIntegerField
         +desired_role: CharField
-        +current_position: CharField
+        +most_recent_title: CharField
         +professional_summary: TextField
         +resume_xml: TextField
         +phone: CharField
@@ -158,7 +158,7 @@ Extended profile for job seekers with career-related information.
 | `certifications` | TextField | Description of professional certifications |
 | `years_of_experience` | PositiveIntegerField | Total years of experience |
 | `desired_role` | CharField | Desired job role |
-| `current_position` | CharField | Current job position |
+| `most_recent_title` | CharField | Most recent job title extracted from resume |
 | `professional_summary` | TextField | Detailed description about the job seeker's qualifications and experience |
 | `resume_xml` | TextField | XML representation of the parsed resume |
 | `phone` | CharField | Phone number |

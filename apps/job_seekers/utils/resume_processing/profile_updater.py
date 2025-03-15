@@ -34,10 +34,10 @@ def update_profile(
         if skills_text:
             profile.skills = skills_text
 
-        # Update current position
-        current_position = parsed_data.get("current_position")
-        if current_position:
-            profile.current_position = current_position
+        # Update most recent title
+        most_recent_title = parsed_data.get("most_recent_title")
+        if most_recent_title:
+            profile.most_recent_title = most_recent_title
 
         # Update years of experience
         years_experience = parsed_data.get("years_of_experience", 0)

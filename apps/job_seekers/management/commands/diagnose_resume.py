@@ -194,10 +194,10 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING("No skills were extracted"))
 
-        if resume_data.get("current_position"):
-            self.stdout.write(f"Current position: {resume_data['current_position']}")
+        if resume_data.get("most_recent_title"):
+            self.stdout.write(f"Most recent title: {resume_data['most_recent_title']}")
         else:
-            self.stdout.write(self.style.WARNING("No current position was extracted"))
+            self.stdout.write(self.style.WARNING("No most recent title found"))
 
         if resume_data.get("years_of_experience") is not None:
             self.stdout.write(
@@ -295,8 +295,8 @@ class Command(BaseCommand):
         missing_data = []
         if not resume_data.get("skills"):
             missing_data.append("skills")
-        if not resume_data.get("current_position"):
-            missing_data.append("current position")
+        if not resume_data.get("most_recent_title"):
+            missing_data.append("most recent title")
         if resume_data.get("years_of_experience") is None:
             missing_data.append("years of experience")
 
@@ -312,3 +312,18 @@ class Command(BaseCommand):
                     "Resume parsed successfully with all essential data extracted"
                 )
             )
+
+        # Check for common issues
+        self.stdout.write(self.style.NOTICE("\n4. Validation:"))
+
+        # Check if skills were extracted
+        if not resume_data.get("skills"):
+            self.stdout.write(self.style.ERROR("✕ No skills were extracted"))
+        else:
+            self.stdout.write(self.style.SUCCESS("✓ Skills were extracted"))
+
+        # Check for current position
+        if not resume_data.get("most_recent_title"):
+            self.stdout.write(self.style.ERROR("✕ No most recent title was extracted"))
+        else:
+            self.stdout.write(self.style.SUCCESS("✓ Most recent title was extracted"))

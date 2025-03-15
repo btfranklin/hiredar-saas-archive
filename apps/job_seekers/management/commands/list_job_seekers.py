@@ -81,7 +81,7 @@ class Command(BaseCommand):
         for user in queryset:
             # Try to get the profile info
             profile = getattr(user, "job_seeker_profile", None)
-            position = getattr(profile, "current_position", "") if profile else ""
+            position = getattr(profile, "most_recent_title", "") if profile else ""
 
             # Format the name
             name = f"{user.name}".strip()

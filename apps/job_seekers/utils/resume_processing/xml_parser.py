@@ -56,7 +56,7 @@ def parse_resume_xml(xml_content: str) -> dict[str, Any]:
     # Extract the structured data
     result = {
         "skills": extract_skills(xml_content),
-        "current_position": extract_most_recent_title(xml_content),
+        "most_recent_title": extract_most_recent_title(xml_content),
         "years_of_experience": calculate_years_experience(xml_content),
         "professional_summary": extract_professional_summary(xml_content),
         "education": extract_education(xml_content),
@@ -81,8 +81,8 @@ def warn_missing_sections(result: dict[str, Any]) -> None:
     if not result.get("skills"):
         logger.warning("No skills were extracted from the resume")
 
-    if not result.get("current_position"):
-        logger.warning("No current position was extracted from the resume")
+    if not result.get("most_recent_title"):
+        logger.warning("No most recent title was extracted from the resume")
 
     if result.get("years_of_experience") is None:
         logger.warning("No years of experience were calculated from the resume")

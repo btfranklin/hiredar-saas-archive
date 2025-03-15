@@ -152,10 +152,10 @@ class ProfileUpdaterTests(TestCase):
             self.assertIn("Dates: 2013-09 - 2015-05", education_text)
 
     def test_extract_most_recent_title(self):
-        """Test extracting current position from XML content."""
+        """Test extracting most recent title from XML content."""
         position = extract_most_recent_title(self.test_xml)
 
-        # Check that current position is extracted correctly
+        # Check that most recent title is extracted correctly
         self.assertIsNotNone(position)
         if position:
             self.assertEqual(position, "Senior Developer")
@@ -177,7 +177,7 @@ class ProfileUpdaterTests(TestCase):
         skills_text = extract_skills(self.test_xml)
         experience_text = extract_experience(self.test_xml)
         professional_summary = extract_professional_summary(self.test_xml)
-        current_position = extract_most_recent_title(self.test_xml)
+        most_recent_title = extract_most_recent_title(self.test_xml)
         years_of_experience = calculate_years_experience(self.test_xml)
 
         # Prepare parsed data dictionary with all fields
@@ -186,7 +186,7 @@ class ProfileUpdaterTests(TestCase):
             "skills": skills_text,
             "experience": experience_text,
             "professional_summary": professional_summary,
-            "current_position": current_position,
+            "most_recent_title": most_recent_title,
             "years_of_experience": years_of_experience,
         }
 
@@ -204,7 +204,7 @@ class ProfileUpdaterTests(TestCase):
         self.assertEqual(self.profile.skills, skills_text)
         self.assertEqual(self.profile.experience, experience_text)
         self.assertEqual(self.profile.professional_summary, professional_summary)
-        self.assertEqual(self.profile.current_position, current_position)
+        self.assertEqual(self.profile.most_recent_title, most_recent_title)
 
         # Check years_of_experience is set, but don't check exact value since the test mock behaves differently
         self.assertIsNotNone(self.profile.years_of_experience)

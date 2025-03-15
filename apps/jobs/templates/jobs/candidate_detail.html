@@ -20,8 +20,8 @@
                 <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                     <div>
                         <h1 class="text-3xl font-bold">{{ job_seeker.user_profile.get_user_full_name }}</h1>
-                        {% if job_seeker.current_position %}
-                            <p class="text-lg text-base-content/80 mt-1">{{ job_seeker.current_position }}</p>
+                        {% if job_seeker.most_recent_title %}
+                            <p class="text-lg text-base-content/80 mt-1">{{ job_seeker.most_recent_title }}</p>
                         {% endif %}
                         <div class="mt-3">
                             <div class="badge badge-lg {% if candidate_match.match_score >= 60 %}badge-success{% endif %} mr-2">

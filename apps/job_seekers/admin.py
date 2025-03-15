@@ -7,13 +7,13 @@ from apps.job_seekers.models import JobSeekerProfile
 class JobSeekerProfileAdmin(admin.ModelAdmin):
     """Admin configuration for JobSeekerProfile model."""
 
-    list_display = ("user", "current_position", "desired_role", "years_of_experience")
+    list_display = ("user", "most_recent_title", "desired_role", "years_of_experience")
     list_filter = ("years_of_experience",)
     search_fields = (
         "user__email",
         "user__name",
         "skills",
-        "current_position",
+        "most_recent_title",
     )
     fieldsets = (
         (None, {"fields": ("user",)}),
@@ -21,7 +21,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
             "Profile Information",
             {
                 "fields": (
-                    "current_position",
+                    "most_recent_title",
                     "desired_role",
                     "years_of_experience",
                     "professional_summary",
