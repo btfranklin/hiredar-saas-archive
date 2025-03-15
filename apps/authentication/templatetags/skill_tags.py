@@ -11,8 +11,8 @@ def skill_match_percentage(job_skills: str, user_skills: str) -> int:
     Calculate the percentage of job skills that match user skills.
 
     Args:
-        job_skills: Comma-separated string of job skills.
-        user_skills: Comma-separated string of user skills.
+        job_skills: Pipe-separated string of job skills.
+        user_skills: Pipe-separated string of user skills.
 
     Returns:
         int: Percentage of matching skills (0-100).
@@ -20,8 +20,8 @@ def skill_match_percentage(job_skills: str, user_skills: str) -> int:
     if not job_skills or not user_skills:
         return 0
 
-    job_skill_list = [s.strip().lower() for s in job_skills.split(",")]
-    user_skill_list = [s.strip().lower() for s in user_skills.split(",")]
+    job_skill_list = [s.strip().lower() for s in job_skills.split(" | ")]
+    user_skill_list = [s.strip().lower() for s in user_skills.split(" | ")]
 
     if not job_skill_list:
         return 0
@@ -31,13 +31,13 @@ def skill_match_percentage(job_skills: str, user_skills: str) -> int:
 
 
 @register.filter
-def split(value: str | None, delimiter: str = ",") -> list[str]:
+def split(value: str | None, delimiter: str = " | ") -> list[str]:
     """
     Split a string by a delimiter.
 
     Args:
         value: The string to split.
-        delimiter: The delimiter to split by.
+        delimiter: The delimiter to split by (defaults to pipe).
 
     Returns:
         list[str]: The split string.

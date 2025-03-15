@@ -12,7 +12,7 @@ class JobSeekerProfile(models.Model):
         related_name="job_seeker_profile",
         limit_choices_to={"user_type": "job_seeker"},
     )
-    skills = models.TextField(blank=True, help_text="Comma-separated list of skills")
+    skills = models.TextField(blank=True, help_text="Pipe-separated list of skills")
     experience = models.TextField(null=True, blank=True)
     education = models.TextField(null=True, blank=True)
     certifications = models.TextField(null=True, blank=True)
@@ -44,4 +44,4 @@ class JobSeekerProfile(models.Model):
         """Return a list of skill names"""
         if not self.skills:
             return []
-        return [skill.strip() for skill in self.skills.split(",") if skill.strip()]
+        return [skill.strip() for skill in self.skills.split(" | ") if skill.strip()]
