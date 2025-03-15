@@ -61,7 +61,7 @@
             </div>
             
             <!-- Education Section -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-2xl font-bold mb-6">Education</h2>
                 
                 {% if job_seeker_profile.education %}
@@ -74,6 +74,24 @@
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle mr-2"></i>
                         <span>No education history found.</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Certifications Section -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <h2 class="text-2xl font-bold mb-6">Certifications</h2>
+                
+                {% if job_seeker_profile.certifications %}
+                    <div class="card bg-base-100 shadow-sm">
+                        <div class="card-body">
+                            <p>{{ job_seeker_profile.certifications|linebreaks }}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span>No certifications found.</span>
                     </div>
                 {% endif %}
             </div>

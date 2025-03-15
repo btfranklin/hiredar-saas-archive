@@ -173,8 +173,7 @@ class Command(BaseCommand):
             user = User.objects.create_user(  # type: ignore
                 email=email,
                 password="testpassword123",
-                first_name=f"Test{counter}",
-                last_name=f"User{counter}",
+                name=f"Test{counter} User{counter}",
                 user_type="job_seeker",
             )
 

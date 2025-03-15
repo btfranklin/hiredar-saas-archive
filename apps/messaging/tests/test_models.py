@@ -1,7 +1,5 @@
 """Tests for messaging models."""
 
-from typing import cast
-
 from django.test import TestCase
 
 from apps.authentication.models import User
@@ -19,15 +17,13 @@ class ConversationModelTest(TestCase):
             email="conv_user1@example.com",
             password="password123",
             user_type="job_seeker",
-            first_name="Test",
-            last_name="User1",
+            name="Test User1",
         )
         self.user2 = User.objects.create_user(  # type: ignore
             email="conv_user2@example.com",
             password="password123",
             user_type="job_seeker",
-            first_name="Test",
-            last_name="User2",
+            name="Test User2",
         )
 
         # Get the automatically created profiles
@@ -60,15 +56,13 @@ class MessageModelTest(TestCase):
             email="msg_user1@example.com",
             password="password123",
             user_type="job_seeker",
-            first_name="Test",
-            last_name="User1",
+            name="Test User1",
         )
         self.user2 = User.objects.create_user(  # type: ignore
             email="msg_user2@example.com",
             password="password123",
             user_type="job_seeker",
-            first_name="Test",
-            last_name="User2",
+            name="Test User2",
         )
 
         # Get the automatically created profiles

@@ -13,11 +13,10 @@ class RecruiterProfileModelTests(TestCase):
         """Set up test data."""
         # Create a test user with recruiter type - profile will be created automatically by signal
         self.test_user = User.objects.create_user(  # type: ignore
-            email="test_recruiter@example.com",
+            email="recruiter@example.com",
             password="password123",
             user_type="recruiter",
-            first_name="Test",
-            last_name="Recruiter",
+            name="Test Recruiter",
         )
 
         # Get the automatically created recruiter profile

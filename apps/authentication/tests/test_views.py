@@ -17,15 +17,13 @@ class AuthenticationViewTests(TestCase):
         self.job_seeker_data = {
             "email": "jobseeker@example.com",
             "password": "testpass123",
-            "first_name": "Job",
-            "last_name": "Seeker",
+            "name": "Job Seeker",
             "user_type": "job_seeker",
         }
         self.recruiter_data = {
             "email": "recruiter@example.com",
             "password": "testpass123",
-            "first_name": "Recruiter",
-            "last_name": "User",
+            "name": "Recruiter User",
             "user_type": "recruiter",
             "company_name": "Test Company",
         }

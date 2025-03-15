@@ -17,8 +17,7 @@ class JobOpeningModelTest(TestCase):
             email="recruiter@example.com",
             password="password123",
             user_type="recruiter",
-            first_name="Test",
-            last_name="Recruiter",
+            name="Test Recruiter",
         )
 
         # Get the automatically created recruiter profile

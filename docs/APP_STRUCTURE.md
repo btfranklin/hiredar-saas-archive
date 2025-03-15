@@ -67,7 +67,7 @@ Handles user authentication, user types, and base user profile:
 Manages job seeker-specific functionality:
 
 - **Models**:
-  - `JobSeekerProfile`: Extended profile for job seekers including skills and experience
+  - `JobSeekerProfile`: Extended profile for job seekers including skills, experience, education, certifications, contact information, and social media links
 - **Views**:
   - Various views for job seeker profile management, resume upload, and dashboard
 - **Templates**:
@@ -251,8 +251,7 @@ from apps.authentication.models import User
 user = User.objects.create_user(
     email="example@example.com",
     password="password",
-    first_name="First",
-    last_name="Last",
+    name="Full Name",
     user_type="job_seeker"
 )
 ```

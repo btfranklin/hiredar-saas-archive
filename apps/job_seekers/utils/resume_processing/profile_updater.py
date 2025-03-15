@@ -59,6 +59,11 @@ def update_profile(
         if education_text:
             profile.education = education_text
 
+        # Update certifications text
+        certifications_text = parsed_data.get("certifications")
+        if certifications_text:
+            profile.certifications = certifications_text
+
         # Update personal details if available
         personal_details = parsed_data.get("personal_details", {})
         if personal_details.get("name"):
@@ -66,10 +71,14 @@ def update_profile(
             profile.user.name = personal_details["name"]
             profile.user.save()
 
-        # Also update user location if provided
-        if personal_details.get("location") and not profile.user.location:
+        # Update user location if provided
+        if personal_details.get("location"):
             profile.user.location = personal_details["location"]
             profile.user.save()
+
+        # Update phone number if provided
+        if personal_details.get("phone"):
+            profile.phone = personal_details["phone"]
 
         # Store the XML for potential future use
         profile.resume_xml = xml_content

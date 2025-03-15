@@ -15,6 +15,7 @@ from django.shortcuts import redirect, render
 from django.views.generic import View
 
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models import JobSeekerProfile
 
 
 class UpdateAccountView(LoginRequiredMixin, View):
@@ -45,6 +46,17 @@ class UpdateAccountView(LoginRequiredMixin, View):
             user.email = request.POST.get("email", "")
             user.location = request.POST.get("location", "")
             user.save()
+
+            # Handle job seeker specific fields
+            if user.user_type == "job_seeker":
+                profile = getattr(user, "job_seeker_profile", None)
+                if profile is not None and isinstance(profile, JobSeekerProfile):
+                    # Update social links and phone
+                    profile.phone = request.POST.get("phone", "")
+                    profile.linkedin_url = request.POST.get("linkedin_url", "")
+                    profile.github_url = request.POST.get("github_url", "")
+                    profile.portfolio_url = request.POST.get("portfolio_url", "")
+                    profile.save()
 
             messages.success(request, "Account information updated successfully.")
             if user.user_type == "job_seeker":

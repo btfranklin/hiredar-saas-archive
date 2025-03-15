@@ -11,8 +11,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
     list_filter = ("years_of_experience",)
     search_fields = (
         "user__email",
-        "user__first_name",
-        "user__last_name",
+        "user__name",
         "skills",
         "current_position",
     )
@@ -26,10 +25,14 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
                     "desired_role",
                     "years_of_experience",
                     "professional_summary",
+                    "phone",
                 )
             },
         ),
-        ("Skills & Experience", {"fields": ("skills", "experience", "education")}),
+        (
+            "Skills & Experience",
+            {"fields": ("skills", "experience", "education", "certifications")},
+        ),
         ("Social Links", {"fields": ("linkedin_url", "github_url", "portfolio_url")}),
         ("Resume Data", {"fields": ("resume_xml",), "classes": ("collapse",)}),
     )

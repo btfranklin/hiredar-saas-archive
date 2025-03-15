@@ -20,8 +20,7 @@ classDiagram
     class User {
         +username: CharField
         +email: EmailField
-        +first_name: CharField
-        +last_name: CharField
+        +name: CharField
         +user_type: CharField("job_seeker", "recruiter", "admin")
         +location: CharField
         +is_staff: BooleanField
@@ -33,11 +32,14 @@ classDiagram
         +user: OneToOneField(User)
         +skills: TextField
         +experience: TextField
+        +education: TextField
+        +certifications: TextField
         +years_of_experience: PositiveIntegerField
         +desired_role: CharField
         +current_position: CharField
         +professional_summary: TextField
         +resume_xml: TextField
+        +phone: CharField
         +linkedin_url: URLField
         +github_url: URLField
         +portfolio_url: URLField
@@ -118,8 +120,7 @@ The custom User model that serves as the base for all user accounts.
 |-------|------|-------------|
 | `username` | CharField | Auto-generated username based on email (hidden from UI) |
 | `email` | EmailField | Primary login field, must be unique |
-| `first_name` | CharField | User's first name |
-| `last_name` | CharField | User's last name |
+| `name` | CharField | User's name |
 | `user_type` | CharField | One of "job_seeker", "recruiter", or "admin" |
 | `location` | CharField | User's location |
 | `is_staff` | BooleanField | Whether user can access admin site |
@@ -129,10 +130,10 @@ The custom User model that serves as the base for all user accounts.
 **Key Methods:**
 | Method | Description |
 |--------|-------------|
-| `get_full_name()` | Returns the user's full name |
-| `get_short_name()` | Returns the user's first name |
+| `get_full_name()` | Returns the user's name |
+| `get_short_name()` | Returns the user's name |
 | `to_dict()` | Converts user instance to a dictionary |
-| `get_initials()` | Gets user initials for avatar display |
+| `get_initials()` | Gets user initials for avatar display (from name parts) |
 | `get_absolute_url()` | Returns URL for the user's profile |
 | `clean()` | Validates that only admin users can have staff privileges |
 
@@ -153,11 +154,14 @@ Extended profile for job seekers with career-related information.
 | `user` | OneToOneField | Link to User model (with user_type="job_seeker") |
 | `skills` | TextField | Comma-separated list of skills |
 | `experience` | TextField | Description of work experience |
+| `education` | TextField | Description of educational background |
+| `certifications` | TextField | Description of professional certifications |
 | `years_of_experience` | PositiveIntegerField | Total years of experience |
 | `desired_role` | CharField | Desired job role |
 | `current_position` | CharField | Current job position |
 | `professional_summary` | TextField | Detailed description about the job seeker's qualifications and experience |
 | `resume_xml` | TextField | XML representation of the parsed resume |
+| `phone` | CharField | Phone number |
 | `linkedin_url` | URLField | LinkedIn profile URL |
 | `github_url` | URLField | GitHub profile URL |
 | `portfolio_url` | URLField | Portfolio website URL |

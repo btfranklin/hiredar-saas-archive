@@ -15,8 +15,7 @@ class UserModelTests(TestCase):
         self.user_data = {
             "email": "test@example.com",
             "password": "testpass123",
-            "first_name": "Test",
-            "last_name": "User",
+            "name": "Test User",
         }
 
     def test_create_user(self) -> None:
