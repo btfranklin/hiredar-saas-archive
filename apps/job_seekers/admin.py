@@ -29,7 +29,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Skills & Experience", {"fields": ("skills", "experience")}),
+        ("Skills & Experience", {"fields": ("skills", "experience", "education")}),
         ("Social Links", {"fields": ("linkedin_url", "github_url", "portfolio_url")}),
         ("Resume Data", {"fields": ("resume_xml",), "classes": ("collapse",)}),
     )

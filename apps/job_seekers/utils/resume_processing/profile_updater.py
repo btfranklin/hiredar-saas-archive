@@ -55,6 +55,11 @@ def update_profile(
         if experience_text:
             profile.experience = experience_text
 
+        # Update education text
+        education_text = parsed_data.get("education")
+        if education_text:
+            profile.education = education_text
+
         # Update personal details if available (still a dictionary)
         personal_details = parsed_data.get("personal_details", {})
         # We could potentially add more personal details processing here

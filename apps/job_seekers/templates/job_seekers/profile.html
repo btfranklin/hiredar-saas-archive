@@ -28,10 +28,10 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-2xl font-bold mb-6">Skills</h2>
                 
-                {% if job_seeker_profile.skills.all %}
+                {% if job_seeker_profile.skills_list %}
                     <div class="flex flex-wrap gap-2">
-                        {% for skill in job_seeker_profile.skills.all %}
-                            <div class="badge badge-lg">{{ skill.name }}</div>
+                        {% for skill in job_seeker_profile.skills_list %}
+                            <div class="badge badge-lg">{{ skill }}</div>
                         {% endfor %}
                     </div>
                 {% else %}
@@ -46,38 +46,11 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-2xl font-bold mb-6">Experience</h2>
                 
-                {% if job_seeker_profile.experiences.all %}
-                    <div class="space-y-6">
-                        {% for experience in job_seeker_profile.experiences.all %}
-                            <div class="card bg-base-100 shadow-sm">
-                                <div class="card-body">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="text-lg font-bold">{{ experience.title }}</h3>
-                                            <p class="text-base-content/70">{{ experience.company }}</p>
-                                        </div>
-                                        <span class="text-sm">
-                                            {{ experience.start_date|date:"M Y" }} - 
-                                            {% if experience.current %}
-                                                Present
-                                            {% else %}
-                                                {{ experience.end_date|date:"M Y" }}
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    
-                                    <p class="mt-2">{{ experience.description }}</p>
-                                    
-                                    {% if experience.skills.all %}
-                                        <div class="flex flex-wrap gap-2 mt-3">
-                                            {% for skill in experience.skills.all %}
-                                                <div class="badge badge-outline">{{ skill.name }}</div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
+                {% if job_seeker_profile.experience %}
+                    <div class="card bg-base-100 shadow-sm">
+                        <div class="card-body">
+                            <p>{{ job_seeker_profile.experience|linebreaks }}</p>
+                        </div>
                     </div>
                 {% else %}
                     <div class="alert alert-info">
@@ -91,32 +64,11 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md">
                 <h2 class="text-2xl font-bold mb-6">Education</h2>
                 
-                {% if job_seeker_profile.education.all %}
-                    <div class="space-y-6">
-                        {% for education in job_seeker_profile.education.all %}
-                            <div class="card bg-base-100 shadow-sm">
-                                <div class="card-body">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="text-lg font-bold">{{ education.degree }}</h3>
-                                            <p class="text-base-content/70">{{ education.institution }}</p>
-                                        </div>
-                                        <span class="text-sm">
-                                            {{ education.start_date|date:"Y" }} - 
-                                            {% if education.current %}
-                                                Present
-                                            {% else %}
-                                                {{ education.end_date|date:"Y" }}
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    
-                                    {% if education.description %}
-                                        <p class="mt-2">{{ education.description }}</p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
+                {% if job_seeker_profile.education %}
+                    <div class="card bg-base-100 shadow-sm">
+                        <div class="card-body">
+                            <p>{{ job_seeker_profile.education|linebreaks }}</p>
+                        </div>
                     </div>
                 {% else %}
                     <div class="alert alert-info">

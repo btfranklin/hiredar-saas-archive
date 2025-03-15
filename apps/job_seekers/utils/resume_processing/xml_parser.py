@@ -53,8 +53,7 @@ def parse_resume_xml(xml_content: str) -> dict[str, Any]:
             f"Invalid XML structure: root element is '{root.tag}', expected 'resume'"
         )
 
-    # Extract the structured data - each extraction function will raise exceptions
-    # rather than silently returning empty values
+    # Extract the structured data
     result = {
         "skills": extract_skills(xml_content),
         "current_position": extract_most_recent_title(xml_content),

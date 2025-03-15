@@ -75,6 +75,16 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             return redirect("core:home")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """Get context data for the profile view."""
+        context = super().get_context_data(**kwargs)
+        user = cast(AuthenticatedUser, self.request.user)
+
+        # Add job_seeker_profile to context
+        context["job_seeker_profile"] = user.job_seeker_profile
+
+        return context
+
 
 class ProfileCreateView(LoginRequiredMixin, TemplateView):
     """Profile creation view for job seekers."""

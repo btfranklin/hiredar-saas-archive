@@ -14,6 +14,7 @@ class JobSeekerProfile(models.Model):
     )
     skills = models.TextField(blank=True, help_text="Comma-separated list of skills")
     experience = models.TextField(null=True, blank=True)
+    education = models.TextField(null=True, blank=True)
     years_of_experience = models.PositiveIntegerField(null=True, blank=True)
     desired_role = models.CharField(max_length=100, null=True, blank=True)
     current_position = models.CharField(max_length=100, null=True, blank=True)
