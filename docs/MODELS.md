@@ -171,6 +171,38 @@ Extended profile for job seekers with career-related information.
 |--------|-------------|
 | `skills_list` | Property that returns a list of skill names |
 
+### ResumeProcessingTaskProgress
+
+Model for tracking progress of resume processing tasks.
+
+**Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `task_id` | CharField | Django Q2 task ID (primary key) |
+| `user` | ForeignKey | Link to User who uploaded the resume |
+| `task_type` | CharField | Type of task being processed (default: "resume_processing") |
+| `current_step` | CharField | Current step being processed |
+| `progress_percent` | IntegerField | Overall progress percentage (0-100) |
+| `steps_completed` | TextField | JSON list of completed steps |
+| `status` | CharField | Task status (pending/running/completed/failed) |
+| `message` | TextField | Status message or error details |
+| `created_at` | DateTimeField | When the task was created |
+| `updated_at` | DateTimeField | When the task was last updated |
+
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| `clean_up_old_records` | Class method to clean up old records beyond a certain age |
+| `clean_up_completed_records` | Class method to clean up completed/failed records |
+| `completed_steps` | Property that returns a list of completed step IDs |
+| `mark_step_complete` | Marks a specific step as complete and updates progress |
+| `to_dict` | Converts task progress to a dictionary for API responses |
+
+**Business Rules:**
+- The model tracks predefined steps in the resume processing pipeline
+- Each step has a weight that contributes to the overall progress percentage
+- Completed records are automatically cleaned up after a configurable time period
+
 ## Recruiters App
 
 ### RecruiterProfile

@@ -1,4 +1,4 @@
-"""Views for the job_seekers app."""
+"""Resume processing views for job seekers."""
 
 import uuid
 from typing import Any, cast
@@ -13,99 +13,12 @@ from django_q.tasks import async_task, result
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import ResumeProcessingTaskProgress
 from apps.job_seekers.tasks import handle_resume_upload_task, save_resume_file
-from apps.jobs.models import CandidateMatch
-from apps.messaging.models import Notification
-
-
-class DashboardView(LoginRequiredMixin, TemplateView):
-    """Dashboard view for job seekers."""
-
-    template_name = "job_seekers/dashboard.html"
-
-    def dispatch(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponseBase:
-        """Ensure only job seekers can access this view."""
-        user = cast(AuthenticatedUser, request.user)
-        if user.user_type != "job_seeker":
-            return redirect("core:home")
-
-        # Check if job seeker profile exists, if not redirect to profile creation
-        try:
-            # This will raise RelatedObjectDoesNotExist if profile doesn't exist
-            user.job_seeker_profile
-        except Exception:
-            # Redirect to profile creation page
-            return redirect("job_seekers:profile_create")
-
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        """Get context data for the dashboard."""
-        context = super().get_context_data(**kwargs)
-        user = cast(AuthenticatedUser, self.request.user)
-
-        # Get job matches
-        context["job_matches"] = CandidateMatch.objects.filter(
-            job_seeker=user.job_seeker_profile,
-            status="pending",
-        ).order_by("-match_score")[:5]
-
-        # Get unread notifications
-        context["notifications"] = Notification.objects.filter(
-            user=cast(
-                Any, user
-            ),  # Cast to Any to avoid type incompatibility with the model field
-            is_read=False,
-        ).order_by("-created_at")[:5]
-
-        return context
-
-
-class ProfileView(LoginRequiredMixin, TemplateView):
-    """Profile view for job seekers."""
-
-    template_name = "job_seekers/profile.html"
-
-    def dispatch(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponseBase:
-        """Ensure only job seekers can access this view."""
-        user = cast(AuthenticatedUser, request.user)
-        if user.user_type != "job_seeker":
-            return redirect("core:home")
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        """Get context data for the profile view."""
-        context = super().get_context_data(**kwargs)
-        user = cast(AuthenticatedUser, self.request.user)
-
-        # Add job_seeker_profile to context
-        context["job_seeker_profile"] = user.job_seeker_profile
-
-        return context
 
 
 class ProfileCreateView(LoginRequiredMixin, TemplateView):
     """Profile creation view for job seekers."""
 
     template_name = "job_seekers/profile_create.html"
-
-    def dispatch(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponseBase:
-        """Ensure only job seekers can access this view."""
-        user = cast(AuthenticatedUser, request.user)
-        if user.user_type != "job_seeker":
-            return redirect("core:home")
-        return super().dispatch(request, *args, **kwargs)
-
-
-class SettingsView(LoginRequiredMixin, TemplateView):
-    """Settings view for job seekers."""
-
-    template_name = "job_seekers/settings.html"
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any

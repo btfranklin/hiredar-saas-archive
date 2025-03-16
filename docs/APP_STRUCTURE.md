@@ -68,8 +68,12 @@ Manages job seeker-specific functionality:
 
 - **Models**:
   - `JobSeekerProfile`: Extended profile for job seekers including skills, experience, education, certifications, contact information, and social media links
+  - `ResumeProcessingTaskProgress`: Tracks progress of resume processing tasks
 - **Views**:
-  - Various views for job seeker profile management, resume upload, and dashboard
+  - Organized in subdirectories for better maintainability:
+    - `dashboard_views.py`: Dashboard view for job seekers
+    - `job_seeker_profile_views.py`: Profile and settings views
+    - `resume_processing_views.py`: Resume upload and processing views
 - **Templates**:
   - Job seeker-specific templates for signup, profiles, and dashboards
 - **Signals**:

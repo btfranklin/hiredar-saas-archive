@@ -3,13 +3,12 @@
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
-from apps.job_seekers.views import (
-    DashboardView,
+from apps.job_seekers.views.dashboard_views import DashboardView
+from apps.job_seekers.views.job_seeker_profile_views import ProfileView, SettingsView
+from apps.job_seekers.views.resume_processing_views import (
     ProfileCreateView,
-    ProfileView,
     ResumeProcessingTaskProgressView,
     ResumeUploadView,
-    SettingsView,
 )
 
 app_name = "job_seekers"

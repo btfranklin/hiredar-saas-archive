@@ -31,14 +31,14 @@ The resume processing pipeline follows these steps:
 
 ### Backend Components
 
-- **Upload View**: `apps/job_seekers/views.py::ResumeUploadView`
+- **Upload View**: `apps/job_seekers/views/resume_processing_views.py::ResumeUploadView`
   - Handles the initial file upload
   - Validates the file (must be PDF)
   - Saves the file to temporary storage
   - Queues the processing task
   - Returns a response with task ID and status URL
 
-- **Status View**: `apps/job_seekers/views.py::ResumeProcessingTaskProgressView`
+- **Status View**: `apps/job_seekers/views/resume_processing_views.py::ResumeProcessingTaskProgressView`
   - Checks the status of the queued processing task
   - Returns progress information to the frontend
 
@@ -135,7 +135,7 @@ Use these commands for testing and populating the system with sample data.
 ## Flow Diagram
 
 ```
-apps/job_seekers/views.py::ResumeUploadView.post()
+apps/job_seekers/views/resume_processing_views.py::ResumeUploadView.post()
 │
 ├── apps/job_seekers/tasks.py::save_resume_file()
 │   └── django.core.files.storage::default_storage.save()
