@@ -107,4 +107,4 @@ class RoleRecommendationsView(LoginRequiredMixin, ListView):
         user = cast(AuthenticatedUser, self.request.user)
         return RoleRecommendation.objects.filter(
             job_seeker=user.job_seeker_profile
-        ).order_by("-confidence_score")
+        ).order_by("role_title")
