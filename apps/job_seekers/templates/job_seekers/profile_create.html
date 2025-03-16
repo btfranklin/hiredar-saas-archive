@@ -71,9 +71,17 @@
                     <span id="current-step-name" class="text-base font-medium">Processing...</span>
                     <span id="progress-percent" class="text-sm font-medium">0%</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                
+                <!-- Initial loading spinner (visible by default) -->
+                <div id="initial-loading" class="flex justify-center py-3">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                </div>
+                
+                <!-- Progress bar (hidden by default, shown when we have real progress) -->
+                <div id="progress-container" class="w-full bg-gray-200 rounded-full h-2.5 hidden">
                     <div id="progress-bar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
                 </div>
+                
                 <p id="current-step-description" class="text-sm mt-2 text-base-content/70">Analyzing your resume...</p>
             </div>
             
@@ -208,13 +216,38 @@
                 // Check task status
                 if (statusData.status === 'completed' || statusData.status === 'success') {
                     // Task completed successfully
-                    // Show 100% progress
-                    const progressData = statusData.progress || { 
-                        progress_percent: 100,
-                        current_step_name: "Completed",
-                        current_step_description: "Resume processing complete!"
-                    };
-                    updateProgress(progressData);
+                    // Always force progress to 100% for completion
+                    const progressData = statusData.progress || {};
+                    
+                    // Ensure progress is set to 100% (not -1 or any other value)
+                    progressData.progress_percent = 100;
+                    progressData.current_step_name = progressData.current_step_name || "Completed";
+                    progressData.current_step_description = progressData.current_step_description || "Resume processing complete!";
+                    
+                    // Force progress bar to show on completion even if progress was indeterminate
+                    const initialLoading = document.getElementById('initial-loading');
+                    const progressContainer = document.getElementById('progress-container');
+                    const progressBar = document.getElementById('progress-bar');
+                    
+                    if (initialLoading) initialLoading.classList.add('hidden');
+                    if (progressContainer) {
+                        progressContainer.classList.remove('hidden');
+                        if (progressBar) progressBar.style.width = '100%';
+                    }
+                    
+                    // Update other progress elements
+                    const progressPercent = document.getElementById('progress-percent');
+                    const currentStepName = document.getElementById('current-step-name');
+                    const currentStepDescription = document.getElementById('current-step-description');
+                    
+                    if (progressPercent) progressPercent.textContent = '100%';
+                    if (currentStepName) currentStepName.textContent = progressData.current_step_name;
+                    if (currentStepDescription) currentStepDescription.textContent = progressData.current_step_description;
+                    
+                    // Update other progress information if available
+                    if (progressData.steps && progressData.steps.length > 0) {
+                        updateProgress(progressData);
+                    }
                     
                     // Stop polling
                     sourceElement.remove();
@@ -289,18 +322,41 @@
     
     // Update the progress display
     function updateProgress(progress) {
-        // Update progress bar and percentage
-        const progressBar = document.getElementById('progress-bar');
+        // Update percentage and step name
         const progressPercent = document.getElementById('progress-percent');
         const currentStepName = document.getElementById('current-step-name');
         const currentStepDescription = document.getElementById('current-step-description');
+        const initialLoading = document.getElementById('initial-loading');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
         
-        if (progressBar) {
-            progressBar.style.width = `${progress.progress_percent}%`;
+        // Check if we have real progress data or if progress is indeterminate (negative value)
+        const hasRealProgress = progress.steps && progress.steps.length > 0;
+        const isIndeterminate = progress.progress_percent < 0;
+        const shouldShowProgressBar = hasRealProgress && !isIndeterminate;
+        
+        // Show/hide the appropriate progress indicator
+        if (shouldShowProgressBar) {
+            // Hide spinner, show progress bar
+            if (initialLoading) initialLoading.classList.add('hidden');
+            if (progressContainer) progressContainer.classList.remove('hidden');
+            
+            // Update progress bar
+            if (progressBar) {
+                progressBar.style.width = `${progress.progress_percent}%`;
+            }
+        } else {
+            // Show spinner, hide progress bar
+            if (initialLoading) initialLoading.classList.remove('hidden');
+            if (progressContainer) progressContainer.classList.add('hidden');
         }
         
         if (progressPercent) {
-            progressPercent.textContent = `${progress.progress_percent}%`;
+            if (shouldShowProgressBar) {
+                progressPercent.textContent = `${progress.progress_percent}%`;
+            } else {
+                progressPercent.textContent = '';
+            }
         }
         
         if (currentStepName && progress.current_step_name) {
@@ -312,7 +368,7 @@
         }
         
         // Update steps list
-        if (progress.steps && progress.steps.length > 0) {
+        if (hasRealProgress) {
             // Initialize steps if not already done
             initializeSteps(progress.steps);
             

@@ -166,7 +166,7 @@ class ResumeProcessingTaskProgressView(LoginRequiredMixin, View):
                         "status": "running",
                         "message": "Task is still running",
                         "progress": {
-                            "progress_percent": 50,  # Default to 50% if we don't know the exact progress
+                            "progress_percent": -1,  # Use -1 to indicate indeterminate progress
                             "current_step": "processing",
                             "current_step_name": "Processing Resume",
                             "steps": [],
