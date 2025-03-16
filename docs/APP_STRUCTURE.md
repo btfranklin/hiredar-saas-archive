@@ -69,6 +69,7 @@ Manages job seeker-specific functionality:
 - **Models**:
   - `JobSeekerProfile`: Extended profile for job seekers including skills, experience, education, certifications, contact information, and social media links
   - `ResumeProcessingTaskProgress`: Tracks progress of resume processing tasks
+  - `RoleRecommendation`: Career recommendations for job seekers based on their skills and experience
 - **Views**:
   - Organized in subdirectories for better maintainability:
     - `dashboard_views.py`: Dashboard view for job seekers
@@ -85,6 +86,7 @@ Manages job seeker-specific functionality:
   - `/job-seekers/profile/create/`: Profile creation
   - `/job-seekers/dashboard/`: Job seeker dashboard
   - `/job-seekers/settings/`: Job seeker settings
+  - `/job-seekers/recommendations/`: Role recommendations for job seekers
 
 ### Recruiters App (`apps/recruiters`)
 
@@ -105,14 +107,13 @@ Manages recruiter-specific functionality:
 
 ### Jobs App (`apps/jobs`)
 
-Manages job openings, candidate matching, and role recommendations:
+Manages job openings and candidate matching:
 
 - **Models**:
   - `JobOpening`: Job opening details
   - `CandidateMatch`: Matches between job seekers and job openings
-  - `RoleRecommendation`: Career recommendations for job seekers
 - **Views**:
-  - Organized in subdirectories for job opening management, candidate matching, and recommendations
+  - Organized in subdirectories for job opening management and candidate matching
 - **Templates**:
   - Job-related templates for job listing, details, and management
 - **Admin**:

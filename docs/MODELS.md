@@ -81,7 +81,7 @@ classDiagram
         +job_seeker: ForeignKey(JobSeekerProfile)
         +role_title: CharField
         +description: TextField
-        +confidence_score: DecimalField
+        +confidence_score: FloatField
         +created_at: DateTimeField
     }
     
@@ -203,6 +203,29 @@ Model for tracking progress of resume processing tasks.
 - Each step has a weight that contributes to the overall progress percentage
 - Completed records are automatically cleaned up after a configurable time period
 
+### RoleRecommendation
+
+Model for AI-generated role recommendations for job seekers.
+
+**Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_seeker` | ForeignKey | Link to the JobSeekerProfile |
+| `role_title` | CharField | Title of the recommended role |
+| `description` | TextField | Description of the recommended role |
+| `confidence_score` | FloatField | AI confidence score between 0 and 100 |
+| `created_at` | DateTimeField | When the recommendation was created |
+
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| No specific methods beyond default | |
+
+**Business Rules:**
+| Rule | Description |
+|------|-------------|
+| Ordering | Role recommendations are ordered by confidence score (descending) |
+
 ## Recruiters App
 
 ### RecruiterProfile
@@ -258,29 +281,6 @@ Model for matching job seekers to job openings.
 | `match_type` | CharField | Type of match (top/wildcard) |
 | `created_at` | DateTimeField | When the match was created |
 | `updated_at` | DateTimeField | When the match was last updated |
-
-### RoleRecommendation
-
-Model for AI-generated role recommendations for job seekers.
-
-**Fields:**
-| Field | Type | Description |
-|-------|------|-------------|
-| `job_seeker` | ForeignKey | Link to the JobSeekerProfile |
-| `role_title` | CharField | Title of the recommended role |
-| `description` | TextField | Description of the recommended role |
-| `confidence_score` | DecimalField | AI confidence score between 0 and 100 |
-| `created_at` | DateTimeField | When the recommendation was created |
-
-**Key Methods:**
-| Method | Description |
-|--------|-------------|
-| No specific methods beyond default | |
-
-**Business Rules:**
-| Rule | Description |
-|------|-------------|
-| Ordering | Role recommendations are ordered by confidence score (descending) |
 
 ## Messaging App
 
