@@ -117,28 +117,13 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
             len(resume_xml) if resume_xml else 0,
         )
 
-        # Check XML format and encoding
-        is_valid_xml = resume_xml.strip().startswith(
-            "<"
-        ) and resume_xml.strip().endswith(">")
-        logger.info(
-            "XML appears to be valid format: %s", "Yes" if is_valid_xml else "No"
-        )
-
-        # Show start and end of XML for debugging
-        if resume_xml and len(resume_xml) > 100:
-            start = resume_xml[:50].replace("\n", "\\n")
-            end = resume_xml[-50:].replace("\n", "\\n")
-            logger.info("XML starts with: %s", start)
-            logger.info("XML ends with: %s", end)
-
         # Generate the tagline using the LLM processor
         try:
             tagline = generate_tagline_from_xml(resume_xml)
 
             # Save the tagline to the user's profile
-            # Future: Add dedicated field for tagline in JobSeekerProfile model
-            # For now, we'll just return it in the response
+            profile.personal_tagline = tagline
+            profile.save(update_fields=["personal_tagline"])
 
             logger.info("Generated tagline for %s: %s", profile.user.email, tagline)
 

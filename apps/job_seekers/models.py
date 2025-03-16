@@ -29,6 +29,12 @@ class JobSeekerProfile(models.Model):
         blank=True,
         help_text="Professional summary highlighting experience and qualifications",
     )
+    personal_tagline = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+        help_text="AI-generated personal identity tagline",
+    )
     resume_xml = models.TextField(
         null=True, blank=True, help_text="XML representation of the parsed resume"
     )
