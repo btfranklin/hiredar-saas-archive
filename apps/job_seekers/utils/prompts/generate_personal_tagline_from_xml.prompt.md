@@ -32,6 +32,4 @@ Do not use quotation marks or any other formatting - just the plain text of the 
 **User:**
 The resume data in the XML below represents the candidate's professional background, skills, and experience.
 
-```xml
 {resume_xml}
-```
