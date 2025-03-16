@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "save_resume_file",
     "handle_resume_upload_task",
-    "cleanup_task_progress",
+    "cleanup_resume_processing_progress",
     "ensure_cleanup_scheduled",
 ]
 
@@ -39,13 +39,16 @@ def ensure_cleanup_scheduled() -> None:
     """
     try:
         # Check if schedule already exists
-        existing = Schedule.objects.filter(name="cleanup_task_progress").first()
+        existing = Schedule.objects.filter(
+            name="cleanup_resume_processing_progress"
+        ).first()
 
         if existing:
             # If task exists but is not set to repeat every 15 minutes, update it
             if (
                 existing.minutes != 15
-                or existing.func != "apps.job_seekers.tasks.cleanup_task_progress"
+                or existing.func
+                != "apps.job_seekers.tasks.cleanup_resume_processing_progress"
             ):
                 existing.delete()
                 existing = None
@@ -53,17 +56,19 @@ def ensure_cleanup_scheduled() -> None:
         # Create schedule if it doesn't exist
         if not existing:
             schedule(
-                "apps.job_seekers.tasks.cleanup_task_progress",
-                name="cleanup_task_progress",
+                "apps.job_seekers.tasks.cleanup_resume_processing_progress",
+                name="cleanup_resume_processing_progress",
                 schedule_type=Schedule.MINUTES,
                 minutes=15,
             )
-            logger.info("Scheduled task cleanup_task_progress to run every 15 minutes")
+            logger.info(
+                "Scheduled task cleanup_resume_processing_progress to run every 15 minutes"
+            )
     except Exception as e:
         logger.error("Failed to schedule cleanup task: %s", e)
 
 
-def cleanup_task_progress() -> None:
+def cleanup_resume_processing_progress() -> None:
     """
     Clean up completed resume processing task progress records.
 

@@ -1,7 +1,7 @@
 """
-Command to clean up old TaskProgress records.
+Command to clean up old ResumeProcessingTaskProgress records.
 
-This management command deletes old TaskProgress records to prevent
+This management command deletes old ResumeProcessingTaskProgress records to prevent
 database bloat from accumulating completed or failed tasks.
 """
 
@@ -10,13 +10,13 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.job_seekers.models import TaskProgress
+from apps.job_seekers.models import ResumeProcessingTaskProgress
 
 
 class Command(BaseCommand):
-    """Command to clean up old TaskProgress records."""
+    """Command to clean up old ResumeProcessingTaskProgress records."""
 
-    help = "Clean up old TaskProgress records that are no longer needed"
+    help = "Clean up old ResumeProcessingTaskProgress records that are no longer needed"
 
     def add_arguments(self, parser):
         """Add command arguments."""
@@ -41,13 +41,15 @@ class Command(BaseCommand):
         cutoff_date = timezone.now() - timedelta(days=days)
 
         # Query records that would be deleted
-        records_to_delete = TaskProgress.objects.filter(created_at__lt=cutoff_date)
+        records_to_delete = ResumeProcessingTaskProgress.objects.filter(
+            created_at__lt=cutoff_date
+        )
         count = records_to_delete.count()
 
         if dry_run:
             self.stdout.write(
                 self.style.WARNING(
-                    f"Would delete {count} TaskProgress records older than {days} days"
+                    f"Would delete {count} ResumeProcessingTaskProgress records older than {days} days"
                 )
             )
 
@@ -64,10 +66,10 @@ class Command(BaseCommand):
             )
         else:
             # Actually delete the records
-            deleted_count = TaskProgress.clean_up_old_records(days)
+            deleted_count = ResumeProcessingTaskProgress.clean_up_old_records(days)
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Successfully deleted {deleted_count} TaskProgress records older than {days} days"
+                    f"Successfully deleted {deleted_count} ResumeProcessingTaskProgress records older than {days} days"
                 )
             )
