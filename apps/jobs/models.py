@@ -90,27 +90,3 @@ class CandidateMatch(models.Model):
 
     def __str__(self) -> str:
         return f"{self.job_seeker} - {self.job_opening} ({self.match_score}%)"
-
-
-class RoleRecommendation(models.Model):
-    """Model for AI-generated role recommendations for job seekers"""
-
-    job_seeker = models.ForeignKey(
-        JobSeekerProfile,
-        on_delete=models.CASCADE,
-        related_name="role_recommendations",
-    )
-    role_title = models.CharField(max_length=255)
-    description = models.TextField()
-    confidence_score = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        help_text="AI confidence score between 0 and 100",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self) -> str:
-        return f"{self.role_title} for {self.job_seeker}"
-
-    class Meta:
-        ordering = ["-confidence_score"]

@@ -5,16 +5,21 @@ This module defines the URL routes for job-related functionality,
 including job openings, candidate matching, and role recommendations.
 """
 
+from django.shortcuts import redirect
 from django.urls import path
 
-from apps.jobs.views.candidate_views import (CandidateDetailView,
-                                             CandidateMatchListView,
-                                             toggle_shortlist)
-from apps.jobs.views.job_views import (JobOpeningCreateView,
-                                       JobOpeningDeleteView,
-                                       JobOpeningDetailView,
-                                       JobOpeningEditView, JobOpeningListView)
-from apps.jobs.views.recommendation_views import RoleRecommendationsView
+from apps.jobs.views.candidate_views import (
+    CandidateDetailView,
+    CandidateMatchListView,
+    toggle_shortlist,
+)
+from apps.jobs.views.job_views import (
+    JobOpeningCreateView,
+    JobOpeningDeleteView,
+    JobOpeningDetailView,
+    JobOpeningEditView,
+    JobOpeningListView,
+)
 
 app_name = "jobs"
 
@@ -41,10 +46,10 @@ urlpatterns = [
         toggle_shortlist,
         name="toggle_shortlist",
     ),
-    # Role Recommendations
+    # Role Recommendations - redirects to job_seekers app
     path(
         "recommendations/",
-        RoleRecommendationsView.as_view(),
+        lambda request: redirect("job_seekers:recommendations"),
         name="recommendations",
     ),
 ]
