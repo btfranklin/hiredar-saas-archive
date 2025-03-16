@@ -86,7 +86,7 @@ def generate_personal_tagline(resume_xml: str) -> str:
     # Make the API call with proper error handling
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",  # Using gpt-4o-mini as specified
+            model="gpt-4o-mini",
             messages=cast(Iterable[Any], messages),
             temperature=0.7,  # Slightly higher temperature for creative output
             max_tokens=50,  # Tagline should be short
