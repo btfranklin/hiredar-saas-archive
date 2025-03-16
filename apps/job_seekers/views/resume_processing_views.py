@@ -85,13 +85,14 @@ class ResumeUploadView(LoginRequiredMixin, View):
             # Generate a unique ID for the task
             task_id = str(uuid.uuid4())
 
-            # Queue the resume processing task and pass the task_id
+            # Queue the resume processing task with a completion hook
             async_task(
                 handle_resume_upload_task,
                 file_path,
                 profile_id,
                 task_id=task_id,
                 task_name=f"resume_processing_{task_id}",
+                hook="apps.job_seekers.tasks.hooks.resume_processing_completed",
             )
 
             # Return success response with task ID and status URL
