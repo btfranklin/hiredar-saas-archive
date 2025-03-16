@@ -38,7 +38,7 @@ The resume processing pipeline follows these steps:
   - Queues the processing task
   - Returns a response with task ID and status URL
 
-- **Status View**: `apps/job_seekers/views.py::TaskStatusView`
+- **Status View**: `apps/job_seekers/views.py::ResumeProcessingTaskProgressView`
   - Checks the status of the queued processing task
   - Returns progress information to the frontend
 

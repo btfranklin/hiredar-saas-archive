@@ -202,9 +202,9 @@ class ResumeUploadView(LoginRequiredMixin, View):
             )
 
 
-class TaskStatusView(LoginRequiredMixin, View):
+class ResumeProcessingTaskProgressView(LoginRequiredMixin, View):
     """
-    View for checking the status of asynchronous tasks.
+    View for checking the status of asynchronous resume processing tasks.
 
     This view returns the current status of a task by its ID.
     """

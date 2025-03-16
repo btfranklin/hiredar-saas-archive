@@ -170,7 +170,20 @@
                 li.className = 'step';
                 li.setAttribute('data-step-id', step.id);
                 li.setAttribute('data-content', `${index + 1}`);
-                li.textContent = step.name;
+                
+                // Create a div to hold step content and potential spinner
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'flex items-center gap-2';
+                contentDiv.textContent = step.name;
+                
+                // Add spinner if this is the current step
+                if (step.current) {
+                    const spinner = document.createElement('span');
+                    spinner.className = 'loading loading-spinner loading-xs text-primary ml-2';
+                    contentDiv.appendChild(spinner);
+                }
+                
+                li.appendChild(contentDiv);
                 
                 // Mark completed steps
                 if (step.completed) {
@@ -227,11 +240,35 @@
                         stepElement.classList.remove('step-primary');
                     }
                     
-                    // Update current status
+                    // Update current status and spinner
                     if (step.current) {
                         stepElement.classList.add('step-accent');
+                        
+                        // Make sure we have the spinner
+                        let contentDiv = stepElement.querySelector('div');
+                        if (contentDiv) {
+                            // Remove existing spinner if present
+                            const existingSpinner = contentDiv.querySelector('.loading');
+                            if (existingSpinner) {
+                                existingSpinner.remove();
+                            }
+                            
+                            // Add new spinner
+                            const spinner = document.createElement('span');
+                            spinner.className = 'loading loading-spinner loading-xs text-primary ml-2';
+                            contentDiv.appendChild(spinner);
+                        }
                     } else {
                         stepElement.classList.remove('step-accent');
+                        
+                        // Remove spinner if not current
+                        let contentDiv = stepElement.querySelector('div');
+                        if (contentDiv) {
+                            const existingSpinner = contentDiv.querySelector('.loading');
+                            if (existingSpinner) {
+                                existingSpinner.remove();
+                            }
+                        }
                     }
                 });
             }
