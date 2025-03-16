@@ -113,8 +113,7 @@
                 </ul>
             </div>
             <div class="navbar-end">
-                {% if user.is_authenticated %}
-                    {% if not hide_user_menu %}
+                {% if user.is_authenticated and not hide_user_menu %}
                     <!-- Notification Icon -->
                     <div class="dropdown dropdown-end mr-2">
                         <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
@@ -183,7 +182,6 @@
                             <li><a href="{% url 'authentication:logout' %}">Logout</a></li>
                         </ul>
                     </div>
-                    {% endif %}
                 {% endif %}
             </div>
         </div>
