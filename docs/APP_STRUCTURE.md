@@ -8,7 +8,7 @@ Hiredar is a job matching platform that connects job seekers with recruiters usi
 
 ## Application Architecture
 
-The application is built using Django 5.1.6 and follows a modular approach with the following key components:
+The application is built using Django 5.1.7 and follows a modular approach with the following key components:
 
 - **Django project**: The main `hiredar` project configuration
 - **Apps**: Separate Django apps for different functional areas
