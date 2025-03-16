@@ -33,7 +33,11 @@
                       method="post"
                       action="{% url 'job_seekers:resume_upload' %}" 
                       enctype="multipart/form-data"
-                      class="space-y-4">
+                      class="space-y-4"
+                      hx-post="{% url 'job_seekers:resume_upload' %}"
+                      hx-encoding="multipart/form-data"
+                      hx-target="#profile-card .card-body"
+                      hx-swap="innerHTML">
                     {% csrf_token %}
                     <div class="form-control">
                         <label class="label" for="resume">
@@ -45,6 +49,7 @@
                     </div>
                     <div class="form-control mt-6">
                         <button type="submit" class="btn btn-primary" id="upload-btn">
+                            <span class="htmx-indicator loading loading-spinner loading-xs"></span>
                             Upload Resume
                         </button>
                     </div>
@@ -56,7 +61,7 @@
 
 <!-- Processing Template (hidden by default) -->
 <div id="processing-template" class="hidden">
-    <div class="card-body">
+    <div id="processing-content">
         <h2 class="text-2xl font-semibold mb-6 text-center">Building Your Profile</h2>
         
         <div class="flex flex-col items-center space-y-6">
@@ -125,293 +130,236 @@
             <span id="error-message">There was an error processing your resume. Please try again.</span>
         </div>
         <div class="mt-6">
-            <button class="btn btn-primary w-full" onclick="window.location.reload()">Try Again</button>
+            <button class="btn btn-primary w-full" hx-get="{% url 'job_seekers:profile_create' %}" hx-target="#profile-card .card-body" hx-swap="innerHTML">Try Again</button>
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const resumeUploadForm = document.getElementById('resume-upload-form');
-        const fileInput = document.getElementById('resume');
-        const uploadBtn = document.getElementById('upload-btn');
-        const profileCard = document.getElementById('profile-card');
-        const processingTemplate = document.getElementById('processing-template');
-        const errorTemplate = document.getElementById('error-template');
-        
-        // Show loading state
-        function showLoading() {
-            profileCard.querySelector('.card-body').innerHTML = processingTemplate.innerHTML;
-        }
-        
-        // Show error message
-        function showError(message) {
-            profileCard.querySelector('.card-body').innerHTML = errorTemplate.innerHTML;
-            const errorMessage = document.getElementById('error-message');
-            if (errorMessage) {
-                errorMessage.textContent = message;
-            }
-        }
-        
-        // Initialize the steps in the UI
-        function initializeSteps(steps) {
-            const stepsContainer = document.getElementById('processing-steps');
-            if (!stepsContainer) return;
+    // This will be our response handler for the upload response
+    document.addEventListener('htmx:afterSwap', function(event) {
+        // Check if this is a response from the resume upload endpoint
+        if (event.detail.requestConfig && 
+            event.detail.requestConfig.path === "{% url 'job_seekers:resume_upload' %}") {
             
-            const stepsList = stepsContainer.querySelector('ul');
-            if (!stepsList) return;
+            // Expecting JSON response with status_url and redirect_url
+            const response = JSON.parse(event.detail.xhr.responseText);
             
-            // Clear any existing steps
-            stepsList.innerHTML = '';
-            
-            // Add each step to the list
-            steps.forEach((step, index) => {
-                const li = document.createElement('li');
-                li.className = 'step';
-                li.setAttribute('data-step-id', step.id);
-                li.setAttribute('data-content', `${index + 1}`);
+            if (response.success && response.status_url) {
+                // Show processing template
+                const processingTemplateContent = document.getElementById('processing-template').querySelector('#processing-content').innerHTML;
+                event.detail.target.innerHTML = processingTemplateContent;
                 
-                // Create a div to hold step content and potential spinner
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'flex items-center gap-2';
-                contentDiv.textContent = step.name;
+                // Set up the HTMX polling element
+                const pollingDiv = document.createElement('div');
+                pollingDiv.setAttribute('hx-get', response.status_url);
+                pollingDiv.setAttribute('hx-trigger', 'load, every 2s');
+                pollingDiv.setAttribute('hx-swap', 'none');
+                pollingDiv.style.display = 'none';
+                pollingDiv.id = 'status-poller';
                 
-                // Add spinner if this is the current step
-                if (step.current) {
-                    const spinner = document.createElement('span');
-                    spinner.className = 'loading loading-spinner loading-xs text-primary ml-2';
-                    contentDiv.appendChild(spinner);
+                // Add the polling element to the page
+                document.body.appendChild(pollingDiv);
+                
+                // Initialize HTMX on the element we just created
+                htmx.process(pollingDiv);
+                
+                // Store redirect URL for later use
+                window.redirectUrl = response.redirect_url;
+            } else {
+                // Show error
+                const errorTemplate = document.getElementById('error-template').innerHTML;
+                event.detail.target.innerHTML = errorTemplate;
+                const errorMessage = document.getElementById('error-message');
+                if (errorMessage) {
+                    errorMessage.textContent = response.message || 'There was an error uploading your resume';
                 }
-                
-                li.appendChild(contentDiv);
-                
-                // Mark completed steps
-                if (step.completed) {
-                    li.classList.add('step-primary');
-                }
-                
-                // Mark current step
-                if (step.current) {
-                    li.classList.add('step-accent');
-                }
-                
-                stepsList.appendChild(li);
-            });
-        }
-        
-        // Update the progress display
-        function updateProgress(progress) {
-            // Update progress bar and percentage
-            const progressBar = document.getElementById('progress-bar');
-            const progressPercent = document.getElementById('progress-percent');
-            const currentStepName = document.getElementById('current-step-name');
-            const currentStepDescription = document.getElementById('current-step-description');
-            
-            if (progressBar) {
-                progressBar.style.width = `${progress.progress_percent}%`;
             }
-            
-            if (progressPercent) {
-                progressPercent.textContent = `${progress.progress_percent}%`;
-            }
-            
-            if (currentStepName && progress.current_step_name) {
-                currentStepName.textContent = progress.current_step_name;
-            }
-            
-            if (currentStepDescription && progress.current_step_description) {
-                currentStepDescription.textContent = progress.current_step_description;
-            }
-            
-            // Update steps list
-            if (progress.steps && progress.steps.length > 0) {
-                // Initialize steps if not already done
-                initializeSteps(progress.steps);
-                
-                // Update step status
-                progress.steps.forEach(step => {
-                    const stepElement = document.querySelector(`[data-step-id="${step.id}"]`);
-                    if (!stepElement) return;
-                    
-                    // Update completed status
-                    if (step.completed) {
-                        stepElement.classList.add('step-primary');
-                    } else {
-                        stepElement.classList.remove('step-primary');
-                    }
-                    
-                    // Update current status and spinner
-                    if (step.current) {
-                        stepElement.classList.add('step-accent');
-                        
-                        // Make sure we have the spinner
-                        let contentDiv = stepElement.querySelector('div');
-                        if (contentDiv) {
-                            // Remove existing spinner if present
-                            const existingSpinner = contentDiv.querySelector('.loading');
-                            if (existingSpinner) {
-                                existingSpinner.remove();
-                            }
-                            
-                            // Add new spinner
-                            const spinner = document.createElement('span');
-                            spinner.className = 'loading loading-spinner loading-xs text-primary ml-2';
-                            contentDiv.appendChild(spinner);
-                        }
-                    } else {
-                        stepElement.classList.remove('step-accent');
-                        
-                        // Remove spinner if not current
-                        let contentDiv = stepElement.querySelector('div');
-                        if (contentDiv) {
-                            const existingSpinner = contentDiv.querySelector('.loading');
-                            if (existingSpinner) {
-                                existingSpinner.remove();
-                            }
-                        }
-                    }
-                });
-            }
-        }
-        
-        // Poll for task status
-        function pollTaskStatus(statusUrl, redirectUrl) {
-            let errorCount = 0;
-            const maxErrors = 5;
-            
-            function checkStatus() {
-                if (!statusUrl) {
-                    console.error("Status URL is undefined");
-                    showError("Server error: Missing status URL");
-                    return;
-                }
-                
-                // Log the request
-                console.log(`Polling task status: ${statusUrl}`);
-                
-                fetch(statusUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log("Task status response:", data);
-                        
-                        if (data.success === false) {
-                            showError(data.message || "Error processing resume");
-                            return;
-                        }
-                        
-                        // Reset error count on successful response
-                        errorCount = 0;
-                        
-                        // Update progress information
-                        if (data.progress) {
-                            updateProgress(data.progress);
-                        }
-                        
-                        // Check task status
-                        if (data.status === 'completed' || data.status === 'success') {
-                            // Task completed successfully
-                            // Show 100% progress
-                            const progressData = data.progress || { 
-                                progress_percent: 100,
-                                current_step_name: "Completed",
-                                current_step_description: "Resume processing complete!"
-                            };
-                            updateProgress(progressData);
-                            
-                            // Redirect after a short delay
-                            setTimeout(() => {
-                                window.location.href = redirectUrl;
-                            }, 1500);
-                        } else if (data.status === 'error' || data.status === 'failed') {
-                            // Task failed
-                            showError(data.message || "Error processing resume");
-                        } else {
-                            // Task still in progress, continue polling
-                            setTimeout(checkStatus, 2000);
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error checking task status:", error);
-                        errorCount++;
-                        
-                        if (errorCount >= maxErrors) {
-                            showError("Failed to check processing status. Please try again later.");
-                        } else {
-                            // Continue polling despite errors for a few attempts
-                            setTimeout(checkStatus, 3000);
-                        }
-                    });
-            }
-            
-            // Start polling
-            setTimeout(checkStatus, 1000);
-        }
-        
-        // Handle form submission
-        if (resumeUploadForm) {
-            resumeUploadForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const file = fileInput.files[0];
-                if (!file) {
-                    showError('Please select a resume file to upload');
-                    return;
-                }
-                
-                // Show loading state
-                showLoading();
-                
-                // Create FormData and append file
-                const formData = new FormData(resumeUploadForm);
-                
-                // Send AJAX request
-                fetch(resumeUploadForm.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'same-origin' // Include cookies for authentication
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    console.log("Got response from server:", response);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Parsed response:", data);
-                    
-                    if (data.success) {
-                        // Resume uploaded successfully, start polling for task status
-                        const statusUrl = data.status_url;
-                        const redirectUrl = data.redirect_url;
-                        
-                        if (statusUrl && redirectUrl) {
-                            // Start polling for status
-                            pollTaskStatus(statusUrl, redirectUrl);
-                        } else {
-                            // Missing required data for either approach
-                            console.error("Missing required data in server response:", data);
-                            showError("Server error: Unable to process response");
-                        }
-                    } else {
-                        // Show error
-                        showError(data.message || 'There was an error uploading your resume');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('An error occurred while uploading your resume. Please try again.');
-                });
-            });
         }
     });
+    
+    // Handle the polling responses
+    document.body.addEventListener('htmx:afterOnLoad', function(event) {
+        // Check if this is a response from the status polling
+        const sourceElement = event.detail.elt;
+        if (sourceElement && sourceElement.id === 'status-poller') {
+            try {
+                const statusData = JSON.parse(event.detail.xhr.responseText);
+                console.log("Task status:", statusData);
+                
+                if (statusData.success === false) {
+                    // Show error
+                    const errorTemplate = document.getElementById('error-template').innerHTML;
+                    document.querySelector('#profile-card .card-body').innerHTML = errorTemplate;
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        errorMessage.textContent = statusData.message || "Error processing resume";
+                    }
+                    // Stop polling
+                    sourceElement.remove();
+                    return;
+                }
+                
+                // Update progress information
+                if (statusData.progress) {
+                    updateProgress(statusData.progress);
+                }
+                
+                // Check task status
+                if (statusData.status === 'completed' || statusData.status === 'success') {
+                    // Task completed successfully
+                    // Show 100% progress
+                    const progressData = statusData.progress || { 
+                        progress_percent: 100,
+                        current_step_name: "Completed",
+                        current_step_description: "Resume processing complete!"
+                    };
+                    updateProgress(progressData);
+                    
+                    // Stop polling
+                    sourceElement.remove();
+                    
+                    // Redirect after a short delay
+                    setTimeout(() => {
+                        window.location.href = window.redirectUrl;
+                    }, 1500);
+                } else if (statusData.status === 'error' || statusData.status === 'failed') {
+                    // Task failed
+                    const errorTemplate = document.getElementById('error-template').innerHTML;
+                    document.querySelector('#profile-card .card-body').innerHTML = errorTemplate;
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        errorMessage.textContent = statusData.message || "Error processing resume";
+                    }
+                    
+                    // Stop polling
+                    sourceElement.remove();
+                }
+            } catch (error) {
+                console.error("Error processing status response:", error);
+            }
+        }
+    });
+    
+    // Initialize the steps in the UI
+    function initializeSteps(steps) {
+        const stepsContainer = document.getElementById('processing-steps');
+        if (!stepsContainer) return;
+        
+        const stepsList = stepsContainer.querySelector('ul');
+        if (!stepsList) return;
+        
+        // Clear any existing steps
+        stepsList.innerHTML = '';
+        
+        // Add each step to the list
+        steps.forEach((step, index) => {
+            const li = document.createElement('li');
+            li.className = 'step';
+            li.setAttribute('data-step-id', step.id);
+            li.setAttribute('data-content', `${index + 1}`);
+            
+            // Create a div to hold step content and potential spinner
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'flex items-center gap-2';
+            contentDiv.textContent = step.name;
+            
+            // Add spinner if this is the current step
+            if (step.current) {
+                const spinner = document.createElement('span');
+                spinner.className = 'loading loading-spinner loading-xs text-primary ml-2';
+                contentDiv.appendChild(spinner);
+            }
+            
+            li.appendChild(contentDiv);
+            
+            // Mark completed steps
+            if (step.completed) {
+                li.classList.add('step-primary');
+            }
+            
+            // Mark current step
+            if (step.current) {
+                li.classList.add('step-accent');
+            }
+            
+            stepsList.appendChild(li);
+        });
+    }
+    
+    // Update the progress display
+    function updateProgress(progress) {
+        // Update progress bar and percentage
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const currentStepName = document.getElementById('current-step-name');
+        const currentStepDescription = document.getElementById('current-step-description');
+        
+        if (progressBar) {
+            progressBar.style.width = `${progress.progress_percent}%`;
+        }
+        
+        if (progressPercent) {
+            progressPercent.textContent = `${progress.progress_percent}%`;
+        }
+        
+        if (currentStepName && progress.current_step_name) {
+            currentStepName.textContent = progress.current_step_name;
+        }
+        
+        if (currentStepDescription && progress.current_step_description) {
+            currentStepDescription.textContent = progress.current_step_description;
+        }
+        
+        // Update steps list
+        if (progress.steps && progress.steps.length > 0) {
+            // Initialize steps if not already done
+            initializeSteps(progress.steps);
+            
+            // Update step status
+            progress.steps.forEach(step => {
+                const stepElement = document.querySelector(`[data-step-id="${step.id}"]`);
+                if (!stepElement) return;
+                
+                // Update completed status
+                if (step.completed) {
+                    stepElement.classList.add('step-primary');
+                } else {
+                    stepElement.classList.remove('step-primary');
+                }
+                
+                // Update current status and spinner
+                if (step.current) {
+                    stepElement.classList.add('step-accent');
+                    
+                    // Make sure we have the spinner
+                    let contentDiv = stepElement.querySelector('div');
+                    if (contentDiv) {
+                        // Remove existing spinner if present
+                        const existingSpinner = contentDiv.querySelector('.loading');
+                        if (existingSpinner) {
+                            existingSpinner.remove();
+                        }
+                        
+                        // Add new spinner
+                        const spinner = document.createElement('span');
+                        spinner.className = 'loading loading-spinner loading-xs text-primary ml-2';
+                        contentDiv.appendChild(spinner);
+                    }
+                } else {
+                    stepElement.classList.remove('step-accent');
+                    
+                    // Remove spinner if not current
+                    let contentDiv = stepElement.querySelector('div');
+                    if (contentDiv) {
+                        const existingSpinner = contentDiv.querySelector('.loading');
+                        if (existingSpinner) {
+                            existingSpinner.remove();
+                        }
+                    }
+                }
+            });
+        }
+    }
 </script>
 {% endblock %} 
