@@ -81,7 +81,6 @@ classDiagram
         +job_seeker: ForeignKey(JobSeekerProfile)
         +role_title: CharField
         +description: TextField
-        +confidence_score: FloatField
         +created_at: DateTimeField
     }
     
@@ -213,7 +212,6 @@ Model for AI-generated role recommendations for job seekers.
 | `job_seeker` | ForeignKey | Link to the JobSeekerProfile |
 | `role_title` | CharField | Title of the recommended role |
 | `description` | TextField | Description of the recommended role |
-| `confidence_score` | FloatField | AI confidence score between 0 and 100 |
 | `created_at` | DateTimeField | When the recommendation was created |
 
 **Key Methods:**
@@ -224,7 +222,7 @@ Model for AI-generated role recommendations for job seekers.
 **Business Rules:**
 | Rule | Description |
 |------|-------------|
-| Ordering | Role recommendations are ordered by confidence score (descending) |
+| Ordering | Role recommendations are ordered alphabetically by role title |
 
 ## Recruiters App
 

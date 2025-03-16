@@ -281,11 +281,10 @@ class RoleRecommendation(models.Model):
     )
     role_title = models.CharField(max_length=100)
     description = models.TextField()
-    confidence_score = models.FloatField(default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return f"{self.job_seeker} - {self.role_title} ({self.confidence_score:.2f})"
+        return f"{self.job_seeker} - {self.role_title}"
 
     class Meta:
-        ordering = ["-confidence_score"]
+        ordering = ["role_title"]

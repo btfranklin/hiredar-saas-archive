@@ -47,6 +47,6 @@ class RoleRecommendationAdmin(admin.ModelAdmin):
     with appropriate display fields and search functionality.
     """
 
-    list_display = ("job_seeker", "role_title", "confidence_score", "created_at")
+    list_display = ("job_seeker", "role_title", "created_at")
     list_filter = ("created_at",)
     search_fields = ("role_title", "job_seeker__user__email")
