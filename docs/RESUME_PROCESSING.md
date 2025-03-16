@@ -74,9 +74,6 @@ The resume processing utilities are organized in a modular structure:
 - **Profile Updating**: `apps/job_seekers/utils/resume_processing/profile_updater.py`
   - Updates the profile with all extracted data
 
-- **Vector Embeddings** (future): `apps/job_seekers/utils/resume_processing/embeddings.py`
-  - Placeholder for future vector embedding generation for semantic search
-
 ### Models
 
 - **JobSeekerProfile**: `apps/job_seekers/models.py::JobSeekerProfile`
