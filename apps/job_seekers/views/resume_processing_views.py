@@ -29,6 +29,13 @@ class ProfileCreateView(LoginRequiredMixin, TemplateView):
             return redirect("core:home")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """Add extra context data."""
+        context = super().get_context_data(**kwargs)
+        # Hide the user menu in the navbar for this page
+        context["hide_user_menu"] = True
+        return context
+
 
 class ResumeUploadView(LoginRequiredMixin, View):
     """
