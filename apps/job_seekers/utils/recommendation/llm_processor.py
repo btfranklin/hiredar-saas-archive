@@ -61,8 +61,6 @@ def generate_personal_tagline(resume_xml: str) -> str:
     try:
         structured_prompt = StructuredPrompt.from_promptdown_file(prompt_path)
 
-        logger.info("XML to apply to the prompt: %s", resume_xml)
-
         # Wrap the XML in markdown code block
         resume_xml = f"```xml\n{resume_xml}\n```"
 
