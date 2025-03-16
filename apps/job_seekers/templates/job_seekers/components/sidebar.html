@@ -26,7 +26,7 @@
             <li><a href="{% url 'job_seekers:profile' %}" class="{% if active_page == 'profile' %}active{% endif %}">
                 <i class="fas fa-user mr-2"></i>Profile
             </a></li>
-            <li><a href="{% url 'jobs:recommendations' %}" class="{% if active_page == 'recommendations' %}active{% endif %}">
+            <li><a href="{% url 'job_seekers:role_recommendations' %}" class="{% if active_page == 'role_recommendations' %}active{% endif %}">
                 <i class="fas fa-briefcase mr-2"></i>Recommended Roles
             </a></li>
             <li><a href="{% url 'messaging:conversations' %}" class="{% if active_page == 'messages' %}active{% endif %}">

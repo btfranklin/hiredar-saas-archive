@@ -264,3 +264,28 @@ class ResumeProcessingTaskProgress(models.Model):
             "steps": detailed_steps,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+
+class RoleRecommendation(models.Model):
+    """
+    Stores role recommendations for job seekers based on their skills and experience.
+
+    These recommendations are generated using AI matching algorithms that analyze
+    the job seeker's profile, skills, and experience to suggest relevant roles.
+    """
+
+    job_seeker = models.ForeignKey(
+        "job_seekers.JobSeekerProfile",
+        on_delete=models.CASCADE,
+        related_name="role_recommendations",
+    )
+    role_title = models.CharField(max_length=100)
+    description = models.TextField()
+    confidence_score = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.job_seeker} - {self.role_title} ({self.confidence_score:.2f})"
+
+    class Meta:
+        ordering = ["-confidence_score"]

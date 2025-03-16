@@ -46,10 +46,4 @@ urlpatterns = [
         toggle_shortlist,
         name="toggle_shortlist",
     ),
-    # Role Recommendations - redirects to job_seekers app
-    path(
-        "recommendations/",
-        lambda request: redirect("job_seekers:recommendations"),
-        name="recommendations",
-    ),
 ]
