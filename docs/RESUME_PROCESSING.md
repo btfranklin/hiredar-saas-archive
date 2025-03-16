@@ -84,6 +84,11 @@ The resume processing utilities are organized in a modular structure:
   - Contains the `resume_xml` field that stores the full XML representation
   - Contains fields for skills, experience, education, certifications, and phone number that are populated from the XML
 
+- **ResumeProcessingTaskProgress**: `apps/job_seekers/models.py::ResumeProcessingTaskProgress`
+  - Tracks the progress of resume processing tasks
+  - Contains fields for task status, progress percentage, and current processing step
+  - Used by the UI to display real-time progress updates to users
+
 ## Configuration
 
 ### Environment Variables
@@ -139,7 +144,7 @@ apps/job_seekers/views.py::ResumeUploadView.post()
     │
     └── apps/job_seekers/tasks.py::handle_resume_upload_task()
         │
-        └── apps/job_seekers/utils/resume_processing/pipeline.py::process_resume_async()
+        └── apps/job_seekers/utils/resume_processing/pipeline.py::process_resume()
             │
             ├── django.core.files.storage::default_storage.path()
             │

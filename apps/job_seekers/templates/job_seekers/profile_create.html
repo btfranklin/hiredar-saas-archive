@@ -58,9 +58,26 @@
 <div id="processing-template" class="hidden">
     <div class="card-body">
         <h2 class="text-2xl font-semibold mb-6 text-center">Building Your Profile</h2>
+        
         <div class="flex flex-col items-center space-y-6">
-            <div class="radial-progress animate-spin text-primary" style="--value:70;"></div>
-            <p class="text-center">Please wait while our AI analyzes your resume and builds your profile...</p>
+            <!-- Progress bar and percentage -->
+            <div class="w-full max-w-sm">
+                <div class="flex justify-between mb-1">
+                    <span id="current-step-name" class="text-base font-medium">Processing...</span>
+                    <span id="progress-percent" class="text-sm font-medium">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="current-step-description" class="text-sm mt-2 text-base-content/70">Analyzing your resume...</p>
+            </div>
+            
+            <!-- Steps list -->
+            <div id="processing-steps" class="w-full max-w-sm">
+                <ul class="steps steps-vertical">
+                    <!-- Steps will be populated dynamically -->
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -125,51 +142,106 @@
         // Show loading state
         function showLoading() {
             profileCard.querySelector('.card-body').innerHTML = processingTemplate.innerHTML;
-            
-            // Get the progress elements after they're added to the DOM
-            const progressText = document.getElementById('progress-text');
-            const progressBar = document.getElementById('progress-bar');
-            
-            if (progressText) progressText.textContent = 'Uploading resume...';
-            if (progressBar) progressBar.style.width = '10%';
         }
         
         // Show error message
         function showError(message) {
             profileCard.querySelector('.card-body').innerHTML = errorTemplate.innerHTML;
             const errorMessage = document.getElementById('error-message');
-            if (errorMessage) errorMessage.textContent = message;
+            if (errorMessage) {
+                errorMessage.textContent = message;
+            }
         }
         
-        // Function to poll task status
-        function pollTaskStatus(taskId, statusUrl, redirectUrl) {
-            console.log(`Starting poll with taskId: ${taskId}, statusUrl: ${statusUrl}, redirectUrl: ${redirectUrl}`);
+        // Initialize the steps in the UI
+        function initializeSteps(steps) {
+            const stepsContainer = document.getElementById('processing-steps');
+            if (!stepsContainer) return;
             
-            // Ensure statusUrl ends with a slash if needed
-            if (statusUrl && !statusUrl.endsWith('/')) {
-                statusUrl = statusUrl + '/';
+            const stepsList = stepsContainer.querySelector('ul');
+            if (!stepsList) return;
+            
+            // Clear any existing steps
+            stepsList.innerHTML = '';
+            
+            // Add each step to the list
+            steps.forEach((step, index) => {
+                const li = document.createElement('li');
+                li.className = 'step';
+                li.setAttribute('data-step-id', step.id);
+                li.setAttribute('data-content', `${index + 1}`);
+                li.textContent = step.name;
+                
+                // Mark completed steps
+                if (step.completed) {
+                    li.classList.add('step-primary');
+                }
+                
+                // Mark current step
+                if (step.current) {
+                    li.classList.add('step-accent');
+                }
+                
+                stepsList.appendChild(li);
+            });
+        }
+        
+        // Update the progress display
+        function updateProgress(progress) {
+            // Update progress bar and percentage
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const currentStepName = document.getElementById('current-step-name');
+            const currentStepDescription = document.getElementById('current-step-description');
+            
+            if (progressBar) {
+                progressBar.style.width = `${progress.progress_percent}%`;
             }
             
-            let steps = [
-                { text: 'Uploading resume...', progress: 10 },
-                { text: 'Processing file...', progress: 30 },
-                { text: 'Extracting skills...', progress: 50 },
-                { text: 'Estimating experience...', progress: 70 },
-                { text: 'Generating summary...', progress: 90 }
-            ];
+            if (progressPercent) {
+                progressPercent.textContent = `${progress.progress_percent}%`;
+            }
             
-            let currentStep = 0;
+            if (currentStepName && progress.current_step_name) {
+                currentStepName.textContent = progress.current_step_name;
+            }
+            
+            if (currentStepDescription && progress.current_step_description) {
+                currentStepDescription.textContent = progress.current_step_description;
+            }
+            
+            // Update steps list
+            if (progress.steps && progress.steps.length > 0) {
+                // Initialize steps if not already done
+                initializeSteps(progress.steps);
+                
+                // Update step status
+                progress.steps.forEach(step => {
+                    const stepElement = document.querySelector(`[data-step-id="${step.id}"]`);
+                    if (!stepElement) return;
+                    
+                    // Update completed status
+                    if (step.completed) {
+                        stepElement.classList.add('step-primary');
+                    } else {
+                        stepElement.classList.remove('step-primary');
+                    }
+                    
+                    // Update current status
+                    if (step.current) {
+                        stepElement.classList.add('step-accent');
+                    } else {
+                        stepElement.classList.remove('step-accent');
+                    }
+                });
+            }
+        }
+        
+        // Poll for task status
+        function pollTaskStatus(statusUrl, redirectUrl) {
             let errorCount = 0;
             const maxErrors = 5;
             
-            // Update to the first step after upload
-            const progressText = document.getElementById('progress-text');
-            const progressBar = document.getElementById('progress-bar');
-            
-            if (progressText) progressText.textContent = steps[currentStep].text;
-            if (progressBar) progressBar.style.width = steps[currentStep].progress + '%';
-            
-            // Function to check task status
             function checkStatus() {
                 if (!statusUrl) {
                     console.error("Status URL is undefined");
@@ -190,10 +262,6 @@
                     .then(data => {
                         console.log("Task status response:", data);
                         
-                        // Get the progress elements each time as they might be refreshed
-                        const progressText = document.getElementById('progress-text');
-                        const progressBar = document.getElementById('progress-bar');
-                        
                         if (data.success === false) {
                             showError(data.message || "Error processing resume");
                             return;
@@ -202,25 +270,31 @@
                         // Reset error count on successful response
                         errorCount = 0;
                         
-                        if (data.status === 'success') {
+                        // Update progress information
+                        if (data.progress) {
+                            updateProgress(data.progress);
+                        }
+                        
+                        // Check task status
+                        if (data.status === 'completed' || data.status === 'success') {
                             // Task completed successfully
-                            if (progressText) progressText.textContent = 'Resume processed successfully!';
-                            if (progressBar) progressBar.style.width = '100%';
+                            // Show 100% progress
+                            const progressData = data.progress || { 
+                                progress_percent: 100,
+                                current_step_name: "Completed",
+                                current_step_description: "Resume processing complete!"
+                            };
+                            updateProgress(progressData);
                             
                             // Redirect after a short delay
                             setTimeout(() => {
                                 window.location.href = redirectUrl;
-                            }, 1000);
-                        } else if (data.status === 'error') {
+                            }, 1500);
+                        } else if (data.status === 'error' || data.status === 'failed') {
                             // Task failed
                             showError(data.message || "Error processing resume");
                         } else {
-                            // Task still in progress
-                            currentStep = (currentStep + 1) % steps.length;
-                            if (progressText) progressText.textContent = steps[currentStep].text;
-                            if (progressBar) progressBar.style.width = (data.progress || steps[currentStep].progress) + '%';
-                            
-                            // Continue polling
+                            // Task still in progress, continue polling
                             setTimeout(checkStatus, 2000);
                         }
                     })
@@ -275,34 +349,16 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log("Server response data:", data);
+                    console.log("Parsed response:", data);
                     
                     if (data.success) {
-                        // Check if this is a direct success response or async task response
-                        if (data.task_id && data.status_url) {
-                            // This is an async task response - start polling
-                            pollTaskStatus(data.task_id, data.status_url, data.redirect_url);
-                        } else if (data.redirect) {
-                            // This is a direct success response - redirect immediately
-                            console.log("Direct success response - redirecting to:", data.redirect);
-                            
-                            // Show success message
-                            const processingDiv = document.querySelector('.card-body');
-                            if (processingDiv) {
-                                processingDiv.innerHTML = `
-                                    <div class="flex flex-col items-center space-y-4">
-                                        <div class="text-5xl text-success">✓</div>
-                                        <h2 class="text-2xl font-semibold text-center">Success!</h2>
-                                        <p class="text-center">${data.message || 'Your resume has been processed successfully!'}</p>
-                                        <p class="text-center text-sm text-gray-500">Redirecting to your dashboard...</p>
-                                    </div>
-                                `;
-                            }
-                            
-                            // Redirect after a short delay
-                            setTimeout(() => {
-                                window.location.href = data.redirect;
-                            }, 2000);
+                        // Resume uploaded successfully, start polling for task status
+                        const statusUrl = data.status_url;
+                        const redirectUrl = data.redirect_url;
+                        
+                        if (statusUrl && redirectUrl) {
+                            // Start polling for status
+                            pollTaskStatus(statusUrl, redirectUrl);
                         } else {
                             // Missing required data for either approach
                             console.error("Missing required data in server response:", data);

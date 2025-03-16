@@ -11,6 +11,7 @@ from django.views.generic import TemplateView, View
 from django_q.tasks import async_task, result
 
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models import ResumeProcessingTaskProgress
 from apps.job_seekers.tasks import handle_resume_upload_task, save_resume_file
 from apps.jobs.models import CandidateMatch
 from apps.messaging.models import Notification
@@ -168,8 +169,17 @@ class ResumeUploadView(LoginRequiredMixin, View):
 
             profile_id = job_seeker_profile.pk
 
-            # Queue the resume processing task
-            task_id = async_task(handle_resume_upload_task, file_path, profile_id)
+            # Generate a unique ID for the task
+            task_id = str(uuid.uuid4())
+
+            # Queue the resume processing task and pass the task_id
+            async_task(
+                handle_resume_upload_task,
+                file_path,
+                profile_id,
+                task_id=task_id,
+                task_name=f"resume_processing_{task_id}",
+            )
 
             # Return success response with task ID and status URL
             status_url = reverse("job_seekers:task_status", kwargs={"task_id": task_id})
@@ -212,7 +222,26 @@ class TaskStatusView(LoginRequiredMixin, View):
             )
 
         try:
-            # Get the task result
+            # First check the TaskProgress model for detailed progress information
+            try:
+                task_progress = ResumeProcessingTaskProgress.objects.get(
+                    task_id=task_id, user=user
+                )
+
+                # Return detailed progress information
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "status": task_progress.status,
+                        "message": task_progress.message,
+                        "progress": task_progress.to_dict(),
+                    }
+                )
+            except ResumeProcessingTaskProgress.DoesNotExist:
+                # Fall back to checking Django Q2 result
+                pass
+
+            # Get the task result from Django Q2
             task_result = result(task_id)
 
             if task_result is None:
@@ -222,7 +251,12 @@ class TaskStatusView(LoginRequiredMixin, View):
                         "success": True,
                         "status": "running",
                         "message": "Task is still running",
-                        "progress": 50,  # Default to 50% if we don't know the exact progress
+                        "progress": {
+                            "progress_percent": 50,  # Default to 50% if we don't know the exact progress
+                            "current_step": "processing",
+                            "current_step_name": "Processing Resume",
+                            "steps": [],
+                        },
                     }
                 )
 
