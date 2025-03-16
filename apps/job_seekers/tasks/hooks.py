@@ -32,9 +32,10 @@ def resume_processing_completed(task: Task) -> None:
         return
 
     result = task.result
-    if not isinstance(result, dict) or not result.get("success", False):
+    # Check if result is a dict and has status='success'
+    if not isinstance(result, dict) or result.get("status") != "success":
         logger.error(
-            "Resume processing did not return success result, not starting follow-up tasks"
+            "Resume processing did not return success status, not starting follow-up tasks"
         )
         return
 
@@ -55,6 +56,7 @@ def resume_processing_completed(task: Task) -> None:
         "apps.job_seekers.tasks.recommendation_tasks.generate_role_recommendations",
         profile_id,
         group=group_name,
+        task_name=f"role_recommendations_{profile_id}",
     )
 
     # Generate personal tagline
@@ -62,17 +64,15 @@ def resume_processing_completed(task: Task) -> None:
         "apps.job_seekers.tasks.recommendation_tasks.generate_personal_tagline",
         profile_id,
         group=group_name,
+        task_name=f"personal_tagline_{profile_id}",
     )
 
     logger.info(
-        "Started follow-up tasks with IDs: %s, %s (group: %s)",
+        "Queued follow-up tasks with IDs: %s, %s (group: %s)",
         rec_task_id,
         tagline_task_id,
         group_name,
     )
-
-    # Note: The group feature would be implemented here in a more advanced version
-    # For simplicity, we're not using the full group functionality
 
 
 def all_processing_complete(group_result: list[Task]) -> None:

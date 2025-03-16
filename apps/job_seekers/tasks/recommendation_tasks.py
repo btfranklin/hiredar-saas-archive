@@ -9,6 +9,9 @@ import logging
 from typing import Any
 
 from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.utils.recommendation.llm_processor import (
+    generate_personal_tagline as generate_tagline_from_xml,
+)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -97,19 +100,61 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
             "Generating personal tagline for job seeker: %s", profile.user.email
         )
 
-        # TODO: Implement actual tagline generation logic
-        # This would analyze the profile's skills, experience, education,
-        # and desired role to create a compelling personal tagline
+        # Check if we have resume XML data
+        if not profile.resume_xml:
+            logger.warning(
+                "No resume XML data available for profile ID %s", job_seeker_profile_id
+            )
+            return {
+                "success": False,
+                "message": "Cannot generate tagline: No resume data available",
+            }
 
-        # For now, we'll just log a placeholder message
-        logger.info("Personal tagline generation not yet implemented")
+        # Validate XML content
+        resume_xml = profile.resume_xml
+        logger.info(
+            "Resume XML found, length: %d characters",
+            len(resume_xml) if resume_xml else 0,
+        )
 
-        # Return success response
-        return {
-            "success": True,
-            "message": "Personal tagline would be generated here",
-            "profile_id": job_seeker_profile_id,
-        }
+        # Check XML format and encoding
+        is_valid_xml = resume_xml.strip().startswith(
+            "<"
+        ) and resume_xml.strip().endswith(">")
+        logger.info(
+            "XML appears to be valid format: %s", "Yes" if is_valid_xml else "No"
+        )
+
+        # Show start and end of XML for debugging
+        if resume_xml and len(resume_xml) > 100:
+            start = resume_xml[:50].replace("\n", "\\n")
+            end = resume_xml[-50:].replace("\n", "\\n")
+            logger.info("XML starts with: %s", start)
+            logger.info("XML ends with: %s", end)
+
+        # Generate the tagline using the LLM processor
+        try:
+            tagline = generate_tagline_from_xml(resume_xml)
+
+            # Save the tagline to the user's profile
+            # Future: Add dedicated field for tagline in JobSeekerProfile model
+            # For now, we'll just return it in the response
+
+            logger.info("Generated tagline for %s: %s", profile.user.email, tagline)
+
+            return {
+                "success": True,
+                "message": "Personal tagline generated successfully",
+                "profile_id": job_seeker_profile_id,
+                "tagline": tagline,
+            }
+
+        except Exception as e:
+            logger.error("Error in LLM tagline generation: %s", str(e), exc_info=True)
+            return {
+                "success": False,
+                "message": f"Error generating tagline: {str(e)}",
+            }
 
     except Exception as e:
         # Log the error
