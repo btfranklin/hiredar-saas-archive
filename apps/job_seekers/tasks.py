@@ -12,7 +12,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django_q.models import Schedule
-from django_q.tasks import async_task, schedule
+from django_q.tasks import schedule
 
 from apps.job_seekers.models import JobSeekerProfile, ResumeProcessingTaskProgress
 from apps.job_seekers.utils.resume_processing.pipeline import process_resume
