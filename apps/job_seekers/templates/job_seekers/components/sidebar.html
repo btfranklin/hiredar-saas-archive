@@ -14,7 +14,17 @@
             
             <h1 class="text-xl font-bold">{{ user.get_full_name }}</h1>
             <p class="text-sm text-base-content/70">{{ user.email }}</p>
-            <div class="badge badge-primary mt-2">Job Seeker</div>
+            <div id="tagline-container" class="bg-primary text-primary-content p-2 rounded-md mt-3 text-sm max-w-full text-center">
+                <div 
+                    hx-get="{% url 'job_seekers:api_personal_tagline' %}" 
+                    hx-trigger="load, every 5s"
+                    hx-swap="innerHTML"
+                    hx-target="this"
+                    hx-indicator="#tagline-spinner">
+                    <span id="tagline-spinner" class="loading loading-spinner loading-xs mr-1"></span>
+                    <span>Job Seeker</span>
+                </div>
+            </div>
         </div>
         
         <div class="divider"></div>
@@ -37,4 +47,15 @@
             </a></li>
         </ul>
     </div>
-</div> 
+</div>
+
+<!-- Script to handle stop polling event -->
+<script>
+    document.body.addEventListener('stopPolling', function(evt) {
+        const target = document.querySelector(evt.detail.target + ' [hx-trigger]');
+        if (target) {
+            // Remove the polling trigger
+            target.removeAttribute('hx-trigger');
+        }
+    });
+</script> 

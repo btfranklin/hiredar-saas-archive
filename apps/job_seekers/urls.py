@@ -3,6 +3,7 @@
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
+from apps.job_seekers.views.api_views import PersonalTaglineView
 from apps.job_seekers.views.dashboard_views import (
     DashboardView,
     RoleRecommendationsView,
@@ -33,5 +34,11 @@ urlpatterns: list[URLPattern] = [
         "task-status/<str:task_id>/",
         ResumeProcessingTaskProgressView.as_view(),
         name="task_status",
+    ),
+    # API endpoints
+    path(
+        "api/personal-tagline/",
+        PersonalTaglineView.as_view(),
+        name="api_personal_tagline",
     ),
 ]
