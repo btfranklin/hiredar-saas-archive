@@ -169,7 +169,7 @@
                         </div>
                         <ul tabindex="0" class="dropdown-content menu menu-sm mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
                             {% if user.user_type == 'recruiter' %}
-                                <li><a href="{% url 'jobs:list' %}">Job Openings</a></li>
+                                <li><a href="{% url 'recruiters:job_openings_list' %}">Job Openings</a></li>
                             {% else %}
                                 <li><a href="{% url 'job_seekers:profile' %}">Profile</a></li>
                             {% endif %}

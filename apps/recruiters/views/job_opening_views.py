@@ -1,20 +1,15 @@
 """
-Job-related views for the jobs app.
+Job opening views for the recruiters app.
 
 This module contains views for creating, listing, viewing, editing, and deleting job openings,
-providing the core functionality for job management in the application.
+providing the core functionality for job opening management in the application.
 """
 
 from typing import Any, ClassVar, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseBase,
-    HttpResponseRedirect,
-)
+from django.http import HttpRequest, HttpResponseBase, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -47,7 +42,7 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
     """
 
     model = JobOpening
-    template_name = "jobs/job_opening_create.html"
+    template_name = "recruiters/job_openings/create.html"
     fields = [
         "title",
         "description",
@@ -59,7 +54,7 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
         "experience_years",
         "is_active",
     ]
-    success_url = reverse_lazy("jobs:list")
+    success_url = reverse_lazy("recruiters:job_openings_list")
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
@@ -163,7 +158,7 @@ class JobOpeningListView(LoginRequiredMixin, ListView):
     """
 
     model = JobOpening
-    template_name = "jobs/job_opening_list.html"
+    template_name = "recruiters/job_openings/list.html"
     context_object_name = "job_openings"
 
     def get_queryset(self) -> QuerySet[JobOpening]:
@@ -193,7 +188,7 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
     """
 
     model: ClassVar[type[JobOpening]] = JobOpening
-    template_name = "jobs/job_opening_detail.html"
+    template_name = "recruiters/job_openings/detail.html"
     context_object_name = "job_opening"
     object: JobOpening | None = None
 
@@ -244,7 +239,7 @@ class JobOpeningEditView(LoginRequiredMixin, UpdateView):
     """
 
     model: ClassVar[type[JobOpening]] = JobOpening
-    template_name = "jobs/job_opening_edit.html"
+    template_name = "recruiters/job_openings/edit.html"
     fields = [
         "title",
         "description",
@@ -256,112 +251,82 @@ class JobOpeningEditView(LoginRequiredMixin, UpdateView):
         "experience_years",
         "is_active",
     ]
-    object: JobOpening | None = None
-
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        """
-        Handle GET requests: retrieve the job to edit and render the form.
-
-        This override ensures that self.object is properly set before the template is rendered.
-        """
-        self.object = cast(JobOpening, self.get_object())
-        return super().get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        """
-        Get additional context data for the template.
-
-        This ensures that job_opening is properly set in the context.
-        """
-        context = super().get_context_data(**kwargs)
-        # Ensure the job_opening object is properly set in the context
-        if "job_opening" not in context:
-            context["job_opening"] = self.object
-        return context
 
     def get_success_url(self) -> str:
         """
-        Get the URL to redirect to after successful update.
+        Get the URL to redirect to after a successful edit.
 
         Returns:
             str: The URL to redirect to.
         """
-        job = cast(JobOpening, self.object)
-        return reverse("jobs:detail", kwargs={"pk": job.pk})
+        return reverse("recruiters:job_openings_detail", kwargs={"pk": self.object.pk})
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponseBase:
         """
-        Check if the user is the owner of the job before processing the request.
+        Ensure only the recruiter who created the job can edit it.
 
         Args:
             request: The HTTP request.
-            *args: Additional arguments.
+            *args: Additional positional arguments.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            HttpResponse: The response to the request.
+            HttpResponseBase: The HTTP response.
         """
-        job = cast(JobOpening, self.get_object())
-        # Only allow the owner to edit
-        if job.recruiter.user != request.user:
-            return redirect("jobs:detail", pk=job.pk)
+        user = cast(AuthenticatedUser, request.user)
+        job_opening = self.get_object()
+
+        if not user.is_authenticated or user.user_type != "recruiter":
+            return redirect("core:home")
+
+        # Check if this recruiter owns the job opening
+        if job_opening.recruiter.user != request.user:
+            return redirect("core:home")
+
         return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form: Any) -> HttpResponseRedirect:
-        """
-        Process the form if it is valid.
-
-        Updates the job opening and handles updating requirements.
-
-        Args:
-            form: The validated form.
-
-        Returns:
-            HttpResponseRedirect: Redirect to success_url.
-        """
-        job = form.save()
-        # Set the object safely with proper casting
-        self.object = cast(JobOpening, job)
-
-        return HttpResponseRedirect(self.get_success_url())
 
 
 class JobOpeningDeleteView(LoginRequiredMixin, DeleteView):
     """
     View for deleting a job opening.
 
-    This view allows recruiters to delete their job openings.
+    This view allows recruiters to delete their own job openings, with a confirmation
+    step to prevent accidental deletion.
 
     Attributes:
         model: The model to delete (JobOpening).
-        template_name: The template to render for job deletion confirmation.
+        template_name: The template to render for confirmation.
         success_url: URL to redirect to after successful deletion.
     """
 
     model: ClassVar[type[JobOpening]] = JobOpening
-    template_name = "jobs/job_opening_confirm_delete.html"
-    context_object_name = "job_opening"
-    success_url = reverse_lazy("jobs:list")
-    object: JobOpening | None = None
+    template_name = "recruiters/job_openings/confirm_delete.html"
+    success_url = reverse_lazy("recruiters:job_openings_list")
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponseBase:
         """
-        Check if the user is the owner of the job before processing the request.
+        Ensure only the recruiter who created the job can delete it.
 
         Args:
             request: The HTTP request.
-            *args: Additional arguments.
+            *args: Additional positional arguments.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            HttpResponse: The response to the request.
+            HttpResponseBase: The HTTP response.
         """
-        job = cast(JobOpening, self.get_object())
-        # Only allow the owner to delete
-        if job.recruiter.user != request.user:
-            return redirect("jobs:detail", pk=job.pk)
+        user = cast(AuthenticatedUser, request.user)
+        job_opening = self.get_object()
+
+        if not user.is_authenticated or user.user_type != "recruiter":
+            return redirect("core:home")
+
+        # Check if this recruiter owns the job opening
+        if job_opening.recruiter.user != request.user:
+            return redirect("core:home")
+
         return super().dispatch(request, *args, **kwargs)

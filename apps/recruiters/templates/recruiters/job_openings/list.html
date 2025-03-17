@@ -35,8 +35,7 @@
                 {% if request.user.user_type == 'recruiter' %}
                     <ul class="menu bg-base-200 w-full p-0">
                         <li><a href="{% url 'recruiters:dashboard' %}"><i class="fas fa-home mr-2"></i> Dashboard</a></li>
-                        <li><a href="{% url 'recruiters:profile' %}"><i class="fas fa-user mr-2"></i> Profile</a></li>
-                        <li><a href="{% url 'jobs:list' %}" class="active"><i class="fas fa-briefcase mr-2"></i> My Job Openings</a></li>
+                        <li><a href="{% url 'recruiters:job_openings_list' %}" class="active"><i class="fas fa-briefcase mr-2"></i> My Job Openings</a></li>
                         <li><a href="{% url 'messaging:conversations' %}"><i class="fas fa-envelope mr-2"></i> Messages</a></li>
                         <li><a href="{% url 'recruiters:settings' %}"><i class="fas fa-cog mr-2"></i> Settings</a></li>
                     </ul>
@@ -58,7 +57,7 @@
                 {% if request.user.user_type == 'recruiter' %}
                     <div class="flex justify-between items-center mb-6">
                         <h1 class="text-2xl font-bold">My Job Openings</h1>
-                        <a href="{% url 'jobs:create' %}" class="btn btn-primary btn-sm">
+                        <a href="{% url 'recruiters:job_openings_create' %}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus mr-2"></i> Create Job Opening
                         </a>
                     </div>
@@ -120,7 +119,7 @@
                                     </div>
                                     
                                     <div class="card-actions justify-end mt-4">
-                                        <a href="{% url 'jobs:detail' job.id %}" class="btn btn-primary">
+                                        <a href="{% url 'recruiters:job_openings_detail' job.id %}" class="btn btn-primary">
                                             {% if request.user.user_type == 'recruiter' %}
                                                 View Details
                                             {% else %}
@@ -129,7 +128,7 @@
                                         </a>
                                         
                                         {% if request.user.user_type == 'recruiter' %}
-                                            <a href="{% url 'jobs:edit' job.id %}" class="btn btn-outline">
+                                            <a href="{% url 'recruiters:job_openings_edit' job.id %}" class="btn btn-outline">
                                                 <i class="fas fa-edit mr-2"></i> Edit
                                             </a>
                                         {% endif %}
@@ -145,7 +144,7 @@
                         {% if request.user.user_type == 'recruiter' %}
                             <h3 class="text-xl font-semibold mb-2">No job openings yet</h3>
                             <p class="text-base-content/70 mb-6">Create your first job opening to start finding candidates</p>
-                            <a href="{% url 'jobs:create' %}" class="btn btn-primary">
+                            <a href="{% url 'recruiters:job_openings_create' %}" class="btn btn-primary">
                                 <i class="fas fa-plus mr-2"></i> Create Job Opening
                             </a>
                         {% else %}

@@ -30,10 +30,10 @@
                             </div>
                             
                             <div class="flex gap-2">
-                                <a href="{% url 'jobs:edit' job_opening.id %}" class="btn btn-sm btn-outline">
+                                <a href="{% url 'recruiters:job_openings_edit' job_opening.id %}" class="btn btn-sm btn-outline">
                                     <i class="fas fa-edit mr-1"></i> Edit
                                 </a>
-                                <a href="{% url 'jobs:delete' job_opening.id %}" class="btn btn-sm btn-error btn-outline">
+                                <a href="{% url 'recruiters:job_openings_delete' job_opening.id %}" class="btn btn-sm btn-error btn-outline">
                                     <i class="fas fa-trash mr-1"></i> Delete
                                 </a>
                             </div>

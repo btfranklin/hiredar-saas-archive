@@ -10,21 +10,9 @@ from apps.jobs.views.candidate_views import (
     CandidateMatchListView,
     toggle_shortlist,
 )
-from apps.jobs.views.job_views import (
-    JobOpeningCreateView,
-    JobOpeningDeleteView,
-    JobOpeningDetailView,
-    JobOpeningEditView,
-    JobOpeningListView,
-)
 
 # For backwards compatibility, expose all views at the module level
 __all__ = [
-    "JobOpeningCreateView",
-    "JobOpeningListView",
-    "JobOpeningDetailView",
-    "JobOpeningEditView",
-    "JobOpeningDeleteView",
     "CandidateMatchListView",
     "CandidateDetailView",
     "toggle_shortlist",

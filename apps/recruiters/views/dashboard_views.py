@@ -1,4 +1,8 @@
-"""Views for the recruiters app."""
+"""
+Dashboard and settings views for the recruiters app.
+
+This module contains views for the recruiter dashboard and settings.
+"""
 
 from typing import Any, cast
 
