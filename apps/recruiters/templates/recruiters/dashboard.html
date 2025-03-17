@@ -10,66 +10,6 @@
         
         <!-- Main content -->
         <div class="w-full lg:w-3/4">
-            <!-- Stats Card -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <!-- Subscription Status - Small Badge at Top -->
-                {% with rec_profile=user.recruiter_profile %}
-                <div class="flex justify-end mb-4">
-                    <div class="flex items-center">
-                        <div class="badge {% if rec_profile.is_subscribed %}badge-success{% else %}badge-warning{% endif %} mr-2">
-                            {% if rec_profile.is_subscribed %}
-                                Active Subscription
-                            {% else %}
-                                No Active Subscription
-                            {% endif %}
-                        </div>
-                        
-                        <span class="text-sm font-medium">
-                            {{ rec_profile.get_subscription_tier_display }}
-                        </span>
-                        
-                        {% if not rec_profile.is_subscribed %}
-                            <a href="#" class="btn btn-primary btn-xs ml-2">
-                                <i class="fas fa-arrow-up mr-1"></i> Upgrade
-                            </a>
-                        {% elif rec_profile.subscription_ends_at %}
-                            <span class="text-xs text-base-content/70 ml-2">
-                                Renews: {{ rec_profile.subscription_ends_at|date:"M j, Y" }}
-                            </span>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endwith %}
-                
-                <!-- Stats -->
-                <div class="stats shadow w-full">
-                    <div class="stat">
-                        <div class="stat-figure text-primary">
-                            <i class="fas fa-briefcase text-2xl"></i>
-                        </div>
-                        <div class="stat-title">Active Jobs</div>
-                        <div class="stat-value">{{ active_jobs_count|default:"0" }}</div>
-                    </div>
-                    
-                    <div class="stat">
-                        <div class="stat-figure text-secondary">
-                            <i class="fas fa-users text-2xl"></i>
-                        </div>
-                        <div class="stat-title">Total Candidates</div>
-                        <div class="stat-value text-secondary">{{ candidates_count|default:"0" }}</div>
-                    </div>
-                    
-                    <div class="stat">
-                        <div class="stat-figure text-accent">
-                            <i class="fas fa-envelope-open text-2xl"></i>
-                        </div>
-                        <div class="stat-title">Messages</div>
-                        <div class="stat-value text-accent">{{ unread_messages_count|default:"0" }}</div>
-                        <div class="stat-desc">Unread messages</div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Quick Actions -->
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
