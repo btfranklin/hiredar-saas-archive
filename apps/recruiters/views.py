@@ -8,8 +8,9 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
 from apps.authentication.types import AuthenticatedUser
-from apps.jobs.models import CandidateMatch, JobOpening
+from apps.jobs.models import CandidateMatch
 from apps.messaging.models import Notification
+from apps.recruiters.models import JobOpening
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -17,7 +18,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     template_name = "recruiters/dashboard.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """Ensure only recruiters can access this view."""
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "recruiter":
@@ -54,7 +57,9 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
     template_name = "recruiters/profile.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """Ensure only recruiters can access this view."""
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "recruiter":
@@ -67,7 +72,9 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 
     template_name = "recruiters/settings.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """Ensure only recruiters can access this view."""
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "recruiter":
