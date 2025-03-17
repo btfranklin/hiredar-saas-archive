@@ -1,0 +1,7 @@
+<!-- Messaging Sidebar Component -->
+<!-- This component delegates to the appropriate sidebar based on user type -->
+{% if user.user_type == 'job_seeker' %}
+    {% include 'job_seekers/components/sidebar.html' with active_page='messages' %}
+{% else %}
+    {% include 'recruiters/components/sidebar.html' with active_page='messages' %}
+{% endif %} 

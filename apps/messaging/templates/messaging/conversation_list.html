@@ -6,12 +6,8 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Include appropriate sidebar based on user type -->
-        {% if user.user_type == 'job_seeker' %}
-            {% include 'job_seekers/components/sidebar.html' with active_page='messages' %}
-        {% else %}
-            {% include 'recruiters/components/sidebar.html' with active_page='messages' %}
-        {% endif %}
+        <!-- Include messaging sidebar component -->
+        {% include 'messaging/components/sidebar.html' %}
         
         <!-- Main content -->
         <div class="w-full lg:w-3/4">
