@@ -37,7 +37,7 @@
                     <div>
                         <h3 class="font-semibold">Candidate Matches</h3>
                         <p class="text-sm text-base-content/70 mb-2">You have {{ job_opening.candidate_matches.count }} potential candidates for this position.</p>
-                        <a href="{% url 'jobs:candidates' job_opening.id %}" class="btn btn-sm btn-outline w-full">
+                        <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-sm btn-outline w-full">
                             <i class="fas fa-users mr-2"></i> View Candidates
                         </a>
                     </div>
@@ -148,7 +148,7 @@
                     </div>
                     
                     <div class="flex justify-end gap-2 mt-8">
-                        <a href="{% url 'jobs:detail' job_opening.id %}" class="btn btn-ghost">Cancel</a>
+                        <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-ghost">Cancel</a>
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>

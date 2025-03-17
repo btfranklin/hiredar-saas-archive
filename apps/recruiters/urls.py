@@ -40,4 +40,16 @@ urlpatterns: list[URLPattern] = [
         JobOpeningDeleteView.as_view(),
         name="job_openings_delete",
     ),
+    # TODO: Implement candidate views and add these URL patterns
+    # # Candidate routes
+    # path(
+    #     "job-openings/<int:job_id>/candidates/",
+    #     JobOpeningCandidatesView.as_view(),
+    #     name="job_opening_candidates",
+    # ),
+    # path(
+    #     "job-openings/<int:job_id>/candidates/<int:job_seeker_id>/",
+    #     JobOpeningCandidateDetailView.as_view(),
+    #     name="job_opening_candidate_detail",
+    # ),
 ]

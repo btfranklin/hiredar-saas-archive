@@ -113,7 +113,7 @@
                         {% else %}
                             <h3 class="text-xl font-semibold mb-2">No available jobs at the moment</h3>
                             <p class="text-base-content/70 mb-6">Check back later or update your profile to get better job recommendations</p>
-                            <a href="{% url 'jobs:recommendations' %}" class="btn btn-primary">
+                            <a href="{% url 'job_seekers:role_recommendations' %}" class="btn btn-primary">
                                 View Recommended Roles
                             </a>
                         {% endif %}
