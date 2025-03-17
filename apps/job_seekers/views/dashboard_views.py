@@ -75,8 +75,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             job_seeker=profile
         ).count()
 
-        # Include the talent pool status
-        context["in_talent_pool"] = profile.in_talent_pool
+        # Include the talent pool status with null-checking
+        context["in_talent_pool"] = (
+            getattr(profile, "in_talent_pool", False) if profile is not None else False
+        )
 
         return context
 

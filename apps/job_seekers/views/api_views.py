@@ -101,6 +101,11 @@ class ToggleTalentPoolView(LoginRequiredMixin, View):
             )
 
         profile = user.job_seeker_profile
+        if profile is None:
+            return JsonResponse(
+                {"success": False, "message": "Job seeker profile is None"},
+                status=404,
+            )
 
         try:
             # Parse the request body to get the active state
@@ -112,10 +117,11 @@ class ToggleTalentPoolView(LoginRequiredMixin, View):
             profile.save(update_fields=["in_talent_pool"])
 
             # Log the status change
+            profile_id = getattr(profile, "id", "unknown")
             logger.info(
                 "Job seeker %s (ID: %s) %s the talent pool",
                 user.email,
-                profile.id,
+                profile_id,
                 "entered" if active else "left",
             )
 
@@ -123,7 +129,7 @@ class ToggleTalentPoolView(LoginRequiredMixin, View):
                 {
                     "success": True,
                     "message": "Talent pool status updated successfully",
-                    "in_talent_pool": profile.in_talent_pool,
+                    "in_talent_pool": getattr(profile, "in_talent_pool", False),
                 }
             )
 
@@ -163,6 +169,8 @@ class ToggleRoleInterestView(LoginRequiredMixin, View):
             return HttpResponse("Profile not found", status=404)
 
         profile = user.job_seeker_profile
+        if profile is None:
+            return HttpResponse("Profile is None", status=404)
 
         # Get the role recommendation and check if it belongs to this job seeker
         role = get_object_or_404(RoleRecommendation, id=role_id)
