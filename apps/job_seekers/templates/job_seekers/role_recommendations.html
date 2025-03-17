@@ -4,6 +4,21 @@
 {% block title %}Recommended Roles | Hiredar{% endblock %}
 
 {% block content %}
+<style>
+    .recommendation-card.interested {
+        border-left: 4px solid var(--success);
+    }
+    .recommendation-card .interest-indicator {
+        display: none;
+    }
+    .recommendation-card.interested .interest-indicator {
+        display: inline-flex;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+</style>
+
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
         <!-- Include job seeker sidebar -->
@@ -13,7 +28,8 @@
         <div class="w-full lg:w-3/4">
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-2xl font-bold mb-2">Your Recommended Roles</h2>
-                <p class="text-base-content/70 mb-6">Our AI has analyzed your skills, experience, and career preferences to suggest roles that match your profile.</p>
+                <p class="text-base-content/70 mb-2">Our AI has analyzed your skills, experience, and career preferences to suggest roles that match your profile.</p>
+                <p class="text-base-content/70 mb-6">Select the roles you're interested in by clicking the "I'm Interested" button. Your selections help us target our job matching algorithm to find positions that align with your career goals.</p>
                 
                 {% if role_recommendations %}
                     <!-- Filter controls -->
@@ -30,9 +46,9 @@
                                 <i class="fas fa-filter mr-2"></i> Filters
                             </label>
                             <ul tabindex="0" class="dropdown-content z-10 menu p-2 shadow bg-base-100 rounded-box w-52">
-                                <li><a>All Roles</a></li>
-                                <li><a>Recent Recommendations</a></li>
-                                <li><a>High Match Score</a></li>
+                                <li><a data-filter="all">All Roles</a></li>
+                                <li><a data-filter="interested">Interested</a></li>
+                                <li><a data-filter="not-interested">Not Interested</a></li>
                             </ul>
                         </div>
                     </div>
@@ -40,8 +56,13 @@
                     <!-- Recommendations Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="recommendations-container">
                         {% for recommendation in role_recommendations %}
-                            <div class="card bg-base-100 shadow-md h-full recommendation-card">
+                            <div class="card bg-base-100 shadow-md h-full recommendation-card position-relative {% if recommendation.is_candidate_interested %}interested{% else %}not-interested{% endif %}" 
+                                 data-role-id="{{ recommendation.id }}">
                                 <div class="card-body">
+                                    <div class="interest-indicator badge badge-success">
+                                        <i class="fas fa-star mr-1"></i> Interested
+                                    </div>
+                                    
                                     <div class="flex justify-between items-start">
                                         <h3 class="card-title text-lg role-title">{{ recommendation.role_title }}</h3>
                                     </div>
@@ -52,30 +73,19 @@
                                         <div>
                                             <p class="font-medium">Description:</p>
                                             <p class="text-sm">{{ recommendation.description }}</p>
-                                        </div>
-                                        
-                                        {% if recommendation.required_skills %}
-                                            <div>
-                                                <p class="font-medium">Key skills for this role:</p>
-                                                <div class="flex flex-wrap gap-1 mt-1">
-                                                    {% for skill in recommendation.required_skills|split:"," %}
-                                                        <span class="badge badge-outline">{{ skill|strip }}</span>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                        
-                                        {% if recommendation.salary_range %}
-                                            <div>
-                                                <p class="font-medium">Typical salary range:</p>
-                                                <p class="text-sm">{{ recommendation.salary_range }}</p>
-                                            </div>
-                                        {% endif %}
+                                        </div>                                        
                                     </div>
                                     
                                     <div class="card-actions justify-end mt-4">
-                                        <button class="btn btn-primary btn-sm">
-                                            <i class="fas fa-thumbs-up mr-2"></i> Interested
+                                        <button class="btn btn-sm interest-btn {% if recommendation.is_candidate_interested %}btn-success{% else %}btn-primary{% endif %}"
+                                                hx-post="{% url 'job_seekers:toggle_role_interest' recommendation.id %}"
+                                                hx-swap="outerHTML"
+                                                hx-target="closest .interest-btn">
+                                            {% if recommendation.is_candidate_interested %}
+                                                <i class="fas fa-check mr-2"></i> Interested
+                                            {% else %}
+                                                <i class="fas fa-thumbs-up mr-2"></i> I'm Interested
+                                            {% endif %}
                                         </button>
                                     </div>
                                 </div>
@@ -94,13 +104,15 @@
     </div>
 </div>
 
-<!-- Simple search functionality -->
+<!-- Search and filter functionality -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('role-search');
     const recommendationsContainer = document.getElementById('recommendations-container');
     const cards = recommendationsContainer ? recommendationsContainer.querySelectorAll('.recommendation-card') : [];
+    const filterButtons = document.querySelectorAll('.dropdown-content li a');
     
+    // Search functionality
     if (searchInput && cards.length) {
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
@@ -117,6 +129,54 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Filter functionality
+    if (filterButtons.length && cards.length) {
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filterType = this.getAttribute('data-filter');
+                
+                cards.forEach(card => {
+                    if (filterType === 'all') {
+                        card.style.display = '';
+                    } else if (filterType === 'interested' && card.classList.contains('interested')) {
+                        card.style.display = '';
+                    } else if (filterType === 'not-interested' && card.classList.contains('not-interested')) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    }
+    
+    // Listen for HTMX events to update card classes
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        // Check for special header that indicates we need to update card class
+        const response = event.detail.xhr;
+        if (response && response.getResponseHeader('HX-Trigger')) {
+            try {
+                const triggers = JSON.parse(response.getResponseHeader('HX-Trigger'));
+                if (triggers.updateCardClass) {
+                    const { roleId, isInterested } = triggers.updateCardClass;
+                    const card = document.querySelector(`.recommendation-card[data-role-id="${roleId}"]`);
+                    
+                    if (card) {
+                        if (isInterested) {
+                            card.classList.remove('not-interested');
+                            card.classList.add('interested');
+                        } else {
+                            card.classList.remove('interested');
+                            card.classList.add('not-interested');
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error parsing HX-Trigger header:', e);
+            }
+        }
+    });
 });
 </script>
 {% endblock %} 
