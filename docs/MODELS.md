@@ -38,11 +38,13 @@ classDiagram
         +desired_role: CharField
         +most_recent_title: CharField
         +professional_summary: TextField
+        +personal_tagline: CharField
         +resume_xml: TextField
         +phone: CharField
         +linkedin_url: URLField
         +github_url: URLField
         +portfolio_url: URLField
+        +in_talent_pool: BooleanField
     }
     
     class RecruiterProfile {
@@ -160,11 +162,13 @@ Extended profile for job seekers with career-related information.
 | `desired_role` | CharField | Desired job role |
 | `most_recent_title` | CharField | Most recent job title extracted from resume |
 | `professional_summary` | TextField | Detailed description about the job seeker's qualifications and experience |
+| `personal_tagline` | CharField | AI-generated personal identity tagline |
 | `resume_xml` | TextField | XML representation of the parsed resume |
 | `phone` | CharField | Phone number |
 | `linkedin_url` | URLField | LinkedIn profile URL |
 | `github_url` | URLField | GitHub profile URL |
 | `portfolio_url` | URLField | Portfolio website URL |
+| `in_talent_pool` | BooleanField | Whether the job seeker is active in the talent pool and available for matching |
 
 **Key Methods:**
 | Method | Description |
