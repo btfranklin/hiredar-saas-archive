@@ -81,6 +81,7 @@ classDiagram
         +job_seeker: ForeignKey(JobSeekerProfile)
         +role_title: CharField
         +description: TextField
+        +is_candidate_interested: BooleanField
         +created_at: DateTimeField
     }
     
@@ -209,10 +210,11 @@ Model for AI-generated role recommendations for job seekers.
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `job_seeker` | ForeignKey | Link to the JobSeekerProfile |
-| `role_title` | CharField | Title of the recommended role |
-| `description` | TextField | Description of the recommended role |
-| `created_at` | DateTimeField | When the recommendation was created |
+| `job_seeker` | ForeignKey | Link to the JobSeekerProfile this role recommendation is for |
+| `role_title` | CharField | Title of the recommended role, in title case (e.g., 'Senior Software Engineer') |
+| `description` | TextField | A concise description of the role, outlining key responsibilities and value proposition |
+| `is_candidate_interested` | BooleanField | Indicates whether the job seeker has expressed interest in this role (default: False) |
+| `created_at` | DateTimeField | When this recommendation was generated |
 
 **Key Methods:**
 | Method | Description |
