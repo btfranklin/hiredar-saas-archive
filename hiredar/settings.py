@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "apps.authentication.apps.AuthenticationConfig",
     "apps.job_seekers.apps.JobSeekersConfig",
     "apps.recruiters.apps.RecruitersConfig",
-    "apps.jobs.apps.JobsConfig",
+    "apps.matching.apps.MatchingConfig",
     "apps.messaging.apps.MessagingConfig",
     "apps.core.apps.CoreConfig",
 ]

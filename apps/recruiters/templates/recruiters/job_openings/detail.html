@@ -115,7 +115,7 @@
                     <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold">Top Matches</h2>
-                            <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-sm btn-ghost">View All</a>
+                            <a href="{% url 'matching:candidates' job_opening.id %}" class="btn btn-sm btn-ghost">View All</a>
                         </div>
                         
                         <div class="space-y-4">
@@ -128,7 +128,7 @@
                                         </div>
                                         <p class="text-sm text-base-content/70 line-clamp-2">{{ match.job_seeker.professional_summary|default:match.job_seeker.experience|truncatewords:20 }}</p>
                                         <div class="card-actions justify-end mt-2">
-                                            <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-sm btn-outline">
+                                            <a href="{% url 'matching:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
                                                 View Profile
                                             </a>
                                         </div>
@@ -144,7 +144,7 @@
                     <div class="bg-base-200 rounded-box p-6 shadow-md">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold">Wildcard Matches</h2>
-                            <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-sm btn-ghost">View All</a>
+                            <a href="{% url 'matching:candidates' job_opening.id %}?section=wildcard" class="btn btn-sm btn-ghost">View All</a>
                         </div>
                         
                         <div class="space-y-4">
@@ -157,7 +157,7 @@
                                         </div>
                                         <p class="text-sm text-base-content/70 line-clamp-2">{{ match.job_seeker.professional_summary|default:match.job_seeker.experience|truncatewords:20 }}</p>
                                         <div class="card-actions justify-end mt-2">
-                                            <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-sm btn-outline">
+                                            <a href="{% url 'matching:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
                                                 View Profile
                                             </a>
                                         </div>

@@ -22,7 +22,7 @@ from django.views.generic import (
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import JobSeekerProfile
-from apps.jobs.models import CandidateMatch
+from apps.matching.models import CandidateMatch
 from apps.recruiters.models import JobOpening
 
 

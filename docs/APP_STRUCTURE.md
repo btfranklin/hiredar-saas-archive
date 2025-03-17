@@ -115,7 +115,7 @@ Manages recruiter-specific functionality:
   - `/recruiters/job-openings/<id>/edit/`: Job editing
   - `/recruiters/job-openings/<id>/delete/`: Job deletion
 
-### Jobs App (`apps/jobs`)
+### Matching App (`apps/matching`)
 
 Manages candidate matching:
 
@@ -124,11 +124,11 @@ Manages candidate matching:
 - **Views**:
   - Views for matching candidates to job openings
 - **Templates**:
-  - Templates for candidate matching (these have been largely moved to the recruiters app)
+  - Templates for candidate matching (organized within the matching directory)
 - **Admin**:
   - Custom admin interfaces for the CandidateMatch model
 - **URLs**:
-  - Limited URLs as most functionality has been moved to the recruiters app
+  - `/matching/`: URL patterns for candidate matching functionality
 
 ### Messaging App (`apps/messaging`)
 
@@ -157,7 +157,7 @@ The application has several important relationships between models across apps:
 
 2. **JobOpenings to Recruiters**: The `JobOpening` model in the recruiters app is linked to a `RecruiterProfile` via a foreign key.
 
-3. **CandidateMatches**: The `CandidateMatch` model in the jobs app connects `JobOpening` instances from the recruiters app with `JobSeekerProfile` instances from the job_seekers app through foreign keys.
+3. **CandidateMatches**: The `CandidateMatch` model in the matching app connects `JobOpening` instances from the recruiters app with `JobSeekerProfile` instances from the job_seekers app through foreign keys.
 
 4. **Conversations**: The `Conversation` model links multiple `User` instances through a many-to-many relationship, while `Message` instances are linked to a specific `Conversation` and a `User` sender.
 
@@ -198,7 +198,7 @@ The application uses namespaced URLs for each app:
 - `/auth/`: User authentication and account management (`authentication` namespace)
 - `/job-seekers/`: Job seeker-specific functionality (`job_seekers` namespace)
 - `/recruiters/`: Recruiter-specific functionality, including job opening management (`recruiters` namespace)
-- `/jobs/`: Candidate matching functionality (`jobs` namespace)
+- `/matching/`: Candidate matching functionality (`matching` namespace)
 - `/messaging/`: Conversations and notifications (`messaging` namespace)
 
 ## Python 3.12 Compatibility

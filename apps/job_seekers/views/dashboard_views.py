@@ -10,7 +10,7 @@ from django.views.generic import ListView, TemplateView
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import RoleRecommendation
-from apps.jobs.models import CandidateMatch
+from apps.matching.models import CandidateMatch
 from apps.messaging.models import Notification
 
 

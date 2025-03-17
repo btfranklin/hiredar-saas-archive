@@ -26,7 +26,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # App URLs
     path("auth/", include("apps.authentication.urls", namespace="authentication")),
-    path("jobs/", include("apps.jobs.urls", namespace="jobs")),
+    path("matching/", include("apps.matching.urls", namespace="matching")),
     path("messaging/", include("apps.messaging.urls", namespace="messaging")),
     path("job-seekers/", include("apps.job_seekers.urls", namespace="job_seekers")),
     path("recruiters/", include("apps.recruiters.urls", namespace="recruiters")),

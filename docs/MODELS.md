@@ -268,7 +268,7 @@ Model for job openings posted by recruiters.
 |--------|-------------|
 | `required_skills_list` | Property that returns a list of required skill names |
 
-## Jobs App
+## Matching App
 
 ### CandidateMatch
 
@@ -343,7 +343,7 @@ Model for user notifications.
 
 ### JobSeekerProfile Relationships
 - One-to-One with User
-- One-to-Many with CandidateMatch (as job_seeker)
+- One-to-Many with CandidateMatch in the matching app (as job_seeker)
 - One-to-Many with RoleRecommendation (as job_seeker)
 
 ### RecruiterProfile Relationships
@@ -352,7 +352,7 @@ Model for user notifications.
 
 ### JobOpening Relationships
 - Many-to-One with RecruiterProfile (as recruiter)
-- One-to-Many with CandidateMatch (as job_opening)
+- One-to-Many with CandidateMatch in the matching app (as job_opening)
 
 ### Conversation Relationships
 - Many-to-Many with User (as participants)
