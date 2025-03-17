@@ -94,6 +94,7 @@ Manages recruiter-specific functionality:
 
 - **Models**:
   - `RecruiterProfile`: Extended profile for recruiters with subscription information
+  - `JobOpening`: Job opening details posted by recruiters
 - **Views**:
   - Various views for recruiter profile management and dashboard
 - **Templates**:
@@ -107,10 +108,9 @@ Manages recruiter-specific functionality:
 
 ### Jobs App (`apps/jobs`)
 
-Manages job openings and candidate matching:
+Manages candidate matching:
 
 - **Models**:
-  - `JobOpening`: Job opening details
   - `CandidateMatch`: Matches between job seekers and job openings
 - **Views**:
   - Organized in subdirectories for job opening management and candidate matching
@@ -150,9 +150,9 @@ The application has several important relationships between models across apps:
 
 1. **User to Profiles**: The `User` model in the authentication app has one-to-one relationships with `JobSeekerProfile` in the job_seekers app and `RecruiterProfile` in the recruiters app.
 
-2. **JobOpenings to Recruiters**: The `JobOpening` model in the jobs app is linked to a `RecruiterProfile` via a foreign key.
+2. **JobOpenings to Recruiters**: The `JobOpening` model in the recruiters app is linked to a `RecruiterProfile` via a foreign key.
 
-3. **CandidateMatches**: The `CandidateMatch` model connects `JobOpening` instances with `JobSeekerProfile` instances through foreign keys.
+3. **CandidateMatches**: The `CandidateMatch` model connects `JobOpening` instances from the recruiters app with `JobSeekerProfile` instances from the job_seekers app through foreign keys.
 
 4. **Conversations**: The `Conversation` model links multiple `User` instances through a many-to-many relationship, while `Message` instances are linked to a specific `Conversation` and a `User` sender.
 

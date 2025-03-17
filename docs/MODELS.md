@@ -243,8 +243,6 @@ Extended profile for recruiters with subscription information.
 | `is_subscribed` | BooleanField | Whether recruiter has an active subscription |
 | `subscription_tier` | CharField | Subscription tier (basic/professional/enterprise) |
 
-## Jobs App
-
 ### JobOpening
 
 Model for job openings posted by recruiters.
@@ -269,6 +267,8 @@ Model for job openings posted by recruiters.
 | Method | Description |
 |--------|-------------|
 | `required_skills_list` | Property that returns a list of required skill names |
+
+## Jobs App
 
 ### CandidateMatch
 
