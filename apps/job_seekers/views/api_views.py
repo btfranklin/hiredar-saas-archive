@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import cast
+from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -70,6 +70,72 @@ class PersonalTaglineView(LoginRequiredMixin, View):
 
         # For regular API requests, return JSON
         return JsonResponse({"personal_tagline": tagline})
+
+
+class ToggleTalentPoolView(LoginRequiredMixin, View):
+    """API view to toggle a job seeker's talent pool status."""
+
+    def post(self, request: HttpRequest) -> JsonResponse:
+        """
+        Toggle the job seeker's active status in the talent pool.
+
+        Args:
+            request: The HTTP request containing the desired active state
+
+        Returns:
+            JsonResponse: A JSON response indicating success or failure
+        """
+        user = cast(AuthenticatedUser, request.user)
+
+        # Ensure user is a job seeker
+        if user.user_type != "job_seeker":
+            return JsonResponse(
+                {"success": False, "message": "User is not a job seeker"}, status=403
+            )
+
+        # Get the job seeker's profile
+        if not hasattr(user, "job_seeker_profile"):
+            return JsonResponse(
+                {"success": False, "message": "Job seeker profile not found"},
+                status=404,
+            )
+
+        profile = user.job_seeker_profile
+
+        try:
+            # Parse the request body to get the active state
+            data = json.loads(request.body)
+            active = data.get("active", False)
+
+            # Update the job seeker's talent pool status
+            profile.in_talent_pool = active
+            profile.save(update_fields=["in_talent_pool"])
+
+            # Log the status change
+            logger.info(
+                "Job seeker %s (ID: %s) %s the talent pool",
+                user.email,
+                profile.id,
+                "entered" if active else "left",
+            )
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Talent pool status updated successfully",
+                    "in_talent_pool": profile.in_talent_pool,
+                }
+            )
+
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"success": False, "message": "Invalid JSON data"}, status=400
+            )
+        except Exception as e:
+            logger.error("Error updating talent pool status: %s", str(e), exc_info=True)
+            return JsonResponse(
+                {"success": False, "message": f"Error: {str(e)}"}, status=500
+            )
 
 
 class ToggleRoleInterestView(LoginRequiredMixin, View):

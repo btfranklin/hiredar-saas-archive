@@ -75,6 +75,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             job_seeker=profile
         ).count()
 
+        # Include the talent pool status
+        context["in_talent_pool"] = profile.in_talent_pool
+
         return context
 
 

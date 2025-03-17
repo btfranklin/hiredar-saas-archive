@@ -41,6 +41,10 @@ class JobSeekerProfile(models.Model):
     phone = models.CharField(
         max_length=20, null=True, blank=True, help_text="Phone number"
     )
+    in_talent_pool = models.BooleanField(
+        default=False,
+        help_text="Whether the job seeker is active in the talent pool and available for matching",
+    )
 
     # Social links
     linkedin_url = models.URLField(blank=True)

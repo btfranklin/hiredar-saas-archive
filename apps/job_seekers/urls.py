@@ -3,7 +3,11 @@
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
-from apps.job_seekers.views.api_views import PersonalTaglineView, ToggleRoleInterestView
+from apps.job_seekers.views.api_views import (
+    PersonalTaglineView,
+    ToggleRoleInterestView,
+    ToggleTalentPoolView,
+)
 from apps.job_seekers.views.dashboard_views import (
     DashboardView,
     RoleRecommendationsView,
@@ -45,5 +49,10 @@ urlpatterns: list[URLPattern] = [
         "api/toggle-role-interest/<int:role_id>/",
         ToggleRoleInterestView.as_view(),
         name="toggle_role_interest",
+    ),
+    path(
+        "api/toggle-talent-pool/",
+        ToggleTalentPoolView.as_view(),
+        name="toggle_talent_pool",
     ),
 ]

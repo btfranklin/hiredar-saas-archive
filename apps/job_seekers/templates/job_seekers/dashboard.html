@@ -10,44 +10,46 @@
         
         <!-- Main content -->
         <div class="w-full lg:w-3/4">
-            <!-- Welcome Card -->
+            <!-- Talent Pool Status Card -->
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-2xl font-bold mb-6">Welcome, {{ user.name }}!</h2>
+                <h2 class="text-2xl font-bold mb-4">Job Search Status</h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Recommended Roles Card -->
-                    <div class="bg-base-100 rounded-box p-4 shadow-sm hover:shadow transition-shadow">
-                        <div class="flex items-center">
-                            <div class="rounded-full bg-primary/10 p-3 mr-4">
-                                <i class="fas fa-briefcase text-2xl text-primary"></i>
+                <div class="bg-base-100 rounded-lg p-5">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <span class="text-lg font-semibold mr-3">Talent Pool Status:</span>
+                                <span class="badge badge-lg {% if in_talent_pool %}badge-success{% else %}badge-error{% endif %}">
+                                    {% if in_talent_pool %}Active{% else %}Inactive{% endif %}
+                                </span>
                             </div>
-                            <div>
-                                <div class="text-sm font-medium text-base-content/70">Recommended Roles</div>
-                                <div class="text-3xl font-bold">{{ recommended_roles_count|default:"0" }}</div>
-                                <div class="text-xs text-base-content/60 mt-1">Based on your profile</div>
-                            </div>
+                            <p class="text-base-content/70 max-w-xl">
+                                When active, our AI talent agent will continuously search for matching job openings and present your profile to recruiters for roles that match your skills and interests.
+                            </p>
                         </div>
-                        <div class="mt-3 text-right">
-                            <a href="{% url 'job_seekers:role_recommendations' %}" class="text-primary text-sm hover:underline">View all recommendations →</a>
-                        </div>
-                    </div>
-                    
-                    <!-- Messages Card -->
-                    <div class="bg-base-100 rounded-box p-4 shadow-sm hover:shadow transition-shadow">
-                        <div class="flex items-center">
-                            <div class="rounded-full bg-accent/10 p-3 mr-4">
-                                <i class="fas fa-envelope-open text-2xl text-accent"></i>
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-base-content/70">Messages</div>
-                                <div class="text-3xl font-bold">{{ unread_messages_count|default:"0" }}</div>
-                                <div class="text-xs text-base-content/60 mt-1">Unread messages</div>
-                            </div>
-                        </div>
-                        <div class="mt-3 text-right">
-                            <a href="{% url 'messaging:conversations' %}" class="text-accent text-sm hover:underline">View all messages →</a>
+                        
+                        <div class="form-control">
+                            <label class="label cursor-pointer flex gap-3">
+                                <span class="label-text font-medium">Enable Job Matching</span>
+                                <input type="checkbox" class="toggle toggle-success toggle-lg" 
+                                       {% if in_talent_pool %}checked{% endif %}
+                                       id="talent-pool-toggle"
+                                       onclick="toggleTalentPoolConfirm(this)">
+                            </label>
                         </div>
                     </div>
+                </div>
+                
+                <div class="mt-5 bg-primary/5 rounded-lg p-4 border-l-4 border-primary">
+                    <h3 class="text-lg font-semibold mb-2 text-primary">How Our AI Talent Agent Works</h3>
+                    <p class="mb-2">When you enable job matching, our AI talent agent will:</p>
+                    <ul class="list-disc list-inside space-y-1 ml-2 text-base-content/80">
+                        <li>Analyze your profile, skills, and role interests</li>
+                        <li>Match you with new job openings from recruiters</li>
+                        <li>Present your qualifications in the best light</li>
+                        <li>Prioritize roles you've marked as interesting</li>
+                    </ul>
+                    <p class="mt-3 text-sm">You'll be notified when you're matched with a job opportunity. You can disable job matching at any time.</p>
                 </div>
             </div>
             
@@ -154,6 +156,29 @@
     </div>
 </div>
 
+<!-- Confirmation Modal -->
+<div id="talent-pool-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Confirm Talent Pool Activation</h3>
+        <p>
+            By activating the talent pool, you're making your profile available to recruiters searching for candidates with your skills and experience.
+        </p>
+        <p class="mt-2">
+            Our AI talent agent will match you with relevant job openings and share your profile with recruiters who are looking for someone like you.
+        </p>
+        <p class="mt-4 text-sm">
+            You can deactivate job matching at any time from your dashboard.
+        </p>
+        <div class="modal-action">
+            <button id="cancel-talent-pool" class="btn">Cancel</button>
+            <button id="confirm-talent-pool" class="btn btn-primary">Yes, Activate</button>
+        </div>
+    </div>
+    <div class="modal-backdrop">
+        <button id="close-modal">close</button>
+    </div>
+</div>
+
 <!-- HTMX Handling for Role Interest Toggling -->
 <script>
 document.addEventListener('htmx:afterSwap', function(event) {
@@ -173,5 +198,98 @@ document.addEventListener('htmx:afterSwap', function(event) {
         }
     }
 });
+
+// Talent Pool Toggle Logic
+function toggleTalentPoolConfirm(checkbox) {
+    // If turning on, show confirmation dialog and revert toggle until confirmed
+    if (checkbox.checked) {
+        checkbox.checked = false; // Revert until confirmed
+        
+        // Show the modal
+        document.getElementById('talent-pool-modal').classList.add('modal-open');
+        
+        // Handle confirmation
+        document.getElementById('confirm-talent-pool').onclick = function() {
+            activateTalentPool();
+            document.getElementById('talent-pool-modal').classList.remove('modal-open');
+        };
+        
+        // Handle cancellation
+        document.getElementById('cancel-talent-pool').onclick = document.getElementById('close-modal').onclick = function() {
+            document.getElementById('talent-pool-modal').classList.remove('modal-open');
+        };
+    } else {
+        // Just turn off directly without confirmation
+        deactivateTalentPool();
+    }
+}
+
+function activateTalentPool() {
+    document.getElementById('talent-pool-toggle').checked = true;
+    
+    // Send AJAX request to activate talent pool
+    fetch('{% url "job_seekers:toggle_talent_pool" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ 'active': true })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh page to reflect changes
+            window.location.reload();
+        } else {
+            alert('Failed to activate talent pool: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+function deactivateTalentPool() {
+    // Send AJAX request to deactivate talent pool
+    fetch('{% url "job_seekers:toggle_talent_pool" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ 'active': false })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh page to reflect changes
+            window.location.reload();
+        } else {
+            alert('Failed to deactivate talent pool: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+// Helper function to get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 </script>
 {% endblock %} 
