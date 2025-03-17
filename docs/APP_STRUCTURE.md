@@ -97,14 +97,23 @@ Manages recruiter-specific functionality:
   - `JobOpening`: Job opening details posted by recruiters
 - **Views**:
   - Various views for recruiter profile management and dashboard
+  - Job opening management views (create, list, detail, edit, delete)
+  - Candidate matching views for viewing potential candidates for job openings
 - **Templates**:
   - Recruiter-specific templates for signup, profiles, and dashboards
+  - Job opening management templates
+  - Candidate matching templates
 - **Signals**:
   - Signal handlers for recruiter-specific actions
 - **URLs**:
   - `/recruiters/profile/`: Recruiter profile
   - `/recruiters/dashboard/`: Recruiter dashboard
   - `/recruiters/settings/`: Recruiter settings
+  - `/recruiters/job-openings/`: Job listings
+  - `/recruiters/job-openings/create/`: Job creation
+  - `/recruiters/job-openings/<id>/`: Job details
+  - `/recruiters/job-openings/<id>/edit/`: Job editing
+  - `/recruiters/job-openings/<id>/delete/`: Job deletion
 
 ### Jobs App (`apps/jobs`)
 
@@ -113,17 +122,13 @@ Manages candidate matching:
 - **Models**:
   - `CandidateMatch`: Matches between job seekers and job openings
 - **Views**:
-  - Organized in subdirectories for job opening management and candidate matching
+  - Views for matching candidates to job openings
 - **Templates**:
-  - Job-related templates for job listing, details, and management
+  - Templates for candidate matching (these have been largely moved to the recruiters app)
 - **Admin**:
-  - Custom admin interfaces for job models
+  - Custom admin interfaces for the CandidateMatch model
 - **URLs**:
-  - `/jobs/`: Job listings
-  - `/jobs/create/`: Job creation
-  - `/jobs/<id>/`: Job details
-  - `/jobs/<id>/edit/`: Job editing
-  - Various other job-related routes
+  - Limited URLs as most functionality has been moved to the recruiters app
 
 ### Messaging App (`apps/messaging`)
 
@@ -152,7 +157,7 @@ The application has several important relationships between models across apps:
 
 2. **JobOpenings to Recruiters**: The `JobOpening` model in the recruiters app is linked to a `RecruiterProfile` via a foreign key.
 
-3. **CandidateMatches**: The `CandidateMatch` model connects `JobOpening` instances from the recruiters app with `JobSeekerProfile` instances from the job_seekers app through foreign keys.
+3. **CandidateMatches**: The `CandidateMatch` model in the jobs app connects `JobOpening` instances from the recruiters app with `JobSeekerProfile` instances from the job_seekers app through foreign keys.
 
 4. **Conversations**: The `Conversation` model links multiple `User` instances through a many-to-many relationship, while `Message` instances are linked to a specific `Conversation` and a `User` sender.
 
@@ -192,8 +197,8 @@ The application uses namespaced URLs for each app:
 - `/`: Home page and core functionality (`core` namespace)
 - `/auth/`: User authentication and account management (`authentication` namespace)
 - `/job-seekers/`: Job seeker-specific functionality (`job_seekers` namespace)
-- `/recruiters/`: Recruiter-specific functionality (`recruiters` namespace)
-- `/jobs/`: Job opening management and candidate matching (`jobs` namespace)
+- `/recruiters/`: Recruiter-specific functionality, including job opening management (`recruiters` namespace)
+- `/jobs/`: Candidate matching functionality (`jobs` namespace)
 - `/messaging/`: Conversations and notifications (`messaging` namespace)
 
 ## Python 3.12 Compatibility

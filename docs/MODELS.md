@@ -277,7 +277,7 @@ Model for matching job seekers to job openings.
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `job_opening` | ForeignKey | Link to the JobOpening |
+| `job_opening` | ForeignKey | Link to the JobOpening in the recruiters app |
 | `job_seeker` | ForeignKey | Link to the JobSeekerProfile |
 | `match_score` | DecimalField | Match score between 0 and 100 |
 | `status` | CharField | Status of the match (pending/accepted/rejected/withdrawn) |
