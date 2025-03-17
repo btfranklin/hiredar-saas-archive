@@ -20,10 +20,8 @@
                     <div class="flex flex-wrap gap-4 mb-6">
                         <div class="form-control">
                             <div class="input-group">
+                                <i class="fas fa-search mr-2"></i>
                                 <input type="text" placeholder="Search roles..." class="input input-bordered" id="role-search">
-                                <button class="btn btn-square">
-                                    <i class="fas fa-search"></i>
-                                </button>
                             </div>
                         </div>
                         
@@ -52,7 +50,7 @@
                                     
                                     <div class="space-y-3">
                                         <div>
-                                            <p class="font-medium">Why this role matches you:</p>
+                                            <p class="font-medium">Description:</p>
                                             <p class="text-sm">{{ recommendation.description }}</p>
                                         </div>
                                         
@@ -76,9 +74,6 @@
                                     </div>
                                     
                                     <div class="card-actions justify-end mt-4">
-                                        <a href="#" class="btn btn-outline btn-sm">
-                                            <i class="fas fa-search mr-2"></i> Find Jobs
-                                        </a>
                                         <button class="btn btn-primary btn-sm">
                                             <i class="fas fa-thumbs-up mr-2"></i> Interested
                                         </button>
