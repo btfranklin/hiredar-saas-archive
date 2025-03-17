@@ -36,6 +36,8 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
 
     template_name = "matching/candidate_match_list.html"
     context_object_name = "candidate_matches"
+    section = None
+    job_opening = None
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
@@ -57,7 +59,7 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
         # Make sure only the recruiter who created the job opening can view matches
         if (
             user.user_type != "recruiter"
-            or self.job_opening.recruiter.user.id != user.id
+            or self.job_opening.recruiter.user.email != user.email
         ):
             return redirect("recruiters:dashboard")
 
@@ -71,14 +73,18 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
             QuerySet: The candidate matches queryset.
         """
         self.section = self.request.GET.get("section", "top")
-        filters = {"job_opening": self.job_opening}
 
+        # Start with the base filter for job_opening
+        queryset = CandidateMatch.objects.filter(job_opening=self.job_opening)
+
+        # Add match_type filter based on section
         if self.section == "wildcard":
-            filters["match_type"] = "wildcard"
+            queryset = queryset.filter(match_type="wildcard")
         else:
-            filters["match_type"] = "top"
+            queryset = queryset.filter(match_type="top")
 
-        return CandidateMatch.objects.filter(**filters).order_by("-match_score")
+        # Order by match score descending
+        return queryset.order_by("-match_score")
 
     def get_context_data(self, **kwargs):
         """
@@ -118,6 +124,7 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
 
     template_name = "matching/candidate_detail.html"
     context_object_name = "match"
+    job_opening = None
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
@@ -139,7 +146,7 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         # Make sure only the recruiter who created the job opening can view matches
         if (
             user.user_type != "recruiter"
-            or self.job_opening.recruiter.user.id != user.id
+            or self.job_opening.recruiter.user.email != user.email
         ):
             return redirect("recruiters:dashboard")
 
@@ -196,7 +203,7 @@ def toggle_shortlist(
     user = cast(AuthenticatedUser, request.user)
 
     # Make sure only the recruiter who created the job opening can modify matches
-    if user.user_type != "recruiter" or job_opening.recruiter.user.id != user.id:
+    if user.user_type != "recruiter" or job_opening.recruiter.user.email != user.email:
         return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
 
     match = get_object_or_404(
