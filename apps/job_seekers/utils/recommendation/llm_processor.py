@@ -14,11 +14,130 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from promptdown import StructuredPrompt
 
+from apps.job_seekers.models import RoleRecommendation
+from apps.job_seekers.utils.recommendation.xml_parser import (
+    parse_role_recommendations_xml,
+)
+
 # Load environment variables
 load_dotenv()
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+
+def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
+    """
+    Generate role recommendations based on the job seeker's resume XML.
+
+    This function sends the job seeker's resume XML to an LLM to generate
+    a list of recommended career roles with descriptions.
+
+    Args:
+        resume_xml: The XML representation of the job seeker's resume
+
+    Returns:
+        A list of RoleRecommendation objects (unsaved to database)
+
+    Raises:
+        ValueError: If the API key is missing or the LLM response is invalid
+        requests.exceptions.RequestException: If the API request fails
+        Exception: For any other processing errors
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        error_msg = "No API key found. Set OPENAI_API_KEY environment variable."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    # Check XML content
+    if not resume_xml:
+        logger.error("Resume XML is empty or None!")
+        raise ValueError(
+            "Unable to generate role recommendations: No resume data provided"
+        )
+
+    prompt_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "prompts",
+        "generate_role_recommendations_from_xml.prompt.md",
+    )
+
+    # Check if prompt file exists
+    if not os.path.exists(prompt_path):
+        logger.error("Prompt file not found at path: %s", prompt_path)
+        raise ValueError(
+            "Unable to generate role recommendations: Prompt file not found"
+        )
+
+    try:
+        structured_prompt = StructuredPrompt.from_promptdown_file(prompt_path)
+
+        # Wrap the XML in markdown code block
+        wrapped_xml = f"```xml\n{resume_xml}\n```"
+
+        # Apply the template values
+        structured_prompt.apply_template_values(
+            {
+                "resume_xml": wrapped_xml,
+            }
+        )
+
+        # Get messages for the API call
+        messages = structured_prompt.to_chat_completion_messages()
+        logger.debug("Number of messages to send: %d", len(messages))
+
+    except Exception as e:
+        logger.error("Error preparing prompt: %s", str(e))
+        raise ValueError(
+            f"Unable to generate role recommendations: Error preparing prompt: {str(e)}"
+        ) from e
+
+    client = OpenAI(api_key=api_key)
+
+    # Log the start of processing
+    logger.info("Sending resume XML to LLM for role recommendations generation")
+    logger.debug("XML length: %d characters", len(resume_xml))
+
+    # Make the API call with proper error handling
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=cast(Iterable[Any], messages),
+            temperature=0.7,
+        )
+
+        # Extract the content from the response
+        response_content = completion.choices[0].message.content
+
+        # Perform basic validation
+        if not response_content or not isinstance(response_content, str):
+            error_msg = "LLM response content is None or not a string"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        # Use the XML parser to parse the response content
+        return parse_role_recommendations_xml(response_content)
+
+    except requests.exceptions.RequestException as e:
+        logger.error("API request failed: %s", str(e))
+        # For RequestException, we carefully check for response attributes
+        response = getattr(e, "response", None)
+        if response is not None:
+            if hasattr(response, "status_code"):
+                logger.error("Response status: %s", response.status_code)
+            if hasattr(response, "text"):
+                logger.error("Response body: %s...", response.text[:500])
+        raise
+
+    except (KeyError, IndexError) as e:
+        error_msg = f"Failed to extract content from API response: {str(e)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
+
+    except Exception as e:
+        logger.error("Unexpected error in LLM processing: %s", str(e))
+        raise
 
 
 def generate_personal_tagline(resume_xml: str) -> str:
@@ -62,12 +181,12 @@ def generate_personal_tagline(resume_xml: str) -> str:
         structured_prompt = StructuredPrompt.from_promptdown_file(prompt_path)
 
         # Wrap the XML in markdown code block
-        resume_xml = f"```xml\n{resume_xml}\n```"
+        wrapped_xml = f"```xml\n{resume_xml}\n```"
 
         # Apply the template values with the original XML
         structured_prompt.apply_template_values(
             {
-                "resume_xml": resume_xml,
+                "resume_xml": wrapped_xml,
             }
         )
 

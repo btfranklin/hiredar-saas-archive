@@ -8,9 +8,12 @@ personal taglines, and other AI-generated recommendations for job seekers.
 import logging
 from typing import Any
 
-from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
 from apps.job_seekers.utils.recommendation.llm_processor import (
     generate_personal_tagline as generate_tagline_from_xml,
+)
+from apps.job_seekers.utils.recommendation.llm_processor import (
+    generate_role_recommendations as generate_role_recommendations_from_xml,
 )
 
 # Setup logging
@@ -47,19 +50,83 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
             "Generating role recommendations for job seeker: %s", profile.user.email
         )
 
-        # TODO: Implement actual recommendation logic
-        # This would involve analyzing the profile's skills, experience,
-        # education, and other factors to determine suitable roles
+        # Check if we have resume XML data
+        if not profile.resume_xml:
+            logger.warning(
+                "No resume XML data available for profile ID %s", job_seeker_profile_id
+            )
+            return {
+                "success": False,
+                "message": "Cannot generate role recommendations: No resume data available",
+            }
 
-        # For now, we'll just log a placeholder message
-        logger.info("Role recommendation generation not yet implemented")
+        # Validate XML content
+        resume_xml = profile.resume_xml
+        logger.info(
+            "Resume XML found, length: %d characters",
+            len(resume_xml) if resume_xml else 0,
+        )
 
-        # Return success response
-        return {
-            "success": True,
-            "message": "Role recommendations would be generated here",
-            "profile_id": job_seeker_profile_id,
-        }
+        # Generate role recommendations using the LLM processor
+        try:
+
+            # Get role recommendations
+            recommendations = generate_role_recommendations_from_xml(resume_xml)
+
+            if not recommendations:
+                logger.warning(
+                    "No role recommendations generated for profile ID %s",
+                    job_seeker_profile_id,
+                )
+                return {
+                    "success": False,
+                    "message": "No suitable role recommendations could be generated",
+                }
+
+            # Save the recommendations to the database
+            # First, delete any existing recommendations for this profile to avoid duplicates
+            RoleRecommendation.objects.filter(job_seeker=profile).delete()
+
+            # Save the recommendation objects
+            created_recommendations = []
+            for recommendation in recommendations:
+                recommendation.job_seeker = profile  # Ensure job_seeker is set
+                recommendation.save()
+                created_recommendations.append(recommendation)
+
+            # Log the successful creation
+            logger.info(
+                "Created %d role recommendations for %s",
+                len(created_recommendations),
+                profile.user.email,
+            )
+
+            # Return success response with recommendations
+            return {
+                "success": True,
+                "message": "Role recommendations generated successfully",
+                "profile_id": job_seeker_profile_id,
+                "recommendations_count": len(created_recommendations),
+                "recommendations": [
+                    {
+                        "id": rec.id,
+                        "title": rec.role_title,
+                        "description": rec.description,
+                    }
+                    for rec in created_recommendations
+                ],
+            }
+
+        except Exception as e:
+            logger.error(
+                "Error in LLM role recommendations generation: %s",
+                str(e),
+                exc_info=True,
+            )
+            return {
+                "success": False,
+                "message": f"Error generating role recommendations: {str(e)}",
+            }
 
     except Exception as e:
         # Log the error
