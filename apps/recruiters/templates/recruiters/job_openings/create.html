@@ -6,9 +6,13 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Sidebar -->
-        <div class="w-full lg:w-1/4">
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
+        <!-- Include Recruiter Sidebar -->
+        {% include 'recruiters/components/sidebar.html' with active_page='jobs' %}
+        
+        <!-- Main Content -->
+        <div class="w-full lg:w-3/4">
+            <!-- Tips Sidebar as a box within the main content -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-6">
                 <h2 class="text-xl font-bold mb-4">Tips for Creating a Great Job Opening</h2>
                 <div class="space-y-4">
                     <div>
@@ -32,10 +36,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Main Content -->
-        <div class="w-full lg:w-3/4">
+            
             <div class="bg-base-200 rounded-box p-6 shadow-md">
                 <h1 class="text-2xl font-bold mb-6">Create New Job Opening</h1>
                 

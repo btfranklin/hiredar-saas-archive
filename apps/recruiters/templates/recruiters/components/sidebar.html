@@ -31,7 +31,7 @@
             <li><a href="{% url 'recruiters:dashboard' %}" class="{% if active_page == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-home mr-2"></i> Dashboard
             </a></li>
-            <li><a href="{% url 'jobs:list' %}" class="{% if active_page == 'jobs' %}active{% endif %}">
+            <li><a href="{% url 'recruiters:job_openings_list' %}" class="{% if active_page == 'jobs' %}active{% endif %}">
                 <i class="fas fa-briefcase mr-2"></i> My Job Openings
             </a></li>
             <li><a href="{% url 'messaging:conversations' %}" class="{% if active_page == 'messages' %}active{% endif %}">

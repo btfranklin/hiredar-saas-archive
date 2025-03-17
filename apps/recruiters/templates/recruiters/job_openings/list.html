@@ -11,45 +11,8 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Sidebar -->
-        <div class="w-full lg:w-1/4">
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
-                <div class="flex flex-col items-center text-center mb-6">
-                    <div class="avatar placeholder mb-4">
-                        <div class="bg-neutral text-neutral-content rounded-full w-20">
-                            <span class="text-xl">{{ user.get_initials }}</span>
-                        </div>
-                    </div>
-                    
-                    <h1 class="text-xl font-bold">{{ user.get_full_name }}</h1>
-                    <p class="text-sm text-base-content/70">{{ user.email }}</p>
-                    {% if request.user.user_type == 'recruiter' %}
-                        <div class="badge badge-primary mt-2">Recruiter</div>
-                    {% else %}
-                        <div class="badge badge-primary mt-2">Job Seeker</div>
-                    {% endif %}
-                </div>
-                
-                <div class="divider"></div>
-                
-                {% if request.user.user_type == 'recruiter' %}
-                    <ul class="menu bg-base-200 w-full p-0">
-                        <li><a href="{% url 'recruiters:dashboard' %}"><i class="fas fa-home mr-2"></i> Dashboard</a></li>
-                        <li><a href="{% url 'recruiters:job_openings_list' %}" class="active"><i class="fas fa-briefcase mr-2"></i> My Job Openings</a></li>
-                        <li><a href="{% url 'messaging:conversations' %}"><i class="fas fa-envelope mr-2"></i> Messages</a></li>
-                        <li><a href="{% url 'recruiters:settings' %}"><i class="fas fa-cog mr-2"></i> Settings</a></li>
-                    </ul>
-                {% else %}
-                    <ul class="menu bg-base-200 w-full p-0">
-                        <li><a href="{% url 'job_seekers:dashboard' %}"><i class="fas fa-home mr-2"></i> Dashboard</a></li>
-                        <li><a href="{% url 'job_seekers:profile' %}"><i class="fas fa-user mr-2"></i> Profile</a></li>
-                        <li><a href="{% url 'jobs:recommendations' %}"><i class="fas fa-briefcase mr-2"></i> Recommended Roles</a></li>
-                        <li><a href="{% url 'messaging:conversations' %}"><i class="fas fa-envelope mr-2"></i> Messages</a></li>
-                        <li><a href="{% url 'job_seekers:settings' %}"><i class="fas fa-cog mr-2"></i> Settings</a></li>
-                    </ul>
-                {% endif %}
-            </div>
-        </div>
+        <!-- Include Recruiter Sidebar -->
+        {% include 'recruiters/components/sidebar.html' with active_page='jobs' %}
         
         <!-- Main content -->
         <div class="w-full lg:w-3/4">

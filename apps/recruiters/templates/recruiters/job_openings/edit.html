@@ -6,9 +6,13 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Sidebar -->
-        <div class="w-full lg:w-1/4">
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
+        <!-- Include Recruiter Sidebar -->
+        {% include 'recruiters/components/sidebar.html' with active_page='jobs' %}
+        
+        <!-- Main Content -->
+        <div class="w-full lg:w-3/4">
+            <!-- Status Info -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-6">
                 <h2 class="text-xl font-bold mb-4">Job Status</h2>
                 <div class="space-y-4">
                     <div>
@@ -39,10 +43,7 @@
                     </div>
                 {% endif %}
             </div>
-        </div>
-        
-        <!-- Main Content -->
-        <div class="w-full lg:w-3/4">
+            
             <div class="bg-base-200 rounded-box p-6 shadow-md">
                 <h1 class="text-2xl font-bold mb-6">Edit Job Opening</h1>
                 

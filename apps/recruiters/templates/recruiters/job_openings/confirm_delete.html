@@ -3,37 +3,32 @@
 {% block title %}Delete Job Opening | Hiredar{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-md mx-auto">
-        <div class="bg-base-200 rounded-box p-6 shadow-md">
-            <h1 class="text-2xl font-bold mb-6 text-center">Delete Job Opening</h1>
-            
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    {% include 'recruiters/components/sidebar.html' with active_page='jobs' %}
+    
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+        <div class="bg-white shadow-lg rounded-lg p-8 max-w-3xl mx-auto">
             <div class="alert alert-warning mb-6">
                 <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 <div>
-                    <h3 class="font-bold">Warning!</h3>
-                    <div class="text-sm">This action cannot be undone. All associated candidate matches will also be deleted.</div>
+                    <h3 class="font-bold">Warning: This action cannot be undone!</h3>
+                    <div class="text-sm">All associated data will be permanently deleted.</div>
                 </div>
             </div>
             
-            <div class="card bg-base-100 shadow-sm mb-6">
-                <div class="card-body p-4">
-                    <h2 class="card-title">{{ job_opening.title }}</h2>
-                    <p class="text-sm text-base-content/70">{{ job_opening.company }} • {{ job_opening.location }}</p>
-                    <p class="mt-2">Status: <span class="badge {% if job_opening.status == 'active' %}badge-success{% elif job_opening.status == 'draft' %}badge-warning{% else %}badge-neutral{% endif %}">{{ job_opening.get_status_display }}</span></p>
-                    
-                    {% if job_opening.candidate_matches.exists %}
-                        <div class="mt-2">
-                            <p class="text-error">This job has {{ job_opening.candidate_matches.count }} candidate matches that will be lost.</p>
-                        </div>
-                    {% endif %}
-                </div>
+            <h1 class="text-2xl font-bold mb-6">Delete Job Opening</h1>
+            
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-2">{{ job_opening.title }}</h2>
+                <p class="text-gray-600">{{ job_opening.description|truncatewords:20 }}</p>
             </div>
             
             <form method="post">
                 {% csrf_token %}
                 <div class="flex justify-between items-center">
-                    <a href="{% url 'jobs:detail' job_opening.id %}" class="btn btn-outline">Cancel</a>
+                    <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-outline">Cancel</a>
                     <button type="submit" class="btn btn-error">
                         <i class="fas fa-trash-alt mr-2"></i> Delete Permanently
                     </button>

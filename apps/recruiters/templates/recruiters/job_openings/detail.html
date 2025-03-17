@@ -6,9 +6,12 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Main Content -->
-        <div class="w-full lg:w-2/3">
-            <!-- Job Header -->
+        <!-- Include Recruiter Sidebar -->
+        {% include 'recruiters/components/sidebar.html' with active_page='jobs' %}
+
+        <!-- Main content area -->
+        <div class="w-full lg:w-3/4">
+            <!-- Job Details -->
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <div class="flex justify-between items-start flex-wrap gap-4 mb-4">
                     <div>
@@ -67,35 +70,26 @@
                     
                     <div>
                         <h3 class="font-medium">Experience</h3>
-                        <p>
-                            {% if job_opening.experience_min and job_opening.experience_max %}
-                                {{ job_opening.experience_min }} - {{ job_opening.experience_max }} years
-                            {% elif job_opening.experience_min %}
-                                {{ job_opening.experience_min }}+ years
-                            {% else %}
-                                Any level
-                            {% endif %}
-                        </p>
+                        <p>{{ job_opening.experience_years }}+ years</p>
                     </div>
                 </div>
                 
-                {% if job_opening.skills.all %}
-                    <div class="mb-6">
-                        <h3 class="font-medium mb-2">Required Skills</h3>
-                        <div class="flex flex-wrap gap-2">
-                            {% for skill in job_opening.skills.all %}
-                                <span class="badge badge-primary">{{ skill.name }}</span>
-                            {% endfor %}
-                        </div>
+                <div class="mb-6">
+                    <h3 class="font-medium mb-2">Required Skills</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for skill in job_opening.required_skills_list %}
+                            <span class="badge badge-outline">{{ skill }}</span>
+                        {% empty %}
+                            <p class="text-base-content/70">No specific skills listed</p>
+                        {% endfor %}
                     </div>
-                {% endif %}
+                </div>
                 
-                <div class="prose max-w-none">
-                    <h2>Job Description</h2>
-                    <p>{{ job_opening.description|linebreaks }}</p>
-                    
-                    <h2>Requirements</h2>
-                    <p>{{ job_opening.requirements|linebreaks }}</p>
+                <div class="mb-6">
+                    <h3 class="font-medium mb-2">Job Description</h3>
+                    <div class="prose max-w-none">
+                        <p>{{ job_opening.description|linebreaks }}</p>
+                    </div>
                 </div>
                 
                 <div class="divider"></div>
@@ -112,97 +106,80 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-        
-        <!-- Sidebar -->
-        <div class="w-full lg:w-1/3">
+            
+            <!-- Candidate Matches Section (for recruiters only) -->
             {% if request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
-                <!-- Candidate Matches (for recruiters only) -->
-                <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">Candidate Matches</h2>
-                        <a href="{% url 'jobs:candidates' job_opening.id %}" class="btn btn-sm btn-ghost">View All</a>
-                    </div>
-                    
+                {% if top_matches or wildcard_matches %}
+                    <!-- Top Matches -->
                     {% if top_matches %}
-                        <div class="mb-6">
-                            <h3 class="font-medium mb-3">Top Matches</h3>
-                            <div class="space-y-4">
-                                {% for match in top_matches|slice:":3" %}
-                                    <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                                        <div class="card-body p-4">
-                                            <div class="flex justify-between items-start">
-                                                <h4 class="card-title text-base">{{ match.job_seeker.user_profile.get_user_full_name }}</h4>
-                                                <div class="badge badge-success">{{ match.match_score }}% Match</div>
-                                            </div>
-                                            <p class="text-sm text-base-content/70 line-clamp-2">{{ match.match_explanation }}</p>
-                                            <div class="card-actions justify-end mt-2">
-                                                <a href="{% url 'jobs:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
-                                                    View Profile
-                                                </a>
-                                            </div>
+                    <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold">Top Matches</h2>
+                            <a href="{% url 'jobs:candidates' job_opening.id %}" class="btn btn-sm btn-ghost">View All</a>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            {% for match in top_matches|slice:":5" %}
+                                <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="card-body p-4">
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="card-title text-base">{{ match.job_seeker.user.name }}</h4>
+                                            <div class="badge badge-success">{{ match.match_score }}% Match</div>
+                                        </div>
+                                        <p class="text-sm text-base-content/70 line-clamp-2">{{ match.job_seeker.professional_summary|default:match.job_seeker.experience|truncatewords:20 }}</p>
+                                        <div class="card-actions justify-end mt-2">
+                                            <a href="{% url 'jobs:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
+                                                View Profile
+                                            </a>
                                         </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                            {% if top_matches.count > 3 %}
-                                <div class="text-center mt-4">
-                                    <a href="{% url 'jobs:candidates' job_opening.id %}" class="link link-primary">View all {{ top_matches.count }} top matches</a>
                                 </div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
+                    </div>
                     {% endif %}
                     
+                    <!-- Wildcard Matches -->
                     {% if wildcard_matches %}
-                        <div>
-                            <h3 class="font-medium mb-3">Wildcard Matches</h3>
-                            <div class="space-y-4">
-                                {% for match in wildcard_matches|slice:":2" %}
-                                    <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                                        <div class="card-body p-4">
-                                            <div class="flex justify-between items-start">
-                                                <h4 class="card-title text-base">{{ match.job_seeker.user_profile.get_user_full_name }}</h4>
-                                                <div class="badge">{{ match.match_score }}% Match</div>
-                                            </div>
-                                            <p class="text-sm text-base-content/70 line-clamp-2">{{ match.match_explanation }}</p>
-                                            <div class="card-actions justify-end mt-2">
-                                                <a href="{% url 'jobs:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
-                                                    View Profile
-                                                </a>
-                                            </div>
+                    <div class="bg-base-200 rounded-box p-6 shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold">Wildcard Matches</h2>
+                            <a href="{% url 'jobs:candidates' job_opening.id %}?section=wildcard" class="btn btn-sm btn-ghost">View All</a>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            {% for match in wildcard_matches|slice:":3" %}
+                                <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="card-body p-4">
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="card-title text-base">{{ match.job_seeker.user.name }}</h4>
+                                            <div class="badge badge-warning">{{ match.match_score }}% Match</div>
+                                        </div>
+                                        <p class="text-sm text-base-content/70 line-clamp-2">{{ match.job_seeker.professional_summary|default:match.job_seeker.experience|truncatewords:20 }}</p>
+                                        <div class="card-actions justify-end mt-2">
+                                            <a href="{% url 'jobs:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
+                                                View Profile
+                                            </a>
                                         </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                            {% if wildcard_matches.count > 2 %}
-                                <div class="text-center mt-4">
-                                    <a href="{% url 'jobs:candidates' job_opening.id %}" class="link link-primary">View all {{ wildcard_matches.count }} wildcard matches</a>
                                 </div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
+                    </div>
                     {% endif %}
-                    
-                    {% if not top_matches and not wildcard_matches %}
-                        <div class="flex flex-col items-center justify-center py-8 text-center">
-                            <i class="fas fa-user-friends text-4xl text-base-content/30 mb-4"></i>
-                            <h3 class="text-lg font-semibold mb-2">No matches yet</h3>
-                            <p class="text-base-content/70">Our AI is still finding candidates that match your job criteria.</p>
+                {% else %}
+                    <div class="bg-base-200 rounded-box p-6 shadow-md">
+                        <div class="flex items-center justify-center flex-col py-8">
+                            <i class="fas fa-users text-5xl text-base-content/30 mb-4"></i>
+                            <h3 class="text-xl font-semibold mb-2">No candidate matches yet</h3>
+                            <p class="text-base-content/70 text-center mb-4">Our AI is still processing potential candidates for this job opening.</p>
                         </div>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
             {% endif %}
             
+            <!-- Job Seeker Specific Section -->
             {% if request.user.user_type == 'job_seeker' %}
-                <!-- Job Application (for job seekers only) -->
-                <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                    <h2 class="text-xl font-bold mb-4">Ready to Apply?</h2>
-                    <p class="mb-4">This job matches your skills and experience. Don't miss this opportunity!</p>
-                    <button class="btn btn-primary w-full">
-                        <i class="fas fa-paper-plane mr-2"></i> Apply Now
-                    </button>
-                </div>
-                
-                <!-- Company Info (for job seekers) -->
                 <div class="bg-base-200 rounded-box p-6 shadow-md">
                     <h2 class="text-xl font-bold mb-4">About {{ job_opening.company }}</h2>
                     <p class="text-base-content/70 mb-4">Learn more about this company and their culture.</p>
