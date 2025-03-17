@@ -47,19 +47,9 @@ class PersonalTaglineView(LoginRequiredMixin, View):
         # If tagline is available and this is an HTMX request, return HTML
         if is_htmx:
             if tagline:
-                # Return the tagline without the spinner for HTMX
+                # Return the tagline without spinner and use status code 286 to stop polling
                 html = f"<span>{tagline}</span>"
-
-                # Stop further polling by adding HX-Reswap header
-                response = HttpResponse(html)
-                response.headers["HX-Reswap"] = "innerHTML"
-                response.headers["HX-Trigger"] = "taglineLoaded"
-
-                # Add a special header to stop the polling
-                response.headers["HX-Trigger-After-Swap"] = (
-                    '{"stopPolling": {"target": "#tagline-container"}}'
-                )
-                return response
+                return HttpResponse(html, status=286)
             else:
                 # Return the original content with spinner for HTMX
                 html = """

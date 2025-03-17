@@ -19,8 +19,7 @@
                     hx-get="{% url 'job_seekers:api_personal_tagline' %}" 
                     hx-trigger="load, every 5s"
                     hx-swap="innerHTML"
-                    hx-target="this"
-                    hx-indicator="#tagline-spinner">
+                    hx-target="this">
                     <span id="tagline-spinner" class="loading loading-spinner loading-xs mr-1"></span>
                     <span>Job Seeker</span>
                 </div>
@@ -47,15 +46,4 @@
             </a></li>
         </ul>
     </div>
-</div>
-
-<!-- Script to handle stop polling event -->
-<script>
-    document.body.addEventListener('stopPolling', function(evt) {
-        const target = document.querySelector(evt.detail.target + ' [hx-trigger]');
-        if (target) {
-            // Remove the polling trigger
-            target.removeAttribute('hx-trigger');
-        }
-    });
-</script> 
+</div> 
