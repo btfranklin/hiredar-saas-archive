@@ -52,21 +52,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class ProfileView(LoginRequiredMixin, TemplateView):
-    """Profile view for recruiters."""
-
-    template_name = "recruiters/profile.html"
-
-    def dispatch(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponseBase:
-        """Ensure only recruiters can access this view."""
-        user = cast(AuthenticatedUser, request.user)
-        if user.user_type != "recruiter":
-            return redirect("core:home")
-        return super().dispatch(request, *args, **kwargs)
-
-
 class SettingsView(LoginRequiredMixin, TemplateView):
     """Settings view for recruiters."""
 
