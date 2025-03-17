@@ -8,21 +8,7 @@ in the Django admin interface.
 
 from django.contrib import admin
 
-from .models import CandidateMatch, JobOpening
-
-
-@admin.register(JobOpening)
-class JobOpeningAdmin(admin.ModelAdmin):
-    """
-    Admin configuration for JobOpening model.
-
-    Defines how job openings are displayed and managed in the Django admin,
-    including display fields, filters, and search capabilities.
-    """
-
-    list_display = ("title", "recruiter", "location", "is_active", "created_at")
-    list_filter = ("is_active", "created_at")
-    search_fields = ("title", "description", "required_skills")
+from .models import CandidateMatch
 
 
 @admin.register(CandidateMatch)

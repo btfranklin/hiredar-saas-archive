@@ -3,8 +3,7 @@
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.jobs.models import JobOpening
-from apps.recruiters.models import RecruiterProfile
+from apps.recruiters.models import JobOpening, RecruiterProfile
 
 
 class JobOpeningModelTest(TestCase):
@@ -38,7 +37,7 @@ class JobOpeningModelTest(TestCase):
         """Test that job opening can be created"""
         self.assertEqual(self.job_opening.title, "Software Engineer")
         # Test the string representation format which is "{title} - {company}"
-        expected_str = f"Software Engineer - "
+        expected_str = "Software Engineer - "
         self.assertEqual(str(self.job_opening), expected_str)
 
     def test_job_opening_skills(self):

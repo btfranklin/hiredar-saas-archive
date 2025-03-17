@@ -23,7 +23,8 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
 from apps.authentication.types import AuthenticatedUser
-from apps.jobs.models import CandidateMatch, JobOpening
+from apps.jobs.models import CandidateMatch
+from apps.recruiters.models import JobOpening
 
 
 @method_decorator(login_required, name="dispatch")
@@ -43,7 +44,9 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
     template_name = "jobs/candidate_match_list.html"
     context_object_name = "candidate_matches"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """
         Check permissions and set up job opening before processing the request.
 
@@ -125,7 +128,9 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
     model = CandidateMatch
     object: CandidateMatch | None = None
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """
         Check if the user is a recruiter before processing the request.
 
