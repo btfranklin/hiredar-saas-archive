@@ -41,12 +41,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         """Get context data for the dashboard."""
         context = super().get_context_data(**kwargs)
         user = cast(AuthenticatedUser, self.request.user)
+        profile = user.job_seeker_profile
 
         # Get job matches
         context["job_matches"] = CandidateMatch.objects.filter(
-            job_seeker=user.job_seeker_profile,
+            job_seeker=profile,
             status="pending",
-        ).order_by("-match_score")[:5]
+        ).order_by("-created_at")[:5]
 
         # Get unread notifications
         context["notifications"] = Notification.objects.filter(
@@ -55,6 +56,24 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             ),  # Cast to Any to avoid type incompatibility with the model field
             is_read=False,
         ).order_by("-created_at")[:5]
+
+        # Get role recommendations
+        # First, get roles the user is interested in
+        context["interested_roles"] = RoleRecommendation.objects.filter(
+            job_seeker=profile,
+            is_candidate_interested=True,
+        ).order_by("role_title")[:5]
+
+        # Then, get other role recommendations
+        context["other_roles"] = RoleRecommendation.objects.filter(
+            job_seeker=profile,
+            is_candidate_interested=False,
+        ).order_by("role_title")[:5]
+
+        # Get total count for the stats card
+        context["recommended_roles_count"] = RoleRecommendation.objects.filter(
+            job_seeker=profile
+        ).count()
 
         return context
 
