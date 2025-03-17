@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, cast
+from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, JsonResponse
