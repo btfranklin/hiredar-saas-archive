@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
+from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 
 
 @admin.register(JobSeekerProfile)
@@ -50,3 +50,38 @@ class RoleRecommendationAdmin(admin.ModelAdmin):
     list_display = ("job_seeker", "role_title", "created_at")
     list_filter = ("created_at",)
     search_fields = ("role_title", "job_seeker__user__email")
+
+
+@admin.register(TalentSheet)
+class TalentSheetAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for TalentSheet model.
+
+    Provides an interface for viewing and managing AI-generated talent sheets
+    for job seekers in the talent pool.
+    """
+
+    list_display = ("job_seeker", "created_at", "updated_at")
+    list_filter = ("created_at", "updated_at")
+    search_fields = ("job_seeker__user__email", "job_seeker__user__name", "ideal_roles")
+
+    fieldsets = (
+        (None, {"fields": ("job_seeker",)}),
+        (
+            "Talent Information",
+            {
+                "fields": (
+                    "promotional_blurb",
+                    "skill_overview",
+                    "ideal_roles",
+                )
+            },
+        ),
+        ("Salary Expectations", {"fields": ("salary_min", "salary_max")}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
+        ),
+    )
+
+    readonly_fields = ("created_at", "updated_at")
