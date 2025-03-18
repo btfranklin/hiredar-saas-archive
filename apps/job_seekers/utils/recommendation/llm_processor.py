@@ -315,7 +315,7 @@ def generate_talent_sheet(
 
         # Call the OpenAI API
         response = client.chat.completions.create(
-            model="gpt-4-turbo",
+            model="gpt-4o",
             messages=cast(Iterable[Any], messages),
             temperature=0.7,
             timeout=60,
