@@ -17,6 +17,7 @@ from apps.job_seekers.tasks.resume_processing_tasks import (
     handle_resume_upload_task,
     save_resume_file,
 )
+from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 # Export all tasks at the module level
 __all__ = [
@@ -31,4 +32,6 @@ __all__ = [
     # Recommendation tasks
     "generate_role_recommendations",
     "generate_personal_tagline",
+    # Talent sheet tasks
+    "generate_talent_sheet_task",
 ]

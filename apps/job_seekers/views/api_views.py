@@ -8,9 +8,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views import View
+from django_q.tasks import async_task
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import RoleRecommendation
+from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -114,6 +116,30 @@ class ToggleTalentPoolView(LoginRequiredMixin, View):
                 profile_id,
                 "entered" if active else "left",
             )
+
+            # If the job seeker is entering the talent pool, schedule a task to generate their talent sheet
+            if active:
+                try:
+                    # Schedule the talent sheet generation task
+                    task_id = async_task(
+                        generate_talent_sheet_task,
+                        getattr(profile, "id"),
+                        hook=None,  # No callback needed
+                        task_name=f"generate_talent_sheet_{getattr(profile, 'id')}",
+                    )
+
+                    logger.info(
+                        "Scheduled talent sheet generation task (ID: %s) for job seeker %s",
+                        task_id,
+                        user.email,
+                    )
+                except Exception as e:
+                    # Log the error but don't fail the request
+                    logger.error(
+                        "Error scheduling talent sheet generation task: %s",
+                        str(e),
+                        exc_info=True,
+                    )
 
             return JsonResponse(
                 {

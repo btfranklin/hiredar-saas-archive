@@ -14,9 +14,10 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from promptdown import StructuredPrompt
 
-from apps.job_seekers.models import RoleRecommendation
+from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.utils.recommendation.xml_parser import (
     parse_role_recommendations_xml,
+    parse_talent_sheet_xml,
 )
 
 # Load environment variables
@@ -246,4 +247,98 @@ def generate_personal_tagline(resume_xml: str) -> str:
 
     except Exception as e:
         logger.error("Unexpected error in LLM processing: %s", str(e))
+        raise
+
+
+def generate_talent_sheet(
+    resume_xml: str,
+    interested_roles: list[str] | None = None,
+) -> TalentSheet:
+    """
+    Generate a talent sheet based on the job seeker's resume XML and interested roles.
+
+    This function sends the job seeker's resume XML and their interested role selections
+    to an LLM to generate a comprehensive talent sheet for recruiters.
+
+    Args:
+        resume_xml: The XML representation of the job seeker's resume
+        interested_roles: Optional list of roles the job seeker has expressed interest in
+
+    Returns:
+        A TalentSheet object (unsaved to database)
+
+    Raises:
+        ValueError: If the API key is missing or the LLM response is invalid
+        requests.exceptions.RequestException: If the API request fails
+        Exception: For any other processing errors
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        error_msg = "No API key found. Set OPENAI_API_KEY environment variable."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    client = OpenAI(api_key=api_key)
+
+    try:
+        # Load and fill the talent sheet generation prompt
+        prompt_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "prompts",
+            "generate_talent_sheet_from_xml.prompt.md",
+        )
+
+        with open(prompt_path, "r") as f:
+            prompt_content = f.read()
+
+        prompt = StructuredPrompt(prompt_content)
+
+        # Prepare interested roles as a comma-separated string for the prompt
+        interested_roles_str = ""
+        if interested_roles:
+            interested_roles_str = ", ".join(interested_roles)
+
+        # Wrap the XML in markdown code block
+        wrapped_xml = f"```xml\n{resume_xml}\n```"
+
+        # Apply the template values
+        prompt.apply_template_values(
+            {
+                "resume_xml": wrapped_xml,
+                "interested_roles": interested_roles_str,
+            }
+        )
+
+        # Get messages for the API call
+        messages = prompt.to_chat_completion_messages()
+        logger.debug("Number of messages to send: %d", len(messages))
+
+        # Call the OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=cast(Iterable[Any], messages),
+            temperature=0.7,
+            timeout=60,
+        )
+
+        # Extract talent sheet XML from response
+        xml_response = cast(str, response.choices[0].message.content)
+        if not xml_response:
+            raise ValueError("Empty response from LLM")
+
+        # Parse the XML response into a TalentSheet object
+        talent_sheet = parse_talent_sheet_xml(xml_response)
+
+        logger.info("Generated talent sheet successfully")
+
+        return talent_sheet
+
+    except requests.exceptions.RequestException as e:
+        logger.error("API request failed: %s", str(e), exc_info=True)
+        raise
+    except ValueError as e:
+        logger.error("Failed to process LLM response: %s", str(e), exc_info=True)
+        raise
+    except Exception as e:
+        logger.error("Error generating talent sheet: %s", str(e), exc_info=True)
         raise

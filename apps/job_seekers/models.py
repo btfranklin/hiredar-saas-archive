@@ -309,7 +309,62 @@ class RoleRecommendation(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.job_seeker} - {self.role_title}"
+        return f"{self.role_title} for {self.job_seeker.user.name}"
 
     class Meta:
         ordering = ["role_title"]
+
+
+class TalentSheet(models.Model):
+    """
+    AI-generated talent sheet for job seekers in the talent pool.
+
+    This represents a comprehensive, recruiter-friendly presentation of a job seeker's
+    qualifications, tailored for the talent pool. Generated when a job seeker opts
+    into the talent pool, this sheet provides a structured presentation of their
+    skills, experience, and career goals that makes it easier for recruiters to
+    quickly assess their suitability for open positions.
+    """
+
+    job_seeker = models.OneToOneField(
+        "job_seekers.JobSeekerProfile",
+        on_delete=models.CASCADE,
+        related_name="talent_sheet",
+        help_text="The job seeker this talent sheet is for",
+    )
+    promotional_blurb = models.TextField(
+        help_text="AI-generated promotional summary highlighting the candidate's unique value proposition"
+    )
+    skill_overview = models.TextField(
+        help_text="Concise overview of the candidate's key skills and competencies"
+    )
+    ideal_roles = models.TextField(
+        blank=True,
+        help_text="Comma-separated list of ideal roles, populated from their interested role recommendations",
+    )
+    salary_min = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Minimum salary expectation",
+    )
+    salary_max = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Maximum salary expectation",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f"Talent Sheet: {self.job_seeker.user.name}"
+
+    @property
+    def ideal_roles_list(self) -> list[str]:
+        """Returns a list of ideal roles from the comma-separated string"""
+        if not self.ideal_roles:
+            return []
+        return [role.strip() for role in self.ideal_roles.split(",")]
