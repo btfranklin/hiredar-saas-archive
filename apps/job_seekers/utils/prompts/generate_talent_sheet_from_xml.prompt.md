@@ -39,5 +39,3 @@ The resume data in the XML below represents the candidate's professional backgro
 {resume_xml}
 
 Interested roles: {interested_roles}
-
-**Assistant:** 

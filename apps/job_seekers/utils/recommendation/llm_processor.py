@@ -288,10 +288,8 @@ def generate_talent_sheet(
             "generate_talent_sheet_from_xml.prompt.md",
         )
 
-        with open(prompt_path, "r") as f:
-            prompt_content = f.read()
-
-        prompt = StructuredPrompt(prompt_content)
+        # Load the prompt using the correct method
+        structured_prompt = StructuredPrompt.from_promptdown_file(prompt_path)
 
         # Prepare interested roles as a comma-separated string for the prompt
         interested_roles_str = ""
@@ -302,7 +300,7 @@ def generate_talent_sheet(
         wrapped_xml = f"```xml\n{resume_xml}\n```"
 
         # Apply the template values
-        prompt.apply_template_values(
+        structured_prompt.apply_template_values(
             {
                 "resume_xml": wrapped_xml,
                 "interested_roles": interested_roles_str,
@@ -310,7 +308,7 @@ def generate_talent_sheet(
         )
 
         # Get messages for the API call
-        messages = prompt.to_chat_completion_messages()
+        messages = structured_prompt.to_chat_completion_messages()
         logger.debug("Number of messages to send: %d", len(messages))
 
         # Call the OpenAI API
