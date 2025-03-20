@@ -44,14 +44,33 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
     model = JobOpening
     template_name = "recruiters/job_openings/create.html"
     fields = [
+        # Basic Information
         "title",
         "description",
         "location",
         "company",
+        # Job Classification
+        "job_level",
+        "employment_type",
+        # Compensation & Benefits
         "salary_min",
         "salary_max",
+        "benefits",
+        "additional_perks",
+        # Qualifications & Skills
         "required_skills",
-        "experience_years",
+        "required_qualifications",
+        "soft_skills",
+        # Job Details
+        "responsibilities",
+        "daily_tasks",
+        "performance_expectations",
+        # Working Conditions
+        "working_hours",
+        "work_environment",
+        "reporting_to",
+        "travel_requirements",
+        # Status
         "is_active",
     ]
     success_url = reverse_lazy("recruiters:job_openings_list")
@@ -124,9 +143,17 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
                 ):
                     match_score += 20  # Each matching skill adds 20 points
 
-            # Add points for experience match
+            # Add points for job level match based on years of experience
             seeker_experience = job_seeker.years_of_experience or 0
-            if seeker_experience >= job.experience_years:
+            if job.job_level == "entry" and seeker_experience >= 0:
+                match_score += 20
+            elif job.job_level == "junior" and seeker_experience >= 1:
+                match_score += 20
+            elif job.job_level == "mid" and seeker_experience >= 3:
+                match_score += 20
+            elif job.job_level == "senior" and seeker_experience >= 5:
+                match_score += 20
+            elif job.job_level == "manager" and seeker_experience >= 7:
                 match_score += 20
 
             # Cap the score at 100
@@ -140,7 +167,7 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
                     job_seeker=job_seeker,
                     match_score=match_score,
                     match_type=match_type,
-                    match_explanation=f"Matched {len([s for s in required_skills if any(s.lower() in js.lower() for js in job_seeker_skills)])} skills and experience requirements",
+                    match_explanation=f"Matched {len([s for s in required_skills if any(s.lower() in js.lower() for js in job_seeker_skills)])} skills and has appropriate experience for this job level.",
                 )
 
 
@@ -241,14 +268,33 @@ class JobOpeningEditView(LoginRequiredMixin, UpdateView):
     model: ClassVar[type[JobOpening]] = JobOpening
     template_name = "recruiters/job_openings/edit.html"
     fields = [
+        # Basic Information
         "title",
         "description",
         "location",
         "company",
+        # Job Classification
+        "job_level",
+        "employment_type",
+        # Compensation & Benefits
         "salary_min",
         "salary_max",
+        "benefits",
+        "additional_perks",
+        # Qualifications & Skills
         "required_skills",
-        "experience_years",
+        "required_qualifications",
+        "soft_skills",
+        # Job Details
+        "responsibilities",
+        "daily_tasks",
+        "performance_expectations",
+        # Working Conditions
+        "working_hours",
+        "work_environment",
+        "reporting_to",
+        "travel_requirements",
+        # Status
         "is_active",
     ]
 

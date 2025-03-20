@@ -21,6 +21,46 @@ class JobOpeningAdmin(admin.ModelAdmin):
     including display fields, filters, and search capabilities.
     """
 
-    list_display = ("title", "recruiter", "location", "is_active", "created_at")
-    list_filter = ("is_active", "created_at")
-    search_fields = ("title", "description", "required_skills")
+    list_display = (
+        "title",
+        "company",
+        "job_level",
+        "location",
+        "employment_type",
+        "is_active",
+        "created_at",
+    )
+    list_filter = ("is_active", "job_level", "employment_type", "created_at")
+    search_fields = ("title", "description", "company", "required_skills", "location")
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {"fields": ("recruiter", "title", "description", "company", "location")},
+        ),
+        ("Job Classification", {"fields": ("job_level", "employment_type")}),
+        (
+            "Compensation & Benefits",
+            {"fields": ("salary_min", "salary_max", "benefits", "additional_perks")},
+        ),
+        (
+            "Qualifications & Skills",
+            {"fields": ("required_skills", "required_qualifications", "soft_skills")},
+        ),
+        (
+            "Job Details",
+            {"fields": ("responsibilities", "daily_tasks", "performance_expectations")},
+        ),
+        (
+            "Working Conditions",
+            {
+                "fields": (
+                    "working_hours",
+                    "work_environment",
+                    "reporting_to",
+                    "travel_requirements",
+                )
+            },
+        ),
+        ("Status", {"fields": ("is_active",)}),
+    )
