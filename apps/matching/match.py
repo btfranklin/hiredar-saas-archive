@@ -12,7 +12,7 @@ import numpy as np
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 
-from apps.matching.tasks.common import index
+from apps.matching.tasks.common import get_index
 
 logger = logging.getLogger(__name__)
 
@@ -51,75 +51,82 @@ def query_pinecone(
         List of matches with metadata and scores
     """
     try:
-        # Using the gRPC Pinecone client format
-        result = index.query(
-            vector=query_vector,
+        # Get the Pinecone index
+        index = get_index()
+
+        # Execute the query
+        query_response = index.query(
+            namespace=namespace,
             top_k=top_k,
             include_metadata=True,
-            filter=filter_dict,  # type: ignore
-            namespace=namespace,
+            vector=query_vector,
+            filter=filter_dict,
         )
-        return result.matches
+        # The response structure depends on the Pinecone client version
+        # For the gRPC client, matches are a property of the response
+        return getattr(query_response, "matches", [])
     except Exception as e:
-        logger.error("Pinecone query error: %s", e)
+        logger.error("Error querying Pinecone: %s", e)
         return []
 
 
 def get_talent_section_embedding(talent_id: int, section: str) -> list[float] | None:
     """
-    Helper to retrieve the embedding for a given TalentSheet section from Pinecone.
+    Retrieve the embedding for a specific section of a talent sheet.
 
     Args:
-        talent_id: The ID of the TalentSheet
-        section: The section name to retrieve
+        talent_id: ID of the talent sheet
+        section: Section name (e.g., 'promotional_blurb', 'skill_overview')
 
     Returns:
         The embedding vector or None if not found
     """
-    section_slug = section.lower().replace(" ", "_")
-    vector_id = f"talent_{talent_id}_{section_slug}"
     try:
-        # Using the gRPC Pinecone client format
+        # Get the Pinecone index
+        index = get_index()
+
+        vector_id = f"talent_{talent_id}_{section}"
         result = index.fetch(ids=[vector_id], namespace="talent_sheets")
-        # Updated to match gRPC client response format
-        if vector_id in result.vectors:
-            return result.vectors[vector_id].values
-        else:
+
+        if not result.vectors:
             logger.warning(
                 "Vector %s not found in Pinecone namespace 'talent_sheets'.", vector_id
             )
             return None
+
+        return result.vectors[vector_id].values
     except Exception as e:
-        logger.error("Error fetching vector %s: %s", vector_id, e)
+        logger.error("Error fetching talent embedding: %s", e)
         return None
 
 
 def get_job_section_embedding(job_id: int, section: str) -> list[float] | None:
     """
-    Similarly, fetch a JobOpening's section embedding.
+    Retrieve the embedding for a specific section of a job opening.
 
     Args:
-        job_id: The ID of the JobOpening
-        section: The section name to retrieve
+        job_id: ID of the job opening
+        section: Section name (e.g., 'job_overview', 'required_skills')
 
     Returns:
         The embedding vector or None if not found
     """
-    section_slug = section.lower().replace(" ", "_")
-    vector_id = f"job_{job_id}_{section_slug}"
     try:
-        # Using the gRPC Pinecone client format
+        # Get the Pinecone index
+        index = get_index()
+
+        vector_id = f"job_{job_id}_{section}"
         result = index.fetch(ids=[vector_id], namespace="job_openings")
-        # Updated to match gRPC client response format
-        if vector_id in result.vectors:
-            return result.vectors[vector_id].values
-        else:
+
+        if not result.vectors:
             logger.warning(
                 "Vector %s not found in Pinecone namespace 'job_openings'.", vector_id
             )
             return None
+
+        return result.vectors[vector_id].values
     except Exception as e:
-        logger.error("Error fetching vector %s: %s", vector_id, e)
+        logger.error("Error fetching job embedding: %s", e)
         return None
 
 

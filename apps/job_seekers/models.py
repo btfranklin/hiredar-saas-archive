@@ -356,6 +356,10 @@ class TalentSheet(models.Model):
         blank=True,
         help_text="Maximum salary expectation",
     )
+    is_published = models.BooleanField(
+        default=False,
+        help_text="Whether this talent sheet is published and available for matching to job openings",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

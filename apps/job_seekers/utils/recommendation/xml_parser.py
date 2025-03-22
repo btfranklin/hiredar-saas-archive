@@ -140,6 +140,7 @@ def parse_talent_sheet_xml(
             job_seeker=job_seeker,
             promotional_blurb=promotional_blurb_elem.text.strip(),
             skill_overview=skill_overview_elem.text.strip(),
+            is_published=True,  # Default to published - talent sheets are created and published together
         )
 
         # Handle optional elements
@@ -167,7 +168,11 @@ def parse_talent_sheet_xml(
 
         logger.info(
             "Successfully parsed talent sheet XML for %s",
-            job_seeker.user.email if job_seeker else "unknown user",
+            (
+                job_seeker.user.name
+                if job_seeker and hasattr(job_seeker, "user")
+                else "unknown user"
+            ),
         )
         return talent_sheet
 

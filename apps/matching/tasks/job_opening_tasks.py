@@ -10,7 +10,7 @@ from typing import Any
 from django.apps import apps
 
 # Import shared utilities
-from apps.matching.tasks.common import get_embedding, index, logger
+from apps.matching.tasks.common import get_embedding, get_index, logger
 
 
 def generate_enriched_text_for_job(section_name: str, raw_text: str) -> str:
@@ -32,7 +32,7 @@ def upsert_job_embedding(
     vector_id: str, embedding: list[float], metadata: dict[str, Any]
 ) -> None:
     """
-    Upsert a job-related vector into the Pinecone index.
+    Upsert a job-related vector into Pinecone.
 
     Args:
         vector_id: Unique identifier for the vector
@@ -43,6 +43,9 @@ def upsert_job_embedding(
         Exception: If the Pinecone API call fails
     """
     try:
+        # Get the Pinecone index
+        index = get_index()
+
         # Using the current Pinecone client format
         # Type ignore is needed because the pinecone-client has inconsistent type definitions
         index.upsert(
@@ -50,7 +53,7 @@ def upsert_job_embedding(
             namespace="job_openings",  # Using namespaces for organization
         )
     except Exception as e:
-        logger.error(f"Error upserting job vector {vector_id}: {e}")
+        logger.error("Error upserting job vector %s to Pinecone: %s", vector_id, e)
         raise
 
 
@@ -67,12 +70,12 @@ def process_job_opening(job_opening_id: int) -> None:
     try:
         job = JobOpening.objects.get(id=job_opening_id)
     except JobOpening.DoesNotExist:
-        logger.error(f"JobOpening with id {job_opening_id} does not exist.")
+        logger.error("JobOpening with id %s does not exist.", job_opening_id)
         return
 
     # Skip processing if job is not active
     if not job.is_active:
-        logger.info(f"Skipping embedding for inactive JobOpening {job_opening_id}")
+        logger.info("Skipping embedding for inactive JobOpening %s", job_opening_id)
         return
 
     # Define the fields to process. Adjust or add fields as needed.
@@ -89,6 +92,9 @@ def process_job_opening(job_opening_id: int) -> None:
         "Soft Skills": job.soft_skills,
     }
 
+    # Track all vector IDs we create for this job opening
+    vector_ids = []
+
     # Process each field, ignoring empty ones
     for section, raw_text in fields.items():
         if not raw_text:
@@ -100,6 +106,7 @@ def process_job_opening(job_opening_id: int) -> None:
         # Create a unique vector ID for each section
         section_slug = section.lower().replace(" ", "_")
         vector_id = f"job_{job.id}_{section_slug}"
+        vector_ids.append(vector_id)
 
         # Enhanced metadata for better search filtering and result display
         metadata = {
@@ -125,30 +132,57 @@ def process_job_opening(job_opening_id: int) -> None:
 
         upsert_job_embedding(vector_id, embedding, metadata)
         logger.info(
-            f"Upserted embedding for JobOpening {job.id} section '{section}' (ID: {vector_id})"
+            "Upserted embedding for JobOpening %s section '%s' (ID: %s)",
+            job.id,
+            section,
+            vector_id,
         )
 
-    logger.info(f"Completed processing embeddings for JobOpening {job.id}")
+    logger.info("Completed processing embeddings for JobOpening %s", job.id)
 
 
 def remove_job_opening_embeddings(job_opening_id: int) -> None:
     """
     Remove all embeddings associated with a JobOpening from Pinecone.
 
+    Since Serverless/Starter Pinecone indexes don't support delete-by-filter operations,
+    we delete by the predictable vector IDs instead.
+
     Args:
         job_opening_id: ID of the JobOpening to remove embeddings for
-
-    Raises:
-        Exception: If the Pinecone API call fails
     """
     try:
-        # Using a filter to find all vectors for this job opening
-        # Type ignore is needed because the pinecone-client has inconsistent type definitions
-        filter_dict = {"job_opening_id": job_opening_id}
+        # Get the Pinecone index
+        index = get_index()
 
-        index.delete(filter=filter_dict, namespace="job_openings")  # type: ignore
+        # First check if the namespace exists
+        stats = index.describe_index_stats()
+        if "job_openings" not in stats.namespaces.keys():
+            logger.warning(
+                "Namespace 'job_openings' doesn't exist yet - nothing to delete for JobOpening %s",
+                job_opening_id,
+            )
+            return
 
-        logger.info(f"Deleted embeddings for JobOpening {job_opening_id}")
+        # For Serverless/Starter tiers, we can't use metadata filtering
+        # Instead, we need to delete vectors by their IDs
+        # Job opening vector IDs follow a predictable pattern:
+        sections = [
+            "job_overview",
+            "required_skills",
+            "responsibilities",
+            "qualifications",
+            "soft_skills",
+        ]
+        vector_ids = [f"job_{job_opening_id}_{section}" for section in sections]
+
+        # Delete vectors by IDs - this works on all Pinecone tiers
+        index.delete(ids=vector_ids, namespace="job_openings")
+
+        logger.info("Deleted embeddings for JobOpening %s", job_opening_id)
     except Exception as e:
-        logger.error(f"Error deleting embeddings for JobOpening {job_opening_id}: {e}")
-        raise
+        # Log the error but don't raise it - we don't want to break the recruiter experience
+        # if there's an issue with the embedding system
+        logger.error(
+            "Error deleting embeddings for JobOpening %s: %s", job_opening_id, e
+        )

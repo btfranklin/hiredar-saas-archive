@@ -46,7 +46,7 @@ class Command(BaseCommand):
         )
 
         # Get dimension with validation
-        dimension_str = os.getenv("PINECONE_DIMENSION", "1536")
+        dimension_str = os.getenv("PINECONE_DIMENSION", "3072")
         try:
             dimension = int(dimension_str)
             if dimension <= 0:

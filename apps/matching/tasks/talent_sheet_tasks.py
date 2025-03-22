@@ -10,7 +10,7 @@ from typing import Any
 from django.apps import apps
 
 # Import shared utilities
-from apps.matching.tasks.common import get_embedding, index, logger
+from apps.matching.tasks.common import get_embedding, get_index, logger
 
 
 def generate_enriched_text_for_talent(section_name: str, raw_text: str) -> str:
@@ -43,6 +43,9 @@ def upsert_talent_embedding(
         Exception: If the Pinecone API call fails
     """
     try:
+        # Get the Pinecone index
+        index = get_index()
+
         # Using the current Pinecone client format
         # Type ignore is needed because the pinecone-client has inconsistent type definitions
         index.upsert(
@@ -73,11 +76,11 @@ def process_talent_sheet(talent_sheet_id: int) -> None:
         return
 
     # Skip processing if talent sheet is not published
-    if talent_sheet.status != "PUBLISHED":
+    if not talent_sheet.is_published:
         logger.info(
-            "Skipping embedding for non-published TalentSheet %s (status: %s)",
+            "Skipping embedding for non-published TalentSheet %s (is_published: %s)",
             talent_sheet_id,
-            talent_sheet.status,
+            talent_sheet.is_published,
         )
         return
 
@@ -87,6 +90,9 @@ def process_talent_sheet(talent_sheet_id: int) -> None:
         "Skill Overview": talent_sheet.skill_overview,
         "Ideal Roles": talent_sheet.ideal_roles,
     }
+
+    # Track all vector IDs we create for this talent sheet for potential future deletion
+    vector_ids = []
 
     # Process each field, ignoring empty ones
     for section, raw_text in fields.items():
@@ -99,6 +105,7 @@ def process_talent_sheet(talent_sheet_id: int) -> None:
         # Create a unique vector ID for each section
         section_slug = section.lower().replace(" ", "_")
         vector_id = f"talent_{talent_sheet.id}_{section_slug}"
+        vector_ids.append(vector_id)
 
         # Enhanced metadata for better search filtering and result display
         metadata = {
@@ -129,22 +136,38 @@ def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
     """
     Remove all embeddings associated with a TalentSheet from Pinecone.
 
+    Since Serverless/Starter Pinecone indexes don't support delete-by-filter operations,
+    we delete by the predictable vector IDs instead.
+
     Args:
         talent_sheet_id: ID of the TalentSheet to remove embeddings for
-
-    Raises:
-        Exception: If the Pinecone API call fails
     """
     try:
-        # Using a filter to find all vectors for this talent sheet
-        # Type ignore is needed because the pinecone-client has inconsistent type definitions
-        filter_dict = {"talent_sheet_id": talent_sheet_id}
+        # Get the Pinecone index
+        index = get_index()
 
-        index.delete(filter=filter_dict, namespace="talent_sheets")  # type: ignore
+        # First check if the namespace exists
+        stats = index.describe_index_stats()
+        if "talent_sheets" not in stats.namespaces.keys():
+            logger.warning(
+                "Namespace 'talent_sheets' doesn't exist yet - nothing to delete for TalentSheet %s",
+                talent_sheet_id,
+            )
+            return
+
+        # For Serverless/Starter tiers, we can't use metadata filtering
+        # Instead, we need to delete vectors by their IDs
+        # Talent sheet vector IDs follow a predictable pattern:
+        sections = ["promotional_blurb", "skill_overview", "ideal_roles"]
+        vector_ids = [f"talent_{talent_sheet_id}_{section}" for section in sections]
+
+        # Delete vectors by IDs - this works on all Pinecone tiers
+        index.delete(ids=vector_ids, namespace="talent_sheets")
 
         logger.info("Deleted embeddings for TalentSheet %s", talent_sheet_id)
     except Exception as e:
+        # Log the error but don't raise it - we don't want to break the job seeker experience
+        # if there's an issue with the embedding system
         logger.error(
             "Error deleting embeddings for TalentSheet %s: %s", talent_sheet_id, e
         )
-        raise

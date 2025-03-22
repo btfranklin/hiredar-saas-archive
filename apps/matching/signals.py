@@ -58,10 +58,10 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
         created: A boolean; True if a new record was created
     """
     # Only process published talent sheets
-    if instance.status == "PUBLISHED":
+    if instance.is_published:
         async_task("apps.matching.tasks.process_talent_sheet", instance.id)
-    elif instance.status in ["WITHDRAWN", "INACTIVE"]:
-        # If a talent sheet is withdrawn/inactive, remove the embeddings
+    else:
+        # If a talent sheet is unpublished, remove the embeddings
         async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
 
 

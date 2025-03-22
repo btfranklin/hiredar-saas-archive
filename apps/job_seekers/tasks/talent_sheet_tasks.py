@@ -78,6 +78,9 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
             # Associate the talent sheet with the job seeker profile
             talent_sheet.job_seeker = profile
 
+            # Set as published by default - talent sheets are always generated and published in one step
+            talent_sheet.is_published = True
+
             # Save the talent sheet to the database
             with transaction.atomic():
                 # Delete any existing talent sheet for this profile to avoid duplicates
