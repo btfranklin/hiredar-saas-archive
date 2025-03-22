@@ -76,22 +76,6 @@
                         </div>
                     </div>
                     
-                    <div id="company_fields" class="hidden mt-4">
-                        <div class="form-control">
-                            <label class="label" for="id_company_name">
-                                <span class="label-text">{% trans "Company Name" %}</span>
-                            </label>
-                            <input type="text" name="company_name" id="id_company_name" placeholder="Company Name" class="input input-bordered" />
-                        </div>
-                        
-                        <div class="form-control mt-2">
-                            <label class="label" for="id_company_website">
-                                <span class="label-text">{% trans "Company Website" %} ({% trans "optional" %})</span>
-                            </label>
-                            <input type="url" name="company_website" id="id_company_website" placeholder="https://company.com" class="input input-bordered" />
-                        </div>
-                    </div>
-                    
                     {% if redirect_field_value %}
                         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
                     {% endif %}
@@ -104,27 +88,4 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const userTypeRadios = document.querySelectorAll('input[name="user_type"]');
-    const companyFields = document.getElementById('company_fields');
-    
-    function toggleCompanyFields() {
-        const selectedValue = document.querySelector('input[name="user_type"]:checked').value;
-        if (selectedValue === 'recruiter') {
-            companyFields.classList.remove('hidden');
-        } else {
-            companyFields.classList.add('hidden');
-        }
-    }
-    
-    userTypeRadios.forEach(radio => {
-        radio.addEventListener('change', toggleCompanyFields);
-    });
-    
-    // Initial check
-    toggleCompanyFields();
-});
-</script>
 {% endblock %} 

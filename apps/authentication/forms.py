@@ -191,17 +191,6 @@ class SocialAccountSignupForm(SocialSignupForm):
         initial="job_seeker",
     )
 
-    company_name = forms.CharField(
-        max_length=150,
-        required=False,
-        widget=forms.TextInput(attrs={"placeholder": "Company name"}),
-    )
-
-    company_website = forms.URLField(
-        required=False,
-        widget=forms.URLInput(attrs={"placeholder": "https://company.com"}),
-    )
-
     def save(self, request):
         """Save the user with the appropriate user type and other details."""
         user = super().save(request)
@@ -216,22 +205,5 @@ class SocialAccountSignupForm(SocialSignupForm):
 
         # Save user
         user.save()
-
-        # If user is a recruiter, create company profile
-        if user_type == "recruiter" and self.cleaned_data.get("company_name"):
-            # Import here to avoid circular import issues
-            from apps.recruiters.models import RecruiterProfile
-
-            # Create or update RecruiterProfile
-            profile, created = RecruiterProfile.objects.get_or_create(user=user)
-
-            if (
-                created
-                or self.cleaned_data.get("company_name")
-                or self.cleaned_data.get("company_website")
-            ):
-                # Update company fields directly in the user's name field since RecruiterProfile doesn't have these fields
-                user.name = f"{self.cleaned_data.get('name', user.name)} - {self.cleaned_data.get('company_name', '')}"
-                user.save(update_fields=["name"])
 
         return user
