@@ -33,6 +33,23 @@ The test follows the same workflow as the production system:
 
 **Note:** This test makes real API calls to OpenAI and should be run manually, not in automated CI/CD pipelines.
 
+## Manual Tests
+
+Some tests are designed to be run manually only and are not discovered by the test runner. These include:
+
+- `manual_resume_ingestion.py` - Tests the resume ingestion and talent sheet generation with real API calls
+
+### Running Manual Tests
+
+To run a manual test, you must explicitly set the environment variable `ALLOW_MANUAL_TESTS=1`:
+
+```bash
+# Run the manual resume ingestion test
+ALLOW_MANUAL_TESTS=1 python manage.py test apps.job_seekers.tests.integration.manual_resume_ingestion
+```
+
+⚠️ **WARNING**: Manual tests typically involve real API calls that may incur costs.
+
 ## Running Tests
 
 To run unit tests:

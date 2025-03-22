@@ -3,6 +3,14 @@ Integration test for the resume ingestion and talent sheet generation pipeline.
 
 This test verifies the end-to-end process of ingesting resumes and generating
 talent sheets, making sure the entire pipeline functions correctly.
+
+⚠️ WARNING: THIS IS A MANUAL TEST FILE ⚠️
+This test makes real API calls to OpenAI and costs money to run.
+It should ONLY be run manually with explicit intention, never as part of
+automated test runs or CI/CD pipelines.
+
+To run this test manually:
+    python manage.py test apps.job_seekers.tests.integration.manual_resume_ingestion
 """
 
 import logging
@@ -31,7 +39,31 @@ from apps.matching.signals import handle_talent_sheet_save
 logger = logging.getLogger(__name__)
 
 
-class ResumeIngestionTest(TestCase):
+class ManualTestCase(TestCase):
+    """
+    Base class for tests that should not be auto-discovered by the test runner.
+
+    This is a marker class to help identify tests that should only be run manually.
+    These tests typically make external API calls that cost money or have other
+    side effects that make them inappropriate for automated test runs.
+    """
+
+    def setUp(self):
+        """Set up before each test method."""
+        # Always check if we're in an automated environment
+        if os.environ.get("CI") or os.environ.get("AUTOMATED_TESTING"):
+            self.skipTest("Skipping manual test in automated testing environment")
+
+        # Check for a specific env var that must be set to run manual tests
+        if not os.environ.get("ALLOW_MANUAL_TESTS"):
+            self.skipTest(
+                "Set ALLOW_MANUAL_TESTS=1 to run this test. WARNING: May incur costs!"
+            )
+
+        super().setUp()
+
+
+class ResumeIngestionTest(ManualTestCase):
     """
     Integration test for the resume ingestion and talent sheet generation pipeline.
 
@@ -40,17 +72,13 @@ class ResumeIngestionTest(TestCase):
     2. Generate TalentSheets for the job seekers
     3. Produce an HTML report for inspection
 
-    WARNING: This test makes real API calls to OpenAI, which cost money.
-    Run this manually, not in automated CI/CD pipelines.
+    ⚠️ WARNING: This test makes real API calls to OpenAI, which cost money.
+    It should NEVER be run automatically and requires ALLOW_MANUAL_TESTS=1 to be set.
     """
 
     def setUp(self):
         """Set up before each test method."""
-        # Skip test if we're running automated tests and not manually invoking this test
-        if os.environ.get("CI") or os.environ.get("AUTOMATED_TESTING"):
-            self.skipTest(
-                "Skipping test that makes real API calls in automated testing environment"
-            )
+        super().setUp()  # This ensures the ManualTestCase checks run first
 
         # Ensure required API keys exist
         self.assertTrue(
