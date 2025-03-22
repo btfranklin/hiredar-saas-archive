@@ -185,14 +185,26 @@ MESSAGE_TAGS = {
 }
 
 # Allauth settings
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
+# These settings are deprecated, replaced by ACCOUNT_SIGNUP_FIELDS below
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
+
+# New consolidated signup fields setting that replaces the deprecated settings above
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_ADAPTER = "apps.authentication.adapters.AccountAdapter"
-ACCOUNT_USER_DISPLAY = lambda user: user.email  # Use email to display the user
+
+
+def get_user_display(user):
+    """Return the user's email as the display name."""
+    return user.email
+
+
+ACCOUNT_USER_DISPLAY = get_user_display
 
 # Controls the life time of the session
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
