@@ -21,6 +21,9 @@ from django.test import TestCase
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
+from apps.job_seekers.utils.recommendation.llm_processor import (
+    generate_personal_tagline,
+)
 from apps.job_seekers.utils.resume_processing.pipeline import process_resume
 from apps.matching.signals import handle_talent_sheet_save
 
@@ -129,7 +132,22 @@ class ResumeIngestionTest(TestCase):
             # Wait briefly to avoid rate limiting
             time.sleep(1)
 
-        # Step 4: Generate HTML report
+        # Step 4: Generate personal taglines for each profile
+        # (This is normally done asynchronously but we need to ensure it's complete for the report)
+        print("\nGenerating personal taglines...")
+        for profile in processed_profiles:
+            try:
+                # Generate personal tagline if not already present
+                if not profile.personal_tagline and profile.resume_xml:
+                    print(f"Generating tagline for {profile.user.email}")
+                    tagline = generate_personal_tagline(profile.resume_xml)
+                    profile.personal_tagline = tagline
+                    profile.save(update_fields=["personal_tagline"])
+                    print(f"Generated tagline: {tagline}")
+            except Exception as e:
+                print(f"Error generating personal tagline: {e}")
+
+        # Step 5: Generate HTML report
         report_path = self._generate_html_report(talent_sheets)
         print(f"\n\nTest complete! View the report at: {report_path}\n")
 
@@ -248,6 +266,7 @@ class ResumeIngestionTest(TestCase):
     <link href="https://cdn.tailwindcss.com" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
     <style>
+        body {{ padding: 2rem; max-width: 1200px; margin: 0 auto; }}
         .section {{ margin-bottom: 2rem; }}
         .card {{ margin-bottom: 2rem; border: 1px solid #eaeaea; padding: 1.5rem; border-radius: 0.5rem; }}
         .tag {{ display: inline-block; background-color: #e5e7eb; padding: 0.25rem 0.5rem; margin: 0.25rem; border-radius: 0.25rem; }}
@@ -256,7 +275,7 @@ class ResumeIngestionTest(TestCase):
     </style>
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 </head>
-<body class="container mx-auto p-4">
+<body>
     <h1 class="text-3xl font-bold mb-6">Talent Sheet Generation Test Report</h1>
     <p class="mb-6">Generated on: {time.strftime("%Y-%m-%d %H:%M:%S")}</p>
     
