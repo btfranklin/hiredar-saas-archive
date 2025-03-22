@@ -61,12 +61,12 @@ class TalentSheetAdmin(admin.ModelAdmin):
     for job seekers in the talent pool.
     """
 
-    list_display = ("job_seeker", "created_at", "updated_at")
-    list_filter = ("created_at", "updated_at")
+    list_display = ("job_seeker", "is_published", "created_at", "updated_at")
+    list_filter = ("is_published", "created_at", "updated_at")
     search_fields = ("job_seeker__user__email", "job_seeker__user__name", "ideal_roles")
 
     fieldsets = (
-        (None, {"fields": ("job_seeker",)}),
+        (None, {"fields": ("job_seeker", "is_published")}),
         (
             "Talent Information",
             {

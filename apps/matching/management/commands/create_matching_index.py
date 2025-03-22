@@ -46,16 +46,16 @@ class Command(BaseCommand):
         )
 
         # Get dimension with validation
-        dimension_str = os.getenv("PINECONE_DIMENSION", "3072")
+        dimension_str = os.getenv("PINECONE_DIMENSIONS", "3072")
         try:
             dimension = int(dimension_str)
             if dimension <= 0:
                 raise CommandError(
-                    f"PINECONE_DIMENSION must be a positive integer, got {dimension}"
+                    f"PINECONE_DIMENSIONS must be a positive integer, got {dimension}"
                 )
         except ValueError as e:
             raise CommandError(
-                f"PINECONE_DIMENSION must be a valid integer, got '{dimension_str}'"
+                f"PINECONE_DIMENSIONS must be a valid integer, got '{dimension_str}'"
             ) from e
 
         metric = "cosine"

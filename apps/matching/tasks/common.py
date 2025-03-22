@@ -24,6 +24,8 @@ pinecone_client = Pinecone(
 # Initialize index reference but don't connect yet
 # This allows the app to start even if the index doesn't exist
 index_name = os.getenv("PINECONE_INDEX_NAME", "job-matcher")
+# Get the dimension from the environment (default to 3072 for text-embedding-3-large)
+DIMENSIONS = int(os.getenv("PINECONE_DIMENSIONS", "3072"))
 index = None
 
 
@@ -77,7 +79,7 @@ def ensure_namespaces_exist() -> None:
                 dummy_id = f"init_{namespace}"
                 # Create a vector with mostly zeros but one non-zero value
                 # (Pinecone requires at least one non-zero value)
-                dummy_vector = [0.0] * 3072
+                dummy_vector = [0.0] * DIMENSIONS
                 dummy_vector[0] = 0.1  # Set first element to non-zero
 
                 # Upsert the dummy vector to create the namespace
