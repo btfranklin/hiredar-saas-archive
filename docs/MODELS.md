@@ -120,7 +120,7 @@ The custom User model that serves as the base for all user accounts.
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `username` | CharField | Auto-generated username based on email (hidden from UI) |
+| `username` | CharField | Auto-generated username based on email (format: `emailprefix_randomsuffix`) |
 | `email` | EmailField | Primary login field, must be unique |
 | `name` | CharField | User's name |
 | `user_type` | CharField | One of "job_seeker", "recruiter", or "admin" |

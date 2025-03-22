@@ -267,6 +267,9 @@ SOCIALACCOUNT_AUTO_SIGNUP = (
 SOCIALACCOUNT_LOGIN_ON_GET = (
     True  # Skip the "Do you want to sign in with social account XYZ" confirmation page
 )
+SOCIALACCOUNT_FORMS = {
+    "signup": "apps.authentication.forms.SocialAccountSignupForm",
+}
 
 # Email backend (for development)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

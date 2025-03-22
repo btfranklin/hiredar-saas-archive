@@ -66,11 +66,11 @@
                         </label>
                         <div class="flex gap-4">
                             <label class="label cursor-pointer justify-start gap-2">
-                                <input type="radio" name="user_type" value="job_seeker" class="radio radio-primary" checked />
+                                <input type="radio" name="user_type" value="job_seeker" class="radio radio-primary" {% if request.GET.user_type == 'job_seeker' %}checked{% endif %} />
                                 <span class="label-text">Job Seeker</span>
                             </label>
                             <label class="label cursor-pointer justify-start gap-2">
-                                <input type="radio" name="user_type" value="recruiter" class="radio radio-primary" />
+                                <input type="radio" name="user_type" value="recruiter" class="radio radio-primary" {% if request.GET.user_type == 'recruiter' %}checked{% endif %} />
                                 <span class="label-text">Recruiter</span>
                             </label>
                         </div>

@@ -174,11 +174,18 @@ The application uses a modern frontend approach:
 
 The authentication system uses Django's built-in authentication combined with django-allauth for social authentication:
 
-1. **Registration**: Users can sign up as either job seekers or recruiters.
-2. **Email Authentication**: The system uses email for authentication instead of usernames.
-3. **Profile Creation**: After signup, users are directed to create their profile.
-4. **Social Authentication**: Users can authenticate using social accounts (Google).
-5. **Dashboard Redirection**: After login, users are redirected to their appropriate dashboard based on their user type.
+1. **Registration**: Users can sign up as either job seekers or recruiters through custom forms extending allauth's `SignupForm`.
+2. **Email Authentication**: The system uses email for authentication instead of usernames, though usernames are auto-generated from email addresses in the format `emailprefix_randomsuffix`.
+3. **Profile Creation**: After signup, users are directed to create their profile based on their user type.
+4. **Social Authentication**: Users can authenticate using social accounts (Google, LinkedIn) with user type specified in the URL.
+5. **Username Generation**: Usernames are automatically generated from email addresses using allauth's `populate_username` hook.
+6. **User Type Assignment**: Social logins capture the user type from URL parameters, hidden form fields, or session data.
+7. **Dashboard Redirection**: After login, users are redirected to their appropriate dashboard based on their user type.
+
+The auth flow uses the following custom adapters:
+
+- **AccountAdapter**: Customizes the account signup flow, including username generation and redirection
+- **SocialAccountAdapter**: Handles social account integration, ensuring user types are correctly assigned
 
 ## Job Matching Process
 

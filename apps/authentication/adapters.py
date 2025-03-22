@@ -41,41 +41,27 @@ class AccountAdapter(DefaultAccountAdapter):
             return reverse("recruiters:profile")
         return reverse("job_seekers:profile_create")
 
-    def generate_unique_username(self, txn, email=None, username=None):
+    def populate_username(self, request, user):
         """
-        Generate a unique username from email.
+        Override username generation to use email as base.
 
-        This preserves our original username generation logic:
-        - Takes the part of the email before @
-        - Adds a random suffix for uniqueness
-
-        Note: This method must match allauth's signature, which is why we have both
-        email and username parameters, even though we only use email.
+        This completely overrides allauth's default username generation.
         """
-        # Default behavior - use email for username generation
-        # Use the provided email or extract from username if possible
-        email_to_use = email
-        if not email_to_use and username and "@" in username:
-            email_to_use = username
+        # If email is available, use it to generate a username
+        if user.email:
+            base = user.email.split("@")[0]
+            random_suffix = uuid.uuid4().hex[:8]
+            user.username = f"{base}_{random_suffix}"
+        else:
+            # Fallback to a random username
+            user.username = f"user_{uuid.uuid4().hex[:10]}"
 
-        if not email_to_use:
-            # If we don't have an email, generate a completely random username
-            return f"user_{uuid.uuid4().hex[:10]}"
-
-        # Generate a unique username based on email to avoid collisions
-        username_base = email_to_use.split("@")[0]
-        # Add a random suffix to ensure uniqueness
-        random_suffix = uuid.uuid4().hex[:8]
-        return f"{username_base}_{random_suffix}"
+        return user.username
 
     def save_user(
         self, request: HttpRequest, user: Any, form: Any, commit: bool = True
     ) -> AuthenticatedUser:
         """Save the user with additional fields from the signup form."""
-        # First handle username generation
-        if not user.username:
-            user.username = self.generate_unique_username(None, user.email)
-
         # Then continue with parent implementation
         user = cast(
             AuthenticatedUser, super().save_user(request, user, form, commit=False)
@@ -125,12 +111,6 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
                 # Always default to job_seeker if not specified
                 sociallogin.user.user_type = "job_seeker"
 
-            # Ensure username is properly generated
-            if not sociallogin.user.username and hasattr(sociallogin.user, "email"):
-                username_base = sociallogin.user.email.split("@")[0]
-                random_suffix = uuid.uuid4().hex[:8]
-                sociallogin.user.username = f"{username_base}_{random_suffix}"
-
             # Set name from social account if available
             if not sociallogin.user.name or sociallogin.user.name == "New User":
                 if hasattr(sociallogin, "account") and hasattr(
@@ -145,6 +125,23 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
                         last_name = sociallogin.account.extra_data.get("lastName", "")
                         if first_name or last_name:
                             sociallogin.user.name = f"{first_name} {last_name}".strip()
+
+    def populate_username(self, request, user):
+        """
+        Override username generation to use email as base for social login.
+
+        This completely overrides allauth's default username generation.
+        """
+        # If email is available, use it to generate a username
+        if user.email:
+            base = user.email.split("@")[0]
+            random_suffix = uuid.uuid4().hex[:8]
+            user.username = f"{base}_{random_suffix}"
+        else:
+            # Fallback to a random username
+            user.username = f"user_{uuid.uuid4().hex[:10]}"
+
+        return user.username
 
     def save_user(
         self, request: HttpRequest, sociallogin: Any, form: Any | None = None
