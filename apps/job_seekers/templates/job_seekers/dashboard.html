@@ -239,8 +239,19 @@ function activateTalentPool() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Refresh page to reflect changes
-            window.location.reload();
+            // Update toggle state based on actual published state
+            document.getElementById('talent-pool-toggle').checked = data.in_talent_pool;
+            // Update the status badge
+            const badge = document.querySelector('.badge');
+            if (data.in_talent_pool) {
+                badge.classList.add('badge-success');
+                badge.classList.remove('badge-error');
+                badge.textContent = 'Active';
+            } else {
+                badge.classList.add('badge-error');
+                badge.classList.remove('badge-success');
+                badge.textContent = 'Inactive';
+            }
         } else {
             alert('Failed to activate talent pool: ' + data.message);
         }
@@ -264,8 +275,19 @@ function deactivateTalentPool() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Refresh page to reflect changes
-            window.location.reload();
+            // Update toggle state based on actual published state
+            document.getElementById('talent-pool-toggle').checked = data.in_talent_pool;
+            // Update the status badge
+            const badge = document.querySelector('.badge');
+            if (data.in_talent_pool) {
+                badge.classList.add('badge-success');
+                badge.classList.remove('badge-error');
+                badge.textContent = 'Active';
+            } else {
+                badge.classList.add('badge-error');
+                badge.classList.remove('badge-success');
+                badge.textContent = 'Inactive';
+            }
         } else {
             alert('Failed to deactivate talent pool: ' + data.message);
         }
@@ -291,5 +313,15 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+</script>
+
+<!-- Check for actual talent pool status on load -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure the toggle reflects the true talent pool status
+    // (based on whether the talent sheet is published)
+    const talentPoolStatus = {% if in_talent_pool %}true{% else %}false{% endif %};
+    document.getElementById('talent-pool-toggle').checked = talentPoolStatus;
+});
 </script>
 {% endblock %} 

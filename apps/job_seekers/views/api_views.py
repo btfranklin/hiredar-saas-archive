@@ -11,7 +11,7 @@ from django.views import View
 from django_q.tasks import async_task
 
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.models import RoleRecommendation
+from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 # Setup logging
@@ -104,10 +104,6 @@ class ToggleTalentPoolView(LoginRequiredMixin, View):
             data = json.loads(request.body)
             active = data.get("active", False)
 
-            # Update the job seeker's talent pool status
-            profile.in_talent_pool = active
-            profile.save(update_fields=["in_talent_pool"])
-
             # Log the status change
             profile_id = getattr(profile, "id", "unknown")
             logger.info(
@@ -140,12 +136,33 @@ class ToggleTalentPoolView(LoginRequiredMixin, View):
                         str(e),
                         exc_info=True,
                     )
+            # If the job seeker is leaving the talent pool, unpublish their talent sheet
+            else:
+                try:
+                    # Find and unpublish the talent sheet if it exists
+                    talent_sheet = TalentSheet.objects.filter(
+                        job_seeker=profile
+                    ).first()
+                    if talent_sheet:
+                        talent_sheet.is_published = False
+                        talent_sheet.save(update_fields=["is_published"])
+                        logger.info(
+                            "Unpublished talent sheet for job seeker %s leaving talent pool",
+                            user.email,
+                        )
+                except Exception as e:
+                    # Log the error but don't fail the request
+                    logger.error(
+                        "Error unpublishing talent sheet: %s",
+                        str(e),
+                        exc_info=True,
+                    )
 
             return JsonResponse(
                 {
                     "success": True,
                     "message": "Talent pool status updated successfully",
-                    "in_talent_pool": getattr(profile, "in_talent_pool", False),
+                    "in_talent_pool": profile.in_talent_pool,
                 }
             )
 

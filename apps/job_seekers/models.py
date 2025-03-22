@@ -41,10 +41,6 @@ class JobSeekerProfile(models.Model):
     phone = models.CharField(
         max_length=20, null=True, blank=True, help_text="Phone number"
     )
-    in_talent_pool = models.BooleanField(
-        default=False,
-        help_text="Whether the job seeker is active in the talent pool and available for matching",
-    )
 
     # Social links
     linkedin_url = models.URLField(blank=True)
@@ -60,6 +56,19 @@ class JobSeekerProfile(models.Model):
         if not self.skills:
             return []
         return [skill.strip() for skill in self.skills.split(" | ") if skill.strip()]
+
+    @property
+    def in_talent_pool(self) -> bool:
+        """
+        Determine if the job seeker is in the talent pool.
+
+        This is determined by whether they have a published talent sheet.
+        This is the source of truth for talent pool participation.
+        """
+        try:
+            return hasattr(self, "talent_sheet") and self.talent_sheet.is_published
+        except Exception:
+            return False
 
 
 class ResumeProcessingTaskProgress(models.Model):
