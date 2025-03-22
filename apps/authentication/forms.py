@@ -2,7 +2,7 @@
 
 from typing import Any, cast
 
-from allauth.account.forms import LoginForm
+from allauth.account.forms import SignupForm as AllAuthSignupForm
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (
@@ -13,7 +13,6 @@ from django.contrib.auth.forms import (
 from django.http import HttpRequest
 
 from apps.authentication.models import User
-from apps.authentication.types import AuthenticatedUser
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -89,7 +88,7 @@ class CustomAuthenticationForm(AuthenticationForm):
         return self.cleaned_data
 
 
-class SignupForm(forms.Form):
+class CustomSignupForm(forms.Form):
     """Form for user signup."""
 
     name = forms.CharField(max_length=255, required=False)
@@ -107,4 +106,62 @@ class SignupForm(forms.Form):
         user.email = self.cleaned_data["email"]
         user.user_type = cast(str, self.cleaned_data["user_type"])
         user.save(update_fields=["name", "email", "user_type"])
+        return user
+
+
+class JobSeekerSignupForm(AllAuthSignupForm):
+    """
+    Custom signup form for job seekers.
+
+    This form extends allauth's SignupForm to support job seeker-specific behavior.
+    """
+
+    def save(self, request: HttpRequest) -> User:
+        """Save the user with job seeker user type."""
+        # First save the user using allauth's parent method
+        user = super().save(request)  # type: ignore
+        assert isinstance(user, User), "Expected a User instance"
+
+        # Set job seeker specific fields
+        user.user_type = "job_seeker"
+        user.name = "New User"  # Default name until resume is parsed
+        user.save()
+
+        return user
+
+
+class RecruiterSignupForm(AllAuthSignupForm):
+    """
+    Custom signup form for recruiters.
+
+    This form extends allauth's SignupForm to support recruiter-specific behavior,
+    including requiring a name field.
+    """
+
+    # Add name field which is required for recruiters
+    name = forms.CharField(
+        max_length=150,
+        label="Full Name",
+        required=True,
+        widget=forms.TextInput(attrs={"placeholder": "Your name"}),
+    )
+
+    def clean_name(self):
+        """Validate that name is provided."""
+        name = self.cleaned_data.get("name", "").strip()
+        if not name or name == "New User":
+            raise forms.ValidationError("Please provide your name")
+        return name
+
+    def save(self, request: HttpRequest) -> User:
+        """Save the user with recruiter user type and name."""
+        # First save the user using allauth's parent method
+        user = super().save(request)  # type: ignore
+        assert isinstance(user, User), "Expected a User instance"
+
+        # Set recruiter specific fields
+        user.user_type = "recruiter"
+        user.name = self.cleaned_data.get("name")
+        user.save()
+
         return user

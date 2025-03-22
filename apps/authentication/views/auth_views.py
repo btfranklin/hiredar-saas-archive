@@ -1,117 +1,52 @@
 """Authentication views for user signup, login, and logout."""
 
-import uuid
 from typing import cast
 
-from django.contrib.auth import login
+from allauth.account.views import SignupView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.messages.views import SuccessMessageMixin
-from django.forms import BaseModelForm
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.views.generic import CreateView
 
-from apps.authentication.forms import CustomAuthenticationForm
+from apps.authentication.forms import (
+    CustomAuthenticationForm,
+    JobSeekerSignupForm,
+    RecruiterSignupForm,
+)
 from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 
 
-class JobSeekerSignupView(CreateView):
+class JobSeekerSignupView(SignupView):
     """
     View for job seeker signup process.
 
-    This view handles the registration of new job seeker users, creating both a User
-    and JobSeekerProfile instance. It uses email as username and sets the user_type to
-    'job_seeker'.
+    This view extends allauth's SignupView to handle job seeker registrations.
+    It uses the JobSeekerSignupForm to properly set the user_type and name.
     """
 
     template_name = "job_seekers/signup.html"
-    model = User
-    fields = ["email", "password"]  # Simplified to only require email and password
+    form_class = JobSeekerSignupForm
 
     def get_success_url(self) -> str:
-        """Return the profile creation URL."""
+        """Return the profile creation URL after successful signup."""
         return reverse("job_seekers:profile_create")
 
-    def form_valid(self, form: BaseModelForm) -> HttpResponseRedirect:
-        """Process the form if it is valid."""
-        # Check if user with this email already exists
-        email = form.cleaned_data["email"]
-        if User.objects.filter(email=email).exists():
-            form.add_error("email", "A user with this email already exists")
-            return cast(HttpResponseRedirect, self.form_invalid(form))
 
-        user = form.save(commit=False)
-        # Generate a unique username based on email to avoid collisions
-        username_base = email.split("@")[0]
-        # Add a random suffix to ensure uniqueness
-        random_suffix = uuid.uuid4().hex[:8]
-        user.username = f"{username_base}_{random_suffix}"
-        user.set_password(form.cleaned_data["password"])
-        user.user_type = "job_seeker"
-        # Default name until resume is parsed
-        user.name = "New User"
-        user.save()
-
-        # Log in the user with allauth's backend
-        login(
-            self.request,
-            user,
-            backend="allauth.account.auth_backends.AuthenticationBackend",
-        )
-
-        return HttpResponseRedirect(self.get_success_url())
-
-
-class RecruiterSignupView(CreateView):
+class RecruiterSignupView(SignupView):
     """
     View for recruiter signup process.
 
-    This view handles the registration of new recruiter users, creating both a User
-    and RecruiterProfile instance.
+    This view extends allauth's SignupView to handle recruiter registrations.
+    It uses the RecruiterSignupForm to properly collect name and set user_type.
     """
 
     template_name = "recruiters/signup.html"
-    model = User
-    fields = ["email", "name", "password"]  # Include name field for recruiters
+    form_class = RecruiterSignupForm
 
     def get_success_url(self) -> str:
-        """Return the recruiter dashboard URL."""
+        """Return the recruiter dashboard URL after successful signup."""
         return reverse("recruiters:dashboard")
-
-    def form_valid(self, form: BaseModelForm) -> HttpResponseRedirect:
-        """Process the form if it is valid."""
-        # Check if user with this email already exists
-        email = form.cleaned_data["email"]
-        if User.objects.filter(email=email).exists():
-            form.add_error("email", "A user with this email already exists")
-            return cast(HttpResponseRedirect, self.form_invalid(form))
-
-        # Validate that name is provided for recruiters
-        name = form.cleaned_data.get("name", "").strip()
-        if not name or name == "New User":
-            form.add_error("name", "Please provide your name")
-            return cast(HttpResponseRedirect, self.form_invalid(form))
-
-        user = form.save(commit=False)
-        # Generate a unique username based on email to avoid collisions
-        username_base = email.split("@")[0]
-        # Add a random suffix to ensure uniqueness
-        random_suffix = uuid.uuid4().hex[:8]
-        user.username = f"{username_base}_{random_suffix}"
-        user.set_password(form.cleaned_data["password"])
-        user.user_type = "recruiter"
-        user.name = name  # Use the validated name
-        user.save()
-
-        # Log in the user with allauth's backend
-        login(
-            self.request,
-            user,
-            backend="allauth.account.auth_backends.AuthenticationBackend",
-        )
-
-        return HttpResponseRedirect(self.get_success_url())
 
 
 class CustomLoginView(SuccessMessageMixin, LoginView):

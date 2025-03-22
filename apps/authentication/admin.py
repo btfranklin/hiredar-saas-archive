@@ -21,14 +21,17 @@ class CustomUserAdmin(UserAdmin):
     list_display = (
         "email",
         "name",
+        "username",
         "user_type",
         "is_staff",
         "is_active",
     )
     list_filter = ("user_type", "is_staff", "is_active")
+    readonly_fields = ("username",)
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("name", "location")}),
+        ("System info", {"fields": ("username",)}),
         ("User type", {"fields": ("user_type",)}),
         (
             "Permissions",
@@ -60,7 +63,7 @@ class CustomUserAdmin(UserAdmin):
             },
         ),
     )
-    search_fields = ("email", "name")
+    search_fields = ("email", "name", "username")
     ordering = ("email",)
 
     def get_queryset(self, request: HttpRequest) -> Any:

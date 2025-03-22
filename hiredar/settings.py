@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 import sys
 from pathlib import Path
+from uuid import uuid4
 
 from django.contrib.messages import constants as messages
 from dotenv import load_dotenv
@@ -53,7 +54,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    # "allauth.socialaccount.providers.linkedin",  # Commented out as provider is not installed
+    "allauth.socialaccount.providers.linkedin_oauth2",
     "django_htmx",
     "django_q",  # Django Q2 for background tasks
     # Project apps
@@ -185,18 +186,30 @@ MESSAGE_TAGS = {
 }
 
 # Allauth settings
-# These settings are deprecated, replaced by ACCOUNT_SIGNUP_FIELDS below
-# ACCOUNT_EMAIL_REQUIRED = True
-# ACCOUNT_USERNAME_REQUIRED = False
-# ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
-
-# New consolidated signup fields setting that replaces the deprecated settings above
+# New consolidated signup fields and login methods (replaces older settings)
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-
 ACCOUNT_LOGIN_METHODS = {"email"}
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+# Username-related settings that aren't deprecated
 ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
+ACCOUNT_USERNAME_BLACKLIST = []
+
+
+# Custom function to generate usernames
+# - Uses portion of email before @ symbol
+# - Adds a random suffix for uniqueness
+def custom_username_from_email(email):
+    base = email.split("@")[0]
+    random_suffix = uuid4().hex[:8]
+    return f"{base}_{random_suffix}"
+
+
 ACCOUNT_ADAPTER = "apps.authentication.adapters.AccountAdapter"
+
+# Temporarily disable email verification, but keep for future with SendGrid
+# Set to "mandatory" when ready to enforce verification
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Options: "none", "optional", "mandatory"
 
 
 def get_user_display(user):
@@ -214,6 +227,46 @@ ACCOUNT_SESSION_REMEMBER = True
 LOGIN_REDIRECT_URL = "/auth/profile/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/auth/login/"
+
+# Social Account Providers Configuration
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
+            "secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+    },
+    "linkedin_oauth2": {
+        "APP": {
+            "client_id": os.environ.get("LINKEDIN_CLIENT_ID", ""),
+            "secret": os.environ.get("LINKEDIN_CLIENT_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": ["r_liteprofile", "r_emailaddress"],
+        "PROFILE_FIELDS": [
+            "id",
+            "first-name",
+            "last-name",
+            "email-address",
+        ],
+    },
+}
+
+# Common settings for all social account providers
+SOCIALACCOUNT_ADAPTER = "apps.authentication.adapters.SocialAccountAdapter"
+SOCIALACCOUNT_EMAIL_VERIFICATION = ACCOUNT_EMAIL_VERIFICATION
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_AUTO_SIGNUP = (
+    True  # Let users sign up via social accounts without additional form
+)
+SOCIALACCOUNT_LOGIN_ON_GET = (
+    True  # Skip the "Do you want to sign in with social account XYZ" confirmation page
+)
 
 # Email backend (for development)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
