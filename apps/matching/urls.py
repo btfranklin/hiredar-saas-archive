@@ -11,6 +11,7 @@ from apps.matching.views.candidate_views import (
     CandidateMatchListView,
     toggle_shortlist,
 )
+from apps.matching.views.matching_views import match_job_api, match_talent_api
 
 app_name = "matching"
 
@@ -30,5 +31,16 @@ urlpatterns = [
         "<int:job_id>/candidates/<int:candidate_id>/shortlist/",
         toggle_shortlist,
         name="toggle_shortlist",
+    ),
+    # Matching API endpoints
+    path(
+        "api/match/talent/<int:talent_id>/",
+        match_talent_api,
+        name="match_talent_api",
+    ),
+    path(
+        "api/match/job/<int:job_id>/",
+        match_job_api,
+        name="match_job_api",
     ),
 ]

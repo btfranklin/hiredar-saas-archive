@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:362d152d0bfd59eba6fcda6811cfb4c863c6934759f38a2079f5094c1e2213a7"
+content_hash = "sha256:89dd733292b3565fdddadaec095e88e9bc6f1335796621f532ec294660523cc8"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -315,7 +315,7 @@ name = "googleapis-common-protos"
 version = "1.69.2"
 requires_python = ">=3.7"
 summary = "Common protobufs used in Google APIs"
-groups = ["default"]
+groups = ["default", "dev"]
 dependencies = [
     "protobuf!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<7.0.0,>=3.20.2",
 ]
@@ -329,7 +329,7 @@ name = "grpcio"
 version = "1.71.0"
 requires_python = ">=3.9"
 summary = "HTTP/2-based RPC framework"
-groups = ["default"]
+groups = ["default", "dev"]
 marker = "python_version ~= \"3.11\""
 files = [
     {file = "grpcio-1.71.0-cp312-cp312-linux_armv7l.whl", hash = "sha256:0ff35c8d807c1c7531d3002be03221ff9ae15712b53ab46e2a0b4bb271f38537"},
@@ -451,7 +451,7 @@ name = "lz4"
 version = "4.4.3"
 requires_python = ">=3.9"
 summary = "LZ4 Bindings for Python"
-groups = ["default"]
+groups = ["default", "dev"]
 files = [
     {file = "lz4-4.4.3-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:43461e439ef71d49bb0ee3a1719494cd952a58d205496698e0cde866f22006bc"},
     {file = "lz4-4.4.3-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:2ae50a175fb7b900f7aa42575f4fe99c32ca0ff57e5a8c1fd25e1243e67409db"},
@@ -504,6 +504,26 @@ groups = ["dev"]
 files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
+]
+
+[[package]]
+name = "numpy"
+version = "2.2.4"
+requires_python = ">=3.10"
+summary = "Fundamental package for array computing in Python"
+groups = ["default"]
+files = [
+    {file = "numpy-2.2.4-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:a7b9084668aa0f64e64bd00d27ba5146ef1c3a8835f3bd912e7a9e01326804c4"},
+    {file = "numpy-2.2.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:dbe512c511956b893d2dacd007d955a3f03d555ae05cfa3ff1c1ff6df8851854"},
+    {file = "numpy-2.2.4-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:bb649f8b207ab07caebba230d851b579a3c8711a851d29efe15008e31bb4de24"},
+    {file = "numpy-2.2.4-cp312-cp312-macosx_14_0_x86_64.whl", hash = "sha256:f34dc300df798742b3d06515aa2a0aee20941c13579d7a2f2e10af01ae4901ee"},
+    {file = "numpy-2.2.4-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c3f7ac96b16955634e223b579a3e5798df59007ca43e8d451a0e6a50f6bfdfba"},
+    {file = "numpy-2.2.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4f92084defa704deadd4e0a5ab1dc52d8ac9e8a8ef617f3fbb853e79b0ea3592"},
+    {file = "numpy-2.2.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:7a4e84a6283b36632e2a5b56e121961f6542ab886bc9e12f8f9818b3c266bfbb"},
+    {file = "numpy-2.2.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:11c43995255eb4127115956495f43e9343736edb7fcdb0d973defd9de14cd84f"},
+    {file = "numpy-2.2.4-cp312-cp312-win32.whl", hash = "sha256:65ef3468b53269eb5fdb3a5c09508c032b793da03251d5f8722b1194f1790c00"},
+    {file = "numpy-2.2.4-cp312-cp312-win_amd64.whl", hash = "sha256:2aad3c17ed2ff455b8eaafe06bcdae0062a1db77cb99f4b9cbb5f4ecb13c5146"},
+    {file = "numpy-2.2.4.tar.gz", hash = "sha256:9ba03692a45d3eef66559efe1d1096c4b9b75c0986b5dff5530c378fb8331d4f"},
 ]
 
 [[package]]
@@ -628,7 +648,7 @@ version = "6.0.2"
 extras = ["grpc"]
 requires_python = "<4.0,>=3.9"
 summary = "Pinecone client and SDK"
-groups = ["default"]
+groups = ["default", "dev"]
 dependencies = [
     "googleapis-common-protos>=1.66.0",
     "grpcio>=1.44.0; python_version >= \"3.8\" and python_version < \"3.11\"",
@@ -682,7 +702,7 @@ name = "protobuf"
 version = "5.29.4"
 requires_python = ">=3.8"
 summary = ""
-groups = ["default"]
+groups = ["default", "dev"]
 files = [
     {file = "protobuf-5.29.4-cp310-abi3-win32.whl", hash = "sha256:13eb236f8eb9ec34e63fc8b1d6efd2777d062fa6aaa68268fb67cf77f6839ad7"},
     {file = "protobuf-5.29.4-cp310-abi3-win_amd64.whl", hash = "sha256:bcefcdf3976233f8a502d265eb65ea740c989bacc6c30a58290ed0e519eb4b8d"},
@@ -698,7 +718,7 @@ name = "protoc-gen-openapiv2"
 version = "0.0.1"
 requires_python = ">=3.6"
 summary = "Provides the missing pieces for gRPC Gateway."
-groups = ["default"]
+groups = ["default", "dev"]
 dependencies = [
     "googleapis-common-protos",
     "protobuf>=4.21.0",
@@ -836,18 +856,18 @@ path = "./."
 summary = "AI-powered job matching platform"
 groups = ["dev"]
 dependencies = [
-    "cryptography>=42.0.0",
-    "django-allauth>=0.60.0",
-    "django-htmx>=1.17.2",
+    "cryptography>=44.0.2",
+    "django-allauth>=65.5.0",
+    "django-htmx>=1.23.0",
     "django-q2>=1.7.6",
-    "django>=5.0.0",
-    "openai>=1.65.4",
+    "django>=5.1.7",
+    "openai>=1.67.0",
     "pdfplumber>=0.11.5",
-    "pillow>=10.2.0",
-    "pinecone>=6.0.2",
+    "pillow>=11.1.0",
+    "pinecone[grpc]>=6.0.2",
     "promptdown>=0.9.0",
-    "pyjwt>=2.8.0",
-    "pymupdf>=1.23.8",
+    "pyjwt>=2.10.1",
+    "pymupdf>=1.25.4",
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
 ]

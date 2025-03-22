@@ -1,0 +1,244 @@
+"""
+Tests for matching functionality.
+
+This module contains tests for the matching system between talent sheets and job openings.
+"""
+
+from unittest.mock import MagicMock, patch
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.test import TestCase
+
+from apps.matching.match import (
+    average_vectors,
+    get_job_section_embedding,
+    get_talent_section_embedding,
+    match_job_to_talents,
+    match_talent_to_jobs,
+    query_pinecone,
+)
+
+
+class MatchingUtilsTests(TestCase):
+    """Test utility functions used in the matching system."""
+
+    def test_average_vectors(self):
+        """Test the averaging of vectors."""
+        vectors = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+        avg = average_vectors(vectors)
+        self.assertEqual(avg, [2.5, 3.5, 4.5])
+
+        # Test with single vector
+        single_vector = [[1.0, 2.0, 3.0]]
+        avg = average_vectors(single_vector)
+        self.assertEqual(avg, [1.0, 2.0, 3.0])
+
+        # Test with empty list
+        with self.assertRaises(ValueError):
+            average_vectors([])
+
+    @patch("apps.matching.match.index")
+    def test_query_pinecone(self, mock_index):
+        """Test querying Pinecone for similar vectors."""
+        # Mock the Pinecone client response with a match
+        mock_match = MagicMock()
+        mock_match.id = "test_vector_id"
+        mock_match.score = 0.95
+        mock_match.metadata = {"key": "value"}
+
+        # Mock the response object with a matches attribute
+        mock_response = MagicMock()
+        mock_response.matches = [mock_match]
+
+        # Set the mock_index.query to return our mocked response
+        mock_index.query.return_value = mock_response
+
+        # Call the function and assert results
+        results = query_pinecone(
+            query_vector=[0.1, 0.2, 0.3], namespace="test_namespace", top_k=5
+        )
+
+        # Verify the results - should be the matches list
+        self.assertEqual(len(results), 1)
+        match = results[0]
+        self.assertEqual(match.id, "test_vector_id")  # type: ignore
+        self.assertEqual(match.score, 0.95)  # type: ignore
+        self.assertEqual(match.metadata, {"key": "value"})  # type: ignore
+
+        # Verify the query was called with correct parameters
+        mock_index.query.assert_called_once()
+        args, kwargs = mock_index.query.call_args
+        self.assertEqual(kwargs.get("vector"), [0.1, 0.2, 0.3])
+        self.assertEqual(kwargs.get("top_k"), 5)
+        self.assertEqual(kwargs.get("namespace"), "test_namespace")
+
+        # Test error handling
+        mock_index.query.side_effect = Exception("Test error")
+        results = query_pinecone(
+            query_vector=[0.1, 0.2, 0.3], namespace="test_namespace"
+        )
+        self.assertEqual(results, [])
+
+
+class MatchingEmbeddingRetrievalTests(TestCase):
+    """Test functions that retrieve embeddings from Pinecone."""
+
+    @patch("apps.matching.match.index")
+    def test_get_talent_section_embedding(self, mock_index):
+        """Test retrieving talent sheet section embeddings."""
+        # Create a mock vector with values attribute
+        mock_vector = MagicMock()
+        mock_vector.values = [0.1, 0.2, 0.3]
+
+        # Create a mock response with vectors dictionary
+        mock_response = MagicMock()
+        mock_response.vectors = {"talent_123_promotional_blurb": mock_vector}
+
+        # Set up the mock index to return our response
+        mock_index.fetch.return_value = mock_response
+
+        # Call the function
+        embedding = get_talent_section_embedding(123, "Promotional Blurb")
+
+        # Verify the result
+        self.assertEqual(embedding, [0.1, 0.2, 0.3])
+
+        # Verify the fetch was called with correct parameters
+        mock_index.fetch.assert_called_once()
+        args, kwargs = mock_index.fetch.call_args
+        self.assertEqual(kwargs.get("ids"), ["talent_123_promotional_blurb"])
+        self.assertEqual(kwargs.get("namespace"), "talent_sheets")
+
+        # Test non-existent vector
+        mock_response.vectors = {}
+        embedding = get_talent_section_embedding(123, "Promotional Blurb")
+        self.assertIsNone(embedding)
+
+        # Test error handling
+        mock_index.fetch.side_effect = Exception("Test error")
+        embedding = get_talent_section_embedding(123, "Promotional Blurb")
+        self.assertIsNone(embedding)
+
+    @patch("apps.matching.match.index")
+    def test_get_job_section_embedding(self, mock_index):
+        """Test retrieving job opening section embeddings."""
+        # Create a mock vector with values attribute
+        mock_vector = MagicMock()
+        mock_vector.values = [0.4, 0.5, 0.6]
+
+        # Create a mock response with vectors dictionary
+        mock_response = MagicMock()
+        mock_response.vectors = {"job_456_required_skills": mock_vector}
+
+        # Set up the mock index to return our response
+        mock_index.fetch.return_value = mock_response
+
+        # Call the function
+        embedding = get_job_section_embedding(456, "Required Skills")
+
+        # Verify the result
+        self.assertEqual(embedding, [0.4, 0.5, 0.6])
+
+        # Verify the fetch was called with correct parameters
+        mock_index.fetch.assert_called_once()
+        args, kwargs = mock_index.fetch.call_args
+        self.assertEqual(kwargs.get("ids"), ["job_456_required_skills"])
+        self.assertEqual(kwargs.get("namespace"), "job_openings")
+
+
+class MatchingFunctionsTests(TestCase):
+    """Test the main matching functions."""
+
+    @patch("apps.matching.match.get_talent_section_embedding")
+    @patch("apps.matching.match.query_pinecone")
+    @patch("apps.matching.match.apps.get_model")
+    def test_match_talent_to_jobs(
+        self, mock_get_model, mock_query_pinecone, mock_get_talent_embedding
+    ):
+        """Test matching a talent sheet to job openings."""
+        # Mock the TalentSheet model
+        mock_talent_sheet = MagicMock()
+        mock_talent_sheet.status = "PUBLISHED"
+
+        mock_model = MagicMock()
+        mock_model.objects.get.return_value = mock_talent_sheet
+        mock_get_model.return_value = mock_model
+
+        # Mock the embedding retrieval
+        mock_get_talent_embedding.side_effect = lambda talent_id, section: {
+            "Promotional Blurb": [0.1, 0.2, 0.3],
+            "Skill Overview": [0.4, 0.5, 0.6],
+            "Ideal Roles": [0.7, 0.8, 0.9],
+        }.get(section)
+
+        # Mock the Pinecone query results
+        mock_match = MagicMock()
+        mock_match.id = "job_123_job_overview"
+        mock_match.score = 0.95
+        mock_match.metadata = {"title": "Software Engineer"}
+
+        mock_query_pinecone.return_value = [mock_match]
+
+        # Call the matching function
+        results = match_talent_to_jobs(123, top_k=5)
+
+        # Verify the results
+        self.assertIn("top_matches", results)
+        self.assertIn("best_skills_fit", results)
+        self.assertIn("experience_matches", results)
+        self.assertIn("wildcard_matches", results)
+
+        # Should have been called 4 times (once for each perspective)
+        self.assertEqual(mock_query_pinecone.call_count, 4)
+
+        # Test handling of non-existent talent sheet
+        mock_model.objects.get.side_effect = ObjectDoesNotExist("TalentSheet not found")
+        results = match_talent_to_jobs(999)
+        for key in results:
+            self.assertEqual(results[key], [])
+
+    @patch("apps.matching.match.get_job_section_embedding")
+    @patch("apps.matching.match.query_pinecone")
+    @patch("apps.matching.match.apps.get_model")
+    def test_match_job_to_talents(
+        self, mock_get_model, mock_query_pinecone, mock_get_job_embedding
+    ):
+        """Test matching a job opening to talent sheets."""
+        # Mock the JobOpening model
+        mock_job = MagicMock()
+        mock_job.is_active = True
+
+        mock_model = MagicMock()
+        mock_model.objects.get.return_value = mock_job
+        mock_get_model.return_value = mock_model
+
+        # Mock the embedding retrieval
+        mock_get_job_embedding.side_effect = lambda job_id, section: {
+            "Job Overview": [0.1, 0.2, 0.3],
+            "Required Skills": [0.4, 0.5, 0.6],
+            "Responsibilities": [0.7, 0.8, 0.9],
+        }.get(section)
+
+        # Mock the Pinecone query results
+        mock_match = MagicMock()
+        mock_match.id = "talent_456_promotional_blurb"
+        mock_match.score = 0.92
+        mock_match.metadata = {"job_seeker_name": "John Doe"}
+
+        mock_query_pinecone.return_value = [mock_match]
+
+        # Call the matching function
+        results = match_job_to_talents(456, top_k=5)
+
+        # Verify the results
+        self.assertIn("top_matches", results)
+        self.assertIn("best_skills_fit", results)
+        self.assertIn("experience_matches", results)
+        self.assertIn("wildcard_matches", results)
+
+        # Should have been called 4 times (once for each perspective)
+        self.assertEqual(mock_query_pinecone.call_count, 4)
+
+        # Test handling of inactive job
+        mock_job.is_active = False
+        match_job_to_talents(456)  # Should log a warning but proceed
