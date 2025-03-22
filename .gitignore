@@ -172,6 +172,7 @@ pipeline_cache/
 # macOS
 .DS_Store
 
-# Media files
+# Media files, sample data, and test reports
 media/
 sample_data/
+test_reports/
