@@ -6,15 +6,23 @@ This directory contains asynchronous task functions for the recruiters app, desi
 
 These tasks handle various asynchronous operations related to recruiters, such as:
 
-- Processing job descriptions
-- Creating job openings from text
-- Handling post-processing callbacks
+- Processing job descriptions and creating job openings
+- Handling task completion callbacks
+- Managing processing status updates
 
 ## Task Structure
 
 Tasks are organized by functionality:
 
 - `job_processing_tasks.py`: Tasks related to processing job descriptions and creating job openings
+
+## Architecture
+
+The task architecture follows a pattern aligned with the job seekers app:
+
+1. **Task Entry Points**: Functions in this directory serve as entry points for Django Q
+2. **Implementation Logic**: The actual implementation logic resides in the `utils` directory
+3. **Clear Responsibility Separation**: Tasks handle basic parameter validation and call the implementation
 
 ## Usage
 
@@ -25,7 +33,7 @@ from django_q.tasks import async_task
 
 # Queue a task to process a job description
 async_task(
-    "apps.recruiters.tasks.process_job_description",
+    "apps.recruiters.tasks.handle_job_description_task",
     task_id,
     job_title,
     job_description,
@@ -34,18 +42,29 @@ async_task(
 )
 ```
 
-## Hooks
+## Task Functions
 
-Hooks are callback functions that are executed after a task completes:
+### `handle_job_description_task`
 
-- `job_processing_done`: Called after job processing completes (success or failure)
+Processes a job description text and creates a structured job opening:
 
-## Task Pipeline
+1. Validates the recruiter profile exists
+2. Calls the implementation in `utils.job_processing.pipeline`
+3. Returns a structured result with status and job ID
 
-The job processing pipeline follows these steps:
+### `job_processing_done`
 
-1. Pre-process the job description text
-2. Convert the text to structured XML using LLM
-3. Parse the XML to extract structured data
-4. Create a new JobOpening from the extracted data
-5. Execute hook function with processing results
+Callback function executed after job processing completes:
+
+1. Logs success or failure
+2. Can be expanded to handle additional post-processing (e.g., notifications)
+
+## Pipeline Flow
+
+The job processing follows these steps:
+
+1. Task validation and setup
+2. Delegation to implementation in the utils module
+3. Processing of text into structured data
+4. Creation of a job opening
+5. Execution of hook function with processing results
