@@ -7,6 +7,53 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}Hiredar - AI-Powered Job Matching{% endblock %}</title>
     
+    <!-- Theme Detection Script - runs immediately -->
+    <script>
+        // Check for user's preferred color scheme
+        (function() {
+            // Check for saved theme preference in localStorage
+            const savedTheme = localStorage.getItem('theme');
+            let themeToUse;
+            
+            if (savedTheme) {
+                // Apply saved preference if available
+                themeToUse = savedTheme;
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                // Apply dark theme if user's system preference is dark
+                themeToUse = 'dark';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                // Default to light theme
+                themeToUse = 'light';
+                localStorage.setItem('theme', 'light');
+            }
+            
+            // Apply theme
+            document.documentElement.setAttribute('data-theme', themeToUse);
+            
+            // Set correct icon when DOM content loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                const themeIcon = document.getElementById('theme-icon');
+                if (themeIcon) {
+                    themeIcon.className = themeToUse === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+            });
+            
+            // Listen for changes in system preference
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                const newTheme = e.matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                // Update icon if it exists
+                const themeIcon = document.getElementById('theme-icon');
+                if (themeIcon) {
+                    themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+            });
+        })();
+    </script>
+    
     <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -113,6 +160,22 @@
                 </ul>
             </div>
             <div class="navbar-end">
+                <!-- Theme Toggle using standard JavaScript -->
+                <button 
+                    id="theme-toggle" 
+                    class="btn btn-ghost btn-circle"
+                    onclick="
+                        const html = document.documentElement;
+                        const currentTheme = html.getAttribute('data-theme');
+                        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                        html.setAttribute('data-theme', newTheme);
+                        localStorage.setItem('theme', newTheme);
+                        this.querySelector('i').className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                    "
+                >
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
+                
                 {% if user.is_authenticated and not hide_user_menu %}
                     <!-- Notification Icon -->
                     <div class="dropdown dropdown-end mr-2">
