@@ -66,7 +66,6 @@ class JobSeekerProfile(models.Model):
         This is the source of truth for talent pool participation.
         """
         try:
-            # Use getattr with default value of None to avoid the linter error
             talent_sheet = getattr(self, "talent_sheet", None)
             return talent_sheet is not None and talent_sheet.is_published
         except Exception:
