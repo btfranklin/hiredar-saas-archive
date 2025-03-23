@@ -74,7 +74,7 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Queue the async task to process the job description
         async_task(
-            "apps.recruiters.tasks.process_job_description",
+            "apps.recruiters.tasks.handle_job_description_task",
             task_id,
             job_title,
             job_description,

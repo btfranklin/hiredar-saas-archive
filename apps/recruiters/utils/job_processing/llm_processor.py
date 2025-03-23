@@ -124,18 +124,18 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
             return xml_content
         else:
             logger.error(
-                f"Error from OpenAI API: {response.status_code} - {response.text}"
+                "Error from OpenAI API: %s - %s", response.status_code, response.text
             )
             return ""
 
     except ET.ParseError as e:
-        logger.error(f"XML parsing error: {str(e)}")
+        logger.error("XML parsing error: %s", str(e))
         return ""
     except requests.RequestException as e:
-        logger.error(f"API request error: {str(e)}")
+        logger.error("API request error: %s", str(e))
         return ""
     except Exception as e:
-        logger.error(f"Error converting text to XML: {str(e)}")
+        logger.error("Error converting text to XML: %s", str(e))
         return ""
 
 

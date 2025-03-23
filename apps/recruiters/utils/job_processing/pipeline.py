@@ -22,7 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 def process_job_description(
-    task_id: str, job_title: str, job_description: str, recruiter_profile_id: int
+    task_id: str,
+    job_title: str,
+    job_description: str,
+    recruiter_profile: RecruiterProfile,
 ) -> dict[str, Any]:
     """
     Process a job description text and create a JobOpening.
@@ -36,7 +39,7 @@ def process_job_description(
         task_id: The task ID for tracking progress
         job_title: The title of the job
         job_description: The full text description of the job
-        recruiter_profile_id: The ID of the RecruiterProfile
+        recruiter_profile: The RecruiterProfile instance
 
     Returns:
         Dictionary with processing results
@@ -47,9 +50,8 @@ def process_job_description(
     job_opening: JobOpening | None = None
 
     try:
-        # Get the task and recruiter objects
+        # Get the task object
         task = JobOpeningProcessingTask.objects.get(task_id=task_id)
-        recruiter_profile = RecruiterProfile.objects.get(pk=recruiter_profile_id)
 
         # Update task status to processing
         task.status = "processing"
