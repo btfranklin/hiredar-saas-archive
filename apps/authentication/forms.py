@@ -47,7 +47,7 @@ class CustomUserChangeForm(UserChangeForm):
         """Meta class for CustomUserChangeForm."""
 
         model = User
-        fields = ("email", "name", "location")
+        fields = ("email", "name")
 
 
 class CustomAuthenticationForm(AuthenticationForm):

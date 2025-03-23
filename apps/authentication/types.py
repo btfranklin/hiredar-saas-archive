@@ -16,7 +16,6 @@ class UserType(TypedDict):
     email: str
     name: str
     user_type: Literal["job_seeker", "recruiter"]
-    location: str | None
 
 
 class AuthenticatedUser(AbstractBaseUser):
@@ -25,7 +24,6 @@ class AuthenticatedUser(AbstractBaseUser):
     email: str
     name: str
     user_type: Literal["job_seeker", "recruiter"]
-    location: str | None
     job_seeker_profile: "JobSeekerProfile | None"
     recruiter_profile: "RecruiterProfile | None"
     is_staff: bool

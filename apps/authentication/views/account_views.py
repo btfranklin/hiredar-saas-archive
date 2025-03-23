@@ -44,13 +44,14 @@ class UpdateAccountView(LoginRequiredMixin, View):
             user = cast(AuthenticatedUser, request.user)
             user.name = request.POST.get("name", "")
             user.email = request.POST.get("email", "")
-            user.location = request.POST.get("location", "")
             user.save()
 
             # Handle job seeker specific fields
             if user.user_type == "job_seeker":
                 profile = getattr(user, "job_seeker_profile", None)
                 if profile is not None and isinstance(profile, JobSeekerProfile):
+                    # Update location (moved from User model)
+                    profile.location = request.POST.get("location", "")
                     # Update social links and phone
                     profile.phone = request.POST.get("phone", "")
                     profile.linkedin_url = request.POST.get("linkedin_url", "")

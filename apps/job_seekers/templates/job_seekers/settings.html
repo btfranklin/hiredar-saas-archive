@@ -46,7 +46,7 @@
                         <label class="label">
                             <span class="label-text">Location</span>
                         </label>
-                        <input type="text" name="location" value="{{ user.location|default:'' }}" class="input input-bordered">
+                        <input type="text" name="location" value="{{ user.job_seeker_profile.location|default:'' }}" class="input input-bordered">
                     </div>
 
                     <div class="form-control">

@@ -115,7 +115,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         ],
         default="job_seeker",
     )
-    location = models.CharField(_("location"), max_length=100, blank=True)
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
@@ -162,7 +161,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             "email": self.email,
             "name": self.name,
             "user_type": self.user_type,
-            "location": self.location or None,
         }
 
     def get_initials(self) -> str:

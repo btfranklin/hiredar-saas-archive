@@ -23,7 +23,6 @@ classDiagram
         +email: EmailField
         +name: CharField
         +user_type: CharField("job_seeker", "recruiter", "admin")
-        +location: CharField
         +is_staff: BooleanField
         +is_active: BooleanField
         +date_joined: DateTimeField
@@ -42,6 +41,7 @@ classDiagram
         +personal_tagline: CharField
         +resume_xml: TextField
         +phone: CharField
+        +location: CharField
         +linkedin_url: URLField
         +github_url: URLField
         +portfolio_url: URLField
@@ -137,7 +137,6 @@ The custom User model that serves as the base for all user accounts.
 | `email` | EmailField | Primary login field, must be unique |
 | `name` | CharField | User's name |
 | `user_type` | CharField | One of "job_seeker", "recruiter", or "admin" |
-| `location` | CharField | User's location |
 | `is_staff` | BooleanField | Whether user can access admin site |
 | `is_active` | BooleanField | Whether user account is active |
 | `date_joined` | DateTimeField | When the user joined |
@@ -178,6 +177,7 @@ Extended profile for job seekers with career-related information.
 | `personal_tagline` | CharField | AI-generated personal identity tagline |
 | `resume_xml` | TextField | XML representation of the parsed resume |
 | `phone` | CharField | Phone number |
+| `location` | CharField | Job seeker's location |
 | `linkedin_url` | URLField | LinkedIn profile URL |
 | `github_url` | URLField | GitHub profile URL |
 | `portfolio_url` | URLField | Portfolio website URL |

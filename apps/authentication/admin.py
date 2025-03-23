@@ -30,7 +30,7 @@ class CustomUserAdmin(UserAdmin):
     readonly_fields = ("username",)
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("name", "location")}),
+        ("Personal info", {"fields": ("name",)}),
         ("System info", {"fields": ("username",)}),
         ("User type", {"fields": ("user_type",)}),
         (
