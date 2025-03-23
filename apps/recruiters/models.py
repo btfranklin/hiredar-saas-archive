@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db import models
 
 from apps.authentication.models import User
@@ -25,6 +27,109 @@ class RecruiterProfile(models.Model):
 
     def __str__(self) -> str:
         return f"Recruiter: {self.user.email}"
+
+
+class JobOpeningProcessingTask(models.Model):
+    """
+    Model for tracking progress of job opening description processing.
+
+    This tracks the progress of a job description being processed by the LLM
+    and converted to a structured JobOpening instance.
+    """
+
+    # Processing status choices
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    )
+
+    # Task identification
+    task_id = models.CharField(max_length=100, primary_key=True)
+    recruiter = models.ForeignKey(
+        RecruiterProfile,
+        on_delete=models.CASCADE,
+        related_name="job_processing_tasks",
+    )
+
+    # Processing metadata
+    job_title = models.CharField(max_length=255)
+    original_text = models.TextField()
+    processed_xml = models.TextField(blank=True, null=True)
+    created_job_opening_id = models.IntegerField(blank=True, null=True)
+
+    # Processing status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    progress_percent = models.IntegerField(default=0)
+    current_step = models.CharField(max_length=100, blank=True)
+    message = models.TextField(blank=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def update_progress(self, step: str, progress: int, message: str = "") -> None:
+        """
+        Update the progress of this processing task.
+
+        Args:
+            step: Current processing step
+            progress: Progress percentage (0-100)
+            message: Optional status message
+        """
+        self.current_step = step
+        self.progress_percent = progress
+        if message:
+            self.message = message
+        self.save(
+            update_fields=["current_step", "progress_percent", "message", "updated_at"]
+        )
+
+    def mark_completed(self, job_opening_id: int, processed_xml: str) -> None:
+        """
+        Mark this task as completed.
+
+        Args:
+            job_opening_id: ID of the created JobOpening
+            processed_xml: The processed XML representation of the job
+        """
+        self.status = "completed"
+        self.progress_percent = 100
+        self.created_job_opening_id = job_opening_id
+        self.processed_xml = processed_xml
+        self.message = "Job opening created successfully."
+        self.save()
+
+    def mark_failed(self, message: str) -> None:
+        """
+        Mark this task as failed.
+
+        Args:
+            message: Error message explaining the failure
+        """
+        self.status = "failed"
+        self.message = message
+        self.save()
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert task progress to a dictionary for API responses.
+
+        Returns:
+            Dictionary with task progress information
+        """
+        return {
+            "task_id": self.task_id,
+            "status": self.status,
+            "progress_percent": self.progress_percent,
+            "current_step": self.current_step,
+            "message": self.message,
+            "created_job_opening_id": self.created_job_opening_id,
+        }
+
+    def __str__(self) -> str:
+        return f"Job Processing Task: {self.job_title} ({self.status})"
 
 
 class JobOpening(models.Model):

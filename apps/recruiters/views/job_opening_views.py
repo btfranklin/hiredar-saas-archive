@@ -5,12 +5,20 @@ This module contains views for creating, listing, viewing, editing, and deleting
 providing the core functionality for job opening management in the application.
 """
 
+import uuid
 from typing import Any, ClassVar, cast
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponseBase, HttpResponseRedirect
-from django.shortcuts import redirect
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBase,
+    HttpResponseRedirect,
+    JsonResponse,
+)
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -18,12 +26,94 @@ from django.views.generic import (
     DetailView,
     ListView,
     UpdateView,
+    View,
 )
+from django_q.tasks import async_task
 
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.models import JobSeekerProfile
 from apps.matching.models import CandidateMatch
-from apps.recruiters.models import JobOpening
+from apps.recruiters.models import (
+    JobOpening,
+    JobOpeningProcessingTask,
+    RecruiterProfile,
+)
+
+
+class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """View for processing a text job description and creating a job opening."""
+
+    def test_func(self) -> bool:
+        """Verify the user is a recruiter."""
+        return self.request.user.user_type == "recruiter"
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Process the text job description and queue an async task."""
+        job_title = request.POST.get("job_title", "").strip()
+        job_description = request.POST.get("job_description", "").strip()
+
+        if not job_title or not job_description:
+            messages.error(request, "Please provide both a job title and description.")
+            return redirect("recruiters:job_openings_create")
+
+        # Get the recruiter profile
+        recruiter_profile = RecruiterProfile.objects.get(user=request.user)
+
+        # Create a unique task ID
+        task_id = str(uuid.uuid4())
+
+        # Create a new processing task
+        task = JobOpeningProcessingTask.objects.create(
+            task_id=task_id,
+            recruiter=recruiter_profile,
+            job_title=job_title,
+            original_text=job_description,
+            status="pending",
+            current_step="Initializing",
+            progress_percent=0,
+        )
+
+        # Queue the async task to process the job description
+        async_task(
+            "apps.recruiters.tasks.process_job_description",
+            task_id,
+            job_title,
+            job_description,
+            recruiter_profile.pk,
+            hook="apps.recruiters.tasks.job_processing_done",
+        )
+
+        # Redirect to the processing status page
+        return redirect("recruiters:job_openings_process_status", task_id=task_id)
+
+
+class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """View for checking the status of a job opening processing task."""
+
+    def test_func(self) -> bool:
+        """Verify the user is a recruiter."""
+        return self.request.user.user_type == "recruiter"
+
+    def get(self, request: HttpRequest, task_id: str) -> HttpResponse:
+        """
+        Display the task status page for HTML requests or
+        return JSON status for AJAX requests.
+        """
+        task = get_object_or_404(
+            JobOpeningProcessingTask,
+            task_id=task_id,
+            recruiter__user=request.user,
+        )
+
+        # For AJAX requests, return JSON status
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse(task.to_dict())
+
+        # For regular requests, render the status template
+        return render(
+            request,
+            "recruiters/job_openings/process_status.html",
+            {"task": task},
+        )
 
 
 class JobOpeningCreateView(LoginRequiredMixin, CreateView):
@@ -88,8 +178,7 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
         """
         Process the form if it is valid.
 
-        Creates a new job opening, sets the company and recruiter, and runs
-        the matching algorithm to find potential candidates.
+        Creates a new job opening, sets the company and recruiter.
 
         Args:
             form: The validated form.
@@ -105,70 +194,7 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
         job.is_active = True  # Set as active by default
         job.save()
 
-        # Run the matching algorithm (simplified for MVP)
-        self._match_candidates(job)
-
         return HttpResponseRedirect(self.get_success_url())
-
-    def _match_candidates(self, job: JobOpening) -> None:
-        """
-        Simple matching algorithm for finding potential candidates for a job.
-
-        In a real app, this would use AI for sophisticated matching. For the MVP,
-        it uses a basic matching algorithm based on skills and experience.
-
-        Args:
-            job: The job opening to match candidates for.
-        """
-        # Get all job seekers
-        job_seekers = JobSeekerProfile.objects.all()
-
-        # For each job seeker, calculate a match score
-        for job_seeker in job_seekers:
-            # In a real app, this would use NLP to compare skills, experience, etc.
-            # For the MVP, we'll use a very simplistic approach
-
-            match_score = 0
-            job_seeker_skills = (
-                job_seeker.skills_list if hasattr(job_seeker, "skills_list") else []
-            )
-            required_skills = (
-                job.required_skills.split(",") if job.required_skills else []
-            )
-
-            # Calculate score based on matching skills
-            for skill in required_skills:
-                if any(
-                    skill.lower() in js_skill.lower() for js_skill in job_seeker_skills
-                ):
-                    match_score += 20  # Each matching skill adds 20 points
-
-            # Add points for job level match based on years of experience
-            seeker_experience = job_seeker.years_of_experience or 0
-            if job.job_level == "entry" and seeker_experience >= 0:
-                match_score += 20
-            elif job.job_level == "junior" and seeker_experience >= 1:
-                match_score += 20
-            elif job.job_level == "mid" and seeker_experience >= 3:
-                match_score += 20
-            elif job.job_level == "senior" and seeker_experience >= 5:
-                match_score += 20
-            elif job.job_level == "manager" and seeker_experience >= 7:
-                match_score += 20
-
-            # Cap the score at 100
-            match_score = min(match_score, 100)
-
-            # Create match if score is above threshold
-            if match_score >= 40:
-                match_type = "top" if match_score >= 70 else "wildcard"
-                CandidateMatch.objects.create(
-                    job_opening=job,
-                    job_seeker=job_seeker,
-                    match_score=match_score,
-                    match_type=match_type,
-                    match_explanation=f"Matched {len([s for s in required_skills if any(s.lower() in js.lower() for js in job_seeker_skills)])} skills and has appropriate experience for this job level.",
-                )
 
 
 class JobOpeningListView(LoginRequiredMixin, ListView):

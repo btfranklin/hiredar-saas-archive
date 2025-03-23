@@ -10,7 +10,9 @@ from apps.recruiters.views import (
     JobOpeningDetailView,
     JobOpeningEditView,
     JobOpeningListView,
+    JobOpeningTaskStatusView,
     SettingsView,
+    TextProcessJobOpeningView,
 )
 
 app_name = "recruiters"
@@ -24,6 +26,16 @@ urlpatterns: list[URLPattern] = [
         "job-openings/create/",
         JobOpeningCreateView.as_view(),
         name="job_openings_create",
+    ),
+    path(
+        "job-openings/process/",
+        TextProcessJobOpeningView.as_view(),
+        name="job_openings_text_process",
+    ),
+    path(
+        "job-openings/process/<str:task_id>/",
+        JobOpeningTaskStatusView.as_view(),
+        name="job_openings_process_status",
     ),
     path(
         "job-openings/<int:pk>/",
