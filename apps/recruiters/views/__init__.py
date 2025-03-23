@@ -6,14 +6,16 @@ making them available for import directly from apps.recruiters.views.
 """
 
 from apps.recruiters.views.dashboard_views import DashboardView, SettingsView
+from apps.recruiters.views.job_opening_processing_views import (
+    JobOpeningTaskStatusView,
+    TextProcessJobOpeningView,
+)
 from apps.recruiters.views.job_opening_views import (
     JobOpeningCreateView,
     JobOpeningDeleteView,
     JobOpeningDetailView,
     JobOpeningEditView,
     JobOpeningListView,
-    JobOpeningTaskStatusView,
-    TextProcessJobOpeningView,
 )
 
 # For backwards compatibility, expose all views at the module level
