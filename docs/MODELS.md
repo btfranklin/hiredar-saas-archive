@@ -12,6 +12,7 @@ classDiagram
     JobSeekerProfile <|-- CandidateMatch : one-to-many
     JobOpening <|-- CandidateMatch : one-to-many
     JobSeekerProfile <|-- RoleRecommendation : one-to-many
+    JobSeekerProfile <|-- TalentSheet : one-to-one
     User <|-- Conversation : many-to-many
     User <|-- Message : one-to-many (sender)
     Conversation <|-- Message : one-to-many
@@ -44,7 +45,7 @@ classDiagram
         +linkedin_url: URLField
         +github_url: URLField
         +portfolio_url: URLField
-        +in_talent_pool: BooleanField
+        +in_talent_pool(): Property
     }
     
     class RecruiterProfile {
@@ -85,6 +86,18 @@ classDiagram
         +description: TextField
         +is_candidate_interested: BooleanField
         +created_at: DateTimeField
+    }
+    
+    class TalentSheet {
+        +job_seeker: OneToOneField(JobSeekerProfile)
+        +promotional_blurb: TextField
+        +skill_overview: TextField
+        +ideal_roles: TextField
+        +salary_min: DecimalField
+        +salary_max: DecimalField
+        +is_published: BooleanField
+        +created_at: DateTimeField
+        +updated_at: DateTimeField
     }
     
     class Conversation {
@@ -168,12 +181,12 @@ Extended profile for job seekers with career-related information.
 | `linkedin_url` | URLField | LinkedIn profile URL |
 | `github_url` | URLField | GitHub profile URL |
 | `portfolio_url` | URLField | Portfolio website URL |
-| `in_talent_pool` | BooleanField | Whether the job seeker is active in the talent pool and available for matching |
 
 **Key Methods:**
 | Method | Description |
 |--------|-------------|
 | `skills_list` | Property that returns a list of skill names |
+| `in_talent_pool` | Property that determines if the job seeker is in the talent pool based on whether they have a published talent sheet |
 
 ### ResumeProcessingTaskProgress
 
@@ -229,6 +242,36 @@ Model for AI-generated role recommendations for job seekers.
 | Rule | Description |
 |------|-------------|
 | Ordering | Role recommendations are ordered alphabetically by role title |
+
+### TalentSheet
+
+AI-generated talent sheet for job seekers in the talent pool.
+
+This represents a comprehensive, recruiter-friendly presentation of a job seeker's qualifications, tailored for the talent pool. Generated when a job seeker opts into the talent pool, this sheet provides a structured presentation of skills, experience, and career goals that makes it easier for recruiters to quickly assess suitability for open positions.
+
+**Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_seeker` | OneToOneField | Link to the JobSeekerProfile this talent sheet is for |
+| `promotional_blurb` | TextField | AI-generated promotional summary highlighting the candidate's unique value proposition |
+| `skill_overview` | TextField | Concise overview of the candidate's key skills and competencies |
+| `ideal_roles` | TextField | Comma-separated list of ideal roles, populated from interested role recommendations |
+| `salary_min` | DecimalField | Minimum salary expectation |
+| `salary_max` | DecimalField | Maximum salary expectation |
+| `is_published` | BooleanField | Whether this talent sheet is published and available for matching to job openings |
+| `created_at` | DateTimeField | When the talent sheet was created |
+| `updated_at` | DateTimeField | When the talent sheet was last updated |
+
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| `ideal_roles_list` | Property that returns a list of ideal roles from the comma-separated string |
+
+**Business Rules:**
+| Rule | Description |
+|------|-------------|
+| Talent Pool Participation | A job seeker is considered to be in the talent pool if they have a published talent sheet |
+| Publication State | Controls whether the talent sheet appears in search results for recruiters |
 
 ## Recruiters App
 
@@ -345,6 +388,7 @@ Model for user notifications.
 - One-to-One with User
 - One-to-Many with CandidateMatch in the matching app (as job_seeker)
 - One-to-Many with RoleRecommendation (as job_seeker)
+- One-to-One with TalentSheet
 
 ### RecruiterProfile Relationships
 - One-to-One with User
