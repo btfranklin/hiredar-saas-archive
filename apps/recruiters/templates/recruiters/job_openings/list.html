@@ -106,10 +106,7 @@
                         
                         {% if request.user.user_type == 'recruiter' %}
                             <h3 class="text-xl font-semibold mb-2">No job openings yet</h3>
-                            <p class="text-base-content/70 mb-6">Create your first job opening to start finding candidates</p>
-                            <a href="{% url 'recruiters:job_openings_create' %}" class="btn btn-primary">
-                                <i class="fas fa-plus mr-2"></i> Create Job Opening
-                            </a>
+                            <p class="text-base-content/70">Create your first job opening using the button in the top-right corner</p>
                         {% else %}
                             <h3 class="text-xl font-semibold mb-2">No available jobs at the moment</h3>
                             <p class="text-base-content/70 mb-6">Check back later or update your profile to get better job recommendations</p>

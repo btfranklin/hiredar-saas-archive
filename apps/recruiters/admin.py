@@ -7,8 +7,8 @@ from .models import JobOpening, RecruiterProfile
 class RecruiterProfileAdmin(admin.ModelAdmin):
     """Admin configuration for RecruiterProfile model."""
 
-    list_display = ("user", "is_subscribed", "subscription_tier")
-    list_filter = ("is_subscribed", "subscription_tier")
+    list_display = ("user", "subscription_tier")
+    list_filter = ("subscription_tier",)
     search_fields = ("user__email", "user__name")
 
 

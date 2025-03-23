@@ -25,5 +25,4 @@ class RecruiterProfileModelTests(TestCase):
     def test_recruiter_profile_creation(self) -> None:
         """Test that a recruiter profile is created correctly."""
         self.assertEqual(self.recruiter_profile.user, self.test_user)
-        self.assertFalse(self.recruiter_profile.is_subscribed)
-        self.assertEqual(self.recruiter_profile.subscription_tier, "basic")
+        self.assertEqual(self.recruiter_profile.subscription_tier, "free")

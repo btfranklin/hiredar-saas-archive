@@ -14,7 +14,7 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <a href="{% url 'recruiters:job_openings_create' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                         <div class="card-body items-center text-center p-4">
                             <i class="fas fa-plus-circle text-primary text-3xl mb-2"></i>
@@ -23,19 +23,11 @@
                         </div>
                     </a>
                     
-                    <a href="{% url 'recruiters:job_openings_list' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="card-body items-center text-center p-4">
-                            <i class="fas fa-search text-secondary text-3xl mb-2"></i>
-                            <h3 class="card-title text-base">Find Candidates</h3>
-                            <p class="text-sm">Search for qualified candidates</p>
-                        </div>
-                    </a>
-                    
                     <a href="{% url 'messaging:conversations' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                         <div class="card-body items-center text-center p-4">
-                            <i class="fas fa-envelope text-accent text-3xl mb-2"></i>
+                            <i class="fas fa-envelope text-info text-3xl mb-2"></i>
                             <h3 class="card-title text-base">Messages</h3>
-                            <p class="text-sm">Check your conversations</p>
+                            <p class="text-sm">View and send messages</p>
                         </div>
                     </a>
                 </div>

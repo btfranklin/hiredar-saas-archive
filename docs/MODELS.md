@@ -284,7 +284,7 @@ Extended profile for recruiters with subscription information.
 |-------|------|-------------|
 | `user` | OneToOneField | Link to User model (with user_type="recruiter") |
 | `is_subscribed` | BooleanField | Whether recruiter has an active subscription |
-| `subscription_tier` | CharField | Subscription tier (basic/professional/enterprise) |
+| `subscription_tier` | CharField | Subscription tier (free/premium) |
 
 ### JobOpening
 

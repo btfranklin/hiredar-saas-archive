@@ -14,15 +14,13 @@ class RecruiterProfile(models.Model):
     )
 
     # Subscription status
-    is_subscribed = models.BooleanField(default=False)
     subscription_tier = models.CharField(
         max_length=20,
         choices=(
-            ("basic", "Basic"),
-            ("professional", "Professional"),
-            ("enterprise", "Enterprise"),
+            ("free", "Free"),
+            ("premium", "Premium"),
         ),
-        default="basic",
+        default="free",
     )
 
     def __str__(self) -> str:
