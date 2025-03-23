@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load account %}
+
+{% block title %}Confirm Email | Hiredar{% endblock %}
+
+{% block content %}
+<div class="hero min-h-screen bg-base-200">
+    <div class="hero-content flex-col">
+        <div class="card flex-shrink-0 w-full max-w-md shadow-2xl bg-base-100">
+            <div class="card-body">
+                <h2 class="text-2xl font-bold text-center mb-4">{% trans "Confirm Email Address" %}</h2>
+                
+                {% if confirmation %}
+                    {% user_display confirmation.email_address.user as user_display %}
+                    
+                    <p class="text-center mb-6">
+                        {% blocktrans with confirmation.email_address.email as email %}
+                            Please confirm that <span class="font-semibold">{{ email }}</span> is an email address for user {{ user_display }}.
+                        {% endblocktrans %}
+                    </p>
+                    
+                    <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                        {% csrf_token %}
+                        <div class="form-control mt-6">
+                            <button type="submit" class="btn btn-primary">{% trans "Confirm" %}</button>
+                        </div>
+                    </form>
+                    
+                {% else %}
+                    {% url 'account_email' as email_url %}
+                    
+                    <div class="alert alert-error shadow-lg">
+                        <div>
+                            <i class="fas fa-circle-xmark"></i>
+                            <p>{% blocktrans %}The confirmation link expired or is invalid. Please request a new confirmation email.{% endblocktrans %}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'core:home' %}" class="btn btn-primary">{% trans "Back to Home" %}</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

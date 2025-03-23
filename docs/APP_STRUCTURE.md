@@ -187,6 +187,21 @@ The auth flow uses the following custom adapters:
 - **AccountAdapter**: Customizes the account signup flow, including username generation and redirection
 - **SocialAccountAdapter**: Handles social account integration, ensuring user types are correctly assigned
 
+## Template Organization and Allauth Integration
+
+The application integrates with django-allauth but also uses custom authentication views. This dual approach requires careful template organization:
+
+1. **Custom Authentication Templates**: Located in `apps/authentication/templates/authentication/`, these templates are used by custom views (e.g., `CustomLoginView`, `CustomLogoutView`). These templates use custom URL patterns like `{% url 'authentication:login' %}`.
+
+2. **Allauth Template Overrides**: Located in `apps/authentication/templates/account/`, these templates override django-allauth's default templates when using allauth's views. These templates use allauth URL patterns like `{% url 'account_login' %}`.
+
+**Important considerations**:
+
+- Custom views should use templates from the `authentication/` directory with custom URLs
+- When extending or using allauth views directly, templates from the `account/` directory should be used
+- Avoid mixing URL patterns between the two approaches (e.g., don't use `account_login` URLs in custom templates)
+- For password reset and other functionality handled by allauth, use the appropriate URL patterns (either custom or allauth's, depending on the approach)
+
 ## Job Matching Process
 
 The job matching process is one of the key features of the application:

@@ -3,12 +3,16 @@
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
-from apps.authentication.views.account_views import (ChangePasswordView,
-                                                     UpdateAccountView)
-from apps.authentication.views.auth_views import (CustomLoginView,
-                                                  CustomLogoutView,
-                                                  JobSeekerSignupView,
-                                                  RecruiterSignupView)
+from apps.authentication.views.account_views import (
+    ChangePasswordView,
+    UpdateAccountView,
+)
+from apps.authentication.views.auth_views import (
+    CustomLoginView,
+    CustomLogoutView,
+    JobSeekerSignupView,
+    RecruiterSignupView,
+)
 
 app_name = "authentication"
 
