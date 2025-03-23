@@ -9,7 +9,7 @@ import os
 from typing import Any
 
 from openai import OpenAI
-from pinecone.grpc import PineconeGRPC as Pinecone
+from pinecone import Pinecone
 from pinecone.openapi_support.exceptions import NotFoundException, PineconeException
 
 logger = logging.getLogger(__name__)
@@ -24,15 +24,18 @@ pinecone_client = Pinecone(
 # Initialize index reference but don't connect yet
 # This allows the app to start even if the index doesn't exist
 index_name = os.getenv("PINECONE_INDEX_NAME", "job-matcher")
+# For production, we can directly specify the host URL to eliminate round trips
+index_host = os.getenv("PINECONE_INDEX_HOST")
 # Get the dimension from the environment (default to 3072 for text-embedding-3-large)
 DIMENSIONS = int(os.getenv("PINECONE_DIMENSIONS", "3072"))
-index = None
 
 
 def get_index() -> Any:
     """
-    Lazily get the Pinecone index, creating a connection only when needed.
-    This allows the app to start without requiring the index to exist.
+    Get the Pinecone index efficiently.
+
+    In production, uses the index host URL directly to eliminate a round trip
+    to the Pinecone control plane. In development, falls back to using the index name.
 
     Returns:
         The Pinecone index object
@@ -40,19 +43,44 @@ def get_index() -> Any:
     Raises:
         NotFoundException: If the index doesn't exist when this function is called
     """
-    global index
-    if index is None:
-        try:
-            index = pinecone_client.Index(index_name)
-            logger.info("Connected to Pinecone index: %s", index_name)
-        except NotFoundException:
-            logger.warning(
-                "Pinecone index '%s' not found. "
-                "Please create it using 'python manage.py create_matching_index'",
-                index_name,
-            )
-            raise
-    return index
+    try:
+        # If index host is provided (recommended for production), use it directly
+        if index_host:
+            return pinecone_client.Index(host=index_host)
+
+        # Otherwise fall back to index name (adds extra round trip, use in development only)
+        return pinecone_client.Index(index_name)
+    except NotFoundException:
+        logger.warning(
+            "Pinecone index '%s' not found. "
+            "Please create it using 'python manage.py create_matching_index'",
+            index_name,
+        )
+        raise
+
+
+def get_index_host() -> str:
+    """
+    Get the host URL for the index.
+
+    This is useful for setting up the PINECONE_INDEX_HOST environment variable
+    in production environments.
+
+    Returns:
+        The host URL for the index
+
+    Raises:
+        Exception: If the index doesn't exist or can't be described
+    """
+    # Use the REST client for admin operations
+    admin_client = Pinecone(
+        api_key=os.getenv("PINECONE_API_KEY"),
+        project_name=os.getenv("PINECONE_PROJECT_NAME", "Hiredar"),
+    )
+
+    host = admin_client.describe_index(index_name).host
+    logger.info("Pinecone index '%s' host URL: %s", index_name, host)
+    return host
 
 
 def ensure_namespaces_exist() -> None:
