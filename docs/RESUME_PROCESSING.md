@@ -104,23 +104,27 @@ The resume processing utilities are organized in a modular structure:
 
 Two management commands are provided for testing the resume processing functionality:
 
-1. **Diagnose Resume**:
+#### Diagnose Resume
+
 ```bash
 python manage.py diagnose_resume /path/to/test/resume.pdf
 ```
 
 This command:
+
 - Extracts text from the provided PDF
 - Sends the text to the LLM API
 - Parses the resulting XML
 - Displays the extracted information
 
-2. **Batch Ingest Resumes**:
+#### Batch Ingest Resumes
+
 ```bash
 python manage.py ingest_resumes /path/to/resume/directory
 ```
 
 This command:
+
 - Processes all PDF files in the specified directory
 - Creates a test user for each resume
 - Extracts and processes each resume
@@ -131,7 +135,7 @@ Use these commands for testing and populating the system with sample data.
 
 ## Flow Diagram
 
-```
+```tree
 apps/job_seekers/views/resume_processing_views.py::ResumeUploadView.post()
 │
 ├── apps/job_seekers/tasks.py::save_resume_file()
@@ -169,11 +173,12 @@ The LLM generates a structured XML representation of the resume that includes:
 - Certifications (name, issuing organization, dates)
 
 This XML is then parsed to extract relevant information for the JobSeekerProfile, including:
+
 - Professional summary for the `professional_summary` field
 - Skills list for the `skills` field
 - Experience details for the `experience` field
 - Education history for the `education` field
-- Certification information for the `certifications` field 
+- Certification information for the `certifications` field
 - Phone number for the `phone` field
 - Location for the User's `location` field
 

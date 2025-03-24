@@ -38,7 +38,7 @@ Tests are organized within each app in the project, following these conventions:
 
 Example test structure:
 
-```
+```tree
 apps/
 ├── authentication/
 │   ├── tests/
@@ -112,4 +112,4 @@ The Hiredar project uses a slightly customized test setup:
 
 - The `apps` directory is added to the Python path for proper test discovery
 
-Test configuration is handled in `settings.py` and doesn't require any manual setup to run tests. 
+Test configuration is handled in `settings.py` and doesn't require any manual setup to run tests.
