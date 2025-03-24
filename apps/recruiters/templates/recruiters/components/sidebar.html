@@ -18,7 +18,7 @@
             
             {% with rec_profile=user.recruiter_profile %}
                 {% if rec_profile %}
-                    <div class="badge {% if rec_profile.subscription_tier == 'premium' %}badge-accent{% else %}badge-neutral{% endif %} mt-2">
+                    <div class="badge {% if rec_profile.subscription_tier == 'premium' %}badge-accent{% else %}badge-warning{% endif %} mt-2">
                         {{ rec_profile.get_subscription_tier_display }}
                     </div>
                 {% endif %}
