@@ -68,7 +68,7 @@ Callback function executed after job processing completes:
 
 The job processing follows these steps:
 
-1. Task validation and setup 
+1. Task validation and setup
 2. Delegation to implementation in the utils module
 3. Processing of text into structured data
 4. Creation of a job opening
