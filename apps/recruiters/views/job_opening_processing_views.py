@@ -100,8 +100,7 @@ class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request: HttpRequest, task_id: str) -> HttpResponse:
         """
-        Display the task status page for HTML requests or
-        return JSON status for AJAX requests.
+        Return JSON status for AJAX requests or redirect for direct browser requests.
         """
         task = get_object_or_404(
             JobOpeningProcessingTask,
@@ -113,9 +112,6 @@ class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(task.to_dict())
 
-        # For regular requests, render the status template
-        return render(
-            request,
-            "recruiters/job_openings/process_status.html",
-            {"task": task},
-        )
+        # For direct browser requests, redirect to the create page
+        # This handles the case where someone tries to access the status URL directly
+        return redirect("recruiters:job_openings_create")

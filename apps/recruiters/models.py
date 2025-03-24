@@ -126,6 +126,7 @@ class JobOpeningProcessingTask(models.Model):
             "current_step": self.current_step,
             "message": self.message,
             "created_job_opening_id": self.created_job_opening_id,
+            "job_title": self.job_title,
         }
 
     def __str__(self) -> str:

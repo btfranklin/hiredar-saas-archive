@@ -38,10 +38,13 @@
             </div>
             
             <!-- Simple Text-Based Job Description Input Form -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
+            <div id="job-form-container" class="bg-base-200 rounded-box p-6 shadow-md">
                 <h1 class="text-2xl font-bold mb-6">Create Job Opening</h1>
                 
-                <form id="job-description-form" method="POST" action="{% url 'recruiters:job_openings_text_process' %}">
+                <form id="job-description-form" method="POST" 
+                      hx-post="{% url 'recruiters:job_openings_text_process' %}"
+                      hx-target="#job-form-container"
+                      hx-swap="innerHTML">
                     {% csrf_token %}
                     
                     <div class="form-control mb-6">
@@ -62,6 +65,7 @@
                     
                     <div class="flex justify-end">
                         <button type="submit" class="btn btn-primary">
+                            <span class="htmx-indicator loading loading-spinner loading-xs mr-2"></span>
                             <i class="fas fa-magic mr-2"></i> Process Job Description
                         </button>
                     </div>
@@ -70,4 +74,237 @@
         </div>
     </div>
 </div>
+
+<!-- Processing Template (hidden by default) -->
+<div id="processing-template" class="hidden">
+    <h1 class="text-2xl font-bold mb-6">Processing Job Description</h1>
+    
+    <div class="card bg-base-100 shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-2" id="job-title-display"></h2>
+        
+        <div class="flex flex-col items-center space-y-6 py-4">
+            <!-- Progress bar and percentage -->
+            <div class="w-full max-w-sm">
+                <div class="flex justify-between mb-1">
+                    <span id="current-step-name" class="text-base font-medium">Processing...</span>
+                    <span id="progress-percent" class="text-sm font-medium">0%</span>
+                </div>
+                
+                <!-- Initial loading spinner (visible by default) -->
+                <div id="initial-loading" class="flex justify-center py-3">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                </div>
+                
+                <!-- Progress bar (hidden by default, shown when we have real progress) -->
+                <div id="progress-container" class="w-full bg-gray-200 rounded-full h-2.5 hidden">
+                    <div id="progress-bar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                
+                <p id="current-step-description" class="text-sm mt-2 text-base-content/70">Preparing to process your job description...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Template (hidden by default) -->
+<div id="success-template" class="hidden">
+    <h1 class="text-2xl font-bold mb-6">Job Opening Created</h1>
+    
+    <div class="card bg-base-100 shadow-md p-6">
+        <div class="alert alert-success mb-6">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span>Job description processed successfully! You can now review and edit the details.</span>
+        </div>
+        
+        <h2 class="text-xl font-semibold mb-4" id="success-job-title"></h2>
+        
+        <div class="divider">Job Details</div>
+        
+        <div class="flex flex-col space-y-4 mb-6" id="job-details-container">
+            <!-- Job details will be populated here -->
+            <div class="skeleton h-4 w-full"></div>
+            <div class="skeleton h-4 w-full"></div>
+            <div class="skeleton h-4 w-full"></div>
+        </div>
+        
+        <div class="flex justify-end">
+            <a id="edit-job-link" href="#" class="btn btn-primary">
+                <i class="fas fa-edit mr-2"></i> Review Job Details
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Error Template (hidden by default) -->
+<div id="error-template" class="hidden">
+    <h1 class="text-2xl font-bold mb-6">Error Processing Job Description</h1>
+    
+    <div class="card bg-base-100 shadow-md p-6">
+        <div class="alert alert-error mb-6">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="error-message">An error occurred while processing the job description.</span>
+        </div>
+        
+        <div class="flex justify-end">
+            <button class="btn btn-primary" hx-get="{% url 'recruiters:job_openings_create' %}" hx-target="#job-form-container" hx-swap="innerHTML">
+                <i class="fas fa-redo mr-2"></i> Try Again
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // This will be our response handler for the form submission
+    document.addEventListener('htmx:afterSwap', function(event) {
+        // Check if this is a response from the job description processing endpoint
+        if (event.detail.requestConfig && 
+            event.detail.requestConfig.path === "{% url 'recruiters:job_openings_text_process' %}") {
+            
+            // Expecting JSON response with status_url and redirect_url
+            try {
+                const response = JSON.parse(event.detail.xhr.responseText);
+                
+                if (response.success && response.status_url) {
+                    // Display the job title in the processing screen
+                    const jobTitle = document.getElementById('job_title').value;
+                    
+                    // Show processing template
+                    const processingTemplateContent = document.getElementById('processing-template').innerHTML;
+                    event.detail.target.innerHTML = processingTemplateContent;
+                    
+                    // Set the job title
+                    const jobTitleDisplay = document.getElementById('job-title-display');
+                    if (jobTitleDisplay) {
+                        jobTitleDisplay.textContent = jobTitle;
+                    }
+                    
+                    // Set up the HTMX polling element
+                    const pollingDiv = document.createElement('div');
+                    pollingDiv.setAttribute('hx-get', response.status_url);
+                    pollingDiv.setAttribute('hx-trigger', 'load, every 2s');
+                    pollingDiv.setAttribute('hx-swap', 'none');
+                    pollingDiv.style.display = 'none';
+                    pollingDiv.id = 'status-poller';
+                    
+                    // Add the polling element to the page
+                    document.body.appendChild(pollingDiv);
+                    
+                    // Initialize HTMX on the element we just created
+                    htmx.process(pollingDiv);
+                    
+                    // Store redirect URL and task ID for later use
+                    window.redirectUrl = response.redirect_url;
+                    window.taskId = response.task_id;
+                } else {
+                    // Show error
+                    const errorTemplate = document.getElementById('error-template').innerHTML;
+                    event.detail.target.innerHTML = errorTemplate;
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        errorMessage.textContent = response.message || 'There was an error processing your job description';
+                    }
+                }
+            } catch (error) {
+                console.error("Error parsing response:", error);
+                // Show error
+                const errorTemplate = document.getElementById('error-template').innerHTML;
+                event.detail.target.innerHTML = errorTemplate;
+                const errorMessage = document.getElementById('error-message');
+                if (errorMessage) {
+                    errorMessage.textContent = 'There was an error processing your request';
+                }
+            }
+        }
+    });
+    
+    // Handle the polling responses
+    document.body.addEventListener('htmx:afterOnLoad', function(event) {
+        // Check if this is a response from the status polling
+        const sourceElement = event.detail.elt;
+        if (sourceElement && sourceElement.id === 'status-poller') {
+            try {
+                const statusData = JSON.parse(event.detail.xhr.responseText);
+                console.log("Task status:", statusData);
+                
+                // Update progress information
+                updateProgress(statusData);
+                
+                // Check task status
+                if (statusData.status === 'completed') {
+                    // Task completed successfully
+                    // Stop polling
+                    sourceElement.remove();
+                    
+                    // Show success template
+                    const successTemplate = document.getElementById('success-template').innerHTML;
+                    document.getElementById('job-form-container').innerHTML = successTemplate;
+                    
+                    // Populate success information
+                    const successJobTitle = document.getElementById('success-job-title');
+                    if (successJobTitle) {
+                        successJobTitle.textContent = statusData.job_title || "New Job Opening";
+                    }
+                    
+                    // Set the edit link
+                    const editJobLink = document.getElementById('edit-job-link');
+                    if (editJobLink && statusData.created_job_opening_id) {
+                        editJobLink.href = `/recruiters/job-openings/${statusData.created_job_opening_id}/edit/`;
+                    }
+                } else if (statusData.status === 'failed') {
+                    // Task failed
+                    // Stop polling
+                    sourceElement.remove();
+                    
+                    // Show error template
+                    const errorTemplate = document.getElementById('error-template').innerHTML;
+                    document.getElementById('job-form-container').innerHTML = errorTemplate;
+                    
+                    // Set error message
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        errorMessage.textContent = statusData.message || "An error occurred while processing the job description.";
+                    }
+                }
+            } catch (error) {
+                console.error("Error processing status response:", error);
+            }
+        }
+    });
+    
+    // Update the progress display
+    function updateProgress(statusData) {
+        // Get progress data from status data
+        const progressPercent = document.getElementById('progress-percent');
+        const currentStepName = document.getElementById('current-step-name');
+        const currentStepDescription = document.getElementById('current-step-description');
+        const initialLoading = document.getElementById('initial-loading');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        
+        if (!progressPercent || !currentStepName || !currentStepDescription || 
+            !initialLoading || !progressContainer || !progressBar) {
+            return;
+        }
+        
+        // Update progress percentage
+        if (statusData.progress_percent !== undefined) {
+            // If we have a progress percent, show the progress bar instead of spinner
+            initialLoading.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+            
+            // Update progress bar and text
+            progressBar.style.width = `${statusData.progress_percent}%`;
+            progressPercent.textContent = `${statusData.progress_percent}%`;
+        }
+        
+        // Update step name and description
+        if (statusData.current_step) {
+            currentStepName.textContent = statusData.current_step;
+        }
+        
+        if (statusData.message) {
+            currentStepDescription.textContent = statusData.message;
+        }
+    }
+</script>
 {% endblock %} 
