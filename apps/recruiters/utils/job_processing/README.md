@@ -19,9 +19,11 @@ The job processing utilities work together to:
 ## Prompt Structure
 
 The LLM interactions use Promptdown templates located in:
+
 - `apps/recruiters/utils/prompts/convert_job_description_to_xml.prompt.md`
 
 These templates follow the Promptdown format which provides:
+
 - System/Developer message to set the LLM's role and context
 - Clearly defined task instructions
 - Response format specification
@@ -29,7 +31,7 @@ These templates follow the Promptdown format which provides:
 
 ## Pipeline Flow
 
-```
+```tree
 Process Job Description
 │
 ├── Preprocess text 
@@ -91,6 +93,7 @@ The job opening XML follows this structure:
 ## Error Handling
 
 The llm_processor module includes comprehensive error handling:
+
 - API connection issues
 - Malformed XML responses
 - XML sanitization for common LLM output issues
@@ -98,10 +101,10 @@ The llm_processor module includes comprehensive error handling:
 
 ## Usage
 
-These utilities are typically used through the task functions in `apps.recruiters.tasks`, rather than being called directly. 
+These utilities are typically used through the task functions in `apps.recruiters.tasks`, rather than being called directly.
 
 ## Dependencies
 
 - OpenAI Python client
 - Promptdown (for structured prompt templates)
-- Python XML libraries (xml.etree.ElementTree) 
+- Python XML libraries (xml.etree.ElementTree)

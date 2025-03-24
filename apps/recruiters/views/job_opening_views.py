@@ -168,7 +168,7 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
         """
         context = super().get_context_data(**kwargs)
         user = cast(AuthenticatedUser, self.request.user)
-        job_opening = cast(JobOpening, self.get_object())
+        job_opening = self.get_object()
 
         if user.user_type == "recruiter":
             # Only show candidate matches to the job owner
@@ -202,6 +202,7 @@ class JobOpeningEditView(LoginRequiredMixin, UpdateView):
 
     model: ClassVar[type[JobOpening]] = JobOpening
     template_name = "recruiters/job_openings/edit.html"
+    context_object_name = "job_opening"
     fields = [
         # Basic Information
         "title",
@@ -240,7 +241,9 @@ class JobOpeningEditView(LoginRequiredMixin, UpdateView):
         Returns:
             str: The URL to redirect to.
         """
-        return reverse("recruiters:job_openings_detail", kwargs={"pk": self.object.pk})
+        # Keep the basic fallback for the NoReverseMatch issue
+        pk = self.object.pk if self.object and self.object.pk else self.kwargs.get("pk")
+        return reverse("recruiters:job_openings_detail", kwargs={"pk": pk})
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any

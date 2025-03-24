@@ -237,7 +237,11 @@
                     </div>
                     
                     <div class="flex justify-end gap-2 mt-8">
-                        <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-ghost">Cancel</a>
+                        {% if job_opening.pk %}
+                        <a href="{% url 'recruiters:job_openings_detail' job_opening.pk %}" class="btn btn-ghost">Cancel</a>
+                        {% else %}
+                        <a href="{% url 'recruiters:job_openings_list' %}" class="btn btn-ghost">Cancel</a>
+                        {% endif %}
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>

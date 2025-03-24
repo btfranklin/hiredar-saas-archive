@@ -44,6 +44,7 @@
                 <form id="job-description-form" method="POST" 
                       hx-post="{% url 'recruiters:job_openings_text_process' %}"
                       hx-target="#job-form-container"
+                      hx-headers='{"X-Requested-With": "XMLHttpRequest", "Accept": "application/json"}'
                       hx-swap="innerHTML">
                     {% csrf_token %}
                     
@@ -155,6 +156,18 @@
 
 <script>
     // This will be our response handler for the form submission
+    document.addEventListener('htmx:beforeRequest', function(event) {
+        // Store the title value before the request is made
+        if (event.detail.requestConfig && 
+            event.detail.requestConfig.path === "{% url 'recruiters:job_openings_text_process' %}") {
+            const jobTitleEl = document.getElementById('job_title');
+            if (jobTitleEl) {
+                // Store job title in localStorage to retrieve after the swap
+                localStorage.setItem('jobTitleValue', jobTitleEl.value);
+            }
+        }
+    });
+    
     document.addEventListener('htmx:afterSwap', function(event) {
         // Check if this is a response from the job description processing endpoint
         if (event.detail.requestConfig && 
@@ -162,53 +175,76 @@
             
             // Expecting JSON response with status_url and redirect_url
             try {
-                const response = JSON.parse(event.detail.xhr.responseText);
+                console.log("Raw response text:", event.detail.xhr.responseText);
+                console.log("Response status:", event.detail.xhr.status);
+                console.log("Response headers:", event.detail.xhr.getAllResponseHeaders());
                 
-                if (response.success && response.status_url) {
-                    // Display the job title in the processing screen
-                    const jobTitle = document.getElementById('job_title').value;
+                // Check if we received JSON or HTML
+                const contentType = event.detail.xhr.getResponseHeader('Content-Type');
+                console.log("Content-Type:", contentType);
+                
+                if (contentType && contentType.includes('application/json')) {
+                    // Parse as JSON
+                    const response = JSON.parse(event.detail.xhr.responseText);
                     
-                    // Show processing template
-                    const processingTemplateContent = document.getElementById('processing-template').innerHTML;
-                    event.detail.target.innerHTML = processingTemplateContent;
-                    
-                    // Set the job title
-                    const jobTitleDisplay = document.getElementById('job-title-display');
-                    if (jobTitleDisplay) {
-                        jobTitleDisplay.textContent = jobTitle;
+                    if (response.success && response.status_url) {
+                        // Retrieve the job title we stored before the request
+                        const jobTitle = localStorage.getItem('jobTitleValue') || "New Job";
+                        
+                        // Show processing template
+                        const processingTemplateContent = document.getElementById('processing-template').innerHTML;
+                        document.getElementById('job-form-container').innerHTML = processingTemplateContent;
+                        
+                        // Set the job title
+                        const jobTitleDisplay = document.getElementById('job-title-display');
+                        if (jobTitleDisplay) {
+                            jobTitleDisplay.textContent = jobTitle;
+                        }
+                        
+                        // Set up the HTMX polling element
+                        const pollingDiv = document.createElement('div');
+                        pollingDiv.setAttribute('hx-get', response.status_url);
+                        pollingDiv.setAttribute('hx-trigger', 'load, every 2s');
+                        pollingDiv.setAttribute('hx-swap', 'none');
+                        pollingDiv.setAttribute('hx-headers', '{"X-Requested-With": "XMLHttpRequest", "Accept": "application/json", "HX-Response-Type": "json"}');
+                        pollingDiv.style.display = 'none';
+                        pollingDiv.id = 'status-poller';
+                        
+                        // Add the polling element to the page
+                        document.body.appendChild(pollingDiv);
+                        
+                        // Initialize HTMX on the element we just created
+                        htmx.process(pollingDiv);
+                        
+                        // Store redirect URL and task ID for later use
+                        window.redirectUrl = response.redirect_url;
+                        window.taskId = response.task_id;
+                    } else {
+                        // Show error
+                        const errorTemplate = document.getElementById('error-template').innerHTML;
+                        document.getElementById('job-form-container').innerHTML = errorTemplate;
+                        const errorMessage = document.getElementById('error-message');
+                        if (errorMessage) {
+                            errorMessage.textContent = response.message || 'There was an error processing your job description';
+                        }
                     }
-                    
-                    // Set up the HTMX polling element
-                    const pollingDiv = document.createElement('div');
-                    pollingDiv.setAttribute('hx-get', response.status_url);
-                    pollingDiv.setAttribute('hx-trigger', 'load, every 2s');
-                    pollingDiv.setAttribute('hx-swap', 'none');
-                    pollingDiv.style.display = 'none';
-                    pollingDiv.id = 'status-poller';
-                    
-                    // Add the polling element to the page
-                    document.body.appendChild(pollingDiv);
-                    
-                    // Initialize HTMX on the element we just created
-                    htmx.process(pollingDiv);
-                    
-                    // Store redirect URL and task ID for later use
-                    window.redirectUrl = response.redirect_url;
-                    window.taskId = response.task_id;
                 } else {
-                    // Show error
+                    // If it's not JSON, we're already getting HTML back, which HTMX should handle automatically
+                    console.log("Response was not JSON. HTMX should have updated the target with HTML.");
+                    
+                    // Show error since we expected JSON
                     const errorTemplate = document.getElementById('error-template').innerHTML;
-                    event.detail.target.innerHTML = errorTemplate;
+                    document.getElementById('job-form-container').innerHTML = errorTemplate;
                     const errorMessage = document.getElementById('error-message');
                     if (errorMessage) {
-                        errorMessage.textContent = response.message || 'There was an error processing your job description';
+                        errorMessage.textContent = 'Unexpected response format. Please try again.';
                     }
                 }
             } catch (error) {
                 console.error("Error parsing response:", error);
                 // Show error
                 const errorTemplate = document.getElementById('error-template').innerHTML;
-                event.detail.target.innerHTML = errorTemplate;
+                document.getElementById('job-form-container').innerHTML = errorTemplate;
                 const errorMessage = document.getElementById('error-message');
                 if (errorMessage) {
                     errorMessage.textContent = 'There was an error processing your request';
@@ -223,36 +259,92 @@
         const sourceElement = event.detail.elt;
         if (sourceElement && sourceElement.id === 'status-poller') {
             try {
-                const statusData = JSON.parse(event.detail.xhr.responseText);
-                console.log("Task status:", statusData);
-                
-                // Update progress information
-                updateProgress(statusData);
-                
-                // Check task status
-                if (statusData.status === 'completed') {
-                    // Task completed successfully
-                    // Stop polling
-                    sourceElement.remove();
+                // Ensure we have a valid response
+                if (event.detail.successful) {
+                    console.log("Status polling response text:", event.detail.xhr.responseText);
+                    console.log("Status polling response headers:", event.detail.xhr.getAllResponseHeaders());
                     
-                    // Show success template
-                    const successTemplate = document.getElementById('success-template').innerHTML;
-                    document.getElementById('job-form-container').innerHTML = successTemplate;
+                    // Check content type to ensure we're dealing with JSON
+                    const contentType = event.detail.xhr.getResponseHeader('Content-Type');
+                    console.log("Status polling Content-Type:", contentType);
                     
-                    // Populate success information
-                    const successJobTitle = document.getElementById('success-job-title');
-                    if (successJobTitle) {
-                        successJobTitle.textContent = statusData.job_title || "New Job Opening";
+                    if (contentType && contentType.includes('application/json')) {
+                        const statusData = JSON.parse(event.detail.xhr.responseText);
+                        console.log("Task status:", statusData);
+                        
+                        // Update progress information
+                        updateProgress(statusData);
+                        
+                        // Check task status
+                        if (statusData.status === 'completed') {
+                            // Task completed successfully
+                            // Stop polling
+                            sourceElement.remove();
+                            
+                            // Additional logging to debug job opening ID
+                            console.log("Task completed. Complete status data:", statusData);
+                            console.log("Job opening ID from status data:", statusData.created_job_opening_id);
+                            console.log("Job opening ID type:", typeof statusData.created_job_opening_id);
+                            
+                            // Show success template
+                            const successTemplate = document.getElementById('success-template').innerHTML;
+                            document.getElementById('job-form-container').innerHTML = successTemplate;
+                            
+                            // Populate success information
+                            const successJobTitle = document.getElementById('success-job-title');
+                            if (successJobTitle) {
+                                successJobTitle.textContent = statusData.job_title || localStorage.getItem('jobTitleValue') || "New Job Opening";
+                            }
+                            
+                            // Set the edit link
+                            const editJobLink = document.getElementById('edit-job-link');
+                            if (editJobLink) {
+                                // Extra defensive check to ensure job ID exists and is valid
+                                const jobId = statusData.created_job_opening_id;
+                                console.log("Setting edit link with ID:", jobId);
+                                
+                                // Strict validation: must be a number greater than 0
+                                if (jobId && !isNaN(Number(jobId)) && Number(jobId) > 0) {
+                                    editJobLink.href = `/recruiters/job-openings/${jobId}/edit/`;
+                                    console.log("Edit link set to:", editJobLink.href);
+                                } else {
+                                    console.warn("Invalid job ID:", jobId, "Falling back to job openings list");
+                                    // Fallback to the job openings list if ID is invalid
+                                    editJobLink.href = '/recruiters/job-openings/';
+                                    // Update the link text to reflect the change
+                                    editJobLink.innerHTML = '<i class="fas fa-list mr-2"></i> View All Job Openings';
+                                }
+                            }
+                        } else if (statusData.status === 'failed') {
+                            // Task failed
+                            // Stop polling
+                            sourceElement.remove();
+                            
+                            // Show error template
+                            const errorTemplate = document.getElementById('error-template').innerHTML;
+                            document.getElementById('job-form-container').innerHTML = errorTemplate;
+                            
+                            // Set error message
+                            const errorMessage = document.getElementById('error-message');
+                            if (errorMessage) {
+                                errorMessage.textContent = statusData.message || "An error occurred while processing the job description.";
+                            }
+                        }
+                    } else {
+                        // Not JSON response
+                        console.error("Status polling response was not JSON");
+                        sourceElement.remove();
+                        
+                        // Show error
+                        const errorTemplate = document.getElementById('error-template').innerHTML;
+                        document.getElementById('job-form-container').innerHTML = errorTemplate;
+                        const errorMessage = document.getElementById('error-message');
+                        if (errorMessage) {
+                            errorMessage.textContent = "Server returned an unexpected response format. Please try again.";
+                        }
                     }
-                    
-                    // Set the edit link
-                    const editJobLink = document.getElementById('edit-job-link');
-                    if (editJobLink && statusData.created_job_opening_id) {
-                        editJobLink.href = `/recruiters/job-openings/${statusData.created_job_opening_id}/edit/`;
-                    }
-                } else if (statusData.status === 'failed') {
-                    // Task failed
-                    // Stop polling
+                } else {
+                    // Server error in polling
                     sourceElement.remove();
                     
                     // Show error template
@@ -262,11 +354,23 @@
                     // Set error message
                     const errorMessage = document.getElementById('error-message');
                     if (errorMessage) {
-                        errorMessage.textContent = statusData.message || "An error occurred while processing the job description.";
+                        errorMessage.textContent = "Server error while checking status. Please try again.";
                     }
                 }
             } catch (error) {
                 console.error("Error processing status response:", error);
+                // Stop polling on error
+                sourceElement.remove();
+                
+                // Show error template
+                const errorTemplate = document.getElementById('error-template').innerHTML;
+                document.getElementById('job-form-container').innerHTML = errorTemplate;
+                
+                // Set error message
+                const errorMessage = document.getElementById('error-message');
+                if (errorMessage) {
+                    errorMessage.textContent = "Error processing response from server.";
+                }
             }
         }
     });
