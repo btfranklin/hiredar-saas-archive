@@ -59,18 +59,18 @@ def process_resume(
     progress_tracker = None
     if task_id:
         try:
-            progress_tracker, _ = ResumeProcessingTaskProgress.objects.get_or_create(
-                task_id=task_id,
-                defaults={
-                    "user": profile.user,
-                    "task_type": "resume_processing",
-                    "status": "running",
-                    "message": "Processing resume...",
-                    "current_step": "file_path_resolved",
-                },
-            )
+            # The tracking record is created in ResumeUploadView before the task is queued
+            progress_tracker = ResumeProcessingTaskProgress.objects.get(task_id=task_id)
+            # Update status to running if not already
+            if progress_tracker.status == "pending":
+                progress_tracker.status = "running"
+                progress_tracker.message = "Processing resume..."
+                progress_tracker.save(update_fields=["status", "message"])
+        except ResumeProcessingTaskProgress.DoesNotExist:
+            logger.error("Progress tracker not found for task_id: %s", task_id)
+            # Continue with processing even if tracking fails
         except Exception as e:
-            logger.error("Error creating progress tracker: %s", e)
+            logger.error("Error getting progress tracker: %s", e)
             # Continue with processing even if tracking fails
 
     try:

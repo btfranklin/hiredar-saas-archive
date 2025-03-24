@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.generic import View
 from django_q.tasks import async_task
 
@@ -30,6 +31,14 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
         job_description = request.POST.get("job_description", "").strip()
 
         if not job_title or not job_description:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "Please provide both a job title and description.",
+                    },
+                    status=400,
+                )
             messages.error(request, "Please provide both a job title and description.")
             return redirect("recruiters:job_openings_create")
 
@@ -53,15 +62,33 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Queue the async task to process the job description
         async_task(
             "apps.recruiters.tasks.handle_job_description_task",
-            task_id,
-            job_title,
-            job_description,
+            task.task_id,  # Use task object reference
+            task.job_title,
+            task.original_text,
             recruiter_profile.pk,
             hook="apps.recruiters.tasks.hooks.job_processing_done",
         )
 
-        # Redirect to the processing status page
-        return redirect("recruiters:job_openings_process_status", task_id=task_id)
+        # Handle AJAX/HTMX requests
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            status_url = reverse(
+                "recruiters:job_openings_process_status",
+                kwargs={"task_id": task.task_id},
+            )
+            redirect_url = reverse("recruiters:job_openings_list")
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Job description submitted. Processing in progress.",
+                    "task_id": task.task_id,
+                    "status_url": status_url,
+                    "redirect_url": redirect_url,
+                }
+            )
+
+        # Redirect to the processing status page for non-AJAX requests
+        return redirect("recruiters:job_openings_process_status", task_id=task.task_id)
 
 
 class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):

@@ -92,25 +92,38 @@ class ResumeUploadView(LoginRequiredMixin, View):
             # Generate a unique ID for the task
             task_id = str(uuid.uuid4())
 
+            # Create a tracking record for this task
+            task_progress = ResumeProcessingTaskProgress.objects.create(
+                task_id=task_id,
+                user=user,
+                task_type="resume_processing",
+                status="pending",
+                message="Preparing to process resume",
+                current_step="file_path_resolved",
+                progress_percent=0,
+            )
+
             # Queue the resume processing task with a completion hook
             async_task(
                 handle_resume_upload_task,
                 file_path,
                 profile_id,
-                task_id=task_id,
-                task_name=f"resume_processing_{task_id}",
+                task_id=task_progress.task_id,
+                task_name=f"resume_processing_{task_progress.task_id}",
                 hook="apps.job_seekers.tasks.hooks.resume_processing_completed",
             )
 
             # Return success response with task ID and status URL
-            status_url = reverse("job_seekers:task_status", kwargs={"task_id": task_id})
+            status_url = reverse(
+                "job_seekers:task_status", kwargs={"task_id": task_progress.task_id}
+            )
             redirect_url = reverse("job_seekers:dashboard")
 
             return JsonResponse(
                 {
                     "success": True,
                     "message": "Resume uploaded successfully. Processing in progress.",
-                    "task_id": task_id,
+                    "task_id": task_progress.task_id,
                     "status_url": status_url,
                     "redirect_url": redirect_url,
                 }
