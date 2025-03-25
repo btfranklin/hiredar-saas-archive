@@ -36,13 +36,19 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = cast(AuthenticatedUser, self.request.user)
 
-        # Get recent job openings
+        # Get active job openings
+        context["active_jobs"] = JobOpening.objects.filter(
+            recruiter=user.recruiter_profile,
+            is_active=True,
+        ).order_by("-created_at")[:5]
+
+        # Get recent job openings (all, including inactive)
         context["recent_jobs"] = JobOpening.objects.filter(
             recruiter=user.recruiter_profile,
         ).order_by("-created_at")[:5]
 
         # Get recent candidate matches
-        context["recent_matches"] = CandidateMatch.objects.filter(
+        context["recent_candidates"] = CandidateMatch.objects.filter(
             job_opening__recruiter=user.recruiter_profile,
             status="pending",
         ).order_by("-match_score")[:5]
