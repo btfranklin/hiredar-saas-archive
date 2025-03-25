@@ -47,8 +47,8 @@ class Command(BaseCommand):
             try:
                 # Verify the job exists
                 job = JobOpening.objects.get(id=job_id)
-            except JobOpening.DoesNotExist:
-                raise CommandError(f"JobOpening with ID {job_id} does not exist")
+            except JobOpening.DoesNotExist as e:
+                raise CommandError(f"JobOpening with ID {job_id} does not exist") from e
 
             if options["remove"]:
                 self.stdout.write(f"Removing embeddings for job opening {job_id}")
@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
         elif options["all"]:
             # Query only active job openings
-            jobs = JobOpening.objects.filter(is_active=True)
+            jobs = JobOpening.objects.filter(status="active")
             count = jobs.count()
 
             if count == 0:

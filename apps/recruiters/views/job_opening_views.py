@@ -70,7 +70,7 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
         "reporting_to",
         "travel_requirements",
         # Status
-        "is_active",
+        "status",
     ]
     success_url = reverse_lazy("recruiters:job_openings_list")
 
@@ -100,7 +100,9 @@ class JobOpeningCreateView(LoginRequiredMixin, CreateView):
         user = cast(AuthenticatedUser, self.request.user)
         # Set recruiter directly
         job.recruiter = user.recruiter_profile
-        job.is_active = True  # Set as active by default
+        # Set status as active by default if not set
+        if not job.status:
+            job.status = "active"
         job.save()
 
         return HttpResponseRedirect(self.get_success_url())
@@ -138,7 +140,7 @@ class JobOpeningListView(LoginRequiredMixin, ListView):
                 "-created_at"
             )
         # Job seekers see all active jobs
-        return JobOpening.objects.filter(is_active=True).order_by("-created_at")
+        return JobOpening.objects.filter(status="active").order_by("-created_at")
 
 
 class JobOpeningDetailView(LoginRequiredMixin, DetailView):
@@ -252,7 +254,7 @@ class JobOpeningEditView(LoginRequiredMixin, UpdateView):
         "reporting_to",
         "travel_requirements",
         # Status
-        "is_active",
+        "status",
     ]
 
     def get_success_url(self) -> str:

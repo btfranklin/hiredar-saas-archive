@@ -27,10 +27,10 @@ class JobOpeningAdmin(admin.ModelAdmin):
         "job_level",
         "location",
         "employment_type",
-        "is_active",
+        "status",
         "created_at",
     )
-    list_filter = ("is_active", "job_level", "employment_type", "created_at")
+    list_filter = ("status", "job_level", "employment_type", "created_at")
     search_fields = ("title", "description", "company", "required_skills", "location")
 
     fieldsets = (
@@ -62,5 +62,5 @@ class JobOpeningAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Status", {"fields": ("is_active",)}),
+        ("Status", {"fields": ("status",)}),
     )

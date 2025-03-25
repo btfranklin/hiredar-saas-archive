@@ -206,7 +206,7 @@ class MatchingFunctionsTests(TestCase):
         """Test matching a job opening to talent sheets."""
         # Mock the JobOpening model
         mock_job = MagicMock()
-        mock_job.is_active = True
+        mock_job.status = "active"
 
         mock_model = MagicMock()
         mock_model.objects.get.return_value = mock_job
@@ -240,5 +240,5 @@ class MatchingFunctionsTests(TestCase):
         self.assertEqual(mock_query_pinecone.call_count, 4)
 
         # Test handling of inactive job
-        mock_job.is_active = False
+        mock_job.status = "inactive"
         match_job_to_talents(456)  # Should log a warning but proceed

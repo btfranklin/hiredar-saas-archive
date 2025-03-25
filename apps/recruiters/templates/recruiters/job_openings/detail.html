@@ -28,8 +28,11 @@
                     
                     <div class="flex flex-col items-end">
                         {% if request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
-                            <div class="badge mb-2 {% if job_opening.is_active %}badge-success{% else %}badge-neutral{% endif %}">
-                                {{ job_opening.is_active|yesno:"Active,Inactive" }}
+                            <div class="badge mb-2 
+                                {% if job_opening.status == 'active' %}badge-success
+                                {% elif job_opening.status == 'draft' %}badge-warning
+                                {% else %}badge-neutral{% endif %}">
+                                {{ job_opening.get_status_display }}
                             </div>
                             
                             <div class="flex gap-2">

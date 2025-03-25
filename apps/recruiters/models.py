@@ -245,12 +245,29 @@ class JobOpening(models.Model):
     )
 
     # Metadata
-    is_active = models.BooleanField(default=True)
+    status = models.CharField(
+        max_length=20,
+        choices=(
+            ("active", "Active"),
+            ("draft", "Draft"),
+            ("closed", "Closed"),
+        ),
+        default="active",
+        help_text="Current status of the job opening",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
         return f"{self.title} - {self.company}"
+
+    @property
+    def is_active(self) -> bool:
+        """
+        Property method for backward compatibility.
+        Returns True if status is 'active', False otherwise.
+        """
+        return self.status == "active"
 
     @property
     def required_skills_list(self) -> list[str]:

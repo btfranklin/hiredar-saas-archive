@@ -73,9 +73,9 @@ def process_job_opening(job_opening_id: int) -> None:
         logger.error("JobOpening with id %s does not exist.", job_opening_id)
         return
 
-    # Skip processing if job is not active
-    if not job.is_active:
-        logger.info("Skipping embedding for inactive JobOpening %s", job_opening_id)
+    # Don't process inactive jobs
+    if job.status != "active":
+        logger.info("Skipping inactive job %s", job.id)
         return
 
     # Define the fields to process. Adjust or add fields as needed.

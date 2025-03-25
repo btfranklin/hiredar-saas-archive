@@ -251,8 +251,18 @@ def match_job_to_talents(
     # Verify the JobOpening exists and is active
     try:
         job = apps.get_model("recruiters", "JobOpening").objects.get(id=job_id)
-        if not job.is_active:
-            logger.warning("JobOpening %s is not active", job_id)
+        if job.status != "active":
+            logger.info(
+                "Skipping match generation for inactive job %s: %s",
+                job.id,
+                job.title,
+            )
+            return {
+                "top_matches": [],
+                "best_skills_fit": [],
+                "experience_matches": [],
+                "wildcard_matches": [],
+            }
     except ObjectDoesNotExist:
         logger.error("JobOpening with id %s does not exist.", job_id)
         return {

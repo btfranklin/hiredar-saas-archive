@@ -22,8 +22,8 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
         instance: The actual instance being saved
         created: A boolean; True if a new record was created
     """
-    # Only process active job openings
-    if instance.is_active:
+    # Only process embeddings for active jobs
+    if instance.status == "active":
         async_task("apps.matching.tasks.process_job_opening", instance.id)
     else:
         # If a job is inactive, remove the embeddings

@@ -15,19 +15,34 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-6">
                 <h2 class="text-xl font-bold mb-4">Job Status</h2>
                 <div class="space-y-4">
-                    <div>
-                        <h3 class="font-semibold">Active</h3>
-                        <p class="text-sm text-base-content/70">The job opening is publicly visible and can receive applications.</p>
+                    <div class="form-control">
+                        <label class="label cursor-pointer justify-start gap-3">
+                            <input type="radio" name="status" class="radio radio-primary" value="active" {% if job_opening.status == 'active' or not job_opening.status %}checked{% endif %} />
+                            <div>
+                                <div class="font-semibold">Active</div>
+                                <div class="text-sm text-base-content/70">The job opening is publicly visible and can receive applications.</div>
+                            </div>
+                        </label>
                     </div>
                     
-                    <div>
-                        <h3 class="font-semibold">Draft</h3>
-                        <p class="text-sm text-base-content/70">The job is saved but not publicly visible yet.</p>
+                    <div class="form-control">
+                        <label class="label cursor-pointer justify-start gap-3">
+                            <input type="radio" name="status" class="radio radio-primary" value="draft" {% if job_opening.status == 'draft' %}checked{% endif %} />
+                            <div>
+                                <div class="font-semibold">Draft</div>
+                                <div class="text-sm text-base-content/70">The job is saved but not publicly visible yet.</div>
+                            </div>
+                        </label>
                     </div>
                     
-                    <div>
-                        <h3 class="font-semibold">Closed</h3>
-                        <p class="text-sm text-base-content/70">The job opening is no longer accepting applications.</p>
+                    <div class="form-control">
+                        <label class="label cursor-pointer justify-start gap-3">
+                            <input type="radio" name="status" class="radio radio-primary" value="closed" {% if job_opening.status == 'closed' %}checked{% endif %} />
+                            <div>
+                                <div class="font-semibold">Closed</div>
+                                <div class="text-sm text-base-content/70">The job opening is no longer accepting applications.</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
                 
@@ -226,16 +241,6 @@
                         </div>
                     </div>
                     
-                    <div class="form-control">
-                        <label class="label" for="id_is_active">
-                            <span class="label-text font-medium">Active Job</span>
-                        </label>
-                        <label class="cursor-pointer flex items-center gap-2">
-                            <input type="checkbox" id="id_is_active" name="is_active" class="checkbox" {% if job_opening.is_active %}checked{% endif %}>
-                            <span>This job is currently active and accepting applications</span>
-                        </label>
-                    </div>
-                    
                     <div class="flex justify-end gap-2 mt-8">
                         {% if job_opening.pk %}
                         <a href="{% url 'recruiters:job_openings_detail' job_opening.pk %}" class="btn btn-ghost">Cancel</a>
@@ -249,4 +254,8 @@
         </div>
     </div>
 </div>
+
+<script>
+    // No need for any JS to update checkbox state
+</script>
 {% endblock %} 
