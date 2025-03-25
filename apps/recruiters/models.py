@@ -202,7 +202,7 @@ class JobOpening(models.Model):
     # Qualifications & Skills
     required_skills = models.TextField(
         blank=True,
-        help_text="List required skills with experience levels, e.g., 'Python (3+ years), React (2+ years), Agile (familiar)'",
+        help_text="List required skills with experience levels, e.g., 'Python (3+ years) | React (2+ years) | Agile (familiar)'",
     )
     required_qualifications = models.TextField(
         blank=True,
@@ -258,5 +258,7 @@ class JobOpening(models.Model):
         if not self.required_skills:
             return []
         return [
-            skill.strip() for skill in self.required_skills.split(",") if skill.strip()
+            skill.strip()
+            for skill in self.required_skills.split(" | ")
+            if skill.strip()
         ]
