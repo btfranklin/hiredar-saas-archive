@@ -169,6 +169,7 @@ def create_job_opening_from_xml(
             additional_perks=perks,
             required_skills=required_skills,
             required_qualifications=required_qualifications,
+            experience_required=experience,
             soft_skills=soft_skills,
             responsibilities=responsibilities,
             daily_tasks=daily_tasks,

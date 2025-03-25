@@ -208,6 +208,10 @@ class JobOpening(models.Model):
         blank=True,
         help_text="Formal education, certifications, or qualifications required",
     )
+    experience_required = models.TextField(
+        blank=True,
+        help_text="Years or type of experience required for this position",
+    )
     soft_skills = models.TextField(
         blank=True,
         help_text="Soft skills like communication, leadership, teamwork, etc.",
