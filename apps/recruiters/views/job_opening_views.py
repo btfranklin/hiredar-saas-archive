@@ -150,7 +150,7 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
     """
 
     model: ClassVar[type[JobOpening]] = JobOpening
-    template_name = "recruiters/job_openings/detail.html"
+    template_name: str = "recruiters/job_openings/detail.html"
     context_object_name = "job_opening"
     object: JobOpening | None = None
 
@@ -170,6 +170,9 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
         user = cast(AuthenticatedUser, self.request.user)
         job_opening = self.get_object()
 
+        # Get the tab parameter from the URL, default to 'details'
+        context["tab"] = self.request.GET.get("tab", "details")
+
         if user.user_type == "recruiter":
             # Only show candidate matches to the job owner
             if job_opening.recruiter.user == self.request.user:
@@ -185,6 +188,24 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 ).order_by("-match_score")
 
         return context
+
+    def get_template_names(self) -> list[str]:
+        """
+        Return the template names to be used for the view.
+
+        If this is an HTMX request and the hx-select header is present,
+        use the partial template (tab_content.html) for better performance.
+
+        Returns:
+            list[str]: List of template names.
+        """
+        if self.request.headers.get(
+            "HX-Request"
+        ) == "true" and self.request.headers.get("HX-Select"):
+            # If this is an HTMX request and is targeting a specific fragment,
+            # serve just the tab content partial template
+            return ["recruiters/job_openings/tab_content.html"]
+        return [self.template_name]
 
 
 class JobOpeningEditView(LoginRequiredMixin, UpdateView):
