@@ -39,7 +39,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Get active job openings
         context["active_jobs"] = JobOpening.objects.filter(
             recruiter=user.recruiter_profile,
-            status="active",
+            status__in=["active", "draft"],
         ).order_by("-created_at")[:5]
 
         # Get recent job openings (all, including inactive)
