@@ -66,6 +66,8 @@ Notes:
 2. For employment_type, use one of: full_time, part_time, contract, temporary, internship
 3. For environment, use one of: office, remote, hybrid
 4. Salary values should be numbers only, without currency symbols or commas
+5. "Experience" should be used for things like numbers of years doing specific things.
+6. "Qualifications" should refer to things like specific degrees or certifications, specific industry knowledge, or ability to perform certain tasks such as lifting, standing or extreme temperatures.
 
 Do not include any explanatory text before or after the XML. Your entire response should be valid XML.
 </response_format>
