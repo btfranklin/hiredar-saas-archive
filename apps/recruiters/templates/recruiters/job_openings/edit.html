@@ -16,9 +16,9 @@
                 <h2 class="text-xl font-bold mb-4">Job Status</h2>
                 <div class="space-y-4">
                     <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-3">
-                            <input type="radio" name="status" class="radio radio-primary" value="active" {% if job_opening.status == 'active' or not job_opening.status %}checked{% endif %} />
-                            <div>
+                        <label class="label cursor-pointer flex items-start gap-2">
+                            <input type="radio" name="status" class="radio radio-primary mt-1" value="active" {% if job_opening.status == 'active' or not job_opening.status %}checked{% endif %} />
+                            <div class="flex-1">
                                 <div class="font-semibold">Active</div>
                                 <div class="text-sm text-base-content/70">The job opening is publicly visible and can receive applications.</div>
                             </div>
@@ -26,9 +26,9 @@
                     </div>
                     
                     <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-3">
-                            <input type="radio" name="status" class="radio radio-primary" value="draft" {% if job_opening.status == 'draft' %}checked{% endif %} />
-                            <div>
+                        <label class="label cursor-pointer flex items-start gap-2">
+                            <input type="radio" name="status" class="radio radio-primary mt-1" value="draft" {% if job_opening.status == 'draft' %}checked{% endif %} />
+                            <div class="flex-1">
                                 <div class="font-semibold">Draft</div>
                                 <div class="text-sm text-base-content/70">The job is saved but not publicly visible yet.</div>
                             </div>
@@ -36,9 +36,9 @@
                     </div>
                     
                     <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-3">
-                            <input type="radio" name="status" class="radio radio-primary" value="closed" {% if job_opening.status == 'closed' %}checked{% endif %} />
-                            <div>
+                        <label class="label cursor-pointer flex items-start gap-2">
+                            <input type="radio" name="status" class="radio radio-primary mt-1" value="closed" {% if job_opening.status == 'closed' %}checked{% endif %} />
+                            <div class="flex-1">
                                 <div class="font-semibold">Closed</div>
                                 <div class="text-sm text-base-content/70">The job opening is no longer accepting applications.</div>
                             </div>
