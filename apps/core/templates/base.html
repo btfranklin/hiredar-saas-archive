@@ -131,6 +131,18 @@
             margin-bottom: 10px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
+        
+        /* Make placeholder text more subtle in dark mode */
+        [data-theme="dark"] ::placeholder {
+            opacity: 0.4 !important;
+        }
+        
+        /* Always use a more subtle placeholder style */
+        .input::placeholder, 
+        .textarea::placeholder, 
+        .select::placeholder {
+            opacity: 0.6;
+        }
     </style>
     
     {% block extra_head %}{% endblock %}

@@ -178,7 +178,7 @@ def create_job_opening_from_xml(
             work_environment=work_environment,
             reporting_to=reporting_to,
             travel_requirements=travel_requirements,
-            status="active",
+            status="draft",
         )
 
         # Log successful creation

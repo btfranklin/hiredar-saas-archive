@@ -256,7 +256,7 @@ class JobOpening(models.Model):
             ("draft", "Draft"),
             ("closed", "Closed"),
         ),
-        default="active",
+        default="draft",
         help_text="Current status of the job opening",
     )
     created_at = models.DateTimeField(auto_now_add=True)
