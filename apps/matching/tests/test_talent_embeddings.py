@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 
 from apps.matching.tasks.talent_sheet_tasks import (
+    create_talent_sheet_embeddings,
     generate_enriched_text_for_talent,
-    process_talent_sheet,
     remove_talent_sheet_embeddings,
 )
 
@@ -33,7 +33,7 @@ class TalentSheetEmbeddingTests(TestCase):
     @patch("apps.matching.tasks.talent_sheet_tasks.get_embedding")
     @patch("apps.matching.tasks.talent_sheet_tasks.upsert_talent_embedding")
     @patch("apps.matching.tasks.talent_sheet_tasks.apps.get_model")
-    def test_process_talent_sheet(
+    def test_create_talent_sheet_embeddings(
         self, mock_get_model, mock_upsert, mock_get_embedding
     ):
         """Test processing a talent sheet."""
@@ -56,7 +56,7 @@ class TalentSheetEmbeddingTests(TestCase):
         mock_get_embedding.return_value = [0.1, 0.2, 0.3]
 
         # Call the function
-        process_talent_sheet(123)
+        create_talent_sheet_embeddings(123)
 
         # Assertions
         # Should be called for all 3 fields in the talent sheet

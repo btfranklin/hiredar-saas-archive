@@ -24,7 +24,7 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
     """
     # Only process embeddings for active jobs
     if instance.status == "active":
-        async_task("apps.matching.tasks.process_job_opening", instance.id)
+        async_task("apps.matching.tasks.create_job_opening_embeddings", instance.id)
     else:
         # If a job is inactive, remove the embeddings
         async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
@@ -59,7 +59,7 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
     """
     # Only process published talent sheets
     if instance.is_published:
-        async_task("apps.matching.tasks.process_talent_sheet", instance.id)
+        async_task("apps.matching.tasks.create_talent_sheet_embeddings", instance.id)
     else:
         # If a talent sheet is unpublished, remove the embeddings
         async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)

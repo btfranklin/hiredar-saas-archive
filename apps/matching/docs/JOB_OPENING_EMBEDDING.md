@@ -26,7 +26,8 @@ apps/matching/
 │   └── talent_sheet_tasks.py   # Talent sheet processing
 ├── signals.py                  # Event handlers
 ├── management/commands/
-│   └── process_job_embeddings.py  # CLI tool
+│   ├── create_job_embeddings.py   # CLI tool for creating embeddings
+│   └── delete_job_embeddings.py   # CLI tool for deleting embeddings
 └── tests/
     └── test_job_embeddings.py     # Unit tests
 ```
@@ -108,32 +109,36 @@ The system responds to job opening status changes:
 ```python
 @receiver(post_save, sender="recruiters.JobOpening")
 def handle_job_opening_save(sender, instance, created, **kwargs):
-    """Process job openings based on status."""
-    if instance.is_active:
-        async_task("apps.matching.tasks.process_job_opening", instance.id)
+    # Only process embeddings for active jobs
+    if instance.status == "active":
+        async_task("apps.matching.tasks.create_job_opening_embeddings", instance.id)
     else:
+        # If a job is inactive, remove the embeddings
         async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
-
-@receiver(post_delete, sender="recruiters.JobOpening")
-def handle_job_opening_delete(sender, instance, **kwargs):
-    """Remove embeddings on deletion."""
-    async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
 ```
 
-### Management Command
+This signal-based approach ensures that embedding operations are performed automatically in response to job opening changes.
 
-The system includes a management command for manually processing job openings:
+### Task Functions
 
-```bash
-# Process a specific job opening
-python manage.py process_job_embeddings --job_id=123
-
-# Process all active job openings
-python manage.py process_job_embeddings --all
-
-# Remove embeddings for job openings
-python manage.py process_job_embeddings --job_id=123 --remove
+```python
+def create_job_opening_embeddings(job_opening_id: int) -> None:
+    """Create embeddings for a job opening and store them in Pinecone."""
+    # Implementation code...
 ```
+
+The task functions are designed to be run asynchronously via django-q, allowing the user interface to remain responsive during potentially lengthy embedding operations.
+
+### Management Commands
+
+```python
+python manage.py create_job_embeddings --job_id=123
+python manage.py create_job_embeddings --all
+python manage.py delete_job_embeddings --job_id=123
+python manage.py delete_job_embeddings --all
+```
+
+These CLI commands provide administrative tools for manually triggering embedding operations.
 
 ## Pinecone Vector Storage Details
 
@@ -215,7 +220,7 @@ This approach creates more semantically rich vectors by combining related inform
 The implementation uses Python 3.12 native type annotations throughout:
 
 ```python
-def process_job_opening(job_opening_id: int) -> None:
+def create_job_opening_embeddings(job_opening_id: int) -> None:
     """Process a JobOpening with proper type annotations."""
 ```
 
@@ -237,3 +242,10 @@ Tests use mocking to avoid actual API calls during testing.
 3. **Dynamic Section Weighting**: Adjust the importance of different sections based on job type
 4. **Cross-Field Relationships**: Consider the relationships between different fields for more holistic embeddings
 5. **Industry-Specific Embeddings**: Explore specialized embedding models for different industries or job types
+
+## Future Improvements
+
+1. **Batch Processing**: Group job openings for more efficient embedding generation
+2. **Progressive Enhancement**: Add more metadata and filtering capabilities
+3. **Field-Specific Embedding Strategies**: Customize embedding approaches for different job sections
+4. **Embedding Versioning**: Track and manage embedding versions as models evolve

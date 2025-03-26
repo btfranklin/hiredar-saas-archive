@@ -57,9 +57,12 @@ def upsert_job_embedding(
         raise
 
 
-def process_job_opening(job_opening_id: int) -> None:
+def create_job_opening_embeddings(job_opening_id: int) -> None:
     """
-    Process a JobOpening: extract, enrich, generate embeddings, and upsert to Pinecone.
+    Create and store embeddings for a JobOpening in Pinecone.
+
+    Process a JobOpening by extracting key fields, generating embeddings for each section,
+    and storing them in Pinecone with rich metadata.
 
     Args:
         job_opening_id: ID of the JobOpening to process

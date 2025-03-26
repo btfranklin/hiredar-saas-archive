@@ -15,8 +15,8 @@ from apps.matching.tasks.common import get_embedding, get_index, logger
 
 def generate_enriched_text_for_talent(section_name: str, raw_text: str) -> str:
     """
-    Generate a standardized, enriched text string for embedding talent sheets.
-    Uses a simple template to provide context without modifying already-processed text.
+    Enrich raw text from a talent sheet using a template.
+    For example: "Section: Promotional Blurb | {raw_text}"
 
     Args:
         section_name: Name of the section (e.g., "Promotional Blurb", "Skill Overview")
@@ -32,21 +32,16 @@ def upsert_talent_embedding(
     vector_id: str, embedding: list[float], metadata: dict[str, Any]
 ) -> None:
     """
-    Upsert a talent-related vector into Pinecone.
+    Upsert a talent embedding vector to Pinecone.
 
     Args:
-        vector_id: Unique identifier for the vector
+        vector_id: Unique ID for the vector
         embedding: The embedding vector
-        metadata: Dictionary of metadata to store with the vector
-
-    Raises:
-        Exception: If the Pinecone API call fails
+        metadata: Metadata to store with the vector
     """
     try:
-        # Get the Pinecone index
         index = get_index()
 
-        # Using the current Pinecone client format
         # Type ignore is needed because the pinecone-client has inconsistent type definitions
         index.upsert(
             vectors=[(vector_id, embedding, metadata)],  # type: ignore
@@ -57,11 +52,12 @@ def upsert_talent_embedding(
         raise
 
 
-def process_talent_sheet(talent_sheet_id: int) -> None:
+def create_talent_sheet_embeddings(talent_sheet_id: int) -> None:
     """
-    Process a TalentSheet: extract text, generate embeddings,
-    and upsert them into Pinecone. Note that talent sheet text
-    is already processed by an LLM prior to this step.
+    Create and store embeddings for a TalentSheet in Pinecone.
+
+    Process a TalentSheet by extracting key fields, generating embeddings for each section,
+    and storing them in Pinecone with rich metadata.
 
     Args:
         talent_sheet_id: ID of the TalentSheet to process
@@ -158,7 +154,11 @@ def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
         # For Serverless/Starter tiers, we can't use metadata filtering
         # Instead, we need to delete vectors by their IDs
         # Talent sheet vector IDs follow a predictable pattern:
-        sections = ["promotional_blurb", "skill_overview", "ideal_roles"]
+        sections = [
+            "promotional_blurb",
+            "skill_overview",
+            "ideal_roles",
+        ]
         vector_ids = [f"talent_{talent_sheet_id}_{section}" for section in sections]
 
         # Delete vectors by IDs - this works on all Pinecone tiers
@@ -166,7 +166,7 @@ def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
 
         logger.info("Deleted embeddings for TalentSheet %s", talent_sheet_id)
     except Exception as e:
-        # Log the error but don't raise it - we don't want to break the job seeker experience
+        # Log the error but don't raise it - we don't want to break the user experience
         # if there's an issue with the embedding system
         logger.error(
             "Error deleting embeddings for TalentSheet %s: %s", talent_sheet_id, e

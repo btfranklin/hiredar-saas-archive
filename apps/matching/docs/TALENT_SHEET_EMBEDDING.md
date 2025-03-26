@@ -100,7 +100,7 @@ The system responds to talent sheet status changes:
 def handle_talent_sheet_save(sender, instance, created, **kwargs):
     """Process talent sheets based on status."""
     if instance.status == "PUBLISHED":
-        async_task("apps.matching.tasks.process_talent_sheet", instance.id)
+        async_task("apps.matching.tasks.create_talent_sheet_embeddings", instance.id)
     elif instance.status in ["WITHDRAWN", "INACTIVE"]:
         async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
 
@@ -116,13 +116,13 @@ The system includes a management command for manually processing talent sheets:
 
 ```bash
 # Process a specific talent sheet
-python manage.py process_talent_embeddings --talent_id=123
+python manage.py create_talent_embeddings --talent_id=123
 
 # Process all published talent sheets
-python manage.py process_talent_embeddings --all
+python manage.py create_talent_embeddings --all
 
 # Remove embeddings for talent sheets
-python manage.py process_talent_embeddings --talent_id=123 --remove
+python manage.py delete_talent_embeddings --talent_id=123
 ```
 
 ## Pinecone Vector Storage Details
@@ -190,7 +190,7 @@ TalentSheet = apps.get_model('job_seekers', 'TalentSheet')
 The implementation uses Python 3.12 native type annotations throughout:
 
 ```python
-def process_talent_sheet(talent_sheet_id: int) -> None:
+def create_talent_sheet_embeddings(talent_sheet_id: int) -> None:
     """Process a TalentSheet with proper type annotations."""
 ```
 
