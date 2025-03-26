@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
-from apps.matching.match import match_job_to_talents, match_talent_to_jobs
+from apps.matching.core.matching import match_job_to_talents, match_talent_to_jobs
 
 
 @require_GET

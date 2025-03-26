@@ -9,14 +9,13 @@ from unittest.mock import MagicMock, patch
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
-from apps.matching.match import (
-    average_vectors,
+from apps.matching.core.matching import match_job_to_talents, match_talent_to_jobs
+from apps.matching.core.pinecone_client import query_pinecone
+from apps.matching.core.retrieval import (
     get_job_section_embedding,
     get_talent_section_embedding,
-    match_job_to_talents,
-    match_talent_to_jobs,
-    query_pinecone,
 )
+from apps.matching.core.vector_operations import average_vectors
 
 
 class MatchingUtilsTests(TestCase):
@@ -37,8 +36,8 @@ class MatchingUtilsTests(TestCase):
         with self.assertRaises(ValueError):
             average_vectors([])
 
-    @patch("apps.matching.match.index")
-    def test_query_pinecone(self, mock_index):
+    @patch("apps.matching.core.pinecone_client.get_index")
+    def test_query_pinecone(self, mock_get_index):
         """Test querying Pinecone for similar vectors."""
         # Mock the Pinecone client response with a match
         mock_match = MagicMock()
@@ -50,8 +49,10 @@ class MatchingUtilsTests(TestCase):
         mock_response = MagicMock()
         mock_response.matches = [mock_match]
 
-        # Set the mock_index.query to return our mocked response
+        # Set up the index mock
+        mock_index = MagicMock()
         mock_index.query.return_value = mock_response
+        mock_get_index.return_value = mock_index
 
         # Call the function and assert results
         results = query_pinecone(
@@ -60,7 +61,7 @@ class MatchingUtilsTests(TestCase):
 
         # Verify the results - should be the matches list
         self.assertEqual(len(results), 1)
-        match = results[0]
+        match = results[0]  # type: ignore
         self.assertEqual(match.id, "test_vector_id")  # type: ignore
         self.assertEqual(match.score, 0.95)  # type: ignore
         self.assertEqual(match.metadata, {"key": "value"})  # type: ignore
@@ -83,19 +84,21 @@ class MatchingUtilsTests(TestCase):
 class MatchingEmbeddingRetrievalTests(TestCase):
     """Test functions that retrieve embeddings from Pinecone."""
 
-    @patch("apps.matching.match.index")
-    def test_get_talent_section_embedding(self, mock_index):
+    @patch("apps.matching.core.retrieval.get_index")
+    def test_get_talent_section_embedding(self, mock_get_index):
         """Test retrieving talent sheet section embeddings."""
         # Create a mock vector with values attribute
         mock_vector = MagicMock()
         mock_vector.values = [0.1, 0.2, 0.3]
 
-        # Create a mock response with vectors dictionary
+        # Create a mock response with vectors dictionary - use the slug format
         mock_response = MagicMock()
         mock_response.vectors = {"talent_123_promotional_blurb": mock_vector}
 
         # Set up the mock index to return our response
+        mock_index = MagicMock()
         mock_index.fetch.return_value = mock_response
+        mock_get_index.return_value = mock_index
 
         # Call the function
         embedding = get_talent_section_embedding(123, "Promotional Blurb")
@@ -119,19 +122,21 @@ class MatchingEmbeddingRetrievalTests(TestCase):
         embedding = get_talent_section_embedding(123, "Promotional Blurb")
         self.assertIsNone(embedding)
 
-    @patch("apps.matching.match.index")
-    def test_get_job_section_embedding(self, mock_index):
+    @patch("apps.matching.core.retrieval.get_index")
+    def test_get_job_section_embedding(self, mock_get_index):
         """Test retrieving job opening section embeddings."""
         # Create a mock vector with values attribute
         mock_vector = MagicMock()
         mock_vector.values = [0.4, 0.5, 0.6]
 
-        # Create a mock response with vectors dictionary
+        # Create a mock response with vectors dictionary - use the slug format
         mock_response = MagicMock()
         mock_response.vectors = {"job_456_required_skills": mock_vector}
 
         # Set up the mock index to return our response
+        mock_index = MagicMock()
         mock_index.fetch.return_value = mock_response
+        mock_get_index.return_value = mock_index
 
         # Call the function
         embedding = get_job_section_embedding(456, "Required Skills")
@@ -149,9 +154,9 @@ class MatchingEmbeddingRetrievalTests(TestCase):
 class MatchingFunctionsTests(TestCase):
     """Test the main matching functions."""
 
-    @patch("apps.matching.match.get_talent_section_embedding")
-    @patch("apps.matching.match.query_pinecone")
-    @patch("apps.matching.match.apps.get_model")
+    @patch("apps.matching.core.matching.get_talent_section_embedding")
+    @patch("apps.matching.core.matching.query_pinecone")
+    @patch("apps.matching.core.matching.apps.get_model")
     def test_match_talent_to_jobs(
         self, mock_get_model, mock_query_pinecone, mock_get_talent_embedding
     ):
@@ -197,9 +202,9 @@ class MatchingFunctionsTests(TestCase):
         for key in results:
             self.assertEqual(results[key], [])
 
-    @patch("apps.matching.match.get_job_section_embedding")
-    @patch("apps.matching.match.query_pinecone")
-    @patch("apps.matching.match.apps.get_model")
+    @patch("apps.matching.core.matching.get_job_section_embedding")
+    @patch("apps.matching.core.matching.query_pinecone")
+    @patch("apps.matching.core.matching.apps.get_model")
     def test_match_job_to_talents(
         self, mock_get_model, mock_query_pinecone, mock_get_job_embedding
     ):

@@ -4,20 +4,15 @@ from django.db import migrations
 
 
 def copy_location_data(apps, schema_editor):
-    """Copy location data from User model to JobSeekerProfile model"""
-    User = apps.get_model("authentication", "User")
-    JobSeekerProfile = apps.get_model("job_seekers", "JobSeekerProfile")
+    """
+    This migration was intended to copy location data from User model to JobSeekerProfile model.
 
-    # Get all job seekers with location
-    job_seekers = User.objects.filter(user_type="job_seeker").exclude(location="")
-
-    for user in job_seekers:
-        try:
-            # Update the job seeker profile with the location from the user
-            JobSeekerProfile.objects.filter(user=user).update(location=user.location)
-        except Exception:
-            # Skip if there's an error
-            pass
+    However, the User model doesn't have a location field. This is a no-op migration.
+    If you need to populate location data, you can do so through the admin interface
+    or another data source.
+    """
+    # No-op - User model doesn't have a location field
+    pass
 
 
 class Migration(migrations.Migration):

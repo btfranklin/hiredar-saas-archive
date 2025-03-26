@@ -9,7 +9,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 
-from apps.matching.match import match_job_to_talents, match_talent_to_jobs
+from apps.matching.core.matching import match_job_to_talents, match_talent_to_jobs
 
 
 class Command(BaseCommand):

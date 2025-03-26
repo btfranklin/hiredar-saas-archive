@@ -40,7 +40,7 @@ class TalentSheetEmbeddingTests(TestCase):
         # Mock the TalentSheet model and a sample object
         mock_talent_sheet = MagicMock()
         mock_talent_sheet.id = 123
-        mock_talent_sheet.status = "PUBLISHED"
+        mock_talent_sheet.is_published = True
         mock_talent_sheet.promotional_blurb = "Experienced developer"
         mock_talent_sheet.skill_overview = "Python, Django, JavaScript"
         mock_talent_sheet.ideal_roles = "Backend Developer, Full Stack"
@@ -91,14 +91,23 @@ class TalentSheetEmbeddingTests(TestCase):
         self.assertEqual(metadata["job_seeker_name"], "John Doe")
         self.assertTrue("content_preview" in metadata)
 
-    @patch("apps.matching.tasks.talent_sheet_tasks.index.delete")
-    def test_remove_talent_sheet_embeddings(self, mock_delete):
+    @patch("apps.matching.tasks.talent_sheet_tasks.get_index")
+    def test_remove_talent_sheet_embeddings(self, mock_get_index):
         """Test removing talent sheet embeddings."""
+        # Setup the mock
+        mock_index = MagicMock()
+        mock_get_index.return_value = mock_index
+
+        # Also mock the stats to prevent errors
+        mock_stats = MagicMock()
+        mock_stats.namespaces = {"talent_sheets": {}}
+        mock_index.describe_index_stats.return_value = mock_stats
+
         # Call the function
         remove_talent_sheet_embeddings(123)
 
         # Verify delete was called with correct parameters
-        mock_delete.assert_called_once()
-        args, kwargs = mock_delete.call_args
+        mock_index.delete.assert_called_once()
+        args, kwargs = mock_index.delete.call_args
         self.assertEqual(kwargs["namespace"], "talent_sheets")
-        self.assertEqual(kwargs["filter"]["talent_sheet_id"], 123)
+        self.assertTrue(all("talent_123_" in id for id in kwargs["ids"]))
