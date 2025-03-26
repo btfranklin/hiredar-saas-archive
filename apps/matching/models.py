@@ -44,16 +44,27 @@ class CandidateMatch(models.Model):
     match_type = models.CharField(
         max_length=20,
         choices=(
-            ("top", "Top Match"),
+            ("holistic", "Holistic Match"),
+            ("skills", "Skills Match"),
+            ("experience", "Experience Match"),
             ("wildcard", "Wildcard Match"),
         ),
-        default="top",
+        default="holistic",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = "matching"
+        # Ensure we don't have duplicate matches for the same job opening, job seeker, and match type
+        unique_together = ["job_opening", "job_seeker", "match_type"]
 
     def __str__(self) -> str:
-        return f"{self.job_seeker} - {self.job_opening} ({self.match_score}%)"
+        # Simple approach to avoid linter errors
+        match_type_display = {
+            "holistic": "Holistic Match",
+            "skills": "Skills Match",
+            "experience": "Experience Match",
+            "wildcard": "Wildcard Match",
+        }.get(self.match_type, self.match_type)
+        return f"{self.job_seeker} - {self.job_opening} ({self.match_score}%, {match_type_display})"

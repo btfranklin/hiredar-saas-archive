@@ -19,17 +19,31 @@ The matching implementation is organized into these main components:
 
 ```bash
 apps/matching/
-├── core/                            # Core matching functionality
-│   ├── __init__.py                  # Re-exports core functions
-│   ├── vector_operations.py         # Vector utility functions
-│   ├── pinecone_client.py           # Pinecone interaction
-│   ├── retrieval.py                 # Embedding retrieval
-│   └── matching.py                  # Main matching algorithms
-├── management/commands/match.py     # CLI interface
-├── views/matching_views.py          # API endpoints
-├── urls.py                          # URL routing
-└── tests/test_matching.py           # Unit tests
+├── core/                                   # Core matching functionality
+│   ├── __init__.py                         # Re-exports core functions
+│   ├── vector_operations.py                # Vector utility functions
+│   ├── pinecone_client.py                  # Pinecone interaction
+│   ├── retrieval.py                        # Embedding retrieval
+│   └── matching.py                         # Main matching algorithms
+├── management/commands/                    # CLI interfaces
+│   ├── create_candidate_matches.py         # Generate candidate matches
+│   ├── create_job_embeddings.py            # Create job embeddings
+│   ├── delete_job_embeddings.py            # Delete job embeddings
+│   ├── create_talent_embeddings.py         # Create talent embeddings
+│   └── delete_talent_embeddings.py         # Delete talent embeddings
+├── views/matching_views.py                 # API endpoints
+├── urls.py                                 # URL routing
+└── tests/test_matching.py                  # Unit tests
 ```
+
+## Matching Flow
+
+The matching process follows these steps:
+
+1. **Embedding Creation** - When job openings are marked as "active" or talent sheets are published, embeddings are automatically created and stored in Pinecone.
+2. **Match Calculation** - The `create_candidate_matches` command queries Pinecone to find the best matches for each job opening.
+3. **CandidateMatch Storage** - Matches are stored in the database as `CandidateMatch` objects with a match score and type.
+4. **UI Integration** - These matches are displayed in the recruiter and job seeker dashboards.
 
 ## Technical Implementation
 
@@ -83,7 +97,7 @@ def match_talent_to_jobs(talent_id: int, top_k: int = 10) -> dict[str, list[dict
 
 #### Matching Perspectives
 
-1. **Top Matches (Holistic)**:
+1. **Holistic Matches**:
    - Uses an average of all available talent sheet embeddings to query against all job opening embeddings
    - Provides a well-rounded view of compatibility
 
@@ -115,6 +129,92 @@ def query_pinecone(
     # Execute query and return matches
 ```
 
+## Running the Matching Process
+
+### Manual Execution
+
+You can manually trigger the matching process using the management command:
+
+```bash
+# Match for a specific job opening
+python manage.py create_candidate_matches --job_id=123
+
+# Match for all active job openings
+python manage.py create_candidate_matches --all
+
+# Match with a custom minimum score threshold (default is 50)
+python manage.py create_candidate_matches --all --min_score=60
+
+# Process a limited number of job openings (useful for testing)
+python manage.py create_candidate_matches --all --limit=10
+```
+
+### Scheduled Execution
+
+To run the matching process automatically on a regular schedule, you can set up a cron job. Here's an example crontab entry to run the process every hour:
+
+```bash
+# Run matching process every hour
+0 * * * * cd /path/to/hiredar && /path/to/env/bin/python manage.py create_candidate_matches --all >> /path/to/logs/matching.log 2>&1
+```
+
+For a production deployment using systemd, you can create a service and timer:
+
+1. Create a systemd service file `/etc/systemd/system/hiredar-matching.service`:
+
+```ini
+[Unit]
+Description=HireDAR Candidate Matching Process
+After=network.target
+
+[Service]
+User=hiredar
+Group=hiredar
+WorkingDirectory=/path/to/hiredar
+ExecStart=/path/to/env/bin/python manage.py create_candidate_matches --all
+Environment=DJANGO_SETTINGS_MODULE=hiredar.settings
+
+[Install]
+WantedBy=multi-user.target
+```
+
+2. Create a systemd timer file `/etc/systemd/system/hiredar-matching.timer`:
+
+```ini
+[Unit]
+Description=Run HireDAR candidate matching hourly
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=1h
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
+```
+
+3. Enable and start the timer:
+
+```bash
+sudo systemctl enable hiredar-matching.timer
+sudo systemctl start hiredar-matching.timer
+```
+
+## Match Types
+
+The system creates four types of matches, each stored as a `CandidateMatch` object with a different `match_type`:
+
+1. **Holistic Match** - Overall matches based on holistic similarity across all dimensions
+2. **Skills Match** - Matches based on skill alignment
+3. **Experience Match** - Matches based on experience and responsibilities
+4. **Wildcard Match** - Alternative matches that might be less obvious but still relevant
+
+## Match Score Calculation
+
+Match scores are calculated based on the cosine similarity between embeddings, converted to a 0-100 scale. A higher score indicates a better match.
+
+The default minimum score threshold is 50, meaning only matches with a score of 50 or higher will be created.
+
 ## Integration Points
 
 ### Management Command
@@ -142,6 +242,17 @@ These endpoints accept the following parameters:
 
 - `top_k`: Number of matches to return per perspective (default: 10)
 
+## Performance Considerations
+
+The matching process can be resource-intensive if there are many job openings and talent sheets. Consider the following optimization strategies:
+
+1. Run the process during off-peak hours
+2. Use the `--limit` option to process batches of job openings
+3. Adjust the frequency of the process based on system load and business needs
+4. Consider running on a dedicated worker if needed
+5. For dashboard views, consider implementing batch processing
+6. Add vector caching to reduce Pinecone API calls
+
 ## Error Handling
 
 The system implements robust error handling throughout:
@@ -150,6 +261,14 @@ The system implements robust error handling throughout:
 2. **Status Checks** - Ensures only published talent sheets and active jobs are fully processed
 3. **Missing Vectors** - Gracefully handles cases where embeddings haven't been generated
 4. **API Errors** - Catches and logs Pinecone API errors without disrupting the application
+
+## Monitoring
+
+To monitor the matching process, check the log output. The command provides detailed information about:
+
+- Number of job openings processed
+- Number of matches created for each job opening
+- Any errors that occurred during the process
 
 ## Metadata Utilization
 
@@ -160,12 +279,6 @@ The system leverages rich metadata stored with vectors:
 
 This metadata enables detailed results without additional database queries.
 
-## Performance Considerations
-
-1. **Vector Caching** - The system could be enhanced with vector caching to reduce Pinecone API calls
-2. **Batch Processing** - For dashboard views, consider implementing batch processing
-3. **Query Optimization** - Filters are used to narrow down vector searches to relevant sections
-
 ## Testing
 
 The matching implementation includes comprehensive unit tests:
@@ -174,6 +287,14 @@ The matching implementation includes comprehensive unit tests:
 2. **API Interaction** - Tests for Pinecone query and fetch operations
 3. **Embedding Retrieval** - Tests for section embedding retrieval
 4. **Matching Functions** - Tests for the main matching algorithms
+
+## Customization
+
+You can customize the matching process by:
+
+1. Adjusting the minimum score threshold
+2. Modifying the `match_job_to_talents` function in `apps/matching/core/matching.py`
+3. Implementing additional match types or filters
 
 ## Future Enhancements
 
