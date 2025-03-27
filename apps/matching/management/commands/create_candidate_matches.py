@@ -51,7 +51,6 @@ class Command(BaseCommand):
         """Execute the command."""
         # Get the JobOpening model
         JobOpening = apps.get_model("recruiters", "JobOpening")
-        JobSeekerProfile = apps.get_model("job_seekers", "JobSeekerProfile")
 
         min_score = options["min_score"]
         if min_score < 0 or min_score > 100:
@@ -174,20 +173,17 @@ class Command(BaseCommand):
                     talent_sheet_id = match["metadata"]["talent_sheet_id"]
 
                     try:
-                        # Get the job seeker profile associated with this talent sheet
-                        job_seeker = (
-                            apps.get_model("job_seekers", "TalentSheet")
-                            .objects.get(id=talent_sheet_id)
-                            .job_seeker
-                        )
+                        # Get the talent sheet directly
+                        TalentSheet = apps.get_model("job_seekers", "TalentSheet")
+                        talent_sheet = TalentSheet.objects.get(id=talent_sheet_id)
 
                         # For non-holistic match types, only create them if a holistic match doesn't already exist
-                        # for this job seeker and job opening
+                        # for this talent sheet and job opening
                         if (
                             match_type != "holistic"
                             and CandidateMatch.objects.filter(
                                 job_opening=job,
-                                job_seeker=job_seeker,
+                                talent_sheet=talent_sheet,
                                 match_type="holistic",
                             ).exists()
                         ):
@@ -197,10 +193,11 @@ class Command(BaseCommand):
                         candidate_match, created = (
                             CandidateMatch.objects.update_or_create(
                                 job_opening=job,
-                                job_seeker=job_seeker,
+                                talent_sheet=talent_sheet,
                                 match_type=match_type,
                                 defaults={
                                     "match_score": score,
+                                    "is_analyzed": False,  # Reset analysis flag on update
                                 },
                             )
                         )
