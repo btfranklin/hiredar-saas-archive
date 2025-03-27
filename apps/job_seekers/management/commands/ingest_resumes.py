@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 from apps.job_seekers.utils.resume_processing.pipeline import process_resume
 
 
@@ -22,6 +23,20 @@ class Command(BaseCommand):
             "directory",
             type=str,
             help="Directory containing resume files (PDF)",
+        )
+
+        # Option to join talent pool
+        parser.add_argument(
+            "--join_talent_pool",
+            action="store_true",
+            help="Automatically add job seekers to the talent pool and generate talent sheets",
+        )
+
+        # Option to limit number of resumes processed
+        parser.add_argument(
+            "--limit",
+            type=int,
+            help="Limit the number of resumes to process",
         )
 
     def handle(self, *args, **options):
@@ -42,9 +57,11 @@ class Command(BaseCommand):
 
         directory_path = options["directory"]
         verbosity = options["verbosity"]  # Django's built-in verbosity level (0-3)
+        join_talent_pool = options["join_talent_pool"]
+        limit = options["limit"]
 
         try:
-            self.ingest_resumes(directory_path, verbosity)
+            self.ingest_resumes(directory_path, verbosity, join_talent_pool, limit)
         except KeyboardInterrupt:
             self.stdout.write(
                 self.style.WARNING("\nScript interrupted by user. Exiting...")
@@ -55,13 +72,21 @@ class Command(BaseCommand):
             traceback.print_exc()
             return
 
-    def ingest_resumes(self, directory_path: str, verbosity: int) -> None:
+    def ingest_resumes(
+        self,
+        directory_path: str,
+        verbosity: int,
+        join_talent_pool: bool = False,
+        limit: int | None = None,
+    ) -> None:
         """
         Process all resumes in the given directory.
 
         Args:
             directory_path: Path to directory containing resume files
             verbosity: Output verbosity level (0-3)
+            join_talent_pool: Whether to add job seekers to the talent pool
+            limit: Optional limit on number of resumes to process
         """
         resume_dir = Path(directory_path)
 
@@ -80,6 +105,11 @@ class Command(BaseCommand):
             )
             return
 
+        # Apply limit if specified
+        if limit and limit > 0:
+            resume_files = resume_files[:limit]
+            self.stdout.write(self.style.SUCCESS(f"Limiting to {limit} resume files"))
+
         self.stdout.write(
             self.style.SUCCESS(f"Found {len(resume_files)} resume files to process")
         )
@@ -87,6 +117,7 @@ class Command(BaseCommand):
         # Process each resume
         success_count = 0
         failure_count = 0
+        talent_sheet_count = 0
 
         for i, resume_file in enumerate(resume_files, 1):
             # Always show which file we're processing
@@ -126,6 +157,12 @@ class Command(BaseCommand):
                         f"  - Name: {user.name}\n"
                         f"  - Most recent title: {profile.most_recent_title}"
                     )
+
+                # If requested, add the job seeker to the talent pool
+                if join_talent_pool:
+                    talent_sheet_created = self.add_to_talent_pool(profile, verbosity)
+                    if talent_sheet_created:
+                        talent_sheet_count += 1
             else:
                 failure_count += 1
                 self.stdout.write(
@@ -141,6 +178,12 @@ class Command(BaseCommand):
             if failure_count
             else "FAILURE: 0 resumes"
         )
+
+        if join_talent_pool:
+            self.stdout.write(
+                self.style.SUCCESS(f"TALENT SHEETS CREATED: {talent_sheet_count}")
+            )
+
         self.stdout.write("=" * 50)
 
     def create_test_user(
@@ -175,6 +218,63 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"Error creating test user: {e}"))
             traceback.print_exc()
             return None, None
+
+    def add_to_talent_pool(self, profile: JobSeekerProfile, verbosity: int) -> bool:
+        """
+        Add a job seeker to the talent pool and generate a talent sheet.
+
+        Args:
+            profile: The JobSeekerProfile to add to the talent pool
+            verbosity: Output verbosity level (0-3)
+
+        Returns:
+            True if talent sheet was created, False otherwise
+        """
+        try:
+            if verbosity >= 1:
+                self.stdout.write(f"  - Adding {profile.user.email} to talent pool")
+
+            # Schedule the talent sheet generation task (same as what happens in the UI)
+            from django_q.tasks import async_task
+
+            profile_id = getattr(profile, "id")
+            task_id = async_task(
+                "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+                profile_id,
+                task_name=f"generate_talent_sheet_{profile_id}",
+            )
+
+            if verbosity >= 2:
+                self.stdout.write(
+                    f"  - Scheduled talent sheet generation task (ID: {task_id})"
+                )
+
+            # Execute the task synchronously to get the result
+            result = generate_talent_sheet_task(profile.pk)
+
+            if result.get("success", False):
+                if verbosity >= 1:
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f"  - Created talent sheet for {profile.user.email}"
+                        )
+                    )
+                return True
+            else:
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"  - Failed to create talent sheet: {result.get('message', 'Unknown error')}"
+                    )
+                )
+                return False
+
+        except Exception as e:
+            self.stdout.write(
+                self.style.ERROR(f"  - Error adding to talent pool: {str(e)}")
+            )
+            if verbosity >= 2:
+                traceback.print_exc()
+            return False
 
     def process_resume(
         self, resume_path: str, profile: JobSeekerProfile, verbosity: int
@@ -224,10 +324,17 @@ class Command(BaseCommand):
                 # Show which step failed
                 pipeline_steps = result.get("pipeline_steps", {})
                 failed_at = "unknown step"
-                for step, completed in pipeline_steps.items():
-                    if not completed:
-                        failed_at = step.replace("_", " ")
-                        break
+
+                # Handle both dict and list formats for backward compatibility
+                if isinstance(pipeline_steps, dict):
+                    for step, completed in pipeline_steps.items():
+                        if not completed:
+                            failed_at = step.replace("_", " ")
+                            break
+                elif isinstance(pipeline_steps, list) and len(pipeline_steps) > 0:
+                    # If it's a list, assume the last item is where it failed
+                    # This is a best guess since we don't have completion flags
+                    failed_at = pipeline_steps[-1].replace("_", " ")
 
                 self.stdout.write(
                     self.style.ERROR(f"  - ERROR in {failed_at}: {error_msg}")
@@ -257,9 +364,17 @@ class Command(BaseCommand):
             if verbosity >= 2:
                 # Show pipeline steps completion
                 pipeline_steps = result.get("pipeline_steps", {})
-                for step, completed in pipeline_steps.items():
-                    step_name = step.replace("_", " ")
-                    self.stdout.write(f"  - {step_name}: {'✓' if completed else '✗'}")
+                # Handle both dict and list formats for backward compatibility
+                if isinstance(pipeline_steps, dict):
+                    for step, completed in pipeline_steps.items():
+                        step_name = step.replace("_", " ")
+                        self.stdout.write(
+                            f"  - {step_name}: {'✓' if completed else '✗'}"
+                        )
+                elif isinstance(pipeline_steps, list):
+                    for step in pipeline_steps:
+                        step_name = step.replace("_", " ")
+                        self.stdout.write(f"  - {step_name}: ✓")
 
                 # Show processing time if available
                 if result.get("processing_time"):
