@@ -1,3 +1,1 @@
-"""
-Management commands for the job_seekers app.
-"""
+"""Management commands package for the job_seekers app."""

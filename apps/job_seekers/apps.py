@@ -4,8 +4,6 @@ Configuration for the job_seekers app.
 This app manages job seeker profiles, skills, and related functionality.
 """
 
-import logging
-
 from django.apps import AppConfig
 
 
@@ -23,28 +21,14 @@ class JobSeekersConfig(AppConfig):
         This imports the signals module to ensure signal handlers are registered.
         """
         # pylint: disable=import-outside-toplevel,unused-import
-        # Register the cleanup schedule in a way that doesn't query the database during startup
-        from django.core.signals import request_started
-        from django.dispatch import receiver
+        # Only register the middleware in non-testing environments
+        from django.conf import settings
 
         import apps.job_seekers.signals  # noqa
 
-        @receiver(request_started, weak=False)
-        def ensure_cleanup_task_scheduled(sender, **kwargs):
-            try:
-                # Only run once per process
-                if not getattr(ensure_cleanup_task_scheduled, "has_run", False):
-                    ensure_cleanup_task_scheduled.has_run = True
-
-                    # Schedule the task using the task module to avoid circular imports
-                    from apps.job_seekers.tasks import ensure_cleanup_scheduled
-
-                    ensure_cleanup_scheduled()
-                    logging.getLogger(__name__).info(
-                        "Cleanup task scheduled, ensured by %s", sender
-                    )
-            except Exception as e:
-                # Log the error but don't crash the app startup
-                logging.getLogger(__name__).error(
-                    "Error scheduling cleanup task: %s", e
-                )
+        if hasattr(settings, "MIDDLEWARE") and not getattr(settings, "TESTING", False):
+            # Register our middleware by adding it to settings.MIDDLEWARE if not already there
+            middleware_path = "apps.job_seekers.middleware.CleanupSchedulerMiddleware"
+            if middleware_path not in settings.MIDDLEWARE:
+                # Add to the beginning of middleware list to run early
+                settings.MIDDLEWARE = [middleware_path] + list(settings.MIDDLEWARE)

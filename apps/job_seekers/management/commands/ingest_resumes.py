@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
+from django_q.tasks import async_task
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile
@@ -235,8 +236,6 @@ class Command(BaseCommand):
                 self.stdout.write(f"  - Adding {profile.user.email} to talent pool")
 
             # Schedule the talent sheet generation task (same as what happens in the UI)
-            from django_q.tasks import async_task
-
             profile_id = getattr(profile, "id")
             task_id = async_task(
                 "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
