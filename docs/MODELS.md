@@ -9,10 +9,10 @@ classDiagram
     User <|-- JobSeekerProfile : one-to-one
     User <|-- RecruiterProfile : one-to-one
     RecruiterProfile <|-- JobOpening : one-to-many
-    JobSeekerProfile <|-- CandidateMatch : one-to-many
+    JobSeekerProfile <|-- TalentSheet : one-to-one
+    TalentSheet <|-- CandidateMatch : one-to-many
     JobOpening <|-- CandidateMatch : one-to-many
     JobSeekerProfile <|-- RoleRecommendation : one-to-many
-    JobSeekerProfile <|-- TalentSheet : one-to-one
     User <|-- Conversation : many-to-many
     User <|-- Message : one-to-many (sender)
     Conversation <|-- Message : one-to-many
@@ -71,11 +71,13 @@ classDiagram
     
     class CandidateMatch {
         +job_opening: ForeignKey(JobOpening)
-        +job_seeker: ForeignKey(JobSeekerProfile)
+        +talent_sheet: ForeignKey(TalentSheet)
         +match_score: DecimalField
         +status: CharField
-        +is_shortlisted: BooleanField
+        +is_analyzed: BooleanField
         +match_type: CharField
+        +match_summary: CharField
+        +match_analysis: TextField
         +created_at: DateTimeField
         +updated_at: DateTimeField
     }
@@ -315,19 +317,32 @@ Model for job openings posted by recruiters.
 
 ### CandidateMatch
 
-Model for matching job seekers to job openings.
+Model for matching talent sheets to job openings.
 
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
 | `job_opening` | ForeignKey | Link to the JobOpening in the recruiters app |
-| `job_seeker` | ForeignKey | Link to the JobSeekerProfile |
+| `talent_sheet` | ForeignKey | Link to the TalentSheet in the job_seekers app |
 | `match_score` | DecimalField | Match score between 0 and 100 |
-| `status` | CharField | Status of the match (pending/accepted/rejected/withdrawn) |
-| `is_shortlisted` | BooleanField | Whether the candidate is shortlisted |
-| `match_type` | CharField | Type of match (top/wildcard) |
+| `status` | CharField | Status of the match (identified/open/contacted/candidate_interested/candidate_declined/recruiter_rejected) |
+| `is_analyzed` | BooleanField | Whether this match has been analyzed by AI |
+| `match_type` | CharField | Type of match (holistic/skills/experience/wildcard) |
+| `match_summary` | CharField | A headline summarizing why this is a good match |
+| `match_analysis` | TextField | Detailed analysis of why this job and candidate match |
 | `created_at` | DateTimeField | When the match was created |
 | `updated_at` | DateTimeField | When the match was last updated |
+
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| `__str__` | Returns a string representation that includes job seeker name, job opening, match score, and match type |
+
+**Business Rules:**
+| Rule | Description |
+|------|-------------|
+| Uniqueness | Each combination of job_opening, talent_sheet, and match_type must be unique |
+| Relationship | Links a talent sheet to a job opening, accessing the job seeker through the talent sheet |
 
 ## Messaging App
 
@@ -386,7 +401,6 @@ Model for user notifications.
 
 ### JobSeekerProfile Relationships
 - One-to-One with User
-- One-to-Many with CandidateMatch in the matching app (as job_seeker)
 - One-to-Many with RoleRecommendation (as job_seeker)
 - One-to-One with TalentSheet
 
@@ -401,6 +415,10 @@ Model for user notifications.
 ### Conversation Relationships
 - Many-to-Many with User (as participants)
 - One-to-Many with Message (as conversation)
+
+### TalentSheet Relationships
+- One-to-One with JobSeekerProfile (as job_seeker)
+- One-to-Many with CandidateMatch (as talent_sheet)
 
 ## Database Schema Notes
 

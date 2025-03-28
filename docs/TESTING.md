@@ -75,6 +75,54 @@ The project uses these types of tests:
 - **Unit Tests**: Test individual components in isolation
 - **SimpleTestCase**: For tests that don't require database access
 - **TestCase**: For tests that require database access (automatically creates and destroys a test database)
+- **Manual Tests**: For end-to-end testing of complex features
+
+## Manual Testing
+
+The project includes a set of manual test scripts in the `apps/matching/tests/manual/` directory that provide interactive guided testing for the matching system:
+
+```bash
+# Run the end-to-end test for the complete matching process
+python -m apps.matching.tests.manual.manual_test_end_to_end_matching
+
+# Test just the resume ingestion and talent sheet creation
+python -m apps.matching.tests.manual.manual_test_resume_ingestion
+
+# Test just the job opening posting and embedding
+python -m apps.matching.tests.manual.manual_test_post_job_openings
+```
+
+These manual test scripts are designed to:
+
+1. Guide the tester through complex multi-step processes
+2. Provide sample data from `sample_data/` directory
+3. Demonstrate the complete workflow of the matching system
+4. Allow for interactive choices during the test
+
+They are particularly useful for:
+
+- Onboarding new developers
+- Verifying complex feature interactions
+- Demonstrating the system to stakeholders
+- Testing complex workflows that would be difficult to automate
+
+## Scheduled Tasks
+
+The project uses Django Q for scheduling periodic tasks:
+
+- **Resume Processing Cleanup**: Scheduled to run every 15 minutes
+  - Cleans up completed resume processing progress records
+  - Managed through the cleanup task system
+
+You can manage the scheduled tasks with these commands:
+
+```bash
+# Fix or diagnose issues with cleanup schedules
+python manage.py fix_cleanup_schedule
+
+# Reset cleanup schedule if needed
+python manage.py reset_cleanup_schedule
+```
 
 ## Best Practices
 

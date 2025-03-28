@@ -149,6 +149,29 @@ python manage.py create_candidate_matches --all --min_score=60
 python manage.py create_candidate_matches --all --limit=10
 ```
 
+### Manual Testing Scripts
+
+The matching app includes a set of manual test scripts in the `apps/matching/tests/manual/` directory that provide an interactive way to test the entire matching pipeline:
+
+```bash
+# Run the end-to-end test for the complete matching process
+python -m apps.matching.tests.manual.manual_test_end_to_end_matching
+
+# Test just the resume ingestion and talent sheet creation
+python -m apps.matching.tests.manual.manual_test_resume_ingestion
+
+# Test just the job opening posting and embedding
+python -m apps.matching.tests.manual.manual_test_post_job_openings
+```
+
+These scripts guide you through:
+
+1. Setting up test data (resumes, job openings)
+2. Processing the data through the matching pipeline
+3. Verifying results
+
+They're particularly useful for demonstrating the system to new developers or stakeholders, as they provide a comprehensive view of the full matching process without requiring manual setup of test data.
+
 ### Scheduled Execution
 
 To run the matching process automatically on a regular schedule, you can set up a cron job. Here's an example crontab entry to run the process every hour:

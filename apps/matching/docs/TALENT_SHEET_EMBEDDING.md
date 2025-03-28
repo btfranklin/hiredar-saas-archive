@@ -99,9 +99,10 @@ The system responds to talent sheet status changes:
 @receiver(post_save, sender="job_seekers.TalentSheet")
 def handle_talent_sheet_save(sender, instance, created, **kwargs):
     """Process talent sheets based on status."""
-    if instance.status == "PUBLISHED":
+    if instance.is_published:
         async_task("apps.matching.tasks.create_talent_sheet_embeddings", instance.id)
-    elif instance.status in ["WITHDRAWN", "INACTIVE"]:
+    else:
+        # If a talent sheet is unpublished, remove the embeddings
         async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
 
 @receiver(post_delete, sender="job_seekers.TalentSheet")
@@ -124,6 +125,30 @@ python manage.py create_talent_embeddings --all
 # Remove embeddings for talent sheets
 python manage.py delete_talent_embeddings --talent_id=123
 ```
+
+### Manual Testing
+
+The system also includes manual test scripts in the `apps/matching/tests/manual/` directory for end-to-end testing of the talent sheet creation and embedding process:
+
+```bash
+# Run the end-to-end test for the complete matching process
+python -m apps.matching.tests.manual.manual_test_end_to_end_matching
+
+# Test just the resume ingestion and talent sheet creation
+python -m apps.matching.tests.manual.manual_test_resume_ingestion
+
+# Test just the job opening posting and embedding
+python -m apps.matching.tests.manual.manual_test_post_job_openings
+```
+
+These manual test scripts are interactive and guide you through the complete process of:
+
+1. Ingesting resumes and creating job seeker profiles
+2. Creating talent sheets for job seekers
+3. Creating embeddings for talent sheets
+4. Posting job openings
+5. Creating embeddings for job openings
+6. Generating matches between talent sheets and job openings
 
 ## Pinecone Vector Storage Details
 
