@@ -27,22 +27,31 @@ apps/matching/
 │   └── matching.py                         # Main matching algorithms
 ├── management/commands/                    # CLI interfaces
 │   ├── create_candidate_matches.py         # Generate candidate matches
-│   ├── create_job_embeddings.py            # Create job embeddings
-│   ├── delete_job_embeddings.py            # Delete job embeddings
 │   └── match.py                            # Manually match job/talent
-├── views/matching_views.py                 # API endpoints
+├── signals.py                              # Signal handlers for embedding lifecycle
+├── tasks/                                    # Asynchronous embedding tasks
+│   ├── common.py
+│   ├── job_opening_tasks.py
+│   └── talent_sheet_tasks.py
+├── views/                                    # Views for displaying matches
+│   ├── __init__.py
+│   ├── candidate_views.py
+│   └── matching_views.py                   # API endpoints for matching
+├── templates/matching/                     # Templates for matching views
 ├── urls.py                                 # URL routing
-└── tests/test_matching.py                  # Unit tests
+└── tests/                                    # Unit & manual tests
+    ├── unit/test_matching.py
+    └── manual/ # Scripts for manual testing
 ```
 
 ## Matching Flow
 
 The matching process follows these steps:
 
-1. **Embedding Creation** - When job openings are marked as "active" or talent sheets are published, embeddings are automatically created and stored in Pinecone.
+1. **Embedding Creation** - When job openings are marked as "active" or talent sheets are published, embeddings are automatically created and stored in Pinecone via background tasks triggered by Django signals (`apps/matching/signals.py` and `apps/matching/tasks/`).
 2. **Match Calculation** - The `create_candidate_matches` command queries Pinecone to find the best matches for each job opening.
 3. **CandidateMatch Storage** - Matches are stored in the database as `CandidateMatch` objects with a match score and type.
-4. **UI Integration** - These matches are displayed in the recruiter and job seeker dashboards.
+4. **UI Integration** - These matches are displayed in the recruiter dashboard.
 
 ## Technical Implementation
 
@@ -90,25 +99,25 @@ The heart of the system is the multi-perspective matching process:
 def match_talent_to_jobs(talent_id: int, top_k: int = 10) -> dict[str, list[dict[str, Any]]]:
     """Matches a talent sheet to job openings from multiple perspectives."""
     # 1. Retrieve the talent's section embeddings
-    # 2. Perform multiple perspective queries
-    # 3. Return structured results
+    # 2. Perform multiple perspective queries (Holistic, Skills, Experience, Wildcard)
+    # 3. Return structured results with keys like 'holistic_matches', 'skills_matches', etc.
 ```
 
 #### Matching Perspectives
 
-1. **Holistic Matches**:
-   - Uses an average of all available talent sheet embeddings to query against all job opening embeddings
+1. **Holistic Matches**: (`holistic_matches`)
+   - Uses an average of available talent sheet embeddings to query against all job opening embeddings
    - Provides a well-rounded view of compatibility
 
-2. **Best Skills Fit**:
+2. **Skills Matches**: (`skills_matches`)
    - Uses the talent's "Skill Overview" embedding to query jobs' "Required Skills"
    - Focuses specifically on technical and skill alignment
 
-3. **Experience Matches**:
+3. **Experience Matches**: (`experience_matches`)
    - Uses the talent's "Promotional Blurb" embedding to query jobs' "Responsibilities"
    - Focuses on matching experience to job duties
 
-4. **Wildcard Matches**:
+4. **Wildcard Matches**: (`wildcard_matches`)
    - Uses the talent's "Ideal Roles" to query jobs' "Job Overview"
    - Finds non-obvious matches based on career aspirations
 
@@ -130,9 +139,9 @@ def query_pinecone(
 
 ## Running the Matching Process
 
-### Manual Execution
+### Candidate Match Generation
 
-You can manually trigger the matching process using the management command:
+The primary way to generate candidate matches is using the management command:
 
 ```bash
 # Match for a specific job opening
@@ -147,6 +156,8 @@ python manage.py create_candidate_matches --all --min_score=60
 # Process a limited number of job openings (useful for testing)
 python manage.py create_candidate_matches --all --limit=10
 ```
+
+This command should typically be run on a schedule (e.g., hourly or daily) to keep matches up-to-date.
 
 ### Manual Testing Scripts
 
@@ -166,82 +177,37 @@ python -m apps.matching.tests.manual.manual_test_post_job_openings
 These scripts guide you through:
 
 1. Setting up test data (resumes, job openings)
-2. Processing the data through the matching pipeline
+2. Processing the data through the matching pipeline (embedding creation happens automatically via signals)
 3. Verifying results
 
-They're particularly useful for demonstrating the system to new developers or stakeholders, as they provide a comprehensive view of the full matching process without requiring manual setup of test data.
+They're particularly useful for demonstrating the system to new developers or stakeholders.
 
-### Scheduled Execution
+### Scheduled Execution (Match Generation)
 
-To run the matching process automatically on a regular schedule, you can set up a cron job. Here's an example crontab entry to run the process every hour:
+To run the candidate match generation process automatically on a regular schedule, you can set up a cron job or systemd timer.
 
-```bash
-# Run matching process every hour
-0 * * * * cd /path/to/hiredar && /path/to/env/bin/python manage.py create_candidate_matches --all >> /path/to/logs/matching.log 2>&1
-```
-
-For a production deployment using systemd, you can create a service and timer:
-
-1. Create a systemd service file `/etc/systemd/system/hiredar-matching.service`:
-
-```ini
-[Unit]
-Description=HireDAR Candidate Matching Process
-After=network.target
-
-[Service]
-User=hiredar
-Group=hiredar
-WorkingDirectory=/path/to/hiredar
-ExecStart=/path/to/env/bin/python manage.py create_candidate_matches --all
-Environment=DJANGO_SETTINGS_MODULE=hiredar.settings
-
-[Install]
-WantedBy=multi-user.target
-```
-
-2. Create a systemd timer file `/etc/systemd/system/hiredar-matching.timer`:
-
-```ini
-[Unit]
-Description=Run HireDAR candidate matching hourly
-
-[Timer]
-OnBootSec=15min
-OnUnitActiveSec=1h
-AccuracySec=1min
-
-[Install]
-WantedBy=timers.target
-```
-
-3. Enable and start the timer:
-
-```bash
-sudo systemctl enable hiredar-matching.timer
-sudo systemctl start hiredar-matching.timer
-```
+(Refer to previous examples for cron/systemd setup using `python manage.py create_candidate_matches --all`)
 
 ## Match Types
 
 The system creates four types of matches, each stored as a `CandidateMatch` object with a different `match_type`:
 
-1. **Holistic Match** - Overall matches based on holistic similarity across all dimensions
-2. **Skills Match** - Matches based on skill alignment
-3. **Experience Match** - Matches based on experience and responsibilities
-4. **Wildcard Match** - Alternative matches that might be less obvious but still relevant
+1. **Holistic Match** - Overall matches based on holistic similarity across all dimensions (`holistic`)
+2. **Skills Match** - Matches based on skill alignment (`skills`)
+3. **Experience Match** - Matches based on experience and responsibilities (`experience`)
+4. **Wildcard Match** - Alternative matches that might be less obvious but still relevant (`wildcard`)
 
 ## Match Score Calculation
 
 Match scores are calculated based on the cosine similarity between embeddings, converted to a 0-100 scale. A higher score indicates a better match.
 
-The default minimum score threshold is 50, meaning only matches with a score of 50 or higher will be created.
+The default minimum score threshold is 50, meaning only matches with a score of 50 or higher will be created by the `create_candidate_matches` command.
 
 ## Integration Points
 
-### Management Command
+### Management Command (Manual Matching)
 
-The system includes a Django management command for CLI usage:
+The system includes a Django management command for CLI usage to manually trigger matching between a specific entity pair (useful for debugging):
 
 ```bash
 # Match a talent to jobs
@@ -253,7 +219,7 @@ python manage.py match --job 456 --top_k 20 --format json
 
 ### API Endpoints
 
-The system exposes API endpoints for web application integration:
+The system exposes API endpoints for potential web application integration:
 
 ```bash
 GET /matching/api/match/talent/<talent_id>/
@@ -328,4 +294,4 @@ You can customize the matching process by:
 
 ## Conclusion
 
-The matching system provides a sophisticated, multi-faceted approach to connecting talent with opportunities. Its use of vector embeddings enables semantic understanding beyond simple keyword matching, and the multiple matching perspectives ensure a comprehensive view of compatibility.
+The matching system provides a sophisticated, multi-faceted approach to connecting talent with opportunities. Its use of vector embeddings enables semantic understanding beyond simple keyword matching, and the multiple matching perspectives ensure a comprehensive view of compatibility. Embedding generation is handled automatically via signals and background tasks.
