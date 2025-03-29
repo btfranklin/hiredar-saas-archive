@@ -45,7 +45,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         # Get job matches
         context["job_matches"] = CandidateMatch.objects.filter(
-            job_seeker=profile,
+            talent_sheet__job_seeker=profile,
             status="pending",
         ).order_by("-created_at")[:5]
 
