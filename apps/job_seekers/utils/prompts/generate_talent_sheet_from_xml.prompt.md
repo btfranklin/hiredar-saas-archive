@@ -21,7 +21,6 @@ Output *ONLY* valid, well-formed XML with clear hierarchy. Use this structure:
   <skill_overview>A 2-3 paragraph overview focusing on the candidate's technical and soft skills, how they've applied them, and what makes them valuable.</skill_overview>
   <ideal_roles>Comma-separated list of roles the candidate would be ideal for, based on their experience and the provided interested roles.</ideal_roles>
   <salary_min>A reasonable lower-bound salary expectation based on experience level and field (numeric value only).</salary_min>
-  <salary_max>A reasonable upper-bound salary expectation based on experience level and field (numeric value only).</salary_max>
 </talent_sheet>
 ```
 

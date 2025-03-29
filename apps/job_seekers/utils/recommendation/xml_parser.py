@@ -126,7 +126,6 @@ def parse_talent_sheet_xml(
         skill_overview_elem = root.find("./skill_overview")
         ideal_roles_elem = root.find("./ideal_roles")
         salary_min_elem = root.find("./salary_min")
-        salary_max_elem = root.find("./salary_max")
 
         # Validate required elements exist
         if promotional_blurb_elem is None or not promotional_blurb_elem.text:
@@ -155,15 +154,6 @@ def parse_talent_sheet_xml(
                 logger.warning(
                     "Invalid salary_min value in talent sheet XML: %s",
                     salary_min_elem.text,
-                )
-
-        if salary_max_elem is not None and salary_max_elem.text:
-            try:
-                talent_sheet.salary_max = float(salary_max_elem.text.strip())
-            except ValueError:
-                logger.warning(
-                    "Invalid salary_max value in talent sheet XML: %s",
-                    salary_max_elem.text,
                 )
 
         logger.info(

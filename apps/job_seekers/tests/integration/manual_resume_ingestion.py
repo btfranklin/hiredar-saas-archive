@@ -360,7 +360,7 @@ class ResumeIngestionTest(ManualTestCase):
                 <div>
                     <h4 class="font-semibold text-lg mb-2">Salary Expectation</h4>
                     <p>
-                        {f"${ts.salary_min:,.2f} - ${ts.salary_max:,.2f}" if ts.salary_min and ts.salary_max else "Not specified"}
+                        {f"${ts.salary_min:,.2f}" if ts.salary_min else "Not specified"}
                     </p>
                 </div>
             </div>
