@@ -5,14 +5,12 @@ This command creates a test recruiter account and posts job openings
 by processing markdown files from the sample_data directory.
 """
 
-import os
 import re
 import traceback
 import uuid
 from pathlib import Path
 
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from apps.authentication.models import User
 from apps.recruiters.models import JobOpening, RecruiterProfile
@@ -226,7 +224,7 @@ class Command(BaseCommand):
         """
         try:
             # Read the markdown file
-            with open(file_path, "r") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Extract job data from the content instead of filename
