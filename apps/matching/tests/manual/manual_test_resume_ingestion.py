@@ -92,18 +92,26 @@ def main():
         print("\n" + "=" * 60)
         print(f"Command completed with exit code {process.returncode}")
 
-        if process.returncode == 0 and join_pool:
+        if process.returncode == 0:
             print_header("NEXT STEPS")
-            print("1. Create talent embeddings:")
-            print("   python manage.py create_talent_embeddings --all")
-            print("\n2. Post job openings:")
-            print("   python manage.py post_job_openings --activate")
-            print("\n3. Generate matches:")
-            print("   python manage.py create_candidate_matches --all")
-            print("\nOr run the end-to-end test script:")
-            print(
-                "python apps/matching/tests/manual/manual_test_end_to_end_matching.py"
-            )
+            if join_pool:
+                print(
+                    "Resumes ingested and talent sheets generated (embeddings triggered automatically via signals)."
+                )
+                print("\nYou can now:")
+                print("1. Post job openings:")
+                print("   python manage.py post_job_openings --activate")
+                print("\n2. Generate matches:")
+                print("   python manage.py create_candidate_matches --all")
+                print("\nOr run the full end-to-end test script:")
+                print(
+                    "   python -m apps.matching.tests.manual.manual_test_end_to_end_matching"
+                )
+            else:
+                print(
+                    "Resumes ingested, but talent sheets were not created (use --join_talent_pool next time)."
+                )
+                print("No further automated steps suggested.")
 
     except subprocess.CalledProcessError as e:
         print(f"\nCommand failed with exit code {e.returncode}")
