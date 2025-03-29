@@ -100,31 +100,24 @@ The system responds to talent sheet status changes:
 def handle_talent_sheet_save(sender, instance, created, **kwargs):
     """Process talent sheets based on status."""
     if instance.is_published:
+        # Embedding creation is automatically triggered for published sheets
         async_task("apps.matching.tasks.create_talent_sheet_embeddings", instance.id)
     else:
-        # If a talent sheet is unpublished, remove the embeddings
+        # If a talent sheet is unpublished or status changes, remove the embeddings
         async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
 
 @receiver(post_delete, sender="job_seekers.TalentSheet")
 def handle_talent_sheet_delete(sender, instance, **kwargs):
     """Remove embeddings on deletion."""
+    # On deletion, trigger removal of talent sheet embeddings
     async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
 ```
 
-### Management Command
+Talent sheet embeddings are now primarily managed automatically via these Django signals. When a `TalentSheet` is saved with `is_published=True`, the `create_talent_sheet_embeddings` task is triggered. If it's saved with `is_published=False` or deleted, the `remove_talent_sheet_embeddings` task is triggered.
 
-The system includes a management command for manually processing talent sheets:
+### Manual Embedding Management (Deprecated)
 
-```bash
-# Process a specific talent sheet
-python manage.py create_talent_embeddings --talent_id=123
-
-# Process all published talent sheets
-python manage.py create_talent_embeddings --all
-
-# Remove embeddings for talent sheets
-python manage.py delete_talent_embeddings --talent_id=123
-```
+Previously, manual management commands (`create_talent_embeddings`, `delete_talent_embeddings`) existed but have been removed as the signal-based automation is now the standard process.
 
 ### Manual Testing
 
@@ -135,6 +128,7 @@ The system also includes manual test scripts in the `apps/matching/tests/manual/
 python -m apps.matching.tests.manual.manual_test_end_to_end_matching
 
 # Test just the resume ingestion and talent sheet creation
+# (This will trigger embedding creation automatically via signals)
 python -m apps.matching.tests.manual.manual_test_resume_ingestion
 
 # Test just the job opening posting and embedding

@@ -29,8 +29,7 @@ apps/matching/
 │   ├── create_candidate_matches.py         # Generate candidate matches
 │   ├── create_job_embeddings.py            # Create job embeddings
 │   ├── delete_job_embeddings.py            # Delete job embeddings
-│   ├── create_talent_embeddings.py         # Create talent embeddings
-│   └── delete_talent_embeddings.py         # Delete talent embeddings
+│   └── match.py                            # Manually match job/talent
 ├── views/matching_views.py                 # API endpoints
 ├── urls.py                                 # URL routing
 └── tests/test_matching.py                  # Unit tests

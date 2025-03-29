@@ -10,7 +10,6 @@ Usage:
     3. Observe the output and talent sheets created
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
