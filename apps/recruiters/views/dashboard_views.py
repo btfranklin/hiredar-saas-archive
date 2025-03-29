@@ -26,9 +26,18 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponseBase:
         """Ensure only recruiters can access this view."""
+        # First, check if the user is authenticated
+        if not request.user.is_authenticated:
+            # If not authenticated, LoginRequiredMixin should handle redirection,
+            # but we return early just in case.
+            return super().dispatch(request, *args, **kwargs)
+
         user = cast(AuthenticatedUser, request.user)
         if user.user_type != "recruiter":
+            # If authenticated but not a recruiter, redirect to home
             return redirect("core:home")
+
+        # If authenticated and a recruiter, proceed as normal
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
