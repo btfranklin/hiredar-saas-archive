@@ -170,7 +170,7 @@ class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
             response["Content-Type"] = "application/json"
             return response
         except JobOpeningProcessingTask.DoesNotExist:
-            logger.warning(f"Task not found: {task_id} for user {request.user.id}")
+            logger.warning("Task not found: %s for user %s", task_id, request.user.id)
             response = JsonResponse(
                 {
                     "status": "error",
@@ -183,7 +183,7 @@ class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
             response["Content-Type"] = "application/json"
             return response
         except Exception as e:
-            logger.exception(f"Error retrieving task status: {str(e)}")
+            logger.exception("Error retrieving task status: %s", str(e))
             response = JsonResponse(
                 {
                     "status": "error",
