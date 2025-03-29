@@ -9,10 +9,9 @@ from typing import Any, cast
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
+from django.http import HttpRequest, HttpResponseBase
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
 from apps.authentication.types import AuthenticatedUser
@@ -72,7 +71,8 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
         Returns:
             QuerySet: The candidate matches queryset.
         """
-        self.section = self.request.GET.get("section", "top")
+        # Default to 'holistic' section
+        self.section = self.request.GET.get("section", "holistic")
 
         # Start with the base filter for job_opening
         queryset = CandidateMatch.objects.filter(job_opening=self.job_opening)
@@ -80,8 +80,13 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
         # Add match_type filter based on section
         if self.section == "wildcard":
             queryset = queryset.filter(match_type="wildcard")
-        else:
-            queryset = queryset.filter(match_type="top")
+        elif self.section == "skills":
+            queryset = queryset.filter(match_type="skills")
+        elif self.section == "experience":
+            queryset = queryset.filter(match_type="experience")
+        else:  # Default to holistic
+            self.section = "holistic"  # Ensure section is set correctly
+            queryset = queryset.filter(match_type="holistic")
 
         # Order by match score descending
         return queryset.order_by("-match_score")
@@ -99,8 +104,15 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["job_opening"] = self.job_opening
         context["section"] = self.section
-        context["top_count"] = CandidateMatch.objects.filter(
-            job_opening=self.job_opening, match_type="top"
+        # Use holistic for the count key and filter
+        context["holistic_count"] = CandidateMatch.objects.filter(
+            job_opening=self.job_opening, match_type="holistic"
+        ).count()
+        context["skills_count"] = CandidateMatch.objects.filter(
+            job_opening=self.job_opening, match_type="skills"
+        ).count()
+        context["experience_count"] = CandidateMatch.objects.filter(
+            job_opening=self.job_opening, match_type="experience"
         ).count()
         context["wildcard_count"] = CandidateMatch.objects.filter(
             job_opening=self.job_opening, match_type="wildcard"
@@ -180,41 +192,5 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         """
         context = super().get_context_data(**kwargs)
         context["job_opening"] = self.job_opening
+        context["talent_sheet"] = self.object.talent_sheet
         return context
-
-
-@login_required
-@require_POST
-def toggle_shortlist(
-    request: HttpRequest, job_id: int, candidate_id: int
-) -> HttpResponse:
-    """
-    Toggle whether a candidate is shortlisted.
-
-    Args:
-        request: The HTTP request.
-        job_id: The job opening ID.
-        candidate_id: The candidate ID.
-
-    Returns:
-        HttpResponse: The HTTP response.
-    """
-    job_opening = get_object_or_404(JobOpening, pk=job_id)
-    user = cast(AuthenticatedUser, request.user)
-
-    # Make sure only the recruiter who created the job opening can modify matches
-    if user.user_type != "recruiter" or job_opening.recruiter.user.email != user.email:
-        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
-
-    match = get_object_or_404(
-        CandidateMatch, job_opening=job_opening, job_seeker__id=candidate_id
-    )
-    match.is_shortlisted = not match.is_shortlisted
-    match.save()
-
-    return JsonResponse(
-        {
-            "status": "success",
-            "is_shortlisted": match.is_shortlisted,
-        }
-    )

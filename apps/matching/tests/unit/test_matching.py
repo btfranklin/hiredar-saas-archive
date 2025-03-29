@@ -9,7 +9,16 @@ from unittest.mock import MagicMock, patch
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
-from apps.matching.core.matching import match_job_to_talents, match_talent_to_jobs
+from apps.matching.core.matching import (
+    JOB_OVERVIEW,
+    JOB_REQUIRED_SKILLS,
+    JOB_RESPONSIBILITIES,
+    TALENT_IDEAL_ROLES,
+    TALENT_PROMO_BLURB,
+    TALENT_SKILL_OVERVIEW,
+    match_job_to_talents,
+    match_talent_to_jobs,
+)
 from apps.matching.core.pinecone_client import query_pinecone
 from apps.matching.core.retrieval import (
     get_job_section_embedding,
@@ -161,19 +170,19 @@ class MatchingFunctionsTests(TestCase):
         self, mock_get_model, mock_query_pinecone, mock_get_talent_embedding
     ):
         """Test matching a talent sheet to job openings."""
-        # Mock the TalentSheet model
+        # Mock the TalentSheet model - make it published
         mock_talent_sheet = MagicMock()
-        mock_talent_sheet.status = "PUBLISHED"
+        mock_talent_sheet.is_published = True  # Ensure it's published
 
         mock_model = MagicMock()
         mock_model.objects.get.return_value = mock_talent_sheet
         mock_get_model.return_value = mock_model
 
-        # Mock the embedding retrieval
+        # Mock the embedding retrieval for specific sections
         mock_get_talent_embedding.side_effect = lambda talent_id, section: {
-            "Promotional Blurb": [0.1, 0.2, 0.3],
-            "Skill Overview": [0.4, 0.5, 0.6],
-            "Ideal Roles": [0.7, 0.8, 0.9],
+            TALENT_PROMO_BLURB: [0.1, 0.2, 0.3],
+            TALENT_SKILL_OVERVIEW: [0.4, 0.5, 0.6],
+            TALENT_IDEAL_ROLES: [0.7, 0.8, 0.9],
         }.get(section)
 
         # Mock the Pinecone query results
@@ -187,9 +196,9 @@ class MatchingFunctionsTests(TestCase):
         # Call the matching function
         results = match_talent_to_jobs(123, top_k=5)
 
-        # Verify the results
-        self.assertIn("top_matches", results)
-        self.assertIn("best_skills_fit", results)
+        # Verify the results - check for new keys
+        self.assertIn("holistic_matches", results)
+        self.assertIn("skills_matches", results)
         self.assertIn("experience_matches", results)
         self.assertIn("wildcard_matches", results)
 
@@ -199,8 +208,19 @@ class MatchingFunctionsTests(TestCase):
         # Test handling of non-existent talent sheet
         mock_model.objects.get.side_effect = ObjectDoesNotExist("TalentSheet not found")
         results = match_talent_to_jobs(999)
-        for key in results:
-            self.assertEqual(results[key], [])
+        self.assertEqual(results.get("holistic_matches", -1), [])  # Check specific key
+
+        # Reset mock for next test case
+        mock_model.objects.get.side_effect = None
+        mock_model.objects.get.return_value = mock_talent_sheet
+
+        # Test handling of unpublished talent sheet
+        mock_talent_sheet.is_published = False
+        results = match_talent_to_jobs(123)
+        self.assertEqual(results.get("holistic_matches", -1), [])  # Check specific key
+        self.assertEqual(
+            mock_query_pinecone.call_count, 4
+        )  # Query should not run if unpublished
 
     @patch("apps.matching.core.matching.get_job_section_embedding")
     @patch("apps.matching.core.matching.query_pinecone")
@@ -209,19 +229,19 @@ class MatchingFunctionsTests(TestCase):
         self, mock_get_model, mock_query_pinecone, mock_get_job_embedding
     ):
         """Test matching a job opening to talent sheets."""
-        # Mock the JobOpening model
+        # Mock the JobOpening model - make it active
         mock_job = MagicMock()
-        mock_job.status = "active"
+        mock_job.is_active = True  # Ensure it's active
 
         mock_model = MagicMock()
         mock_model.objects.get.return_value = mock_job
         mock_get_model.return_value = mock_model
 
-        # Mock the embedding retrieval
+        # Mock the embedding retrieval for specific sections
         mock_get_job_embedding.side_effect = lambda job_id, section: {
-            "Job Overview": [0.1, 0.2, 0.3],
-            "Required Skills": [0.4, 0.5, 0.6],
-            "Responsibilities": [0.7, 0.8, 0.9],
+            JOB_OVERVIEW: [0.1, 0.2, 0.3],
+            JOB_REQUIRED_SKILLS: [0.4, 0.5, 0.6],
+            JOB_RESPONSIBILITIES: [0.7, 0.8, 0.9],
         }.get(section)
 
         # Mock the Pinecone query results
@@ -235,15 +255,28 @@ class MatchingFunctionsTests(TestCase):
         # Call the matching function
         results = match_job_to_talents(456, top_k=5)
 
-        # Verify the results
-        self.assertIn("top_matches", results)
-        self.assertIn("best_skills_fit", results)
+        # Verify the results - check for new keys
+        self.assertIn("holistic_matches", results)
+        self.assertIn("skills_matches", results)
         self.assertIn("experience_matches", results)
         self.assertIn("wildcard_matches", results)
 
         # Should have been called 4 times (once for each perspective)
         self.assertEqual(mock_query_pinecone.call_count, 4)
 
+        # Test handling of non-existent job
+        mock_model.objects.get.side_effect = ObjectDoesNotExist("JobOpening not found")
+        results = match_job_to_talents(999)
+        self.assertEqual(results.get("holistic_matches", -1), [])  # Check specific key
+
+        # Reset mock for next test case
+        mock_model.objects.get.side_effect = None
+        mock_model.objects.get.return_value = mock_job
+
         # Test handling of inactive job
-        mock_job.status = "inactive"
-        match_job_to_talents(456)  # Should log a warning but proceed
+        mock_job.is_active = False
+        results = match_job_to_talents(456)
+        self.assertEqual(results.get("holistic_matches", -1), [])  # Check specific key
+        self.assertEqual(
+            mock_query_pinecone.call_count, 4
+        )  # Query should not run if inactive

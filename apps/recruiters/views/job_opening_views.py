@@ -181,9 +181,9 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 # Get candidate matches - use related_name from model definition
                 matches = CandidateMatch.objects.filter(job_opening=job_opening)
 
-                context["top_matches"] = matches.filter(match_type="top").order_by(
-                    "-match_score"
-                )
+                context["holistic_matches"] = matches.filter(
+                    match_type="holistic"
+                ).order_by("-match_score")
 
                 context["wildcard_matches"] = matches.filter(
                     match_type="wildcard"

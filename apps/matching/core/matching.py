@@ -10,115 +10,158 @@ from typing import Any
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 
-from apps.matching.core.pinecone_client import query_pinecone
-from apps.matching.core.retrieval import (
-    get_job_section_embedding,
-    get_talent_section_embedding,
-)
-from apps.matching.core.vector_operations import average_vectors
+from .pinecone_client import query_pinecone
+from .retrieval import get_job_section_embedding, get_talent_section_embedding
+from .vector_operations import average_vectors
 
 logger = logging.getLogger(__name__)
+
+# Define section names consistently
+TALENT_PROMO_BLURB = "Promotional Blurb"
+TALENT_SKILL_OVERVIEW = "Skill Overview"
+TALENT_IDEAL_ROLES = "Ideal Roles"
+
+JOB_OVERVIEW = "Job Overview"
+JOB_REQUIRED_SKILLS = "Required Skills"
+JOB_RESPONSIBILITIES = "Responsibilities"
 
 
 def match_talent_to_jobs(
     talent_id: int, top_k: int = 10
 ) -> dict[str, list[dict[str, Any]]]:
-    """
-    Given a TalentSheet id, perform multiple matching queries against JobOpenings.
-    Returns a dictionary with lists of job matches for different perspectives.
-
-    Args:
-        talent_id: ID of the TalentSheet to find matches for
-        top_k: Number of results to return per perspective
-
-    Returns:
-        Dictionary with match results grouped by perspective
-    """
-    # Verify the TalentSheet exists
+    """Matches a talent sheet to job openings from multiple perspectives."""
     try:
+        # Check if TalentSheet exists and is published before fetching embeddings
         talent_sheet = apps.get_model("job_seekers", "TalentSheet").objects.get(
             id=talent_id
         )
-        if talent_sheet.status != "PUBLISHED":
-            logger.warning(
-                "TalentSheet %s is not published (status: %s)",
-                talent_id,
-                talent_sheet.status,
-            )
+        if not talent_sheet.is_published:
+            logger.warning("TalentSheet %s is not published.", talent_id)
+            # Return empty structure if not published, as no matching should occur
+            return {
+                "holistic_matches": [],
+                "skills_matches": [],
+                "experience_matches": [],
+                "wildcard_matches": [],
+            }
     except ObjectDoesNotExist:
         logger.error("TalentSheet with id %s does not exist.", talent_id)
         return {
-            "top_matches": [],
-            "best_skills_fit": [],
+            "holistic_matches": [],
+            "skills_matches": [],
             "experience_matches": [],
             "wildcard_matches": [],
         }
 
-    # Retrieve embeddings for the talent's sections
-    promotional = get_talent_section_embedding(talent_id, "Promotional Blurb")
-    skills = get_talent_section_embedding(talent_id, "Skill Overview")
-    ideal_roles = get_talent_section_embedding(talent_id, "Ideal Roles")
-
-    if not promotional and not skills and not ideal_roles:
-        logger.error("No embeddings found for talent_id: %s", talent_id)
+    # Fetch individual embeddings
+    try:
+        promo_embedding = get_talent_section_embedding(talent_id, TALENT_PROMO_BLURB)
+        skills_embedding = get_talent_section_embedding(
+            talent_id, TALENT_SKILL_OVERVIEW
+        )
+        ideal_roles_embedding = get_talent_section_embedding(
+            talent_id, TALENT_IDEAL_ROLES
+        )
+    except Exception as e:
+        logger.error(
+            "Failed to retrieve one or more embeddings for talent %s: %s", talent_id, e
+        )
+        # Decide if partial matching is okay or return empty
         return {
-            "top_matches": [],
-            "best_skills_fit": [],
+            "holistic_matches": [],
+            "skills_matches": [],
             "experience_matches": [],
             "wildcard_matches": [],
         }
 
-    results = {}
-
-    # --- Top Match (Holistic) ---
-    # For a holistic view, we average available embeddings
-    holistic_vectors = [
-        vec for vec in (promotional, skills, ideal_roles) if vec is not None
-    ]
-    if holistic_vectors:
-        holistic_query = average_vectors(holistic_vectors)
-        top_matches = query_pinecone(
-            query_vector=holistic_query, namespace="job_openings", top_k=top_k
+    if not promo_embedding and not skills_embedding and not ideal_roles_embedding:
+        logger.warning(
+            "No embeddings found for talent %s. Cannot perform matching.", talent_id
         )
-        results["top_matches"] = top_matches
-    else:
-        results["top_matches"] = []
+        return {
+            "holistic_matches": [],
+            "skills_matches": [],
+            "experience_matches": [],
+            "wildcard_matches": [],
+        }
 
-    # --- Best Skills Fit ---
-    if skills:
-        skills_matches = query_pinecone(
-            query_vector=skills,
-            namespace="job_openings",
-            top_k=top_k,
-            filter_dict={"section": "Required Skills"},
-        )
-        results["best_skills_fit"] = skills_matches
-    else:
-        results["best_skills_fit"] = []
+    # Initialize results structure
+    results: dict[str, list[dict[str, Any]]] = {
+        "holistic_matches": [],
+        "skills_matches": [],
+        "experience_matches": [],
+        "wildcard_matches": [],
+    }
 
-    # --- Most Relevant Experience ---
-    if promotional:
-        # Use Promotional Blurb to capture experience
-        experience_matches = query_pinecone(
-            query_vector=promotional,
-            namespace="job_openings",
-            top_k=top_k,
-            filter_dict={"section": "Responsibilities"},
-        )
-        results["experience_matches"] = experience_matches
-    else:
+    # 1. Holistic Match (Average talent vector vs all job vectors)
+    try:
+        holistic_vectors = [
+            vec
+            for vec in [promo_embedding, skills_embedding, ideal_roles_embedding]
+            if vec is not None
+        ]
+        if holistic_vectors:
+            holistic_query = average_vectors(holistic_vectors)
+            holistic_matches = query_pinecone(
+                query_vector=holistic_query, namespace="job_openings", top_k=top_k
+            )
+            results["holistic_matches"] = holistic_matches
+        else:
+            # This case should ideally not be reached due to the check above, but included for safety
+            results["holistic_matches"] = []
+            logger.warning(
+                "Could not calculate holistic vector for talent %s", talent_id
+            )
+    except Exception as e:
+        logger.error("Error during holistic match for talent %s: %s", talent_id, e)
+        results["holistic_matches"] = []
+
+    # 2. Skills Match (Talent Skill Overview vs Job Required Skills)
+    try:
+        if skills_embedding:
+            skills_matches = query_pinecone(
+                query_vector=skills_embedding,
+                namespace="job_openings",
+                top_k=top_k,
+                filter_dict={"section": JOB_REQUIRED_SKILLS.lower().replace(" ", "_")},
+            )
+            results["skills_matches"] = skills_matches
+        else:
+            results["skills_matches"] = []
+    except Exception as e:
+        logger.error("Error during skills match for talent %s: %s", talent_id, e)
+        results["skills_matches"] = []
+
+    # 3. Experience Match (Talent Promo Blurb vs Job Responsibilities)
+    try:
+        if promo_embedding:
+            experience_matches = query_pinecone(
+                query_vector=promo_embedding,
+                namespace="job_openings",
+                top_k=top_k,
+                filter_dict={"section": JOB_RESPONSIBILITIES.lower().replace(" ", "_")},
+            )
+            results["experience_matches"] = experience_matches
+        else:
+            results["experience_matches"] = []
+    except Exception as e:
+        logger.error("Error during experience match for talent %s: %s", talent_id, e)
         results["experience_matches"] = []
 
-    # --- Wildcard Matches ---
-    if ideal_roles:
-        wildcard_matches = query_pinecone(
-            query_vector=ideal_roles,
-            namespace="job_openings",
-            top_k=top_k,
-            filter_dict={"section": "Job Overview"},
-        )
-        results["wildcard_matches"] = wildcard_matches
-    else:
+    # 4. Wildcard Match (Talent Ideal Roles vs Job Overview)
+    try:
+        if ideal_roles_embedding:
+            wildcard_matches = query_pinecone(
+                query_vector=ideal_roles_embedding,
+                namespace="job_openings",
+                top_k=top_k,
+                filter_dict={"section": JOB_OVERVIEW.lower().replace(" ", "_")},
+            )
+            results["wildcard_matches"] = wildcard_matches
+        else:
+            results["wildcard_matches"] = []
+    except Exception as e:
+        logger.error("Error during wildcard match for talent %s: %s", talent_id, e)
         results["wildcard_matches"] = []
 
     return results
@@ -127,104 +170,133 @@ def match_talent_to_jobs(
 def match_job_to_talents(
     job_id: int, top_k: int = 10
 ) -> dict[str, list[dict[str, Any]]]:
-    """
-    Given a JobOpening id, perform matching queries against TalentSheets.
-    Returns a dictionary with lists of candidate matches for different perspectives.
-
-    Args:
-        job_id: ID of the JobOpening to find matches for
-        top_k: Number of results to return per perspective
-
-    Returns:
-        Dictionary with match results grouped by perspective
-    """
-    # Verify the JobOpening exists and is active
+    """Matches a job opening to talent sheets from multiple perspectives."""
     try:
+        # Check if JobOpening exists and is active before fetching embeddings
         job = apps.get_model("recruiters", "JobOpening").objects.get(id=job_id)
-        if job.status != "active":
-            logger.info(
-                "Skipping match generation for inactive job %s: %s",
-                job.id,
-                job.title,
-            )
+        if not job.is_active:
+            logger.warning("JobOpening %s is not active.", job_id)
+            # Return empty structure if not active
             return {
-                "top_matches": [],
-                "best_skills_fit": [],
+                "holistic_matches": [],
+                "skills_matches": [],
                 "experience_matches": [],
                 "wildcard_matches": [],
             }
     except ObjectDoesNotExist:
         logger.error("JobOpening with id %s does not exist.", job_id)
         return {
-            "top_matches": [],
-            "best_skills_fit": [],
+            "holistic_matches": [],
+            "skills_matches": [],
             "experience_matches": [],
             "wildcard_matches": [],
         }
 
-    # Retrieve job embeddings
-    job_overview = get_job_section_embedding(job_id, "Job Overview")
-    job_skills = get_job_section_embedding(job_id, "Required Skills")
-    responsibilities = get_job_section_embedding(job_id, "Responsibilities")
-
-    if not job_overview and not job_skills and not responsibilities:
-        logger.error("No embeddings found for job_id: %s", job_id)
+    # Fetch individual embeddings
+    try:
+        overview_embedding = get_job_section_embedding(job_id, JOB_OVERVIEW)
+        skills_embedding = get_job_section_embedding(job_id, JOB_REQUIRED_SKILLS)
+        resp_embedding = get_job_section_embedding(job_id, JOB_RESPONSIBILITIES)
+    except Exception as e:
+        logger.error(
+            "Failed to retrieve one or more embeddings for job %s: %s", job_id, e
+        )
+        # Decide if partial matching is okay or return empty
         return {
-            "top_matches": [],
-            "best_skills_fit": [],
+            "holistic_matches": [],
+            "skills_matches": [],
             "experience_matches": [],
             "wildcard_matches": [],
         }
 
-    results = {}
-
-    # --- Top Match (Holistic) ---
-    holistic_vectors = [
-        vec for vec in (job_overview, job_skills, responsibilities) if vec is not None
-    ]
-    if holistic_vectors:
-        holistic_query = average_vectors(holistic_vectors)
-        top_matches = query_pinecone(
-            query_vector=holistic_query, namespace="talent_sheets", top_k=top_k
+    if not overview_embedding and not skills_embedding and not resp_embedding:
+        logger.warning(
+            "No embeddings found for job %s. Cannot perform matching.", job_id
         )
-        results["top_matches"] = top_matches
-    else:
-        results["top_matches"] = []
+        return {
+            "holistic_matches": [],
+            "skills_matches": [],
+            "experience_matches": [],
+            "wildcard_matches": [],
+        }
 
-    # --- Best Skills Fit ---
-    if job_skills:
-        skills_matches = query_pinecone(
-            query_vector=job_skills,
-            namespace="talent_sheets",
-            top_k=top_k,
-            filter_dict={"section": "Skill Overview"},
-        )
-        results["best_skills_fit"] = skills_matches
-    else:
-        results["best_skills_fit"] = []
+    # Initialize results structure
+    results: dict[str, list[dict[str, Any]]] = {
+        "holistic_matches": [],
+        "skills_matches": [],
+        "experience_matches": [],
+        "wildcard_matches": [],
+    }
 
-    # --- Most Relevant Experience ---
-    if responsibilities:
-        experience_matches = query_pinecone(
-            query_vector=responsibilities,
-            namespace="talent_sheets",
-            top_k=top_k,
-            filter_dict={"section": "Promotional Blurb"},
-        )
-        results["experience_matches"] = experience_matches
-    else:
+    # 1. Holistic Match (Average job vector vs all talent vectors)
+    try:
+        holistic_vectors = [
+            vec
+            for vec in [overview_embedding, skills_embedding, resp_embedding]
+            if vec is not None
+        ]
+        if holistic_vectors:
+            holistic_query = average_vectors(holistic_vectors)
+            holistic_matches = query_pinecone(
+                query_vector=holistic_query, namespace="talent_sheets", top_k=top_k
+            )
+            results["holistic_matches"] = holistic_matches
+        else:
+            # This case should ideally not be reached
+            results["holistic_matches"] = []
+            logger.warning("Could not calculate holistic vector for job %s", job_id)
+    except Exception as e:
+        logger.error("Error during holistic match for job %s: %s", job_id, e)
+        results["holistic_matches"] = []
+
+    # 2. Skills Match (Job Required Skills vs Talent Skill Overview)
+    try:
+        if skills_embedding:
+            skills_matches = query_pinecone(
+                query_vector=skills_embedding,
+                namespace="talent_sheets",
+                top_k=top_k,
+                filter_dict={
+                    "section": TALENT_SKILL_OVERVIEW.lower().replace(" ", "_")
+                },
+            )
+            results["skills_matches"] = skills_matches
+        else:
+            results["skills_matches"] = []
+    except Exception as e:
+        logger.error("Error during skills match for job %s: %s", job_id, e)
+        results["skills_matches"] = []
+
+    # 3. Experience Match (Job Responsibilities vs Talent Promo Blurb)
+    try:
+        if resp_embedding:
+            experience_matches = query_pinecone(
+                query_vector=resp_embedding,
+                namespace="talent_sheets",
+                top_k=top_k,
+                filter_dict={"section": TALENT_PROMO_BLURB.lower().replace(" ", "_")},
+            )
+            results["experience_matches"] = experience_matches
+        else:
+            results["experience_matches"] = []
+    except Exception as e:
+        logger.error("Error during experience match for job %s: %s", job_id, e)
         results["experience_matches"] = []
 
-    # --- Wildcard Matches ---
-    if job_overview:
-        wildcard_matches = query_pinecone(
-            query_vector=job_overview,
-            namespace="talent_sheets",
-            top_k=top_k,
-            filter_dict={"section": "Ideal Roles"},
-        )
-        results["wildcard_matches"] = wildcard_matches
-    else:
+    # 4. Wildcard Match (Job Overview vs Talent Ideal Roles)
+    try:
+        if overview_embedding:
+            wildcard_matches = query_pinecone(
+                query_vector=overview_embedding,
+                namespace="talent_sheets",
+                top_k=top_k,
+                filter_dict={"section": TALENT_IDEAL_ROLES.lower().replace(" ", "_")},
+            )
+            results["wildcard_matches"] = wildcard_matches
+        else:
+            results["wildcard_matches"] = []
+    except Exception as e:
+        logger.error("Error during wildcard match for job %s: %s", job_id, e)
         results["wildcard_matches"] = []
 
     return results

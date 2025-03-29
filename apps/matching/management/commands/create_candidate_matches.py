@@ -150,8 +150,8 @@ class Command(BaseCommand):
         with transaction.atomic():
             # Map of result keys to match types in the database
             match_type_mapping = {
-                "top_matches": "holistic",
-                "best_skills_fit": "skills",
+                "holistic_matches": "holistic",
+                "skills_matches": "skills",
                 "experience_matches": "experience",
                 "wildcard_matches": "wildcard",
             }

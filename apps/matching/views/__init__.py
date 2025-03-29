@@ -9,7 +9,6 @@ This package contains modules for different view-related functionality:
 from apps.matching.views.candidate_views import (
     CandidateDetailView,
     CandidateMatchListView,
-    toggle_shortlist,
 )
 
-__all__ = ["CandidateDetailView", "CandidateMatchListView", "toggle_shortlist"]
+__all__ = ["CandidateDetailView", "CandidateMatchListView"]

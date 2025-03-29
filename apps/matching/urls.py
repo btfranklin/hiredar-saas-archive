@@ -9,7 +9,6 @@ from django.urls import path
 from apps.matching.views.candidate_views import (
     CandidateDetailView,
     CandidateMatchListView,
-    toggle_shortlist,
 )
 from apps.matching.views.matching_views import match_job_api, match_talent_api
 
@@ -26,11 +25,6 @@ urlpatterns = [
         "<int:job_id>/candidates/<int:candidate_id>/",
         CandidateDetailView.as_view(),
         name="candidate_detail",
-    ),
-    path(
-        "<int:job_id>/candidates/<int:candidate_id>/shortlist/",
-        toggle_shortlist,
-        name="toggle_shortlist",
     ),
     # Matching API endpoints
     path(
