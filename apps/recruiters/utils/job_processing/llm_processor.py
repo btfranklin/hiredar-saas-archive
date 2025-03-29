@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 from typing import Any, Iterable, cast
 
 import requests
+from django.conf import settings  # Import Django settings
 from dotenv import load_dotenv
 from openai import OpenAI
 from promptdown import StructuredPrompt
@@ -40,7 +41,8 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
         requests.exceptions.RequestException: If the API request fails
         Exception: For any other processing errors
     """
-    api_key = os.getenv("OPENAI_API_KEY")
+    # Use settings for API key if available, fall back to env var (for compatibility)
+    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
     if not api_key:
         error_msg = "No API key found. Set OPENAI_API_KEY environment variable."
         logger.error(error_msg)
@@ -70,9 +72,9 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
     # Make the API call with proper error handling
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model=settings.RECRUITERS_JOB_PROCESSING_MODEL,
             messages=cast(Iterable[Any], messages),
-            temperature=0.2,  # Lower temperature for more deterministic output
+            temperature=settings.RECRUITERS_JOB_PROCESSING_TEMPERATURE,  # Use settings
         )
 
         # Extract the XML content from the response

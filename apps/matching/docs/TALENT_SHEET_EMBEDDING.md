@@ -174,18 +174,27 @@ The system implements robust error handling throughout:
 
 ## Environment Configuration
 
-Required environment variables:
+Configuration is managed through Django settings, which read values from environment variables defined in your `.env` file. Refer to `.env.example` for the required variables and `settings.py` for default values.
 
-```bash
-# OpenAI settings
+Key settings related to talent sheet embedding:
+
+```dotenv
+# --- Secrets (in .env only) ---
 OPENAI_API_KEY=your-openai-api-key
-OPENAI_EMBEDDING_MODEL=text-embedding-3-large
-
-# Pinecone settings
 PINECONE_API_KEY=your-pinecone-api-key
-PINECONE_INDEX_NAME=job-matcher
-PINECONE_PROJECT_NAME=Hiredar
+
+# --- Configuration (in .env or defaults in settings.py) ---
+MATCHING_EMBEDDING_MODEL=text-embedding-3-large # Model used for embeddings
+PINECONE_INDEX_NAME=job-matcher                 # Pinecone index name
+PINECONE_DIMENSIONS=3072                        # Vector dimensions (must match model)
+PINECONE_PROJECT_NAME=Hiredar                   # Pinecone project name
+PINECONE_INDEX_HOST=                            # Optional: Direct index host URL (for production)
+
+# Note: Other AI models for different tasks (e.g., talent sheet generation) are also configured via settings/env vars.
 ```
+
+Access these configurations in the code via `django.conf.settings`, for example:
+`settings.MATCHING_EMBEDDING_MODEL` or `settings.PINECONE_INDEX_NAME`.
 
 ## Implementation Notes
 

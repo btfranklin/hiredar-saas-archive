@@ -8,6 +8,7 @@ import logging
 import os
 from typing import Any
 
+from django.conf import settings  # Import Django settings
 from openai import OpenAI
 from pinecone import Pinecone
 from pinecone.openapi_support.exceptions import NotFoundException, PineconeException
@@ -15,19 +16,18 @@ from pinecone.openapi_support.exceptions import NotFoundException, PineconeExcep
 logger = logging.getLogger(__name__)
 
 # Initialize clients (these should be initialized once)
+# API Keys are typically handled directly by client libraries
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 pinecone_client = Pinecone(
     api_key=os.getenv("PINECONE_API_KEY"),
-    project_name=os.getenv("PINECONE_PROJECT_NAME", "Hiredar"),
+    project_name=settings.PINECONE_PROJECT_NAME,  # Use settings
 )
 
 # Initialize index reference but don't connect yet
-# This allows the app to start even if the index doesn't exist
-index_name = os.getenv("PINECONE_INDEX_NAME", "job-matcher")
-# For production, we can directly specify the host URL to eliminate round trips
-index_host = os.getenv("PINECONE_INDEX_HOST")
-# Get the dimension from the environment (default to 3072 for text-embedding-3-large)
-DIMENSIONS = int(os.getenv("PINECONE_DIMENSIONS", "3072"))
+# Read configuration from Django settings
+index_name = settings.PINECONE_INDEX_NAME
+index_host = settings.PINECONE_INDEX_HOST
+DIMENSIONS = settings.PINECONE_DIMENSIONS  # Already an int in settings
 
 
 def get_index() -> Any:
@@ -74,8 +74,8 @@ def get_index_host() -> str:
     """
     # Use the REST client for admin operations
     admin_client = Pinecone(
-        api_key=os.getenv("PINECONE_API_KEY"),
-        project_name=os.getenv("PINECONE_PROJECT_NAME", "Hiredar"),
+        api_key=os.getenv("PINECONE_API_KEY"),  # Keep API key direct
+        project_name=settings.PINECONE_PROJECT_NAME,  # Use settings
     )
 
     host = admin_client.describe_index(index_name).host
@@ -144,7 +144,7 @@ def get_embedding(text: str) -> list[float]:
         # Using the current OpenAI client API
         response = openai_client.embeddings.create(
             input=text,
-            model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large"),
+            model=settings.MATCHING_EMBEDDING_MODEL,  # Use settings
         )
         # Extract the embedding from the response
         return response.data[0].embedding

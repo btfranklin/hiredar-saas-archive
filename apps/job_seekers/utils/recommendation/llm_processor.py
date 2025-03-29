@@ -10,6 +10,7 @@ import os
 from typing import Any, Iterable, cast
 
 import requests
+from django.conf import settings  # Import Django settings
 from dotenv import load_dotenv
 from openai import OpenAI
 from promptdown import StructuredPrompt
@@ -45,7 +46,8 @@ def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
         requests.exceptions.RequestException: If the API request fails
         Exception: For any other processing errors
     """
-    api_key = os.getenv("OPENAI_API_KEY")
+    # Use settings for API key if available, fall back to env var (for compatibility)
+    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
     if not api_key:
         error_msg = "No API key found. Set OPENAI_API_KEY environment variable."
         logger.error(error_msg)
@@ -103,9 +105,9 @@ def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
     # Make the API call with proper error handling
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model=settings.JOBSEEKERS_ROLE_RECOMMENDATION_MODEL,  # Renamed setting
             messages=cast(Iterable[Any], messages),
-            temperature=0.7,
+            temperature=settings.JOBSEEKERS_RECOMMENDATION_TEMPERATURE,  # Use settings
         )
 
         # Extract the content from the response
@@ -156,7 +158,8 @@ def generate_personal_tagline(resume_xml: str) -> str:
         requests.exceptions.RequestException: If the API request fails
         Exception: For any other processing errors
     """
-    api_key = os.getenv("OPENAI_API_KEY")
+    # Use settings for API key if available, fall back to env var (for compatibility)
+    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
     if not api_key:
         error_msg = "No API key found. Set OPENAI_API_KEY environment variable."
         logger.error(error_msg)
@@ -208,10 +211,10 @@ def generate_personal_tagline(resume_xml: str) -> str:
     # Make the API call with proper error handling
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=settings.JOBSEEKERS_TAGLINE_GENERATION_MODEL,  # Renamed setting
             messages=cast(Iterable[Any], messages),
-            temperature=0.7,  # Slightly higher temperature for creative output
-            max_tokens=50,  # Tagline should be short
+            temperature=settings.JOBSEEKERS_TAGLINE_TEMPERATURE,  # Use settings
+            max_tokens=settings.JOBSEEKERS_TAGLINE_MAX_TOKENS,  # Use settings
         )
 
         # Extract the content from the response

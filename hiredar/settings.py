@@ -338,3 +338,51 @@ LOGGING = {
 
 # Ensure the logs directory exists
 os.makedirs(os.path.join(BASE_DIR, "logs"), exist_ok=True)
+
+# --- Custom Application Settings ---
+
+# API Keys (Required - must be set in .env or environment)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+
+# Check if required API keys are missing
+if not OPENAI_API_KEY:
+    print("WARNING: OPENAI_API_KEY is not set in the environment.")
+if not PINECONE_API_KEY:
+    print("WARNING: PINECONE_API_KEY is not set in the environment.")
+
+# AI Model Selection (Configurable via .env, with defaults)
+MATCHING_EMBEDDING_MODEL = os.getenv(
+    "MATCHING_EMBEDDING_MODEL", "text-embedding-3-large"
+)
+RECRUITERS_JOB_PROCESSING_MODEL = os.getenv("RECRUITERS_JOB_PROCESSING_MODEL", "gpt-4o")
+JOBSEEKERS_RESUME_PROCESSING_MODEL = os.getenv(
+    "JOBSEEKERS_RESUME_PROCESSING_MODEL", "gpt-4o"
+)
+JOBSEEKERS_ROLE_RECOMMENDATION_MODEL = os.getenv(
+    "JOBSEEKERS_ROLE_RECOMMENDATION_MODEL", "gpt-4o"
+)
+JOBSEEKERS_TAGLINE_GENERATION_MODEL = os.getenv(
+    "JOBSEEKERS_TAGLINE_GENERATION_MODEL", "gpt-4o-mini"
+)
+
+# AI Model Configuration (Temperature, Tokens, etc.)
+RECRUITERS_JOB_PROCESSING_TEMPERATURE = float(
+    os.getenv("RECRUITERS_JOB_PROCESSING_TEMPERATURE", "0.2")
+)
+JOBSEEKERS_RESUME_PROCESSING_TEMPERATURE = float(
+    os.getenv("JOBSEEKERS_RESUME_PROCESSING_TEMPERATURE", "0.7")
+)
+JOBSEEKERS_RECOMMENDATION_TEMPERATURE = float(
+    os.getenv("JOBSEEKERS_RECOMMENDATION_TEMPERATURE", "0.7")
+)
+JOBSEEKERS_TAGLINE_TEMPERATURE = float(
+    os.getenv("JOBSEEKERS_TAGLINE_TEMPERATURE", "0.7")
+)
+JOBSEEKERS_TAGLINE_MAX_TOKENS = int(os.getenv("JOBSEEKERS_TAGLINE_MAX_TOKENS", "50"))
+
+# Pinecone Configuration (Configurable via .env, with defaults)
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "job-matcher")
+PINECONE_DIMENSIONS = int(os.getenv("PINECONE_DIMENSIONS", "3072"))
+PINECONE_PROJECT_NAME = os.getenv("PINECONE_PROJECT_NAME", "Hiredar")
+PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST", None)
