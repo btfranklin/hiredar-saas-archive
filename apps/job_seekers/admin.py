@@ -1,20 +1,58 @@
 from django.contrib import admin
+from django.db.models import Q
 
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
+
+
+class InTalentPoolFilter(admin.SimpleListFilter):
+    """Filter for job seekers in the talent pool."""
+
+    title = "Talent Pool Status"
+    parameter_name = "in_talent_pool"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("yes", "Active"),
+            ("no", "Inactive"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(talent_sheet__is_published=True)
+        if self.value() == "no":
+            return queryset.filter(
+                Q(talent_sheet__isnull=True) | Q(talent_sheet__is_published=False)
+            )
+        return queryset
 
 
 @admin.register(JobSeekerProfile)
 class JobSeekerProfileAdmin(admin.ModelAdmin):
     """Admin configuration for JobSeekerProfile model."""
 
-    list_display = ("user", "most_recent_title", "desired_role", "years_of_experience")
-    list_filter = ("years_of_experience",)
+    list_display = (
+        "user",
+        "get_name",
+        "most_recent_title",
+        "location",
+        "in_talent_pool",
+    )
+    list_filter = (InTalentPoolFilter,)
     search_fields = (
         "user__email",
         "user__name",
         "skills",
         "most_recent_title",
+        "location",
     )
+
+    def get_name(self, obj):
+        """Get the name of the user."""
+        return obj.user.name if obj.user else ""
+
+    get_name.short_description = "Name"
+    get_name.admin_order_field = "user__name"
+
     fieldsets = (
         (None, {"fields": ("user",)}),
         (
@@ -26,6 +64,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
                     "years_of_experience",
                     "professional_summary",
                     "phone",
+                    "location",
                 )
             },
         ),
@@ -61,9 +100,24 @@ class TalentSheetAdmin(admin.ModelAdmin):
     for job seekers in the talent pool.
     """
 
-    list_display = ("job_seeker", "is_published", "created_at", "updated_at")
+    list_display = (
+        "job_seeker",
+        "get_job_seeker_name",
+        "is_published",
+        "created_at",
+        "updated_at",
+    )
     list_filter = ("is_published", "created_at", "updated_at")
     search_fields = ("job_seeker__user__email", "job_seeker__user__name", "ideal_roles")
+
+    def get_job_seeker_name(self, obj):
+        """Get the name of the job seeker."""
+        return (
+            obj.job_seeker.user.name if obj.job_seeker and obj.job_seeker.user else ""
+        )
+
+    get_job_seeker_name.short_description = "Name"
+    get_job_seeker_name.admin_order_field = "job_seeker__user__name"
 
     fieldsets = (
         (None, {"fields": ("job_seeker", "is_published")}),
