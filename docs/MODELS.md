@@ -96,7 +96,6 @@ classDiagram
         +skill_overview: TextField
         +ideal_roles: TextField
         +salary_min: DecimalField
-        +salary_max: DecimalField
         +is_published: BooleanField
         +created_at: DateTimeField
         +updated_at: DateTimeField
@@ -259,7 +258,6 @@ This represents a comprehensive, recruiter-friendly presentation of a job seeker
 | `skill_overview` | TextField | Concise overview of the candidate's key skills and competencies |
 | `ideal_roles` | TextField | Comma-separated list of ideal roles, populated from interested role recommendations |
 | `salary_min` | DecimalField | Minimum salary expectation |
-| `salary_max` | DecimalField | Maximum salary expectation |
 | `is_published` | BooleanField | Whether this talent sheet is published and available for matching to job openings |
 | `created_at` | DateTimeField | When the talent sheet was created |
 | `updated_at` | DateTimeField | When the talent sheet was last updated |

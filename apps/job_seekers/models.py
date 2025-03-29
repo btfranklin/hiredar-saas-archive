@@ -362,13 +362,6 @@ class TalentSheet(models.Model):
         blank=True,
         help_text="Minimum salary expectation",
     )
-    salary_max = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Maximum salary expectation",
-    )
     is_published = models.BooleanField(
         default=False,
         help_text="Whether this talent sheet is published and available for matching to job openings",

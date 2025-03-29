@@ -131,7 +131,7 @@ class TalentSheetAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Salary Expectations", {"fields": ("salary_min", "salary_max")}),
+        ("Salary Expectations", {"fields": ("salary_min",)}),
         (
             "Timestamps",
             {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
