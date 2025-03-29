@@ -1,4 +1,5 @@
 import os
+import time
 import traceback
 import uuid
 from pathlib import Path
@@ -7,12 +8,15 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
-from django_q.tasks import async_task
+from django_q.tasks import async_task, fetch
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 from apps.job_seekers.utils.resume_processing.pipeline import process_resume
+
+# Define a timeout for waiting for the task (e.g., 5 minutes)
+TASK_WAIT_TIMEOUT = 300  # seconds
+TASK_POLL_INTERVAL = 2  # seconds
 
 
 class Command(BaseCommand):
@@ -222,36 +226,69 @@ class Command(BaseCommand):
 
     def add_to_talent_pool(self, profile: JobSeekerProfile, verbosity: int) -> bool:
         """
-        Add a job seeker to the talent pool and generate a talent sheet.
+        Add a job seeker to the talent pool by scheduling the task
+        and waiting for its completion.
 
         Args:
             profile: The JobSeekerProfile to add to the talent pool
             verbosity: Output verbosity level (0-3)
 
         Returns:
-            True if talent sheet was created, False otherwise
+            True if talent sheet was created successfully, False otherwise
         """
+        task_id = None
         try:
             if verbosity >= 1:
-                self.stdout.write(f"  - Adding {profile.user.email} to talent pool")
+                self.stdout.write(
+                    f"  - Scheduling talent sheet generation for {profile.user.email}"
+                )
 
-            # Schedule the talent sheet generation task (same as what happens in the UI)
+            # Schedule the talent sheet generation task to run asynchronously
             profile_id = getattr(profile, "id")
             task_id = async_task(
                 "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
                 profile_id,
                 task_name=f"generate_talent_sheet_{profile_id}",
+                # No sync=True here, let it run in the cluster
             )
 
-            if verbosity >= 2:
+            if verbosity >= 1:
                 self.stdout.write(
-                    f"  - Scheduled talent sheet generation task (ID: {task_id})"
+                    f"  - Task {task_id} scheduled. Waiting for completion..."
                 )
 
-            # Execute the task synchronously to get the result
-            result = generate_talent_sheet_task(profile.pk)
+            # Wait for the task to complete
+            start_time = time.time()
+            task = None
+            while time.time() - start_time < TASK_WAIT_TIMEOUT:
+                task = fetch(task_id)
+                if task:
+                    # Check if the task has finished (success is True or False)
+                    if task.success is not None:
+                        if verbosity >= 1:
+                            self.stdout.write(f"  - Task {task_id} completed.")
+                        break  # Exit the loop, task is done
+                else:
+                    # Task might not be visible immediately, wait briefly
+                    if verbosity >= 2:
+                        self.stdout.write(
+                            f"  - Task {task_id} not fetched yet, retrying..."
+                        )
 
-            if result.get("success", False):
+                time.sleep(TASK_POLL_INTERVAL)
+            else:
+                # Timeout reached
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"  - Timeout: Task {task_id} did not complete within {TASK_WAIT_TIMEOUT}s"
+                    )
+                )
+                return False
+
+            # Check the result from the completed task object
+            if task and task.success:
+                # Task object's result field contains the return value of the task function
+                result_data = task.result
                 if verbosity >= 1:
                     self.stdout.write(
                         self.style.SUCCESS(
@@ -260,17 +297,35 @@ class Command(BaseCommand):
                     )
                 return True
             else:
+                # Task failed or wasn't fetched correctly
+                error_message = "Unknown error"
+                if task:
+                    # Try to get the error message from the task result if it failed
+                    if isinstance(task.result, dict):
+                        error_message = task.result.get(
+                            "message", "Task failed without specific message"
+                        )
+                    elif (
+                        task.result
+                    ):  # If result is not None/dict, use its string representation
+                        error_message = str(task.result)
+                    else:
+                        error_message = "Task failed without returning a result."
+                else:
+                    error_message = "Task could not be fetched after scheduling."
+
                 self.stdout.write(
                     self.style.ERROR(
-                        f"  - Failed to create talent sheet: {result.get('message', 'Unknown error')}"
+                        f"  - Failed to create talent sheet: {error_message}"
                     )
                 )
                 return False
 
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f"  - Error adding to talent pool: {str(e)}")
+                self.style.ERROR(f"  - Error during talent pool processing: {str(e)}")
             )
+            # If an exception occurs *before* or *during* polling, log it
             if verbosity >= 2:
                 traceback.print_exc()
             return False
