@@ -9,7 +9,6 @@ The job opening embedding system follows a modular design pattern where each com
 1. **Common Utilities**: Shared embedding functionality used across different entity types
 2. **Job Opening Tasks**: Functions specific to processing job openings
 3. **Signal Handlers**: Event-based triggers for embedding actions
-4. **Management Commands**: Manual tools for processing and administration
 
 This modular approach allows for independent evolution of different entity embedding systems (job openings and talent sheets) while ensuring consistent embedding quality.
 
@@ -25,9 +24,6 @@ apps/matching/
 │   ├── job_opening_tasks.py    # Job opening processing
 │   └── talent_sheet_tasks.py   # Talent sheet processing
 ├── signals.py                  # Event handlers
-├── management/commands/
-│   ├── create_job_embeddings.py   # CLI tool for creating embeddings
-│   └── delete_job_embeddings.py   # CLI tool for deleting embeddings
 └── tests/
     └── test_job_embeddings.py     # Unit tests
 ```
@@ -38,8 +34,8 @@ apps/matching/
 
 When a job opening is saved or updated:
 
-1. **Event Detection**: Django signals detect changes to JobOpening instances
-2. **Status Check**: Only active job openings are processed
+1. **Event Detection**: Django signals (`post_save`, `post_delete`) detect changes to `JobOpening` instances
+2. **Status Check**: Only active job openings trigger embedding creation; inactive or deleted jobs trigger removal
 3. **Text Extraction**: Multiple fields are extracted from various job aspects
 4. **Text Enhancement**: Section context is added to each field using templates
 5. **Embedding Generation**: OpenAI's embedding API generates semantic vectors
@@ -98,9 +94,9 @@ This rich metadata enables advanced filtering during vector search and improves 
 
 The system responds to job opening status changes:
 
-- **Active**: Generate and store embeddings
-- **Inactive**: Remove existing embeddings
-- **Deletion**: Remove all associated embeddings
+- **Active**: Trigger asynchronous task `create_job_opening_embeddings`
+- **Inactive**: Trigger asynchronous task `remove_job_opening_embeddings`
+- **Deletion**: Trigger asynchronous task `remove_job_opening_embeddings`
 
 ## Integration Points
 
@@ -115,6 +111,11 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
     else:
         # If a job is inactive, remove the embeddings
         async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
+
+@receiver(post_delete, sender="recruiters.JobOpening")
+def handle_job_opening_delete(sender, instance, **kwargs):
+    """Remove embeddings on deletion."""
+    async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
 ```
 
 This signal-based approach ensures that embedding operations are performed automatically in response to job opening changes.
@@ -125,20 +126,17 @@ This signal-based approach ensures that embedding operations are performed autom
 def create_job_opening_embeddings(job_opening_id: int) -> None:
     """Create embeddings for a job opening and store them in Pinecone."""
     # Implementation code...
+
+def remove_job_opening_embeddings(job_opening_id: int) -> None:
+    """Remove embeddings for a job opening from Pinecone."""
+    # Implementation code...
 ```
 
 The task functions are designed to be run asynchronously via django-q, allowing the user interface to remain responsive during potentially lengthy embedding operations.
 
-### Management Commands
+### Management Commands (Deprecated)
 
-```python
-python manage.py create_job_embeddings --job_id=123
-python manage.py create_job_embeddings --all
-python manage.py delete_job_embeddings --job_id=123
-python manage.py delete_job_embeddings --all
-```
-
-These CLI commands provide administrative tools for manually triggering embedding operations.
+Manual management commands (`create_job_embeddings`, `delete_job_embeddings`) previously existed but have been removed as the signal-based automation is now the standard process for managing job opening embeddings.
 
 ## Pinecone Vector Storage Details
 
@@ -163,10 +161,10 @@ Example: `job_123_required_skills`
 
 The system implements robust error handling throughout:
 
-1. **API Errors**: Errors from OpenAI or Pinecone are caught and logged
-2. **Missing Entities**: Non-existent job openings are handled gracefully
-3. **Status Validation**: Only active job openings trigger processing
-4. **Empty Field Handling**: Empty fields are skipped rather than processed
+1. **API Errors**: Errors from OpenAI or Pinecone are caught and logged in the task functions
+2. **Missing Entities**: Non-existent job openings are handled gracefully in the tasks
+3. **Status Validation**: Signals ensure only appropriate statuses trigger processing
+4. **Empty Field Handling**: Empty fields are skipped rather than processed in `create_job_opening_embeddings`
 
 ## Environment Configuration
 
@@ -201,7 +199,11 @@ The system intelligently consolidates related fields to create more comprehensiv
 "Responsibilities": " ".join(
     filter(
         None,
-        [job.responsibilities, job.daily_tasks, job.performance_expectations],
+        [
+            job.responsibilities,
+            job.daily_tasks,
+            job.performance_expectations,
+        ],
     )
 )
 ```

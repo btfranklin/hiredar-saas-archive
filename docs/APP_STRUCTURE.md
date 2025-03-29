@@ -117,18 +117,33 @@ Manages recruiter-specific functionality:
 
 ### Matching App (`apps/matching`)
 
-Manages candidate matching:
+Manages candidate matching and embedding generation/storage:
 
 - **Models**:
-  - `CandidateMatch`: Matches between job seekers and job openings
+  - `CandidateMatch`: Matches between talent sheets and job openings
+- **Core**:
+  - `matching.py`: Core matching algorithms using vector embeddings
+  - `pinecone_client.py`: Interaction with Pinecone vector database
+  - `retrieval.py`: Functions to retrieve section embeddings from Pinecone
+  - `vector_operations.py`: Utility functions for vector math (e.g., averaging)
+- **Tasks**:
+  - `job_opening_tasks.py`: Asynchronous tasks for creating/removing job opening embeddings
+  - `talent_sheet_tasks.py`: Asynchronous tasks for creating/removing talent sheet embeddings
+  - `common.py`: Shared utilities for embedding tasks (e.g., Pinecone index access)
+- **Signals**:
+  - Signal handlers in `signals.py` trigger embedding tasks automatically when `JobOpening` or `TalentSheet` instances are saved or deleted.
+- **Management/Commands**:
+  - `create_candidate_matches.py`: Generates `CandidateMatch` objects based on vector similarity.
+  - `match.py`: Manually triggers matching between a specific job/talent (for testing/debug).
 - **Views**:
-  - Views for matching candidates to job openings
+  - `candidate_views.py`: Views for recruiters to see matched candidates for a job.
+  - `matching_views.py`: API endpoints for triggering matches (potentially for internal use or future features).
 - **Templates**:
-  - Templates for candidate matching (organized within the matching directory)
+  - Templates for displaying candidate matches to recruiters.
 - **Admin**:
-  - Custom admin interfaces for the CandidateMatch model
+  - Custom admin interfaces for the `CandidateMatch` model.
 - **URLs**:
-  - `/matching/`: URL patterns for candidate matching functionality
+  - `/matching/`: URL patterns for candidate matching views and APIs.
 
 ### Messaging App (`apps/messaging`)
 
