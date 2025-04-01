@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:89dd733292b3565fdddadaec095e88e9bc6f1335796621f532ec294660523cc8"
+content_hash = "sha256:a35a68ef35e230215560c427cedf6635784cefa80383a58476a65efd6f4fc042"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -219,7 +219,7 @@ files = [
 
 [[package]]
 name = "django-allauth"
-version = "65.5.0"
+version = "65.6.0"
 requires_python = ">=3.8"
 summary = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
 groups = ["default", "dev"]
@@ -228,7 +228,7 @@ dependencies = [
     "asgiref>=3.8.1",
 ]
 files = [
-    {file = "django_allauth-65.5.0.tar.gz", hash = "sha256:1a564fd2f5413054559078c2b7146796b517c1e7a38c6312e9de7c9bb708325d"},
+    {file = "django_allauth-65.6.0.tar.gz", hash = "sha256:8058298a55c7232f06fd1397a2858498d10d0e710cc4d0db364923f5c75a5748"},
 ]
 
 [[package]]
@@ -528,7 +528,7 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.68.2"
+version = "1.70.0"
 requires_python = ">=3.8"
 summary = "The official Python library for the openai API"
 groups = ["default", "dev"]
@@ -543,8 +543,8 @@ dependencies = [
     "typing-extensions<5,>=4.11",
 ]
 files = [
-    {file = "openai-1.68.2-py3-none-any.whl", hash = "sha256:24484cb5c9a33b58576fdc5acf0e5f92603024a4e39d0b99793dfa1eb14c2b36"},
-    {file = "openai-1.68.2.tar.gz", hash = "sha256:b720f0a95a1dbe1429c0d9bb62096a0d98057bcda82516f6e8af10284bdd5b19"},
+    {file = "openai-1.70.0-py3-none-any.whl", hash = "sha256:f6438d053fd8b2e05fd6bef70871e832d9bbdf55e119d0ac5b92726f1ae6f614"},
+    {file = "openai-1.70.0.tar.gz", hash = "sha256:e52a8d54c3efeb08cf58539b5b21a5abef25368b5432965e4de88cdf4e091b2b"},
 ]
 
 [[package]]
@@ -560,35 +560,33 @@ files = [
 
 [[package]]
 name = "pdfminer-six"
-version = "20231228"
-requires_python = ">=3.6"
+version = "20250327"
+requires_python = ">=3.9"
 summary = "PDF parser and analyzer"
 groups = ["default", "dev"]
 dependencies = [
     "charset-normalizer>=2.0.0",
     "cryptography>=36.0.0",
-    "importlib-metadata; python_version < \"3.8\"",
-    "typing-extensions; python_version < \"3.8\"",
 ]
 files = [
-    {file = "pdfminer.six-20231228-py3-none-any.whl", hash = "sha256:e8d3c3310e6fbc1fe414090123ab01351634b4ecb021232206c4c9a8ca3e3b8f"},
-    {file = "pdfminer.six-20231228.tar.gz", hash = "sha256:6004da3ad1a7a4d45930cb950393df89b068e73be365a6ff64a838d37bcb08c4"},
+    {file = "pdfminer_six-20250327-py3-none-any.whl", hash = "sha256:5af494c85b1ecb7c28df5e3a26bb5234a8226a307503d9a09f4958bc154b16a9"},
+    {file = "pdfminer_six-20250327.tar.gz", hash = "sha256:57f6c34c2702df04cfa3191622a3db0a922ced686d35283232b00094f8914aa1"},
 ]
 
 [[package]]
 name = "pdfplumber"
-version = "0.11.5"
+version = "0.11.6"
 requires_python = ">=3.8"
 summary = "Plumb a PDF for detailed information about each char, rectangle, and line."
 groups = ["default", "dev"]
 dependencies = [
     "Pillow>=9.1",
-    "pdfminer-six==20231228",
+    "pdfminer-six==20250327",
     "pypdfium2>=4.18.0",
 ]
 files = [
-    {file = "pdfplumber-0.11.5-py3-none-any.whl", hash = "sha256:a6e0921a57e0ef7356001a0fd811250b0e37a0b42630a922ee48f55cdd534070"},
-    {file = "pdfplumber-0.11.5.tar.gz", hash = "sha256:dadd81b62a0b23e078cdd89de26e013850d4daf5690fcf46dec396b07e6737d6"},
+    {file = "pdfplumber-0.11.6-py3-none-any.whl", hash = "sha256:169fc2b8dbf328c81a4e9bab30af0c304ad4b472fd7816616eabdb79dc5d9d17"},
+    {file = "pdfplumber-0.11.6.tar.gz", hash = "sha256:d0f419e031641d9eac70dc18c60e1fc3ca2ec28cce7e149644923c030a0003ff"},
 ]
 
 [[package]]
@@ -862,32 +860,31 @@ dependencies = [
     "django-q2>=1.7.6",
     "django>=5.1.7",
     "numpy>=2.2.4",
-    "openai>=1.67.0",
+    "openai>=1.68.2",
     "pdfplumber>=0.11.5",
     "pillow>=11.1.0",
     "pinecone[grpc]>=6.0.2",
     "promptdown>=0.9.0",
     "pyjwt>=2.10.1",
     "pymupdf>=1.25.4",
-    "python-dotenv>=1.0.1",
+    "python-dotenv>=1.1.0",
     "requests>=2.32.3",
 ]
 
 [[package]]
 name = "pymupdf"
-version = "1.25.4"
+version = "1.25.5"
 requires_python = ">=3.9"
 summary = "A high performance Python library for data extraction, analysis, conversion & manipulation of PDF (and other) documents."
 groups = ["default", "dev"]
 files = [
-    {file = "pymupdf-1.25.4-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:b39ab5fc0cc793f2a93908cb4dc13182e61e9ace3476850ebf0e505f65355475"},
-    {file = "pymupdf-1.25.4-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:72ac2a460e15a4b75fb22d0bdeb9eb9b3bd6ab44d5288e56f85ff9e4241d0830"},
-    {file = "pymupdf-1.25.4-cp39-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:bd16e264438b01bf6f6b8722deb49df20c0a9a7be2b4a8e29dcb7b5183d8b42a"},
-    {file = "pymupdf-1.25.4-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:72817aa5f5023632346eee4aad0c32018d7879cf9a72e1820054dc9d8c48150f"},
-    {file = "pymupdf-1.25.4-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:a8c23242d209512437187dc728001fc7c65c2dd9d37b50071f34c5cd745194a3"},
-    {file = "pymupdf-1.25.4-cp39-abi3-win32.whl", hash = "sha256:d90e6087f9b153999fa9f2c4709488fb0355de0302ec502a76c4fc0c0a0c535e"},
-    {file = "pymupdf-1.25.4-cp39-abi3-win_amd64.whl", hash = "sha256:af8fa1f7920b3b27343b2511cb9fc44baf2bad8b948db0b0f9d5b2fa589cb305"},
-    {file = "pymupdf-1.25.4.tar.gz", hash = "sha256:5f189466b68901055a9ddc77dc1c91cba081a60964f0caa6ff5b9b87001a0194"},
+    {file = "pymupdf-1.25.5-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:cde4e1c9cfb09c0e1e9c2b7f4b787dd6bb34a32cfe141a4675e24af7c0c25dd3"},
+    {file = "pymupdf-1.25.5-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:5a35e2725fae0ab57f058dff77615c15eb5961eac50ba04f41ebc792cd8facad"},
+    {file = "pymupdf-1.25.5-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ee22155d3a634642d76553204867d862ae1bdd9f7cf70c0797d8127ebee6bed5"},
+    {file = "pymupdf-1.25.5-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:6ed7fc25271004d6d3279c20a80cb2bb4cda3efa9f9088dcc07cd790eca0bc63"},
+    {file = "pymupdf-1.25.5-cp39-abi3-win32.whl", hash = "sha256:65e18ddb37fe8ec4edcdbebe9be3a8486b6a2f42609d0a142677e42f3a0614f8"},
+    {file = "pymupdf-1.25.5-cp39-abi3-win_amd64.whl", hash = "sha256:7f44bc3d03ea45b2f68c96464f96105e8c7908896f2fb5e8c04f1fb8dae7981e"},
+    {file = "pymupdf-1.25.5.tar.gz", hash = "sha256:5f96311cacd13254c905f6654a004a0a2025b71cabc04fda667f5472f72c15a0"},
 ]
 
 [[package]]
