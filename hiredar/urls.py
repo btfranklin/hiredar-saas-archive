@@ -37,13 +37,8 @@ urlpatterns = [
 
 # Serve media files in development
 if settings.DEBUG:
+    # Standard Django approach for media files
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    # Explicitly serve static files from STATIC_ROOT in development only
-    urlpatterns.append(
-        path(
-            "static/<path:path>",
-            serve,
-            {"document_root": settings.STATIC_ROOT},
-            name="static",
-        )
-    )
+
+    # Standard Django approach for static files
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
