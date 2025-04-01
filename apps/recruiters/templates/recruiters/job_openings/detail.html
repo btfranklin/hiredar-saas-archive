@@ -96,4 +96,23 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Toggle between AI-processed and original description
+    function toggleDescription() {
+        const checkbox = document.getElementById('show-original-description');
+        const aiProcessed = document.getElementById('ai-processed-description');
+        const original = document.getElementById('original-description');
+        
+        if (checkbox.checked) {
+            aiProcessed.classList.add('hidden');
+            original.classList.remove('hidden');
+        } else {
+            aiProcessed.classList.remove('hidden');
+            original.classList.add('hidden');
+        }
+    }
+</script>
 {% endblock %} 

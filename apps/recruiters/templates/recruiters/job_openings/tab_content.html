@@ -72,8 +72,27 @@
     <div class="p-6">
         <!-- Basic Details -->
         <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-3">Job Description</h2>
-            <p>{{ job_opening.description|linebreaks }}</p>
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold">Job Description</h2>
+                
+                {% if job_opening.original_description %}
+                <div class="flex items-center">
+                    <span class="text-sm mr-2">View original</span>
+                    <input type="checkbox" id="show-original-description" class="toggle toggle-primary" 
+                           onchange="toggleDescription()">
+                </div>
+                {% endif %}
+            </div>
+            
+            <div id="ai-processed-description">
+                <p>{{ job_opening.description|linebreaks }}</p>
+            </div>
+            
+            {% if job_opening.original_description %}
+            <div id="original-description" class="hidden">
+                <p>{{ job_opening.original_description|linebreaks }}</p>
+            </div>
+            {% endif %}
         </div>
         
         <div class="divider"></div>

@@ -162,6 +162,10 @@ class JobOpening(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField()
+    original_description = models.TextField(
+        blank=True,
+        help_text="The original, unmodified job description as provided by the recruiter",
+    )
     location = models.CharField(max_length=100, blank=True)
     company = models.CharField(
         max_length=255,

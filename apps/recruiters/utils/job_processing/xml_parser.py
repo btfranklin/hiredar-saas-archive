@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_job_opening_from_xml(
-    xml_data: str, recruiter_profile: RecruiterProfile
+    xml_data: str, recruiter_profile: RecruiterProfile, original_description: str = ""
 ) -> JobOpening | None:
     """
     Create a JobOpening from XML data.
@@ -23,6 +23,7 @@ def create_job_opening_from_xml(
     Args:
         xml_data: XML string representation of the job
         recruiter_profile: RecruiterProfile instance for the job creator
+        original_description: The original job description text as provided by the recruiter
 
     Returns:
         Created JobOpening instance or None if creation failed
@@ -179,6 +180,7 @@ def create_job_opening_from_xml(
             reporting_to=reporting_to,
             travel_requirements=travel_requirements,
             status="draft",
+            original_description=original_description,
         )
 
         # Log successful creation

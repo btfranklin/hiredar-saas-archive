@@ -103,6 +103,14 @@
                         <textarea id="id_description" name="description" class="textarea textarea-bordered h-32" required>{{ job_opening.description }}</textarea>
                     </div>
                     
+                    <div class="form-control">
+                        <label class="label" for="id_original_description">
+                            <span class="label-text font-medium">Original Job Description</span>
+                            <span class="label-text-alt text-base-content/70">The unprocessed version</span>
+                        </label>
+                        <textarea id="id_original_description" name="original_description" class="textarea textarea-bordered h-32">{{ job_opening.original_description }}</textarea>
+                    </div>
+                    
                     <div class="divider">Job Classification</div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

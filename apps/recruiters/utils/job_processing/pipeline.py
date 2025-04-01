@@ -87,7 +87,9 @@ def process_job_description(
             70,
             "Creating structured job opening from processed data",
         )
-        job_opening = create_job_opening_from_xml(xml_data, recruiter_profile)
+        job_opening = create_job_opening_from_xml(
+            xml_data, recruiter_profile, original_description=job_description
+        )
 
         if not job_opening:
             task.mark_failed("Failed to create job opening from structured data")
