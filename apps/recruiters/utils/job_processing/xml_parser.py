@@ -79,7 +79,7 @@ def create_job_opening_from_xml(
                     if skill_elem.text and skill_elem.text.strip():
                         skills.append(skill_elem.text.strip())
 
-        required_skills = ", ".join(skills)
+        required_skills = " | ".join(skills)
 
         # Extract qualifications
         qualifications = []
