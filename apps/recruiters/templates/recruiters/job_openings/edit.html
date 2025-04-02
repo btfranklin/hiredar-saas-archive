@@ -31,29 +31,26 @@
                     
                     <div class="divider">Job Status</div>
                     
-                    <fieldset class="space-y-4">
-                        <div class="form-control">
-                            <label class="label cursor-pointer flex items-start gap-2">
+                    <fieldset class="fieldset space-y-4">
+                        <legend class="sr-only">Job Status</legend>
+                        <div class="space-y-4">
+                            <label class="label cursor-pointer flex items-start gap-4">
                                 <input type="radio" name="status" class="radio radio-primary mt-1" value="draft" {% if job_opening.status == 'draft' %}checked{% endif %} />
                                 <div class="flex-1">
                                     <div class="font-semibold">Draft</div>
                                     <div class="text-sm text-base-content/70">The job is saved but not publicly visible yet.</div>
                                 </div>
                             </label>
-                        </div>
-                        
-                        <div class="form-control">
-                            <label class="label cursor-pointer flex items-start gap-2">
+                            
+                            <label class="label cursor-pointer flex items-start gap-4">
                                 <input type="radio" name="status" class="radio radio-primary mt-1" value="active" {% if job_opening.status == 'active' or not job_opening.status %}checked{% endif %} />
                                 <div class="flex-1">
                                     <div class="font-semibold">Active</div>
                                     <div class="text-sm text-base-content/70">The job opening is publicly visible and can receive applications.</div>
                                 </div>
                             </label>
-                        </div>
-                        
-                        <div class="form-control">
-                            <label class="label cursor-pointer flex items-start gap-2">
+                            
+                            <label class="label cursor-pointer flex items-start gap-4">
                                 <input type="radio" name="status" class="radio radio-primary mt-1" value="closed" {% if job_opening.status == 'closed' %}checked{% endif %} />
                                 <div class="flex-1">
                                     <div class="font-semibold">Closed</div>
@@ -63,22 +60,10 @@
                         </div>
                     </fieldset>
                     
-                    {% if job_opening.candidate_matches.exists %}
-                        <div class="my-4">
-                            <h3 class="font-semibold">Candidate Matches</h3>
-                            <p class="text-sm text-base-content/70 mb-2">You have {{ job_opening.candidate_matches.count }} potential candidates for this position.</p>
-                            <a href="{% url 'matching:candidates' job_opening.id %}" class="btn btn-sm btn-outline w-full">
-                                <i class="fas fa-users mr-2"></i> View Candidates
-                            </a>
-                        </div>
-                    {% endif %}
-                    
-                    <div class="divider">Job Details</div>
-                    
                     {% if job_opening.original_description %}
                     <div class="flex justify-end mb-4">
-                        <div class="flex items-center">
-                            <span class="text-sm mr-2">View original</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm">View original</span>
                             <input type="checkbox" 
                                    class="toggle toggle-primary" 
                                    id="description-toggle"
@@ -88,116 +73,136 @@
                     {% endif %}
                     
                     <div id="processed-fields">
-                        <div class="form-control">
-                            <label class="label" for="id_title">
-                                <span class="label-text font-medium">Job Title*</span>
-                            </label>
-                            <input type="text" id="id_title" name="title" class="input input-bordered w-full" value="{{ job_opening.title }}" required>
-                        </div>
+                        <fieldset class="fieldset space-y-4">
+                            <legend class="sr-only">Basic Information</legend>
+                            <div class="form-control">
+                                <label class="label" for="id_title">
+                                    <span class="label-text font-medium">Job Title*</span>
+                                </label>
+                                <input type="text" id="id_title" name="title" class="input input-bordered w-full" value="{{ job_opening.title }}" required>
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label" for="id_company">
+                                    <span class="label-text font-medium">Company</span>
+                                </label>
+                                <input type="text" id="id_company" name="company" class="input input-bordered w-full" value="{{ job_opening.company }}">
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label" for="id_location">
+                                    <span class="label-text font-medium">Location</span>
+                                </label>
+                                <input type="text" id="id_location" name="location" class="input input-bordered w-full" value="{{ job_opening.location }}">
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label" for="id_description">
+                                    <span class="label-text font-medium">Job Description*</span>
+                                </label>
+                                <textarea id="id_description" name="description" class="textarea textarea-bordered h-32" required>{{ job_opening.description }}</textarea>
+                            </div>
+                        </fieldset>
                         
-                        <div class="form-control">
-                            <label class="label" for="id_company">
-                                <span class="label-text font-medium">Company</span>
-                            </label>
-                            <input type="text" id="id_company" name="company" class="input input-bordered w-full" value="{{ job_opening.company }}">
-                        </div>
-                        
-                        <div class="form-control">
-                            <label class="label" for="id_location">
-                                <span class="label-text font-medium">Location</span>
-                            </label>
-                            <input type="text" id="id_location" name="location" class="input input-bordered w-full" value="{{ job_opening.location }}">
-                        </div>
-                        
-                        <div class="form-control">
-                            <label class="label" for="id_description">
-                                <span class="label-text font-medium">Job Description*</span>
-                            </label>
-                            <textarea id="id_description" name="description" class="textarea textarea-bordered h-32" required>{{ job_opening.description }}</textarea>
-                        </div>
+                        {% if job_opening.candidate_matches.exists %}
+                            <div class="my-4">
+                                <h3 class="font-semibold">Candidate Matches</h3>
+                                <p class="text-sm text-base-content/70 mb-2">You have {{ job_opening.candidate_matches.count }} potential candidates for this position.</p>
+                                <a href="{% url 'matching:candidates' job_opening.id %}" class="btn btn-sm btn-outline w-full">
+                                    <i class="fas fa-users mr-2"></i> View Candidates
+                                </a>
+                            </div>
+                        {% endif %}
                         
                         <div class="divider">Job Classification</div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label" for="id_job_level">
-                                    <span class="label-text font-medium">Job Level</span>
-                                </label>
-                                <select id="id_job_level" name="job_level" class="select select-bordered w-full">
-                                    <option value="" {% if not job_opening.job_level %}selected{% endif %}>-- Select Level --</option>
-                                    <option value="entry" {% if job_opening.job_level == 'entry' %}selected{% endif %}>Entry Level</option>
-                                    <option value="junior" {% if job_opening.job_level == 'junior' %}selected{% endif %}>Junior</option>
-                                    <option value="mid" {% if job_opening.job_level == 'mid' %}selected{% endif %}>Mid-Level</option>
-                                    <option value="senior" {% if job_opening.job_level == 'senior' %}selected{% endif %}>Senior</option>
-                                    <option value="manager" {% if job_opening.job_level == 'manager' %}selected{% endif %}>Manager</option>
-                                    <option value="executive" {% if job_opening.job_level == 'executive' %}selected{% endif %}>Executive</option>
-                                </select>
+                        <fieldset class="fieldset">
+                            <legend class="sr-only">Job Classification</legend>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label class="label" for="id_job_level">
+                                        <span class="label-text font-medium">Job Level</span>
+                                    </label>
+                                    <select id="id_job_level" name="job_level" class="select select-bordered w-full">
+                                        <option value="" {% if not job_opening.job_level %}selected{% endif %}>-- Select Level --</option>
+                                        <option value="entry" {% if job_opening.job_level == 'entry' %}selected{% endif %}>Entry Level</option>
+                                        <option value="mid" {% if job_opening.job_level == 'mid' %}selected{% endif %}>Mid Level</option>
+                                        <option value="senior" {% if job_opening.job_level == 'senior' %}selected{% endif %}>Senior Level</option>
+                                        <option value="lead" {% if job_opening.job_level == 'lead' %}selected{% endif %}>Lead</option>
+                                        <option value="manager" {% if job_opening.job_level == 'manager' %}selected{% endif %}>Manager</option>
+                                        <option value="director" {% if job_opening.job_level == 'director' %}selected{% endif %}>Director</option>
+                                        <option value="executive" {% if job_opening.job_level == 'executive' %}selected{% endif %}>Executive</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-control">
+                                    <label class="label" for="id_employment_type">
+                                        <span class="label-text font-medium">Employment Type</span>
+                                    </label>
+                                    <select id="id_employment_type" name="employment_type" class="select select-bordered w-full">
+                                        <option value="" {% if not job_opening.employment_type %}selected{% endif %}>-- Select Type --</option>
+                                        <option value="full_time" {% if job_opening.employment_type == 'full_time' %}selected{% endif %}>Full-time</option>
+                                        <option value="part_time" {% if job_opening.employment_type == 'part_time' %}selected{% endif %}>Part-time</option>
+                                        <option value="contract" {% if job_opening.employment_type == 'contract' %}selected{% endif %}>Contract</option>
+                                        <option value="temporary" {% if job_opening.employment_type == 'temporary' %}selected{% endif %}>Temporary</option>
+                                        <option value="internship" {% if job_opening.employment_type == 'internship' %}selected{% endif %}>Internship</option>
+                                    </select>
+                                </div>
                             </div>
-                            
-                            <div class="form-control">
-                                <label class="label" for="id_employment_type">
-                                    <span class="label-text font-medium">Employment Type</span>
-                                </label>
-                                <select id="id_employment_type" name="employment_type" class="select select-bordered w-full">
-                                    <option value="" {% if not job_opening.employment_type %}selected{% endif %}>-- Select Type --</option>
-                                    <option value="full_time" {% if job_opening.employment_type == 'full_time' %}selected{% endif %}>Full-time</option>
-                                    <option value="part_time" {% if job_opening.employment_type == 'part_time' %}selected{% endif %}>Part-time</option>
-                                    <option value="contract" {% if job_opening.employment_type == 'contract' %}selected{% endif %}>Contract</option>
-                                    <option value="temporary" {% if job_opening.employment_type == 'temporary' %}selected{% endif %}>Temporary</option>
-                                    <option value="internship" {% if job_opening.employment_type == 'internship' %}selected{% endif %}>Internship</option>
-                                </select>
-                            </div>
-                        </div>
+                        </fieldset>
                         
                         <div class="divider">Compensation & Benefits</div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label" for="id_salary_min">
-                                    <span class="label-text font-medium">Minimum Salary</span>
-                                </label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/70">$</span>
-                                    <input type="number" 
-                                           id="id_salary_min" 
-                                           name="salary_min" 
-                                           class="input input-bordered w-full text-right pl-8 pr-8" 
-                                           min="0" 
-                                           step="any"
-                                           value="{{ job_opening.salary_min|default:'' }}">
+                        <fieldset class="fieldset">
+                            <legend class="sr-only">Compensation & Benefits</legend>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label class="label" for="id_salary_min">
+                                        <span class="label-text font-medium">Minimum Salary</span>
+                                    </label>
+                                    <div class="join w-full">
+                                        <span class="join-item px-3 bg-base-300 flex items-center">$</span>
+                                        <input type="number" 
+                                               id="id_salary_min" 
+                                               name="salary_min" 
+                                               class="input input-bordered join-item w-full text-right" 
+                                               min="0" 
+                                               step="any"
+                                               value="{{ job_opening.salary_min|default:'' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-control">
+                                    <label class="label" for="id_salary_max">
+                                        <span class="label-text font-medium">Maximum Salary</span>
+                                    </label>
+                                    <div class="join w-full">
+                                        <span class="join-item px-3 bg-base-300 flex items-center">$</span>
+                                        <input type="number" 
+                                               id="id_salary_max" 
+                                               name="salary_max" 
+                                               class="input input-bordered join-item w-full text-right" 
+                                               min="0" 
+                                               step="any"
+                                               value="{{ job_opening.salary_max|default:'' }}">
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="form-control">
-                                <label class="label" for="id_salary_max">
-                                    <span class="label-text font-medium">Maximum Salary</span>
+                            <div class="form-control mt-4">
+                                <label class="label" for="id_benefits">
+                                    <span class="label-text font-medium">Benefits</span>
                                 </label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/70">$</span>
-                                    <input type="number" 
-                                           id="id_salary_max" 
-                                           name="salary_max" 
-                                           class="input input-bordered w-full text-right pl-8 pr-8" 
-                                           min="0" 
-                                           step="any"
-                                           value="{{ job_opening.salary_max|default:'' }}">
-                                </div>
+                                <textarea id="id_benefits" name="benefits" class="textarea textarea-bordered h-24" placeholder="Health insurance, retirement plans, etc.">{{ job_opening.benefits }}</textarea>
                             </div>
-                        </div>
-                        
-                        <div class="form-control">
-                            <label class="label" for="id_benefits">
-                                <span class="label-text font-medium">Benefits</span>
-                            </label>
-                            <textarea id="id_benefits" name="benefits" class="textarea textarea-bordered h-24" placeholder="Health insurance, retirement plans, etc.">{{ job_opening.benefits }}</textarea>
-                        </div>
-                        
-                        <div class="form-control">
-                            <label class="label" for="id_additional_perks">
-                                <span class="label-text font-medium">Additional Perks</span>
-                            </label>
-                            <textarea id="id_additional_perks" name="additional_perks" class="textarea textarea-bordered h-24" placeholder="Gym membership, free lunch, flexible schedule, etc.">{{ job_opening.additional_perks }}</textarea>
-                        </div>
+                            
+                            <div class="form-control">
+                                <label class="label" for="id_additional_perks">
+                                    <span class="label-text font-medium">Additional Perks</span>
+                                </label>
+                                <textarea id="id_additional_perks" name="additional_perks" class="textarea textarea-bordered h-24" placeholder="Gym membership, free lunch, flexible schedule, etc.">{{ job_opening.additional_perks }}</textarea>
+                            </div>
+                        </fieldset>
                         
                         <div class="divider">Qualifications & Skills</div>
                         
