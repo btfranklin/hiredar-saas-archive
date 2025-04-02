@@ -24,18 +24,18 @@
     </div>
 
     {# Tabs for sections #}
-    <div class="tabs tabs-bordered mb-6">
+    <div class="tabs tabs-boxed mb-6">
         <a class="tab tab-lg {% if section == 'holistic' %}tab-active{% endif %}" href="?section=holistic">
-            Holistic <span class="ml-2 badge badge-ghost">{{ holistic_count }}</span>
+            <i class="fas fa-star mr-2"></i> Holistic <span class="badge badge-ghost ml-2">{{ holistic_count }}</span>
         </a>
         <a class="tab tab-lg {% if section == 'skills' %}tab-active{% endif %}" href="?section=skills">
-            Skills <span class="ml-2 badge badge-ghost">{{ skills_count }}</span>
+            <i class="fas fa-code mr-2"></i> Skills <span class="badge badge-ghost ml-2">{{ skills_count }}</span>
         </a>
         <a class="tab tab-lg {% if section == 'experience' %}tab-active{% endif %}" href="?section=experience">
-            Experience <span class="ml-2 badge badge-ghost">{{ experience_count }}</span>
+            <i class="fas fa-briefcase mr-2"></i> Experience <span class="badge badge-ghost ml-2">{{ experience_count }}</span>
         </a>
         <a class="tab tab-lg {% if section == 'wildcard' %}tab-active{% endif %}" href="?section=wildcard">
-            Wildcard <span class="ml-2 badge badge-ghost">{{ wildcard_count }}</span>
+            <i class="fas fa-lightbulb mr-2"></i> Wildcard <span class="badge badge-ghost ml-2">{{ wildcard_count }}</span>
         </a>
     </div>
 
