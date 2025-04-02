@@ -174,6 +174,8 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
 
         # Get the tab parameter from the URL, default to 'details'
         context["tab"] = self.request.GET.get("tab", "details")
+        # Get the view parameter from the URL, default to 'processed'
+        context["view"] = self.request.GET.get("view", "processed")
 
         if user.user_type == "recruiter":
             # Only show candidate matches to the job owner

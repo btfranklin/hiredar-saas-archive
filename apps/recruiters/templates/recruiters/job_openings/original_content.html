@@ -1,0 +1,6 @@
+{% if tab|default:'details' == 'details' %}
+    <!-- Original Job Description Content -->
+    <div class="prose max-w-none">
+        {{ job_opening.original_description|linebreaks }}
+    </div>
+{% endif %} 

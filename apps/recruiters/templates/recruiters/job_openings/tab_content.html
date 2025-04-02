@@ -78,154 +78,22 @@
                 {% if job_opening.original_description %}
                 <div class="flex items-center">
                     <span class="text-sm mr-2">View original</span>
-                    <input type="checkbox" id="show-original-description" class="toggle toggle-primary" 
-                           onchange="toggleDescription()">
+                    <input type="checkbox" 
+                           class="toggle toggle-primary" 
+                           hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=details&view={% if view == 'original' %}processed{% else %}original{% endif %}"
+                           hx-target="#tab-content"
+                           hx-push-url="false"
+                           hx-select="#tab-content"
+                           {% if view == 'original' %}checked{% endif %}>
                 </div>
                 {% endif %}
             </div>
             
-            <div id="ai-processed-description">
-                <p>{{ job_opening.description|linebreaks }}</p>
-            </div>
-            
-            {% if job_opening.original_description %}
-            <div id="original-description" class="hidden">
-                <p>{{ job_opening.original_description|linebreaks }}</p>
-            </div>
+            {% if view == 'original' %}
+                {% include 'recruiters/job_openings/original_content.html' %}
+            {% else %}
+                {% include 'recruiters/job_openings/structured_content.html' %}
             {% endif %}
-        </div>
-        
-        <div class="divider"></div>
-        
-        <!-- Skills & Requirements -->
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-3">Skills & Requirements</h2>
-            
-            {% if job_opening.required_skills %}
-                <div class="mb-4">
-                    <h3 class="font-medium text-base-content/70">Required Skills</h3>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                        {% for skill in job_opening.required_skills_list %}
-                            <span class="badge badge-outline">{{ skill }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-            
-            {% if job_opening.required_qualifications %}
-                <div class="mb-4">
-                    <h3 class="font-medium text-base-content/70">Required Qualifications</h3>
-                    <p>{{ job_opening.required_qualifications|linebreaks }}</p>
-                </div>
-            {% endif %}
-            
-            {% if job_opening.experience_years %}
-                <div class="mb-4">
-                    <h3 class="font-medium text-base-content/70">Experience Required</h3>
-                    <p>{{ job_opening.experience_years }} year{% if job_opening.experience_years != 1 %}s{% endif %}</p>
-                </div>
-            {% endif %}
-            
-            {% if job_opening.soft_skills %}
-                <div>
-                    <h3 class="font-medium text-base-content/70">Soft Skills</h3>
-                    <p>{{ job_opening.soft_skills|linebreaks }}</p>
-                </div>
-            {% endif %}
-        </div>
-        
-        <div class="divider"></div>
-        
-        <!-- Job Details -->
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-3">Job Details</h2>
-            
-            {% if job_opening.responsibilities %}
-                <div class="mb-4">
-                    <h3 class="font-medium text-base-content/70">Responsibilities</h3>
-                    <p>{{ job_opening.responsibilities|linebreaks }}</p>
-                </div>
-            {% endif %}
-            
-            {% if job_opening.daily_tasks %}
-                <div class="mb-4">
-                    <h3 class="font-medium text-base-content/70">Daily Tasks</h3>
-                    <p>{{ job_opening.daily_tasks|linebreaks }}</p>
-                </div>
-            {% endif %}
-            
-            {% if job_opening.performance_expectations %}
-                <div>
-                    <h3 class="font-medium text-base-content/70">Performance Expectations</h3>
-                    <p>{{ job_opening.performance_expectations|linebreaks }}</p>
-                </div>
-            {% endif %}
-        </div>
-        
-        <div class="divider"></div>
-        
-        <!-- Compensation & Benefits -->
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-3">Compensation & Benefits</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {% if job_opening.salary_min or job_opening.salary_max %}
-                    <div>
-                        <h3 class="font-medium text-base-content/70">Salary Range</h3>
-                        <p>
-                            {% if job_opening.salary_min and job_opening.salary_max %}
-                                ${{ job_opening.salary_min|floatformat:0 }} - ${{ job_opening.salary_max|floatformat:0 }}
-                            {% elif job_opening.salary_min %}
-                                ${{ job_opening.salary_min|floatformat:0 }}+
-                            {% elif job_opening.salary_max %}
-                                Up to ${{ job_opening.salary_max|floatformat:0 }}
-                            {% endif %}
-                        </p>
-                    </div>
-                {% endif %}
-                
-                {% if job_opening.working_hours %}
-                    <div>
-                        <h3 class="font-medium text-base-content/70">Working Hours</h3>
-                        <p>{{ job_opening.working_hours }}</p>
-                    </div>
-                {% endif %}
-            </div>
-            
-            {% if job_opening.benefits %}
-                <div class="mb-4">
-                    <h3 class="font-medium text-base-content/70">Benefits</h3>
-                    <p>{{ job_opening.benefits|linebreaks }}</p>
-                </div>
-            {% endif %}
-            
-            {% if job_opening.additional_perks %}
-                <div>
-                    <h3 class="font-medium text-base-content/70">Additional Perks</h3>
-                    <p>{{ job_opening.additional_perks|linebreaks }}</p>
-                </div>
-            {% endif %}
-        </div>
-        
-        <div class="divider"></div>
-        
-        <!-- Working Conditions -->
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-3">Working Conditions</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% if job_opening.reporting_to %}
-                    <div>
-                        <h3 class="font-medium text-base-content/70">Reports To</h3>
-                        <p>{{ job_opening.reporting_to }}</p>
-                    </div>
-                {% endif %}
-                
-                {% if job_opening.travel_requirements %}
-                    <div>
-                        <h3 class="font-medium text-base-content/70">Travel Requirements</h3>
-                        <p>{{ job_opening.travel_requirements }}</p>
-                    </div>
-                {% endif %}
-            </div>
         </div>
         
         <div class="divider"></div>
