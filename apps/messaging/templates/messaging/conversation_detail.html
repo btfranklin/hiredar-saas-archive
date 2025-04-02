@@ -55,30 +55,33 @@
             
             <div class="bg-base-200 rounded-box p-6 shadow-md">
                 <!-- Messages container -->
-                <div class="message-container mb-4 p-2" id="message-container">
+                <div class="chat chat-start mb-4" id="message-container">
                     {% if conversation.messages.all %}
                         {% for message in conversation.messages.all %}
-                            <div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %} mb-4">
-                                <div class="message-bubble p-3 {% if message.sender == request.user %}sent ml-auto{% else %}received{% endif %}">
-                                    <div class="flex justify-between items-start mb-1">
-                                        <span class="font-medium text-sm">
-                                            {% if message.sender == request.user %}
-                                                You
-                                            {% else %}
-                                                {{ other_participant.get_full_name }}
-                                            {% endif %}
-                                        </span>
-                                        <span class="text-xs text-base-content/60 ml-2">
-                                            {{ message.created_at|date:"M d, g:i a" }}
-                                        </span>
-                                    </div>
-                                    <p>{{ message.content }}</p>
-                                    {% if message.is_read and message.sender == request.user %}
-                                        <div class="text-right">
-                                            <span class="text-xs text-base-content/60">Read</span>
+                            <div class="chat {% if message.sender == request.user %}chat-end{% endif %}">
+                                <div class="chat-image avatar">
+                                    <div class="w-10 rounded-full">
+                                        <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center">
+                                            <span class="text-sm">{{ message.sender.get_initials }}</span>
                                         </div>
-                                    {% endif %}
+                                    </div>
                                 </div>
+                                <div class="chat-header">
+                                    {% if message.sender == request.user %}
+                                        You
+                                    {% else %}
+                                        {{ other_participant.get_full_name }}
+                                    {% endif %}
+                                    <time class="text-xs opacity-50 ml-2">{{ message.created_at|date:"M d, g:i a" }}</time>
+                                </div>
+                                <div class="chat-bubble {% if message.sender == request.user %}chat-bubble-primary{% endif %}">
+                                    {{ message.content }}
+                                </div>
+                                {% if message.is_read and message.sender == request.user %}
+                                    <div class="chat-footer opacity-50">
+                                        Read
+                                    </div>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     {% else %}
@@ -111,33 +114,37 @@
             </div>
             
             {% if job_opening %}
-            <div class="mt-6 bg-base-200 rounded-box p-4 shadow-md">
-                <h2 class="text-lg font-bold mb-3">Job Details</h2>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="flex-1">
-                        <h3 class="font-semibold">{{ job_opening.title }}</h3>
-                        <p class="text-sm text-base-content/70">{{ job_opening.recruiter.company_name }}</p>
-                        <div class="flex flex-wrap gap-1 mt-2">
-                            <div class="badge badge-outline">{{ job_opening.location }}</div>
-                            {% if job_opening.salary_min and job_opening.salary_max %}
-                                <div class="badge badge-outline">${{ job_opening.salary_min|floatformat:0 }}k - ${{ job_opening.salary_max|floatformat:0 }}k</div>
-                            {% endif %}
+                <div class="mt-6 bg-base-200 rounded-box p-6 shadow-md">
+                    <h3 class="text-lg font-semibold mb-4">About the Job</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-medium">Title</h4>
+                            <p class="text-base-content/70">{{ job_opening.title }}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">Company</h4>
+                            <p class="text-base-content/70">{{ job_opening.company }}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">Location</h4>
+                            <p class="text-base-content/70">{{ job_opening.location }}</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">Description</h4>
+                            <p class="text-base-content/70">{{ job_opening.description|truncatewords:50 }}</p>
+                        </div>
+                        <div class="flex justify-end">
+                            <a href="{% url 'recruiters:job_opening_detail' job_opening.id %}" class="btn btn-outline btn-sm">
+                                View Full Job Details
+                            </a>
                         </div>
                     </div>
-                    <div>
-                        <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-outline btn-sm">
-                            View Job
-                        </a>
-                    </div>
                 </div>
-            </div>
             {% endif %}
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const messageContainer = document.getElementById('message-container');

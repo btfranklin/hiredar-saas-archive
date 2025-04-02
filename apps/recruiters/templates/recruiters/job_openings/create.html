@@ -84,24 +84,37 @@
         <h2 class="text-xl font-semibold mb-2" id="job-title-display"></h2>
         
         <div class="flex flex-col items-center space-y-6 py-4">
-            <!-- Progress bar and percentage -->
+            <!-- Progress indicator -->
+            <div class="flex flex-col items-center space-y-4">
+                <div class="radial-progress text-primary" id="processing-progress" style="--value:0; --size:8rem;">0%</div>
+                <div class="text-center">
+                    <div id="current-step-name" class="text-base font-medium">Processing...</div>
+                    <p id="current-step-description" class="text-sm text-base-content/70 mt-1">Preparing to process your job description...</p>
+                </div>
+            </div>
+            
+            <!-- Processing steps -->
             <div class="w-full max-w-sm">
-                <div class="flex justify-between mb-1">
-                    <span id="current-step-name" class="text-base font-medium">Processing...</span>
-                    <span id="progress-percent" class="text-sm font-medium">0%</span>
+                <div class="steps steps-vertical">
+                    <div class="step step-primary" data-step="parsing">
+                        <div class="step-content">
+                            <div class="step-title">Parsing Description</div>
+                            <div class="step-description text-sm text-base-content/70">Extracting key information from your job description</div>
+                        </div>
+                    </div>
+                    <div class="step" data-step="classifying">
+                        <div class="step-content">
+                            <div class="step-title">Classifying Job</div>
+                            <div class="step-description text-sm text-base-content/70">Determining job level and requirements</div>
+                        </div>
+                    </div>
+                    <div class="step" data-step="matching">
+                        <div class="step-content">
+                            <div class="step-title">Finding Matches</div>
+                            <div class="step-description text-sm text-base-content/70">Identifying potential candidates</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Initial loading spinner (visible by default) -->
-                <div id="initial-loading" class="flex justify-center py-3">
-                    <span class="loading loading-spinner loading-md text-primary"></span>
-                </div>
-                
-                <!-- Progress bar (hidden by default, shown when we have real progress) -->
-                <div id="progress-container" class="w-full bg-gray-200 rounded-full h-2.5 hidden">
-                    <div id="progress-bar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
-                </div>
-                
-                <p id="current-step-description" class="text-sm mt-2 text-base-content/70">Preparing to process your job description...</p>
             </div>
         </div>
     </div>
@@ -111,27 +124,20 @@
 <div id="success-template" class="hidden">
     <h1 class="text-2xl font-bold mb-6">Job Opening Created</h1>
     
-    <div class="card bg-base-100 shadow-md p-6">
-        <div class="alert alert-success mb-6">
-            <i class="fas fa-check-circle mr-2"></i>
-            <span>Job description processed successfully! You can now review and edit the details.</span>
-        </div>
-        
-        <h2 class="text-xl font-semibold mb-4" id="success-job-title"></h2>
-        
-        <div class="divider">Job Details</div>
-        
-        <div class="flex flex-col space-y-4 mb-6" id="job-details-container">
-            <!-- Job details will be populated here -->
-            <div class="skeleton h-4 w-full"></div>
-            <div class="skeleton h-4 w-full"></div>
-            <div class="skeleton h-4 w-full"></div>
-        </div>
-        
-        <div class="flex justify-end">
-            <a id="edit-job-link" href="#" class="btn btn-primary">
-                <i class="fas fa-edit mr-2"></i> Review Job Details
-            </a>
+    <div class="card bg-base-100 shadow-md" id="success-card">
+        <div class="card-body">
+            <div class="alert alert-success mb-6">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>Job description processed successfully! You can now review and edit the details.</span>
+            </div>
+            
+            <h2 class="text-xl font-semibold mb-4" id="success-job-title"></h2>
+            
+            <div class="flex justify-end">
+                <a id="edit-job-link" href="#" class="btn btn-primary">
+                    <i class="fas fa-edit mr-2"></i> Review Job Details
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -378,26 +384,17 @@
     // Update the progress display
     function updateProgress(statusData) {
         // Get progress data from status data
-        const progressPercent = document.getElementById('progress-percent');
+        const progressPercent = document.getElementById('processing-progress');
         const currentStepName = document.getElementById('current-step-name');
         const currentStepDescription = document.getElementById('current-step-description');
-        const initialLoading = document.getElementById('initial-loading');
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
         
-        if (!progressPercent || !currentStepName || !currentStepDescription || 
-            !initialLoading || !progressContainer || !progressBar) {
+        if (!progressPercent || !currentStepName || !currentStepDescription) {
             return;
         }
         
         // Update progress percentage
         if (statusData.progress_percent !== undefined) {
-            // If we have a progress percent, show the progress bar instead of spinner
-            initialLoading.classList.add('hidden');
-            progressContainer.classList.remove('hidden');
-            
-            // Update progress bar and text
-            progressBar.style.width = `${statusData.progress_percent}%`;
+            progressPercent.style.setProperty('--value', statusData.progress_percent);
             progressPercent.textContent = `${statusData.progress_percent}%`;
         }
         
@@ -409,6 +406,19 @@
         if (statusData.message) {
             currentStepDescription.textContent = statusData.message;
         }
+        
+        // Update step indicators
+        const steps = document.querySelectorAll('.step');
+        steps.forEach(step => {
+            const stepId = step.getAttribute('data-step');
+            if (statusData.current_step && statusData.current_step.toLowerCase().includes(stepId)) {
+                step.classList.add('step-primary');
+            } else if (statusData.completed_steps && statusData.completed_steps.includes(stepId)) {
+                step.classList.add('step-primary');
+            } else {
+                step.classList.remove('step-primary');
+            }
+        });
     }
 </script>
 {% endblock %} 

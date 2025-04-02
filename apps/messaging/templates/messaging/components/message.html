@@ -1,24 +1,27 @@
 {% load static %}
 
-<div class="flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %} mb-4">
-    <div class="message-bubble p-3 {% if message.sender == request.user %}sent ml-auto{% else %}received{% endif %}">
-        <div class="flex justify-between items-start mb-1">
-            <span class="font-medium text-sm">
-                {% if message.sender == request.user %}
-                    You
-                {% else %}
-                    {{ message.sender.get_full_name }}
-                {% endif %}
-            </span>
-            <span class="text-xs text-base-content/60 ml-2">
-                {{ message.created_at|date:"M d, g:i a" }}
-            </span>
-        </div>
-        <p>{{ message.content }}</p>
-        {% if message.is_read and message.sender == request.user %}
-            <div class="text-right">
-                <span class="text-xs text-base-content/60">Read</span>
+<div class="chat {% if message.sender == request.user %}chat-end{% endif %}">
+    <div class="chat-image avatar">
+        <div class="w-10 rounded-full">
+            <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center">
+                <span class="text-sm">{{ message.sender.get_initials }}</span>
             </div>
-        {% endif %}
+        </div>
     </div>
+    <div class="chat-header">
+        {% if message.sender == request.user %}
+            You
+        {% else %}
+            {{ message.sender.get_full_name }}
+        {% endif %}
+        <time class="text-xs opacity-50 ml-2">{{ message.created_at|date:"M d, g:i a" }}</time>
+    </div>
+    <div class="chat-bubble {% if message.sender == request.user %}chat-bubble-primary{% endif %}">
+        {{ message.content }}
+    </div>
+    {% if message.is_read and message.sender == request.user %}
+        <div class="chat-footer opacity-50">
+            Read
+        </div>
+    {% endif %}
 </div> 

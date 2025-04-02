@@ -106,13 +106,35 @@
                 <div class="space-y-4">
                     <div>
                         <h3 class="font-semibold">Match Score</h3>
-                        <div class="flex items-center mt-1">
-                            <div class="radial-progress text-primary" style="--value:{{ candidate_match.match_score }}; --size:4rem;">{{ candidate_match.match_score }}%</div>
-                            <div class="ml-4">
-                                <span class="badge {% if candidate_match.match_score >= 60 %}badge-success{% else %}badge-warning{% endif %}">
-                                    {{ candidate_match.get_match_type_display }}
-                                </span>
+                        <div class="flex items-center gap-6 mt-2">
+                            <div class="flex flex-col items-center">
+                                <div class="radial-progress text-primary" style="--value:{{ candidate_match.match_score }}; --size:6rem;">{{ candidate_match.match_score }}%</div>
+                                <div class="text-sm text-base-content/70 mt-1">Overall Match</div>
                             </div>
+                            
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-2">
+                                    <div class="radial-progress text-success" style="--value:{{ candidate_match.skills_match_score|default:0 }}; --size:3rem;">{{ candidate_match.skills_match_score|default:0 }}%</div>
+                                    <div>
+                                        <div class="font-medium">Skills Match</div>
+                                        <div class="text-sm text-base-content/70">Technical alignment</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-2">
+                                    <div class="radial-progress text-accent" style="--value:{{ candidate_match.experience_match_score|default:0 }}; --size:3rem;">{{ candidate_match.experience_match_score|default:0 }}%</div>
+                                    <div>
+                                        <div class="font-medium">Experience Match</div>
+                                        <div class="text-sm text-base-content/70">Work history fit</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <span class="badge {% if candidate_match.match_score >= 60 %}badge-success{% else %}badge-warning{% endif %}">
+                                {{ candidate_match.get_match_type_display }}
+                            </span>
                         </div>
                     </div>
                     

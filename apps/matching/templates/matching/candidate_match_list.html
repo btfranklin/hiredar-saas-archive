@@ -40,11 +40,25 @@
     </div>
 
     {% if not candidate_matches %}
-        <div class="alert">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-info shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div>
-                <h3 class="font-bold">No {{ section|title }} matches found</h3>
-                <div class="text-sm">Our AI is still looking for suitable candidates in this category. Check back later or broaden your criteria.</div>
+        <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+                <div class="flex flex-col items-center text-center py-8">
+                    <div class="text-4xl mb-4">
+                        <i class="fas fa-search text-base-content/30"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">No Matches Found</h3>
+                    <p class="text-base-content/70 max-w-md">
+                        {% if section == 'holistic' %}
+                            We haven't found any candidates that match all the requirements yet. Try adjusting the job requirements or check back later.
+                        {% elif section == 'skills' %}
+                            No candidates currently match the required skills. Consider broadening the skill requirements or check back later.
+                        {% elif section == 'experience' %}
+                            No candidates match the experience requirements. You might want to adjust the experience level or check back later.
+                        {% else %}
+                            No wildcard matches found. Consider adjusting the job requirements to find more potential candidates.
+                        {% endif %}
+                    </p>
+                </div>
             </div>
         </div>
     {% else %}
