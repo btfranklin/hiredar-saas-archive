@@ -57,7 +57,7 @@ def upsert_job_embedding(
         raise
 
 
-def create_job_opening_embeddings(job_opening_id: int) -> None:
+def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
     """
     Create and store embeddings for a JobOpening in Pinecone.
 
@@ -66,6 +66,7 @@ def create_job_opening_embeddings(job_opening_id: int) -> None:
 
     Args:
         job_opening_id: ID of the JobOpening to process
+        **kwargs: Additional keyword arguments (ignored)
     """
     # Get JobOpening model dynamically to avoid circular imports
     JobOpening = apps.get_model("recruiters", "JobOpening")
@@ -142,6 +143,13 @@ def create_job_opening_embeddings(job_opening_id: int) -> None:
         )
 
     logger.info("Completed processing embeddings for JobOpening %s", job.id)
+
+    # Trigger matching task after successfully creating embeddings
+    # Import here to avoid circular imports
+    from django_q.tasks import async_task
+
+    logger.info("Triggering candidate matching for JobOpening %s", job.id)
+    async_task("apps.matching.tasks.create_candidate_matches", job.id)
 
 
 def remove_job_opening_embeddings(job_opening_id: int) -> None:

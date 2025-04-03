@@ -52,7 +52,7 @@ def upsert_talent_embedding(
         raise
 
 
-def create_talent_sheet_embeddings(talent_sheet_id: int) -> None:
+def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
     """
     Create and store embeddings for a TalentSheet in Pinecone.
 
@@ -61,6 +61,7 @@ def create_talent_sheet_embeddings(talent_sheet_id: int) -> None:
 
     Args:
         talent_sheet_id: ID of the TalentSheet to process
+        **kwargs: Additional keyword arguments (ignored)
     """
     # Get TalentSheet model dynamically to avoid circular imports
     TalentSheet = apps.get_model("job_seekers", "TalentSheet")
@@ -126,6 +127,15 @@ def create_talent_sheet_embeddings(talent_sheet_id: int) -> None:
         )
 
     logger.info("Completed processing embeddings for TalentSheet %s", talent_sheet.id)
+
+    # Trigger matching task after successfully creating embeddings
+    # Import here to avoid circular imports
+    from django_q.tasks import async_task
+
+    logger.info(
+        "Triggering matching against active jobs for TalentSheet %s", talent_sheet.id
+    )
+    async_task("apps.matching.tasks.match_talent_to_active_jobs", talent_sheet.id)
 
 
 def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:

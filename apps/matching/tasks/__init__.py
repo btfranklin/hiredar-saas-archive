@@ -9,6 +9,12 @@ from apps.matching.tasks.job_opening_tasks import (
     create_job_opening_embeddings,
     remove_job_opening_embeddings,
 )
+from apps.matching.tasks.matching_tasks import (
+    create_candidate_matches,
+    match_talent_to_active_jobs,
+    remove_job_opening_matches,
+    remove_talent_sheet_matches,
+)
 from apps.matching.tasks.talent_sheet_tasks import (
     create_talent_sheet_embeddings,
     remove_talent_sheet_embeddings,
@@ -19,4 +25,8 @@ __all__ = [
     "remove_job_opening_embeddings",
     "create_talent_sheet_embeddings",
     "remove_talent_sheet_embeddings",
+    "create_candidate_matches",
+    "remove_job_opening_matches",
+    "match_talent_to_active_jobs",
+    "remove_talent_sheet_matches",
 ]

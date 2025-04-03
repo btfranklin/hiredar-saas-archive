@@ -15,7 +15,8 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
     """
     Handle JobOpening save events.
 
-    Process active job openings for embeddings and remove embeddings for inactive ones.
+    Process active job openings for embeddings, and remove embeddings
+    and matches for inactive ones.
 
     Args:
         sender: The model class
@@ -24,25 +25,27 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
     """
     # Only process embeddings for active jobs
     if instance.status == "active":
+        # Create embeddings (which will trigger matching when completed)
         async_task("apps.matching.tasks.create_job_opening_embeddings", instance.id)
     else:
-        # If a job is inactive, remove the embeddings
+        # If a job is inactive, remove the embeddings and matches
         async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
+        async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
 
 
 @receiver(post_delete, sender="recruiters.JobOpening")
 def handle_job_opening_delete(sender, instance, **kwargs):
     """
-    Handle JobOpening deletion events.
+    Handle JobOpening delete events.
 
-    Remove embeddings when a job opening is deleted.
+    Remove embeddings and matches when a job opening is deleted.
 
     Args:
         sender: The model class
         instance: The actual instance being deleted
     """
-    # On deletion, trigger removal of job embeddings
     async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
+    async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
 
 
 @receiver(post_save, sender="job_seekers.TalentSheet")
@@ -59,10 +62,12 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
     """
     # Only process published talent sheets
     if instance.is_published:
+        # Create embeddings (which will trigger matching when completed)
         async_task("apps.matching.tasks.create_talent_sheet_embeddings", instance.id)
     else:
-        # If a talent sheet is unpublished, remove the embeddings
+        # If a talent sheet is unpublished, remove the embeddings and matches
         async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
+        async_task("apps.matching.tasks.remove_talent_sheet_matches", instance.id)
 
 
 @receiver(post_delete, sender="job_seekers.TalentSheet")
@@ -78,3 +83,4 @@ def handle_talent_sheet_delete(sender, instance, **kwargs):
     """
     # On deletion, trigger removal of talent sheet embeddings
     async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
+    async_task("apps.matching.tasks.remove_talent_sheet_matches", instance.id)
