@@ -59,7 +59,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Get recent candidate matches
         context["recent_candidates"] = CandidateMatch.objects.filter(
             job_opening__recruiter=user.recruiter_profile,
-            status="pending",
+            match_type="holistic",
         ).order_by("-match_score")[:5]
 
         # Get unread notifications

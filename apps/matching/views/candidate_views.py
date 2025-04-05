@@ -130,12 +130,12 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
     Only accessible to the recruiter who owns the job opening.
 
     Attributes:
-        template_name: The template to render for candidate detail.
+        template_name: The template to render for candidate match details.
         context_object_name: The name of the context variable for the match.
     """
 
-    template_name = "matching/candidate_detail.html"
-    context_object_name = "match"
+    template_name = "matching/candidate_match_detail.html"
+    context_object_name = "candidate_match"
     job_opening = None
 
     def dispatch(
@@ -177,7 +177,8 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         return get_object_or_404(
             CandidateMatch,
             job_opening=self.job_opening,
-            job_seeker__id=self.kwargs["candidate_id"],
+            talent_sheet__job_seeker__id=self.kwargs["candidate_id"],
+            match_type="holistic",  # Default to holistic match for detail view
         )
 
     def get_context_data(self, **kwargs):
@@ -193,4 +194,5 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["job_opening"] = self.job_opening
         context["talent_sheet"] = self.object.talent_sheet
+        context["job_seeker"] = self.object.talent_sheet.job_seeker
         return context

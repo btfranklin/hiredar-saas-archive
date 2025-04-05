@@ -120,13 +120,13 @@
                                         <div class="flex items-center">
                                             <div class="avatar placeholder mr-3">
                                                 <div class="bg-neutral text-neutral-content rounded-full w-12">
-                                                    <span>{{ candidate.job_seeker.get_initials }}</span>
+                                                    <span>{{ candidate.talent_sheet.job_seeker.user.get_full_name|first }}</span>
                                                 </div>
                                             </div>
                                             
                                             <div>
-                                                <h3 class="font-bold">{{ candidate.job_seeker.get_full_name }}</h3>
-                                                <p class="text-sm text-base-content/70">{{ candidate.job_seeker.job_title }}</p>
+                                                <h3 class="font-bold">{{ candidate.talent_sheet.job_seeker.user.get_full_name }}</h3>
+                                                <p class="text-sm text-base-content/70">{{ candidate.talent_sheet.job_seeker.most_recent_title|default:"" }}</p>
                                             </div>
                                         </div>
                                         
@@ -139,10 +139,10 @@
                                         </div>
                                         
                                         <div class="flex space-x-2">
-                                            <a href="{% url 'job_seekers:profile' candidate.job_seeker.id %}" class="btn btn-sm btn-outline">
-                                                View Profile
+                                            <a href="{% url 'matching:candidate_match_detail' candidate.job_opening.id candidate.talent_sheet.job_seeker.id %}" class="btn btn-sm btn-outline">
+                                                View Match Details
                                             </a>
-                                            <a href="{% url 'messaging:create' %}?recipient={{ candidate.job_seeker.id }}" class="btn btn-sm btn-primary">
+                                            <a href="{% url 'messaging:conversation_create' candidate.job_opening.id candidate.talent_sheet.job_seeker.id %}" class="btn btn-sm btn-primary">
                                                 Contact
                                             </a>
                                         </div>

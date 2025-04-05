@@ -24,7 +24,7 @@ urlpatterns = [
     path(
         "<int:job_id>/candidates/<int:candidate_id>/",
         CandidateDetailView.as_view(),
-        name="candidate_detail",
+        name="candidate_match_detail",
     ),
     # Matching API endpoints
     path(

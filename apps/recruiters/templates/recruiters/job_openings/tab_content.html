@@ -1,8 +1,8 @@
 {% if tab == 'candidates' and request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
     <!-- Candidate Matches Tab Content -->
-    {% if top_matches or wildcard_matches %}
+    {% if holistic_matches or wildcard_matches %}
         <!-- Top Matches -->
-        {% if top_matches %}
+        {% if holistic_matches %}
         <div class="p-6 mb-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">Top Matches</h2>
@@ -10,17 +10,17 @@
             </div>
             
             <div class="space-y-4">
-                {% for match in top_matches|slice:":5" %}
+                {% for match in holistic_matches|slice:":5" %}
                     <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                         <div class="card-body p-4">
                             <div class="flex justify-between items-start">
-                                <h4 class="card-title text-base">{{ match.job_seeker.user.name }}</h4>
+                                <h4 class="card-title text-base">{{ match.talent_sheet.job_seeker.user.get_full_name }}</h4>
                                 <div class="badge badge-success">{{ match.match_score }}% Match</div>
                             </div>
-                            <p class="text-sm text-base-content/70 line-clamp-2">{{ match.job_seeker.professional_summary|default:match.job_seeker.experience|truncatewords:20 }}</p>
+                            <p class="text-sm text-base-content/70 line-clamp-2">{{ match.talent_sheet.job_seeker.professional_summary|default:"" }}</p>
                             <div class="card-actions justify-end mt-2">
-                                <a href="{% url 'matching:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
-                                    View Profile
+                                <a href="{% url 'matching:candidate_match_detail' job_opening.id match.talent_sheet.job_seeker.id %}" class="btn btn-sm btn-outline">
+                                    View Match Details
                                 </a>
                             </div>
                         </div>
@@ -43,13 +43,13 @@
                     <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                         <div class="card-body p-4">
                             <div class="flex justify-between items-start">
-                                <h4 class="card-title text-base">{{ match.job_seeker.user.name }}</h4>
+                                <h4 class="card-title text-base">{{ match.talent_sheet.job_seeker.user.get_full_name }}</h4>
                                 <div class="badge badge-warning">{{ match.match_score }}% Match</div>
                             </div>
-                            <p class="text-sm text-base-content/70 line-clamp-2">{{ match.job_seeker.professional_summary|default:match.job_seeker.experience|truncatewords:20 }}</p>
+                            <p class="text-sm text-base-content/70 line-clamp-2">{{ match.talent_sheet.job_seeker.professional_summary|default:"" }}</p>
                             <div class="card-actions justify-end mt-2">
-                                <a href="{% url 'matching:candidate_detail' job_opening.id match.job_seeker.id %}" class="btn btn-sm btn-outline">
-                                    View Profile
+                                <a href="{% url 'matching:candidate_match_detail' job_opening.id match.talent_sheet.job_seeker.id %}" class="btn btn-sm btn-outline">
+                                    View Match Details
                                 </a>
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ job_seeker.user_profile.get_user_full_name }} | Candidate Profile | Hiredar{% endblock %}
+{% block title %}{{ job_seeker.user_profile.get_user_full_name }} | Match Details | Hiredar{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -31,31 +31,9 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <a href="#" class="btn btn-primary" hx-post="{% url 'messaging:start_conversation' job_seeker.user_profile.user.id %}" hx-swap="none">
+                        <a href="{% url 'messaging:conversation_create' job_opening.id job_seeker.id %}" class="btn btn-primary">
                             <i class="fas fa-envelope mr-2"></i> Contact Candidate
                         </a>
-                        <div class="dropdown dropdown-end">
-                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </div>
-                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                                <li>
-                                    <button class="{% if candidate_match.is_shortlisted %}text-success{% endif %}" 
-                                            hx-post="{% url 'matching:toggle_shortlist' job_opening.id job_seeker.id %}" 
-                                            hx-swap="outerHTML">
-                                        <i class="fas {% if candidate_match.is_shortlisted %}fa-check-circle{% else %}fa-circle{% endif %} mr-2"></i>
-                                        {% if candidate_match.is_shortlisted %}Shortlisted{% else %}Add to Shortlist{% endif %}
-                                    </button>
-                                </li>
-                                <li>
-                                    <a href="#" 
-                                       hx-post="{% url 'messaging:start_conversation' job_seeker.user_profile.user.id %}" 
-                                       hx-swap="none">
-                                        <i class="fas fa-envelope mr-2"></i> Send Message
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -142,7 +120,7 @@
                     
                     <div>
                         <h3 class="font-semibold">Why This Match?</h3>
-                        <p class="text-base-content/70 mt-1">{{ candidate_match.match_explanation|default:"Our AI has determined this candidate is a good match based on their skills and experience." }}</p>
+                        <p class="text-base-content/70 mt-1">{{ candidate_match.match_summary|default:"Our AI has determined this candidate is a good match based on their skills and experience." }}</p>
                     </div>
                     
                     <div class="divider my-2"></div>
@@ -152,7 +130,7 @@
                         <ul class="mt-2 space-y-2">
                             {% for skill in job_opening.required_skills_list %}
                                 <li class="flex items-center">
-                                    {% if skill in job_seeker.skill_list %}
+                                    {% if skill in job_seeker.skills_list %}
                                         <span class="text-success"><i class="fas fa-check-circle mr-2"></i></span>
                                         <span>{{ skill }}</span>
                                     {% else %}
