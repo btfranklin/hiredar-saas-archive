@@ -67,5 +67,5 @@ python manage.py test apps.job_seekers.tests.integration
 To run a specific test:
 
 ```bash
-python manage.py test apps.job_seekers.tests.integration.test_resume_ingestion
+python manage.py test apps.job_seekers.tests.integration.manual_resume_ingestion
 ```
