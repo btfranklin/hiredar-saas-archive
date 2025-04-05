@@ -291,10 +291,10 @@ SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 # Django Q2 configuration
 Q_CLUSTER = {
     "name": "hiredar",
-    "workers": 4,
+    "workers": int(os.getenv("DJANGO_Q_WORKERS", "4")),
     "recycle": 500,
-    "timeout": 60,
-    "retry": 60,
+    "timeout": int(os.getenv("DJANGO_Q_TIMEOUT", "60")),
+    "retry": int(os.getenv("DJANGO_Q_RETRY", "60")),
     "compress": True,
     "save_limit": 250,
     "queue_limit": 500,
