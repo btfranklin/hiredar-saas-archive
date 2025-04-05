@@ -1,5 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Q
+from django_q.tasks import async_task
 
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 
@@ -45,6 +46,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
         "most_recent_title",
         "location",
     )
+    actions = ["enter_talent_pool", "leave_talent_pool"]
 
     def get_name(self, obj):
         """Get the name of the user."""
@@ -52,6 +54,58 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
 
     get_name.short_description = "Name"
     get_name.admin_order_field = "user__name"
+
+    def enter_talent_pool(self, request, queryset):
+        """Add selected job seekers to the talent pool."""
+        count = 0
+        errors = 0
+        for profile in queryset:
+            if not profile.resume_xml:
+                messages.warning(
+                    request, f"Skipped {profile.user.email}: No resume data available"
+                )
+                errors += 1
+                continue
+
+            # Queue the talent sheet generation task
+            async_task(
+                "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+                profile.id,
+                task_name=f"generate_talent_sheet_{profile.id}",
+            )
+            count += 1
+
+        if count:
+            messages.success(
+                request,
+                f"Queued {count} job seeker(s) for talent pool entry. Talent sheets will be generated in the background.",
+            )
+        if errors:
+            messages.warning(
+                request, f"Skipped {errors} job seeker(s) due to missing resume data."
+            )
+
+    enter_talent_pool.short_description = "Add selected job seekers to talent pool"
+
+    def leave_talent_pool(self, request, queryset):
+        """Remove selected job seekers from the talent pool."""
+        count = 0
+        for profile in queryset:
+            # Unpublish any existing talent sheet
+            talent_sheet = getattr(profile, "talent_sheet", None)
+            if talent_sheet:
+                talent_sheet.is_published = False
+                talent_sheet.save(update_fields=["is_published"])
+                count += 1
+
+        if count:
+            messages.success(
+                request, f"Removed {count} job seeker(s) from the talent pool."
+            )
+        else:
+            messages.info(request, "No job seekers were in the talent pool.")
+
+    leave_talent_pool.short_description = "Remove selected job seekers from talent pool"
 
     fieldsets = (
         (None, {"fields": ("user",)}),
