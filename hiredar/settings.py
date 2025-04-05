@@ -296,11 +296,13 @@ Q_CLUSTER = {
     "timeout": int(os.getenv("DJANGO_Q_TIMEOUT", "60")),
     "retry": int(os.getenv("DJANGO_Q_RETRY", "60")),
     "compress": True,
-    "save_limit": 250,
+    "save_limit": int(os.getenv("DJANGO_Q_SAVE_LIMIT", "250")),
     "queue_limit": 500,
     "cpu_affinity": 1,
     "label": "Django Q2",
     "orm": "default",  # Use Django ORM as broker (no Redis needed)
+    "orm_batch": int(os.getenv("DJANGO_Q_ORM_BATCH", "50")),
+    "poll": int(os.getenv("DJANGO_Q_POLL", "0.5")),
 }
 
 # Logging configuration
