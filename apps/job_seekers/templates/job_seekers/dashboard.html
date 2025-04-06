@@ -31,10 +31,12 @@
                         <div class="form-control">
                             <label class="label cursor-pointer flex gap-3">
                                 <span class="label-text font-medium">Enable Job Matching</span>
-                                <input type="checkbox" class="toggle toggle-success toggle-lg" 
-                                       {% if in_talent_pool %}checked{% endif %}
-                                       id="talent-pool-toggle"
-                                       onclick="toggleTalentPoolConfirm(this)">
+                                <div id="talent-pool-toggle-container">
+                                    <input type="checkbox" class="toggle toggle-success toggle-lg" 
+                                           {% if in_talent_pool %}checked{% endif %}
+                                           id="talent-pool-toggle"
+                                           onclick="toggleTalentPoolConfirm(this)">
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -225,7 +227,13 @@ function toggleTalentPoolConfirm(checkbox) {
 }
 
 function activateTalentPool() {
-    document.getElementById('talent-pool-toggle').checked = true;
+    // Replace the toggle with a loading spinner while we wait for the server
+    const toggleContainer = document.getElementById('talent-pool-toggle-container');
+    toggleContainer.innerHTML = `
+        <div class="flex items-center">
+            <span class="loading loading-spinner loading-md text-primary mr-1"></span>
+        </div>
+    `;
     
     // Send AJAX request to activate talent pool
     fetch('{% url "job_seekers:toggle_talent_pool" %}', {
@@ -239,31 +247,26 @@ function activateTalentPool() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Update toggle state based on actual published state
-            document.getElementById('talent-pool-toggle').checked = data.in_talent_pool;
-            // Update the status badge
-            const badge = document.querySelector('.badge');
-            if (data.in_talent_pool) {
-                badge.classList.add('badge-success');
-                badge.classList.remove('badge-error');
-                badge.textContent = 'Active';
-            } else {
-                badge.classList.add('badge-error');
-                badge.classList.remove('badge-success');
-                badge.textContent = 'Inactive';
-            }
+            // Start polling for talent sheet status
+            startPollingTalentPoolStatus();
         } else {
+            // Show error and restore toggle
             alert('Failed to activate talent pool: ' + data.message);
+            restoreToggle(false);
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('An error occurred. Please try again.');
+        restoreToggle(false);
     });
 }
 
 function deactivateTalentPool() {
-    // Send AJAX request to deactivate talent pool
+    // Let the toggle behave normally - no visual indication of processing
+    // The toggle is already unchecked by the browser at this point
+    
+    // Send AJAX request to deactivate talent pool in the background
     fetch('{% url "job_seekers:toggle_talent_pool" %}', {
         method: 'POST',
         headers: {
@@ -275,27 +278,87 @@ function deactivateTalentPool() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Update toggle state based on actual published state
-            document.getElementById('talent-pool-toggle').checked = data.in_talent_pool;
-            // Update the status badge
-            const badge = document.querySelector('.badge');
+            // Update badge to match server state
+            updateStatusBadge(data.in_talent_pool);
+            
+            // In case the server state is different than what we expected, update the toggle
+            // This should be rare, but we handle it just in case
             if (data.in_talent_pool) {
-                badge.classList.add('badge-success');
-                badge.classList.remove('badge-error');
-                badge.textContent = 'Active';
-            } else {
-                badge.classList.add('badge-error');
-                badge.classList.remove('badge-success');
-                badge.textContent = 'Inactive';
+                document.getElementById('talent-pool-toggle').checked = true;
             }
         } else {
-            alert('Failed to deactivate talent pool: ' + data.message);
+            // Only show an error if something went wrong - don't change the toggle
+            console.error('Failed to deactivate talent pool:', data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred. Please try again.');
+        // Don't show alerts to the user, just log the error
     });
+}
+
+function startPollingTalentPoolStatus() {
+    // Poll the server every 2 seconds to check if the talent sheet is published
+    const pollInterval = setInterval(function() {
+        fetch('{% url "job_seekers:api_talent_pool_status" %}', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.in_talent_pool) {
+                // Talent sheet is published, update UI
+                clearInterval(pollInterval);
+                restoreToggle(true);
+                updateStatusBadge(true);
+            }
+        })
+        .catch(error => {
+            console.error('Error polling talent pool status:', error);
+        });
+    }, 2000);
+    
+    // Set a timeout to stop polling after 30 seconds (15 polls)
+    setTimeout(function() {
+        clearInterval(pollInterval);
+        // Check one final time
+        fetch('{% url "job_seekers:api_talent_pool_status" %}')
+        .then(response => response.json())
+        .then(data => {
+            restoreToggle(data.in_talent_pool);
+            updateStatusBadge(data.in_talent_pool);
+        })
+        .catch(error => {
+            console.error('Error in final talent pool status check:', error);
+            restoreToggle(false);
+        });
+    }, 30000);
+}
+
+function restoreToggle(isActive) {
+    const toggleContainer = document.getElementById('talent-pool-toggle-container');
+    toggleContainer.innerHTML = `
+        <input type="checkbox" class="toggle toggle-success toggle-lg" 
+               ${isActive ? 'checked' : ''}
+               id="talent-pool-toggle"
+               onclick="toggleTalentPoolConfirm(this)">
+    `;
+}
+
+function updateStatusBadge(isActive) {
+    const badge = document.querySelector('.badge');
+    if (badge) {
+        if (isActive) {
+            badge.classList.add('badge-success');
+            badge.classList.remove('badge-error');
+            badge.textContent = 'Active';
+        } else {
+            badge.classList.add('badge-error');
+            badge.classList.remove('badge-success');
+            badge.textContent = 'Inactive';
+        }
+    }
 }
 
 // Helper function to get CSRF token from cookies

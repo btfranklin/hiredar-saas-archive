@@ -5,6 +5,7 @@ from django.urls.resolvers import URLPattern
 
 from apps.job_seekers.views.api_views import (
     PersonalTaglineView,
+    TalentPoolStatusView,
     ToggleRoleInterestView,
     ToggleTalentPoolView,
 )
@@ -54,5 +55,10 @@ urlpatterns: list[URLPattern] = [
         "api/toggle-talent-pool/",
         ToggleTalentPoolView.as_view(),
         name="toggle_talent_pool",
+    ),
+    path(
+        "api/talent-pool-status/",
+        TalentPoolStatusView.as_view(),
+        name="api_talent_pool_status",
     ),
 ]

@@ -252,3 +252,50 @@ class ToggleRoleInterestView(LoginRequiredMixin, View):
         response.headers["HX-Trigger"] = json.dumps(js_trigger)
 
         return response
+
+
+class TalentPoolStatusView(LoginRequiredMixin, View):
+    """API view to check a job seeker's talent pool status."""
+
+    def get(self, request: HttpRequest) -> JsonResponse:
+        """
+        Check if the job seeker is in the talent pool by verifying if they have
+        a published talent sheet.
+
+        Args:
+            request: The HTTP request
+
+        Returns:
+            JsonResponse: A JSON response with the job seeker's talent pool status
+        """
+        user = cast(AuthenticatedUser, request.user)
+
+        # Ensure user is a job seeker
+        if user.user_type != "job_seeker":
+            return JsonResponse(
+                {"success": False, "message": "User is not a job seeker"}, status=403
+            )
+
+        # Get the job seeker's profile
+        if not hasattr(user, "job_seeker_profile"):
+            return JsonResponse(
+                {"success": False, "message": "Job seeker profile not found"},
+                status=404,
+            )
+
+        profile = user.job_seeker_profile
+        if profile is None:
+            return JsonResponse(
+                {"success": False, "message": "Job seeker profile is None"},
+                status=404,
+            )
+
+        # Check if the job seeker is in the talent pool
+        in_talent_pool = profile.in_talent_pool
+
+        return JsonResponse(
+            {
+                "success": True,
+                "in_talent_pool": in_talent_pool,
+            }
+        )
