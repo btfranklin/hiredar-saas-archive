@@ -12,6 +12,7 @@ from apps.job_seekers.views.api_views import (
 from apps.job_seekers.views.dashboard_views import (
     DashboardView,
     RoleRecommendationsView,
+    TalentSheetDetailsView,
 )
 from apps.job_seekers.views.job_seeker_profile_views import ProfileView, SettingsView
 from apps.job_seekers.views.resume_processing_views import (
@@ -32,6 +33,12 @@ urlpatterns: list[URLPattern] = [
         "recommendations/",
         RoleRecommendationsView.as_view(),
         name="role_recommendations",
+    ),
+    # Talent sheet
+    path(
+        "talent-sheet/",
+        TalentSheetDetailsView.as_view(),
+        name="talent_sheet_details",
     ),
     # Resume upload and processing
     path("resume-upload/", ResumeUploadView.as_view(), name="resume_upload"),

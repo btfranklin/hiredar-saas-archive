@@ -1,0 +1,65 @@
+{% if has_talent_sheet %}
+<div class="py-2 space-y-5">
+    {% if talent_sheet %}
+        <!-- Promotional Blurb -->
+        <div class="bg-base-200 p-4 rounded-lg">
+            <h3 class="font-semibold text-md mb-2 text-primary">Professional Overview</h3>
+            <p class="text-sm text-base-content/90 whitespace-pre-line">{{ talent_sheet.promotional_blurb }}</p>
+        </div>
+        
+        <!-- Skills -->
+        <div>
+            <h3 class="font-semibold text-md mb-2 text-primary">Key Skills & Expertise</h3>
+            <div class="bg-base-200 p-4 rounded-lg">
+                <p class="text-sm text-base-content/90 whitespace-pre-line">{{ talent_sheet.skill_overview }}</p>
+            </div>
+        </div>
+        
+        <!-- Ideal Roles -->
+        {% if talent_sheet.ideal_roles %}
+        <div>
+            <h3 class="font-semibold text-md mb-2 text-primary">Ideal Roles</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for role in talent_sheet.ideal_roles_list %}
+                    <span class="badge badge-primary">{{ role }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Minimum Salary -->
+        {% if talent_sheet.salary_min %}
+        <div>
+            <h3 class="font-semibold text-md mb-2 text-primary">Salary Expectations</h3>
+            <p class="text-sm bg-base-200 p-3 rounded-lg inline-block">
+                <span class="font-medium">Starting from:</span> ${{ talent_sheet.salary_min|floatformat:0 }}
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- Info text about who can see this -->
+        <div class="alert alert-info mt-4">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <p class="text-sm">This is your talent sheet as seen by recruiters. When you're in the talent pool, recruiters can view this information when considering you for relevant positions. <strong>Recruiters can only see this talent sheet, not your full resume</strong> — your resume remains private until you specifically choose to share it with a recruiter. This talent sheet was generated using our AI to present your skills and experience in the best light for potential employers.</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <p>We couldn't find your talent sheet data. Please try refreshing the page.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="py-3">
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <p>You don't have an active talent sheet. To create one, enable job matching using the toggle above.</p>
+        </div>
+    </div>
+</div>
+{% endif %} 

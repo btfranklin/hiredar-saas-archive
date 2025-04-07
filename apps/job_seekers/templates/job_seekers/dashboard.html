@@ -42,7 +42,33 @@
                     </div>
                 </div>
                 
+                <!-- Talent Sheet Collapse Section - Only shown if in talent pool -->
+                <div id="talent-sheet-collapse-container" class="{% if not in_talent_pool %}hidden{% endif %} my-5">
+                    <div class="collapse collapse-arrow bg-base-100 border border-primary/10 rounded-lg">
+                        <input type="checkbox" class="peer" id="talent-sheet-collapse" onclick="checkLoadTalentSheet(this)"/> 
+                        <div class="collapse-title text-lg font-medium text-primary flex items-center">
+                            <i class="fas fa-id-card mr-2"></i> View Your Talent Sheet
+                        </div>
+                        <div class="collapse-content" id="talent-sheet-content">
+                            <div id="talent-sheet-loading" class="w-full flex justify-center py-4">
+                                <span class="loading loading-spinner loading-md"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="mt-5 bg-primary/5 rounded-lg p-4 border-l-4 border-primary">
+                    {% if in_talent_pool %}
+                    <h3 class="text-lg font-semibold mb-2 text-primary">Your AI Talent Agent Is Working For You</h3>
+                    <p class="mb-2">Your AI talent agent is now actively:</p>
+                    <ul class="list-disc list-inside space-y-1 ml-2 text-base-content/80">
+                        <li>Analyzing your profile to highlight your strengths</li>
+                        <li>Matching you with new job openings as they're posted</li>
+                        <li>Presenting your talent sheet to interested recruiters</li>
+                        <li>Prioritizing roles similar to those you've marked as interesting</li>
+                    </ul>
+                    <p class="mt-3 text-sm">Recruiters are now able to discover your profile when searching for candidates with your skills. If they're interested, they'll reach out via our messaging system. Check back regularly for new matches and messages.</p>
+                    {% else %}
                     <h3 class="text-lg font-semibold mb-2 text-primary">How Our AI Talent Agent Works</h3>
                     <p class="mb-2">When you enable job matching, our AI talent agent will:</p>
                     <ul class="list-disc list-inside space-y-1 ml-2 text-base-content/80">
@@ -52,6 +78,7 @@
                         <li>Prioritize roles you've marked as interesting</li>
                     </ul>
                     <p class="mt-3 text-sm">Recruiters can view your profile and may reach out via our messaging system if they're interested. You can disable job matching at any time.</p>
+                    {% endif %}
                 </div>
             </div>
             
@@ -266,6 +293,12 @@ function deactivateTalentPool() {
     // Let the toggle behave normally - no visual indication of processing
     // The toggle is already unchecked by the browser at this point
     
+    // Immediately hide the talent sheet collapse container
+    const talentSheetContainer = document.getElementById('talent-sheet-collapse-container');
+    if (talentSheetContainer) {
+        talentSheetContainer.classList.add('hidden');
+    }
+    
     // Send AJAX request to deactivate talent pool in the background
     fetch('{% url "job_seekers:toggle_talent_pool" %}', {
         method: 'POST',
@@ -285,6 +318,10 @@ function deactivateTalentPool() {
             // This should be rare, but we handle it just in case
             if (data.in_talent_pool) {
                 document.getElementById('talent-pool-toggle').checked = true;
+                // Also show the talent sheet section again if it's still active
+                if (talentSheetContainer) {
+                    talentSheetContainer.classList.remove('hidden');
+                }
             }
         } else {
             // Only show an error if something went wrong - don't change the toggle
@@ -312,6 +349,12 @@ function startPollingTalentPoolStatus() {
                 clearInterval(pollInterval);
                 restoreToggle(true);
                 updateStatusBadge(true);
+                
+                // Show the talent sheet collapse container
+                const talentSheetContainer = document.getElementById('talent-sheet-collapse-container');
+                if (talentSheetContainer) {
+                    talentSheetContainer.classList.remove('hidden');
+                }
             }
         })
         .catch(error => {
@@ -328,6 +371,16 @@ function startPollingTalentPoolStatus() {
         .then(data => {
             restoreToggle(data.in_talent_pool);
             updateStatusBadge(data.in_talent_pool);
+            
+            // Show or hide the talent sheet collapse container based on the final status
+            const talentSheetContainer = document.getElementById('talent-sheet-collapse-container');
+            if (talentSheetContainer) {
+                if (data.in_talent_pool) {
+                    talentSheetContainer.classList.remove('hidden');
+                } else {
+                    talentSheetContainer.classList.add('hidden');
+                }
+            }
         })
         .catch(error => {
             console.error('Error in final talent pool status check:', error);
@@ -375,6 +428,44 @@ function getCookie(name) {
         }
     }
     return cookieValue;
+}
+
+// Function to load talent sheet when the collapse is opened
+function checkLoadTalentSheet(checkbox) {
+    // Only load the content if the checkbox is checked (collapse is open)
+    // and the content hasn't been loaded yet
+    if (checkbox.checked && !checkbox.dataset.loaded) {
+        const contentElement = document.getElementById('talent-sheet-content');
+        
+        // Show loading indicator
+        document.getElementById('talent-sheet-loading').classList.remove('hidden');
+        
+        // Fetch the talent sheet content
+        fetch('{% url "job_seekers:talent_sheet_details" %}', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Replace content with the response
+            contentElement.innerHTML = html;
+            // Mark as loaded so we don't load it again
+            checkbox.dataset.loaded = 'true';
+        })
+        .catch(error => {
+            console.error('Error loading talent sheet:', error);
+            contentElement.innerHTML = `
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div>
+                        <p>Failed to load talent sheet. Please try again.</p>
+                    </div>
+                </div>
+            `;
+        });
+    }
 }
 </script>
 
