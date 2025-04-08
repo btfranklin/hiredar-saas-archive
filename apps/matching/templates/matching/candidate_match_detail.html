@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load matching_filters %}
 
 {% block title %}{{ job_seeker.user_profile.get_user_full_name }} | Match Details | Hiredar{% endblock %}
 
@@ -23,11 +24,12 @@
                         {% if job_seeker.most_recent_title %}
                             <p class="text-lg text-base-content/80 mt-1">{{ job_seeker.most_recent_title }}</p>
                         {% endif %}
-                        <div class="mt-3">
-                            <div class="badge badge-lg {% if candidate_match.match_score >= 60 %}badge-success{% endif %} mr-2">
-                                {{ candidate_match.match_score }}% Match
-                            </div>
-                            <span class="badge badge-lg">{{ candidate_match.get_match_type_display }}</span>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            {% for match_type, match_label, rating in candidate_match.get_all_match_ratings %}
+                                <div class="badge badge-lg {% if match_type == candidate_match.match_type %}badge-primary{% else %}badge-outline{% endif %}">
+                                    {{ match_label }} {{ rating }}/10
+                                </div>
+                            {% endfor %}
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -83,36 +85,25 @@
                 
                 <div class="space-y-4">
                     <div>
-                        <h3 class="font-semibold">Match Score</h3>
-                        <div class="flex items-center gap-6 mt-2">
-                            <div class="flex flex-col items-center">
-                                <div class="radial-progress text-primary" style="--value:{{ candidate_match.match_score }}; --size:6rem;">{{ candidate_match.match_score }}%</div>
-                                <div class="text-sm text-base-content/70 mt-1">Overall Match</div>
-                            </div>
-                            
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="radial-progress text-success" style="--value:{{ candidate_match.skills_match_score|default:0 }}; --size:3rem;">{{ candidate_match.skills_match_score|default:0 }}%</div>
-                                    <div>
-                                        <div class="font-medium">Skills Match</div>
-                                        <div class="text-sm text-base-content/70">Technical alignment</div>
-                                    </div>
+                        <h3 class="font-semibold">Match Ratings</h3>
+                        <div class="flex flex-wrap gap-3 mt-3">
+                            {% for match_type, match_label, rating in candidate_match.get_all_match_ratings %}
+                                <div class="flex flex-col items-center">
+                                    {% if match_type == 'holistic' %}
+                                        <div class="radial-progress text-primary" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
+                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
+                                    {% elif match_type == 'skills' %}
+                                        <div class="radial-progress text-success" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
+                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
+                                    {% elif match_type == 'experience' %}
+                                        <div class="radial-progress text-accent" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
+                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
+                                    {% else %}
+                                        <div class="radial-progress text-secondary" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
+                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
+                                    {% endif %}
                                 </div>
-                                
-                                <div class="flex items-center gap-2">
-                                    <div class="radial-progress text-accent" style="--value:{{ candidate_match.experience_match_score|default:0 }}; --size:3rem;">{{ candidate_match.experience_match_score|default:0 }}%</div>
-                                    <div>
-                                        <div class="font-medium">Experience Match</div>
-                                        <div class="text-sm text-base-content/70">Work history fit</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <span class="badge {% if candidate_match.match_score >= 60 %}badge-success{% else %}badge-warning{% endif %}">
-                                {{ candidate_match.get_match_type_display }}
-                            </span>
+                            {% endfor %}
                         </div>
                     </div>
                     

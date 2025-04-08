@@ -72,7 +72,10 @@ classDiagram
     class CandidateMatch {
         +job_opening: ForeignKey(JobOpening)
         +talent_sheet: ForeignKey(TalentSheet)
-        +match_score: DecimalField
+        +holistic_score: DecimalField
+        +skills_score: DecimalField
+        +experience_score: DecimalField
+        +wildcard_score: DecimalField
         +status: CharField
         +is_analyzed: BooleanField
         +match_type: CharField
@@ -322,10 +325,13 @@ Model for matching talent sheets to job openings.
 |-------|------|-------------|
 | `job_opening` | ForeignKey | Link to the JobOpening in the recruiters app |
 | `talent_sheet` | ForeignKey | Link to the TalentSheet in the job_seekers app |
-| `match_score` | DecimalField | Match score between 0 and 100 |
+| `holistic_score` | DecimalField | Overall match score between 0.0 and 1.0 |
+| `skills_score` | DecimalField | Skills-based match score between 0.0 and 1.0 |
+| `experience_score` | DecimalField | Experience-based match score between 0.0 and 1.0 |
+| `wildcard_score` | DecimalField | Wildcard match score between 0.0 and 1.0 |
 | `status` | CharField | Status of the match (identified/open/contacted/candidate_interested/candidate_declined/recruiter_rejected) |
 | `is_analyzed` | BooleanField | Whether this match has been analyzed by AI |
-| `match_type` | CharField | Type of match (holistic/skills/experience/wildcard) |
+| `match_type` | CharField | Primary type of match (holistic/skills/experience/wildcard) |
 | `match_summary` | CharField | A headline summarizing why this is a good match |
 | `match_analysis` | TextField | Detailed analysis of why this job and candidate match |
 | `created_at` | DateTimeField | When the match was created |
@@ -335,12 +341,20 @@ Model for matching talent sheets to job openings.
 | Method | Description |
 |--------|-------------|
 | `__str__` | Returns a string representation that includes job seeker name, job opening, match score, and match type |
+| `get_score_for_type` | Returns the score for the current match type |
+| `get_rating_for_type` | Returns the rating (1-10) for the current match type |
+| `holistic_rating` | Property that returns the holistic score as a 1-10 rating |
+| `skills_rating` | Property that returns the skills score as a 1-10 rating |
+| `experience_rating` | Property that returns the experience score as a 1-10 rating |
+| `wildcard_rating` | Property that returns the wildcard score as a 1-10 rating |
+| `get_all_match_ratings` | Returns ratings for all match types for this talent sheet and job |
 
 **Business Rules:**
 | Rule | Description |
 |------|-------------|
 | Uniqueness | Each combination of job_opening, talent_sheet, and match_type must be unique |
 | Relationship | Links a talent sheet to a job opening, accessing the job seeker through the talent sheet |
+| Ratings | Scores are stored as raw similarity scores (0.0-1.0) and converted to ratings (1-10) for display |
 
 ## Messaging App
 

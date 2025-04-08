@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load matching_filters %}
 
 {% block title %}Candidate Matches | {{ job_opening.title }} | Hiredar{% endblock %}
 
@@ -84,7 +85,7 @@
                             <div class="flex justify-between items-start">
                                 <h3 class="card-title">{{ match.talent_sheet.job_seeker.user.get_full_name }}</h3>
                                 {# Use different badge styling based on section or score if desired #}
-                                <div class="badge {% if match.match_type == 'holistic' %}badge-primary{% elif match.match_type == 'skills' %}badge-secondary{% elif match.match_type == 'experience' %}badge-accent{% else %}badge-ghost{% endif %}">{{ match.match_score|floatformat:0 }}% Match</div>
+                                <div class="badge {% if match.match_type == 'holistic' %}badge-primary{% elif match.match_type == 'skills' %}badge-secondary{% elif match.match_type == 'experience' %}badge-accent{% else %}badge-ghost{% endif %}">{{ match.get_rating_for_type }}/10</div>
                             </div>
 
                             <div class="my-2">

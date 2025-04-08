@@ -46,46 +46,66 @@ def create_candidate_matches(job_id: int, **kwargs) -> None:
                 "wildcard_matches": "wildcard",
             }
 
+            # Store all matches by talent sheet ID for quick lookup later
+            all_matches_by_talent = {}
+
+            # First pass: collect all matches by talent sheet ID
+            for result_key, match_type in match_type_mapping.items():
+                matches = match_results.get(result_key, [])
+
+                for match in matches:
+                    talent_sheet_id = match["metadata"]["talent_sheet_id"]
+                    # Store raw score (0-1 range) directly from Pinecone
+                    score = match["score"]
+
+                    if talent_sheet_id not in all_matches_by_talent:
+                        all_matches_by_talent[talent_sheet_id] = {}
+
+                    all_matches_by_talent[talent_sheet_id][match_type] = score
+
             # Process each type of match
             for result_key, match_type in match_type_mapping.items():
                 if not match_results.get(result_key):
                     continue
 
                 for match in match_results[result_key]:
-                    # Convert score from 0-1 to 0-100 and round to 2 decimal places
-                    score = round(match["score"] * 100, 2)
+                    # Use raw score (0-1 range) directly from Pinecone
+                    score = match["score"]
 
-                    # Skip if below minimum score (50)
-                    if score < 50:
+                    # Skip if below minimum score (0.5)
+                    if score < 0.5:
                         continue
 
                     talent_sheet_id = match["metadata"]["talent_sheet_id"]
+
+                    # Get all match scores for this talent
+                    talent_scores = all_matches_by_talent.get(talent_sheet_id, {})
+
+                    # Get the scores for different match types, default to 0
+                    holistic_score = talent_scores.get("holistic", 0)
+                    skills_score = talent_scores.get("skills", 0)
+                    experience_score = talent_scores.get("experience", 0)
+                    wildcard_score = talent_scores.get("wildcard", 0)
 
                     try:
                         # Get the talent sheet
                         TalentSheet = apps.get_model("job_seekers", "TalentSheet")
                         talent_sheet = TalentSheet.objects.get(id=talent_sheet_id)
 
-                        # For non-holistic match types, only create them if a holistic match doesn't already exist
-                        if (
-                            match_type != "holistic"
-                            and CandidateMatch.objects.filter(
+                        # Create or update the match
+                        candidate_match, created = (
+                            CandidateMatch.objects.update_or_create(
                                 job_opening=job,
                                 talent_sheet=talent_sheet,
-                                match_type="holistic",
-                            ).exists()
-                        ):
-                            continue
-
-                        # Create or update the match
-                        CandidateMatch.objects.update_or_create(
-                            job_opening=job,
-                            talent_sheet=talent_sheet,
-                            match_type=match_type,
-                            defaults={
-                                "match_score": score,
-                                "is_analyzed": False,  # Reset analysis flag on update
-                            },
+                                match_type=match_type,
+                                defaults={
+                                    "holistic_score": holistic_score,
+                                    "skills_score": skills_score,
+                                    "experience_score": experience_score,
+                                    "wildcard_score": wildcard_score,
+                                    "is_analyzed": False,  # Reset analysis flag on update
+                                },
+                            )
                         )
 
                     except Exception as e:
@@ -156,44 +176,64 @@ def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
                         "wildcard_matches": "wildcard",
                     }
 
+                    # Store all matches for this talent by match type
+                    talent_scores = {}
+
+                    # First pass: collect all match scores for this talent
+                    for result_key, match_type in match_type_mapping.items():
+                        matches = match_results.get(result_key, [])
+
+                        for match in matches:
+                            # Skip if not matching our talent sheet
+                            if str(match["metadata"]["talent_sheet_id"]) != str(
+                                talent_id
+                            ):
+                                continue
+
+                            # Store raw score (0-1 range) directly from Pinecone
+                            score = match["score"]
+                            talent_scores[match_type] = score
+
                     # Process each type of match
                     for result_key, match_type in match_type_mapping.items():
                         if not match_results.get(result_key):
                             continue
 
                         for match in match_results[result_key]:
-                            # Convert score from 0-1 to 0-100 and round to 2 decimal places
-                            score = round(match["score"] * 100, 2)
-
-                            # Skip if below minimum score (50)
-                            if score < 50:
-                                continue
-
                             # Skip if not matching our talent sheet
-                            if match["metadata"]["talent_sheet_id"] != talent_id:
+                            if str(match["metadata"]["talent_sheet_id"]) != str(
+                                talent_id
+                            ):
                                 continue
+
+                            # Use raw score (0-1 range) directly from Pinecone
+                            score = match["score"]
+
+                            # Skip if below minimum score (0.5)
+                            if score < 0.5:
+                                continue
+
+                            # Get the scores for all match types, default to 0
+                            holistic_score = talent_scores.get("holistic", 0)
+                            skills_score = talent_scores.get("skills", 0)
+                            experience_score = talent_scores.get("experience", 0)
+                            wildcard_score = talent_scores.get("wildcard", 0)
 
                             try:
-                                # For non-holistic match types, only create them if a holistic match doesn't already exist
-                                if (
-                                    match_type != "holistic"
-                                    and CandidateMatch.objects.filter(
+                                # Create or update the match
+                                candidate_match, created = (
+                                    CandidateMatch.objects.update_or_create(
                                         job_opening=job,
                                         talent_sheet=talent,
-                                        match_type="holistic",
-                                    ).exists()
-                                ):
-                                    continue
-
-                                # Create or update the match
-                                CandidateMatch.objects.update_or_create(
-                                    job_opening=job,
-                                    talent_sheet=talent,
-                                    match_type=match_type,
-                                    defaults={
-                                        "match_score": score,
-                                        "is_analyzed": False,  # Reset analysis flag on update
-                                    },
+                                        match_type=match_type,
+                                        defaults={
+                                            "holistic_score": holistic_score,
+                                            "skills_score": skills_score,
+                                            "experience_score": experience_score,
+                                            "wildcard_score": wildcard_score,
+                                            "is_analyzed": False,  # Reset analysis flag on update
+                                        },
+                                    )
                                 )
 
                             except Exception as e:

@@ -16,14 +16,17 @@ from .vector_operations import average_vectors
 
 logger = logging.getLogger(__name__)
 
-# Define section names consistently
-TALENT_PROMO_BLURB = "Promotional Blurb"
-TALENT_SKILL_OVERVIEW = "Skill Overview"
-TALENT_IDEAL_ROLES = "Ideal Roles"
-
+# Define section names for different parts of job openings and talent sheets
+# Use exact format as stored in metadata (with proper capitalization and spaces)
 JOB_OVERVIEW = "Job Overview"
 JOB_REQUIRED_SKILLS = "Required Skills"
 JOB_RESPONSIBILITIES = "Responsibilities"
+JOB_QUALIFICATIONS = "Qualifications"
+JOB_SOFT_SKILLS = "Soft Skills"
+
+TALENT_SKILL_OVERVIEW = "Skill Overview"
+TALENT_PROMO_BLURB = "Promotional Blurb"
+TALENT_IDEAL_ROLES = "Ideal Roles"
 
 
 def match_talent_to_jobs(
@@ -37,7 +40,7 @@ def match_talent_to_jobs(
         )
         if not talent_sheet.is_published:
             logger.warning("TalentSheet %s is not published.", talent_id)
-            # Return empty structure if not published, as no matching should occur
+            # Return empty structure if not published
             return {
                 "holistic_matches": [],
                 "skills_matches": [],
@@ -55,10 +58,10 @@ def match_talent_to_jobs(
 
     # Fetch individual embeddings
     try:
-        promo_embedding = get_talent_section_embedding(talent_id, TALENT_PROMO_BLURB)
         skills_embedding = get_talent_section_embedding(
             talent_id, TALENT_SKILL_OVERVIEW
         )
+        promo_embedding = get_talent_section_embedding(talent_id, TALENT_PROMO_BLURB)
         ideal_roles_embedding = get_talent_section_embedding(
             talent_id, TALENT_IDEAL_ROLES
         )
@@ -66,7 +69,7 @@ def match_talent_to_jobs(
         logger.error(
             "Failed to retrieve one or more embeddings for talent %s: %s", talent_id, e
         )
-        # Decide if partial matching is okay or return empty
+        # Return empty results
         return {
             "holistic_matches": [],
             "skills_matches": [],
@@ -74,7 +77,7 @@ def match_talent_to_jobs(
             "wildcard_matches": [],
         }
 
-    if not promo_embedding and not skills_embedding and not ideal_roles_embedding:
+    if not skills_embedding and not promo_embedding and not ideal_roles_embedding:
         logger.warning(
             "No embeddings found for talent %s. Cannot perform matching.", talent_id
         )
@@ -97,7 +100,7 @@ def match_talent_to_jobs(
     try:
         holistic_vectors = [
             vec
-            for vec in [promo_embedding, skills_embedding, ideal_roles_embedding]
+            for vec in [skills_embedding, promo_embedding, ideal_roles_embedding]
             if vec is not None
         ]
         if holistic_vectors:
@@ -123,7 +126,7 @@ def match_talent_to_jobs(
                 query_vector=skills_embedding,
                 namespace="job_openings",
                 top_k=top_k,
-                filter_dict={"section": JOB_REQUIRED_SKILLS.lower().replace(" ", "_")},
+                filter_dict={"section": JOB_REQUIRED_SKILLS},
             )
             results["skills_matches"] = skills_matches
         else:
@@ -139,7 +142,7 @@ def match_talent_to_jobs(
                 query_vector=promo_embedding,
                 namespace="job_openings",
                 top_k=top_k,
-                filter_dict={"section": JOB_RESPONSIBILITIES.lower().replace(" ", "_")},
+                filter_dict={"section": JOB_RESPONSIBILITIES},
             )
             results["experience_matches"] = experience_matches
         else:
@@ -155,7 +158,7 @@ def match_talent_to_jobs(
                 query_vector=ideal_roles_embedding,
                 namespace="job_openings",
                 top_k=top_k,
-                filter_dict={"section": JOB_OVERVIEW.lower().replace(" ", "_")},
+                filter_dict={"section": JOB_OVERVIEW},
             )
             results["wildcard_matches"] = wildcard_matches
         else:
@@ -256,9 +259,7 @@ def match_job_to_talents(
                 query_vector=skills_embedding,
                 namespace="talent_sheets",
                 top_k=top_k,
-                filter_dict={
-                    "section": TALENT_SKILL_OVERVIEW.lower().replace(" ", "_")
-                },
+                filter_dict={"section": TALENT_SKILL_OVERVIEW},
             )
             results["skills_matches"] = skills_matches
         else:
@@ -274,7 +275,7 @@ def match_job_to_talents(
                 query_vector=resp_embedding,
                 namespace="talent_sheets",
                 top_k=top_k,
-                filter_dict={"section": TALENT_PROMO_BLURB.lower().replace(" ", "_")},
+                filter_dict={"section": TALENT_PROMO_BLURB},
             )
             results["experience_matches"] = experience_matches
         else:
@@ -290,7 +291,7 @@ def match_job_to_talents(
                 query_vector=overview_embedding,
                 namespace="talent_sheets",
                 top_k=top_k,
-                filter_dict={"section": TALENT_IDEAL_ROLES.lower().replace(" ", "_")},
+                filter_dict={"section": TALENT_IDEAL_ROLES},
             )
             results["wildcard_matches"] = wildcard_matches
         else:

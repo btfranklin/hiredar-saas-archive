@@ -15,6 +15,9 @@ class CandidateMatch(models.Model):
 
     Represents a potential match between a talent sheet and job opening,
     with metadata about the quality of the match and its current status.
+
+    Similarity scores from Pinecone are stored directly (0-1 range).
+    Rating properties convert these to a 1-10 scale for display.
     """
 
     job_opening = models.ForeignKey(
@@ -27,11 +30,29 @@ class CandidateMatch(models.Model):
         on_delete=models.CASCADE,  # When a talent sheet is deleted, delete the match
         related_name="job_matches",
     )
-    match_score = models.DecimalField(
+    holistic_score = models.DecimalField(
         max_digits=5,
-        decimal_places=2,
+        decimal_places=4,
         default=Decimal("0.0"),
-        help_text="Match score between 0 and 100",
+        help_text="Holistic similarity score (0-1)",
+    )
+    skills_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        default=Decimal("0.0"),
+        help_text="Skills similarity score (0-1)",
+    )
+    experience_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        default=Decimal("0.0"),
+        help_text="Experience similarity score (0-1)",
+    )
+    wildcard_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        default=Decimal("0.0"),
+        help_text="Wildcard similarity score (0-1)",
     )
     status = models.CharField(
         max_length=20,
@@ -89,4 +110,81 @@ class CandidateMatch(models.Model):
 
         # Access job seeker through talent sheet
         job_seeker_name = self.talent_sheet.job_seeker.user.get_full_name()
-        return f"{job_seeker_name} - {self.job_opening} ({self.match_score}%, {match_type_display})"
+        return f"{job_seeker_name} - {self.job_opening} ({self.get_score_for_type():.2f}, {match_type_display})"
+
+    @property
+    def holistic_rating(self) -> int:
+        """Convert holistic score to a 1-10 integer rating."""
+        return self._score_to_rating(self.holistic_score)
+
+    @property
+    def skills_rating(self) -> int:
+        """Convert skills score to a 1-10 integer rating."""
+        return self._score_to_rating(self.skills_score)
+
+    @property
+    def experience_rating(self) -> int:
+        """Convert experience score to a 1-10 integer rating."""
+        return self._score_to_rating(self.experience_score)
+
+    @property
+    def wildcard_rating(self) -> int:
+        """Convert wildcard score to a 1-10 integer rating."""
+        return self._score_to_rating(self.wildcard_score)
+
+    def _score_to_rating(self, score: Decimal) -> int:
+        """
+        Convert a similarity score (0-1) to a rating (1-10).
+
+        This uses a non-linear scale to better differentiate between scores,
+        as similarity scores tend to cluster in the upper range.
+        """
+        # Convert score to float
+        float_score = float(score)
+
+        # Ensure minimum rating is 1 and maximum is 10
+        if float_score < 0.5:
+            # Scores below 0.5 are considered poor matches
+            return max(1, round(float_score * 10))
+        else:
+            # Scores 0.5 and above use a different scale to spread out the ratings
+            # For example: 0.5 -> 5, 0.65 -> 7, 0.8 -> 9, 0.95+ -> 10
+            return min(10, 5 + round((float_score - 0.5) * 10))
+
+    def get_score_for_type(self) -> Decimal:
+        """Get the score for the current match type."""
+        if self.match_type == "holistic":
+            return self.holistic_score
+        elif self.match_type == "skills":
+            return self.skills_score
+        elif self.match_type == "experience":
+            return self.experience_score
+        elif self.match_type == "wildcard":
+            return self.wildcard_score
+        return Decimal("0.0")  # Fallback
+
+    def get_rating_for_type(self) -> int:
+        """Get the rating for the current match type."""
+        if self.match_type == "holistic":
+            return self.holistic_rating
+        elif self.match_type == "skills":
+            return self.skills_rating
+        elif self.match_type == "experience":
+            return self.experience_rating
+        elif self.match_type == "wildcard":
+            return self.wildcard_rating
+        return 1  # Fallback
+
+    def get_all_match_ratings(self):
+        """
+        Get ratings for all match types for this talent sheet and job.
+
+        Returns:
+            A list of tuples containing (match_type, match_type_display, rating)
+        """
+        return [
+            ("holistic", "Holistic", self.holistic_rating),
+            ("skills", "Skills", self.skills_rating),
+            ("experience", "Experience", self.experience_rating),
+            ("wildcard", "Wildcard", self.wildcard_rating),
+        ]
