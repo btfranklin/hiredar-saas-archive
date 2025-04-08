@@ -185,11 +185,11 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
 
                 context["holistic_matches"] = matches.filter(
                     match_type="holistic"
-                ).order_by("-match_score")
+                ).order_by("-holistic_score")
 
                 context["wildcard_matches"] = matches.filter(
                     match_type="wildcard"
-                ).order_by("-match_score")
+                ).order_by("-wildcard_score")
 
         return context
 

@@ -177,15 +177,25 @@ class Command(BaseCommand):
                 # Check if this matches our talent sheet
                 match_talent_id = match_data["metadata"].get("talent_sheet_id")
                 if str(match_talent_id) == str(talent_sheet.id):
-                    # Create the match record
-                    match_score = round(match_data["score"] * 100, 2)
-                    match = CandidateMatch.objects.create(
+                    # Create a new match
+                    match_score = round(match_data["score"], 4)  # Keep as raw score 0-1
+
+                    # Determine the score field based on match type
+                    score_fields = {
+                        "holistic": {"holistic_score": match_score},
+                        "skills": {"skills_score": match_score},
+                        "experience": {"experience_score": match_score},
+                        "wildcard": {"wildcard_score": match_score},
+                    }
+
+                    # Create the match with the appropriate score field
+                    new_match = CandidateMatch.objects.create(
                         job_opening=job_opening,
                         talent_sheet=talent_sheet,
                         match_type="holistic",
-                        match_score=match_score,
                         status="identified",
                         is_analyzed=False,
+                        **score_fields.get("holistic", {"holistic_score": match_score}),
                     )
                     self.stdout.write(
                         self.style.SUCCESS(

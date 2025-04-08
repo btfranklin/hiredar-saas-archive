@@ -189,17 +189,35 @@ class Command(BaseCommand):
                         ):
                             continue
 
-                        # Create or update the match
-                        candidate_match, created = (
-                            CandidateMatch.objects.update_or_create(
-                                job_opening=job,
-                                talent_sheet=talent_sheet,
-                                match_type=match_type,
-                                defaults={
-                                    "match_score": score,
-                                    "is_analyzed": False,  # Reset analysis flag on update
-                                },
-                            )
+                        # Create a record for this match
+                        score = match.get("score", 0)
+                        # Normalize to 0-1 range instead of 0-100
+                        if score > 1:
+                            score = score / 100
+
+                        match_data = {
+                            "job_opening": job,
+                            "talent_sheet": talent_sheet,
+                            "match_type": match_type,
+                            "status": "identified",
+                            "is_analyzed": False,
+                        }
+
+                        # Set the appropriate score field based on match type
+                        if match_type == "holistic":
+                            match_data["holistic_score"] = score
+                        elif match_type == "skills":
+                            match_data["skills_score"] = score
+                        elif match_type == "experience":
+                            match_data["experience_score"] = score
+                        elif match_type == "wildcard":
+                            match_data["wildcard_score"] = score
+
+                        obj, created = CandidateMatch.objects.update_or_create(
+                            job_opening=job,
+                            talent_sheet=talent_sheet,
+                            match_type=match_type,
+                            defaults=match_data,
                         )
 
                         match_count += 1

@@ -89,7 +89,7 @@ class CandidateMatchListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(match_type="holistic")
 
         # Order by match score descending
-        return queryset.order_by("-match_score")
+        return queryset.order_by("-holistic_score")
 
     def get_context_data(self, **kwargs):
         """

@@ -15,7 +15,7 @@
                         <div class="card-body p-4">
                             <div class="flex justify-between items-start">
                                 <h4 class="card-title text-base">{{ match.talent_sheet.job_seeker.user.get_full_name }}</h4>
-                                <div class="badge badge-success">{{ match.match_score }}% Match</div>
+                                <div class="badge badge-success">{{ match.get_rating_for_type }}/10 Match</div>
                             </div>
                             <p class="text-sm text-base-content/70 line-clamp-2">{{ match.talent_sheet.job_seeker.professional_summary|default:"" }}</p>
                             <div class="card-actions justify-end mt-2">
@@ -44,7 +44,7 @@
                         <div class="card-body p-4">
                             <div class="flex justify-between items-start">
                                 <h4 class="card-title text-base">{{ match.talent_sheet.job_seeker.user.get_full_name }}</h4>
-                                <div class="badge badge-warning">{{ match.match_score }}% Match</div>
+                                <div class="badge badge-warning">{{ match.get_rating_for_type }}/10 Match</div>
                             </div>
                             <p class="text-sm text-base-content/70 line-clamp-2">{{ match.talent_sheet.job_seeker.professional_summary|default:"" }}</p>
                             <div class="card-actions justify-end mt-2">
