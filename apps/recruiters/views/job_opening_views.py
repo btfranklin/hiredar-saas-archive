@@ -176,6 +176,8 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
         context["tab"] = self.request.GET.get("tab", "details")
         # Get the view parameter from the URL, default to 'processed'
         context["view"] = self.request.GET.get("view", "processed")
+        # Get the section parameter from the URL, default to 'holistic'
+        context["section"] = self.request.GET.get("section", "holistic")
 
         if user.user_type == "recruiter":
             # Only show candidate matches to the job owner
@@ -183,13 +185,36 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 # Get candidate matches - use related_name from model definition
                 matches = CandidateMatch.objects.filter(job_opening=job_opening)
 
-                context["holistic_matches"] = matches.filter(
-                    match_type="holistic"
-                ).order_by("-holistic_score")
+                # Get candidate matches for the selected section
+                section = context["section"]
+                if section == "wildcard":
+                    context["candidate_matches"] = matches.filter(
+                        match_type="wildcard"
+                    ).order_by("-wildcard_score")
+                elif section == "skills":
+                    context["candidate_matches"] = matches.filter(
+                        match_type="skills"
+                    ).order_by("-skills_score")
+                elif section == "experience":
+                    context["candidate_matches"] = matches.filter(
+                        match_type="experience"
+                    ).order_by("-experience_score")
+                else:  # Default to holistic
+                    context["candidate_matches"] = matches.filter(
+                        match_type="holistic"
+                    ).order_by("-holistic_score")
 
-                context["wildcard_matches"] = matches.filter(
+                # Add match counts to context for the tabs
+                context["holistic_count"] = matches.filter(
+                    match_type="holistic"
+                ).count()
+                context["skills_count"] = matches.filter(match_type="skills").count()
+                context["experience_count"] = matches.filter(
+                    match_type="experience"
+                ).count()
+                context["wildcard_count"] = matches.filter(
                     match_type="wildcard"
-                ).order_by("-wildcard_score")
+                ).count()
 
         return context
 

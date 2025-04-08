@@ -7,7 +7,7 @@
 <div class="container mx-auto px-4 py-8">
     <div class="mb-6">
         <div class="flex items-center gap-2 mb-1">
-            <a href="{% url 'matching:candidates' job_opening.id %}" class="link link-hover text-base-content/70">
+            <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=candidates" class="link link-hover text-base-content/70">
                 <i class="fas fa-chevron-left text-xs"></i> Back to Candidates
             </a>
         </div>

@@ -6,21 +6,13 @@ This module defines the URL routes for candidate matching functionality.
 
 from django.urls import path
 
-from apps.matching.views.candidate_views import (
-    CandidateDetailView,
-    CandidateMatchListView,
-)
+from apps.matching.views.candidate_views import CandidateDetailView
 from apps.matching.views.matching_views import match_job_api, match_talent_api
 
 app_name = "matching"
 
 urlpatterns = [
     # Candidate Matching
-    path(
-        "<int:job_id>/candidates/",
-        CandidateMatchListView.as_view(),
-        name="candidates",
-    ),
     path(
         "<int:job_id>/candidates/<int:candidate_id>/",
         CandidateDetailView.as_view(),
