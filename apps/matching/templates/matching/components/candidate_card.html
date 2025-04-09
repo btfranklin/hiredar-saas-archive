@@ -1,0 +1,37 @@
+{% load matching_filters %}
+
+<div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow h-full">
+    <div class="card-body flex flex-col justify-between h-full">
+        <div>
+            <div class="flex justify-between items-start">
+                <h3 class="card-title">{{ match.talent_sheet.job_seeker.user.get_full_name }}</h3>
+                <div class="badge {% if match.match_type == 'holistic' %}badge-primary{% elif match.match_type == 'skills' %}badge-secondary{% elif match.match_type == 'experience' %}badge-accent{% else %}badge-ghost{% endif %}">{{ match.get_rating_for_type }}/10</div>
+            </div>
+
+            <div class="my-2">
+                {% if match.talent_sheet.job_seeker.most_recent_title %}
+                    <p class="text-base-content/70">{{ match.talent_sheet.job_seeker.most_recent_title }}</p>
+                {% endif %}
+
+                <div class="flex flex-wrap gap-1 mt-2">
+                    {% for skill in match.talent_sheet.skills.all|slice:":5" %}
+                        <span class="badge badge-outline">{{ skill.name }}</span>
+                    {% endfor %}
+                    {% if match.talent_sheet.skills.count > 5 %}
+                        <span class="badge badge-outline">...+{{ match.talent_sheet.skills.count|add:"-5" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if match.match_summary %}
+            <p class="text-sm text-base-content/80 mt-2 line-clamp-3"><strong>Summary:</strong> {{ match.match_summary }}</p>
+            {% endif %}
+        </div>
+
+        <div class="card-actions justify-end mt-4">
+            <a href="{% url 'matching:candidate_match_detail' job_opening.id match.talent_sheet.job_seeker.id %}" class="btn btn-primary">
+                View Match Details
+            </a>
+        </div>
+    </div>
+</div> 
