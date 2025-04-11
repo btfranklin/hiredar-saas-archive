@@ -70,6 +70,7 @@ Manages job seeker-specific functionality:
   - `JobSeekerProfile`: Extended profile for job seekers including skills, experience, education, certifications, contact information, and social media links
   - `ResumeProcessingTaskProgress`: Tracks progress of resume processing tasks
   - `RoleRecommendation`: Career recommendations for job seekers based on their skills and experience
+  - `TalentSheet`: AI-generated talent sheet for job seekers in the talent pool
 - **Views**:
   - Organized in subdirectories for better maintainability:
     - `dashboard_views.py`: Dashboard view for job seekers
@@ -129,21 +130,34 @@ Manages candidate matching and embedding generation/storage:
 - **Tasks**:
   - `job_opening_tasks.py`: Asynchronous tasks for creating/removing job opening embeddings
   - `talent_sheet_tasks.py`: Asynchronous tasks for creating/removing talent sheet embeddings
+  - `matching_tasks.py`: Tasks for handling match creation and analysis
   - `common.py`: Shared utilities for embedding tasks (e.g., Pinecone index access)
 - **Signals**:
   - Signal handlers in `signals.py` trigger embedding tasks automatically when `JobOpening` or `TalentSheet` instances are saved or deleted.
 - **Management/Commands**:
-  - `create_candidate_matches.py`: Generates `CandidateMatch` objects based on vector similarity.
-  - `match.py`: Manually triggers matching between a specific job/talent (for testing/debug).
+  - `create_candidate_matches.py`: Generates `CandidateMatch` objects based on vector similarity
+  - `rematch_all_jobs.py`: Rematch all active jobs after changes in the matching algorithm
+  - `match.py`: Manually triggers matching between a specific job/talent (for testing/debug)
+  - `analyze_job_match.py`: Generates match analysis for job/talent combinations
+  - `refresh_match.py`: Updates an existing match with fresh data
+  - `examine_vector_metadata.py`: Examines metadata stored in vectors
+  - `list_pinecone_vectors.py`: Lists vectors by namespace with optional section filters
+  - `check_skill_match_with_section.py`: Tests matching with different section filter formats
+  - `create_matching_index.py`: Creates a Pinecone index for matching
+  - `delete_matching_index.py`: Deletes a Pinecone index
+  - `flush_matches.py`: Removes all matches for cleanup
+  - `inspect_job_seeker.py`: Inspects a job seeker's data for debugging
 - **Views**:
-  - `candidate_views.py`: Views for recruiters to see matched candidates for a job.
-  - `matching_views.py`: API endpoints for triggering matches (potentially for internal use or future features).
+  - `candidate_views.py`: Views for recruiters to see matched candidates for a job
+  - `matching_views.py`: API endpoints for triggering matches
 - **Templates**:
-  - Templates for displaying candidate matches to recruiters.
+  - `candidate_match_detail.html`: Detailed view of a candidate match
+  - `components/`: Reusable UI components like candidate cards
+  - `includes/`: Partial templates for candidate match lists
 - **Admin**:
-  - Custom admin interfaces for the `CandidateMatch` model.
+  - Custom admin interfaces for the `CandidateMatch` model
 - **URLs**:
-  - `/matching/`: URL patterns for candidate matching views and APIs.
+  - `/matching/`: URL patterns for candidate matching views and APIs
 
 ### Messaging App (`apps/messaging`)
 
@@ -172,7 +186,7 @@ The application has several important relationships between models across apps:
 
 2. **JobOpenings to Recruiters**: The `JobOpening` model in the recruiters app is linked to a `RecruiterProfile` via a foreign key.
 
-3. **CandidateMatches**: The `CandidateMatch` model in the matching app connects `JobOpening` instances from the recruiters app with `JobSeekerProfile` instances from the job_seekers app through foreign keys.
+3. **CandidateMatches**: The `CandidateMatch` model in the matching app connects `JobOpening` instances with `TalentSheet` instances through foreign keys.
 
 4. **Conversations**: The `Conversation` model links multiple `User` instances through a many-to-many relationship, while `Message` instances are linked to a specific `Conversation` and a `User` sender.
 
@@ -224,8 +238,10 @@ The job matching process is one of the key features of the application:
 1. **Job Creation**: Recruiters create job openings with required skills and details.
 2. **Resume Upload**: Job seekers upload their resumes, which are processed by the system.
 3. **Skill Extraction**: AI processes extract skills and experience from resumes.
-4. **Matching Algorithm**: The system matches job seekers to job openings based on skills and requirements.
-5. **Match Presentation**: Recruiters are shown matching candidates for their job openings.
+4. **Vector Generation**: The system creates embeddings for both jobs and talent sheets.
+5. **Matching Algorithm**: Vector similarity is used to match job seekers to job openings based on skills, experience, and other factors.
+6. **Match Presentation**: Recruiters are shown matching candidates for their job openings with rating scores out of 10.
+7. **Match Analysis**: AI analyzes why a match is suitable and provides detailed summaries.
 
 ## URL Structure
 
@@ -272,6 +288,8 @@ The application uses Django Q for background tasks:
 - **Resume Processing**: Asynchronous processing of uploaded resumes
 - **AI Analysis**: Background AI analysis for matching and recommendations
 - **Email Notifications**: Sending emails in the background
+- **Vector Generation**: Creating embeddings for jobs and talent sheets in the background
+- **Match Creation**: Finding and creating matches in the background
 
 ## Development Guidelines
 
@@ -339,6 +357,9 @@ The application uses environment variables for configuration, loaded through a `
 - `DATABASE_URL`: Database connection string (for production)
 - `ALLOWED_HOSTS`: Comma-separated list of allowed hosts
 - `EMAIL_*`: Email configuration settings
+- `PINECONE_API_KEY`: API key for Pinecone vector database
+- `PINECONE_ENVIRONMENT`: Pinecone environment
+- `OPENAI_API_KEY`: API key for OpenAI services
 
 ## Security Considerations
 
