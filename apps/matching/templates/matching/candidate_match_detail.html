@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load matching_filters %}
 
-{% block title %}{{ job_seeker.user_profile.get_user_full_name }} | Match Details | Hiredar{% endblock %}
+{% block title %}{{ job_seeker.user.name }} | Match Details | Hiredar{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -11,6 +11,7 @@
                 <i class="fas fa-chevron-left text-xs"></i> Back to Candidates
             </a>
         </div>
+        <h1 class="text-2xl font-bold mb-4">Match Details</h1>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-8">
@@ -20,17 +21,8 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                     <div>
-                        <h1 class="text-3xl font-bold">{{ job_seeker.user_profile.get_user_full_name }}</h1>
-                        {% if job_seeker.most_recent_title %}
-                            <p class="text-lg text-base-content/80 mt-1">{{ job_seeker.most_recent_title }}</p>
-                        {% endif %}
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            {% for match_type, match_label, rating in candidate_match.get_all_match_ratings %}
-                                <div class="badge badge-lg {% if match_type == candidate_match.match_type %}badge-primary{% else %}badge-outline{% endif %}">
-                                    {{ match_label }} {{ rating }}/10
-                                </div>
-                            {% endfor %}
-                        </div>
+                        <h1 class="text-3xl font-bold">{{ job_seeker.user.name }}</h1>
+                        <p class="text-lg text-base-content/80 mt-1 italic">{{ job_seeker.personal_tagline }}</p>
                     </div>
                     <div class="flex gap-2">
                         <a href="{% url 'messaging:conversation_create' job_opening.id job_seeker.id %}" class="btn btn-primary">
@@ -40,41 +32,32 @@
                 </div>
             </div>
 
-            <!-- Skills Section -->
+            <!-- Talent Sheet Sections -->
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-xl font-bold mb-4">Skills</h2>
+                <h2 class="text-xl font-bold mb-4">Promotional Summary</h2>
+                <div class="prose max-w-none">
+                    <p>{{ talent_sheet.promotional_blurb|linebreaks }}</p>
+                </div>
+            </div>
+
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h2 class="text-xl font-bold mb-4">Skills Overview</h2>
+                <div class="prose max-w-none">
+                    <p>{{ talent_sheet.skill_overview|linebreaks }}</p>
+                </div>
+            </div>
+
+            <!-- Ideal Roles Section -->
+            {% if talent_sheet.ideal_roles %}
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <h2 class="text-xl font-bold mb-4">Ideal Roles</h2>
                 <div class="flex flex-wrap gap-2">
-                    {% for skill in job_seeker.skills.all %}
-                        <div class="badge badge-lg">{{ skill.name }}</div>
-                    {% empty %}
-                        <p class="text-base-content/70">No skills listed</p>
+                    {% for role in talent_sheet.ideal_roles_list %}
+                        <div class="badge badge-lg">{{ role }}</div>
                     {% endfor %}
                 </div>
             </div>
-
-            <!-- Experience Section -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-xl font-bold mb-4">Work Experience</h2>
-                <div class="prose max-w-none">
-                    <p>{{ job_seeker.experience|default:"No experience information available."|linebreaks }}</p>
-                </div>
-            </div>
-
-            <!-- Education Section -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-xl font-bold mb-4">Education</h2>
-                <div class="prose max-w-none">
-                    <p>{{ job_seeker.education|default:"No education information available."|linebreaks }}</p>
-                </div>
-            </div>
-
-            <!-- Certifications Section -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
-                <h2 class="text-xl font-bold mb-4">Certifications</h2>
-                <div class="prose max-w-none">
-                    <p>{{ job_seeker.certifications|default:"No certifications listed."|linebreaks }}</p>
-                </div>
-            </div>
+            {% endif %}
         </div>
 
         <!-- Sidebar -->
@@ -114,75 +97,28 @@
                         <p class="text-base-content/70 mt-1">{{ candidate_match.match_summary|default:"Our AI has determined this candidate is a good match based on their skills and experience." }}</p>
                     </div>
                     
+                    {% if candidate_match.match_analysis %}
                     <div class="divider my-2"></div>
                     
                     <div>
-                        <h3 class="font-semibold">Skill Alignment</h3>
-                        <ul class="mt-2 space-y-2">
-                            {% for skill in job_opening.required_skills_list %}
-                                <li class="flex items-center">
-                                    {% if skill in job_seeker.skills_list %}
-                                        <span class="text-success"><i class="fas fa-check-circle mr-2"></i></span>
-                                        <span>{{ skill }}</span>
-                                    {% else %}
-                                        <span class="text-base-content/30"><i class="fas fa-times-circle mr-2"></i></span>
-                                        <span class="text-base-content/50">{{ skill }}</span>
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
+                        <h3 class="font-semibold">Match Analysis</h3>
+                        <div class="prose max-w-none text-base-content/70 mt-1">
+                            {{ candidate_match.match_analysis|linebreaks }}
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
             
-            <!-- Contact Information -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-xl font-bold mb-4">Contact Information</h2>
+            {% if talent_sheet.salary_min %}
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <h2 class="text-xl font-bold mb-4">Salary Expectations</h2>
                 
                 <div class="space-y-4">
-                    <div>
-                        <h3 class="font-semibold">Email</h3>
-                        <p class="text-base-content/70 mt-1">{{ job_seeker.user_profile.user.email }}</p>
-                    </div>
-                    
-                    {% if job_seeker.phone %}
-                        <div>
-                            <h3 class="font-semibold">Phone</h3>
-                            <p class="text-base-content/70 mt-1">{{ job_seeker.phone }}</p>
-                        </div>
-                    {% endif %}
-                    
-                    {% if job_seeker.linkedin_url %}
-                        <div>
-                            <h3 class="font-semibold">LinkedIn</h3>
-                            <a href="{{ job_seeker.linkedin_url }}" target="_blank" class="link link-primary mt-1 inline-block">
-                                <i class="fab fa-linkedin mr-1"></i> LinkedIn Profile
-                            </a>
-                        </div>
-                    {% endif %}
+                    <p class="text-base-content/70">Minimum salary expectation: <span class="font-semibold">${{ talent_sheet.salary_min|floatformat:0 }}</span></p>
                 </div>
             </div>
-            
-            <!-- Job Opening Info -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
-                <h2 class="text-xl font-bold mb-4">Job Opening</h2>
-                
-                <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="card-body p-4">
-                        <h3 class="card-title text-lg">{{ job_opening.title }}</h3>
-                        <p class="text-base-content/70">{{ job_opening.company }} • {{ job_opening.location }}</p>
-                        
-                        <div class="mt-2 flex flex-wrap gap-1">
-                            {% for skill in job_opening.required_skills_list|slice:":3" %}
-                                <span class="badge badge-outline">{{ skill }}</span>
-                            {% endfor %}
-                            {% if job_opening.required_skills_list|length > 3 %}
-                                <span class="badge badge-outline">+{{ job_opening.required_skills_list|length|add:"-3" }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </a>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>
