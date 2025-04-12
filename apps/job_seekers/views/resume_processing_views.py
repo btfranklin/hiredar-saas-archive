@@ -33,6 +33,15 @@ class ProfileCreateView(LoginRequiredMixin, TemplateView):
             return redirect("core:home")
         return super().dispatch(request, *args, **kwargs)
 
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        """Handle GET requests, with special handling for HTMX requests."""
+        if request.headers.get("HX-Request"):
+            # For HTMX requests, render just the form partial
+            return render(request, "job_seekers/partials/upload_form.html")
+
+        # For regular requests, render the full page
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add extra context data."""
         context = super().get_context_data(**kwargs)

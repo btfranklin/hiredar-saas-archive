@@ -10,6 +10,7 @@
     <div class="mt-6">
         <button class="btn btn-primary w-full" 
                 hx-get="{% url 'job_seekers:profile_create' %}" 
+                hx-headers='{"HX-Request": "true"}'
                 hx-target="#profile-card .card-body" 
                 hx-swap="innerHTML">Try Again</button>
     </div>

@@ -32,7 +32,7 @@
         <div class="w-full max-w-sm">
             <ul class="steps steps-vertical">
                 {% for step in steps %}
-                <li class="step {% if step.completed %}step-primary{% endif %} {% if step.current %}step-accent{% endif %}" 
+                <li class="step {% if step.completed or step.current %}step-primary{% endif %}" 
                     data-step-id="{{ step.id }}">
                     <div class="flex items-center gap-2">
                         {{ step.name }}

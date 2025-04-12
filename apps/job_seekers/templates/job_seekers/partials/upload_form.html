@@ -1,0 +1,30 @@
+<!-- partials/upload_form.html -->
+<h2 class="text-2xl font-semibold mb-4">Upload Your Resume</h2>
+<p class="mb-4">Upload your resume and let our AI build your profile. We support PDF resume formats.</p>
+
+<!-- Initial Upload Form -->
+<form id="resume-upload-form" 
+      method="post"
+      action="{% url 'job_seekers:resume_upload' %}" 
+      enctype="multipart/form-data"
+      class="space-y-4"
+      hx-post="{% url 'job_seekers:resume_upload' %}"
+      hx-encoding="multipart/form-data"
+      hx-target="#profile-card .card-body"
+      hx-swap="innerHTML">
+    {% csrf_token %}
+    <div class="form-control">
+        <label class="label" for="resume">
+            <span class="label-text">Resume (PDF only)</span>
+        </label>
+        <input type="file" name="resume" id="resume" 
+               class="file-input file-input-bordered file-input-primary w-full" 
+               accept="application/pdf" required />
+    </div>
+    <div class="form-control mt-6">
+        <button type="submit" class="btn btn-primary">
+            <span class="htmx-indicator loading loading-spinner loading-xs me-2"></span>
+            Upload Resume
+        </button>
+    </div>
+</form>
