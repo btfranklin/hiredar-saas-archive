@@ -30,25 +30,4 @@
         </div>
     </div>
 </div>
-
-<!-- Debug monitoring script (remove in production) -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Log all HTMX events for debugging
-        htmx.logAll();
-        
-        // Monitor specific HTMX events for diagnostics
-        document.body.addEventListener('htmx:beforeRequest', function(evt) {
-            console.log('Request starting:', evt.detail);
-        });
-        
-        document.body.addEventListener('htmx:afterRequest', function(evt) {
-            console.log('Request complete:', evt.detail);
-        });
-        
-        document.body.addEventListener('htmx:responseError', function(evt) {
-            console.error('Response error:', evt.detail);
-        });
-    });
-</script>
 {% endblock %} 
