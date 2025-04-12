@@ -76,6 +76,15 @@ Manages job seeker-specific functionality:
     - `dashboard_views.py`: Dashboard view for job seekers
     - `job_seeker_profile_views.py`: Profile and settings views
     - `resume_processing_views.py`: Resume upload and processing views
+    - `api_views.py`: API endpoints for HTMX and JSON responses
+    - `mixins.py`: Reusable mixins for views:
+      - `HTMXViewMixin`: Handles HTMX-specific request processing and response rendering
+      - `ProfileAccessMixin`: Controls access permissions for job seekers
+- **Services**:
+  - Handles business logic separate from views:
+    - `resume_processing.py`: Services for handling resume uploads and processing
+    - `profile_manager.py`: Services for job seeker profile operations
+    - `talent_pool_manager.py`: Services for talent pool and role interest management
 - **Templates**:
   - Job seeker-specific templates for signup, profiles, and dashboards
 - **Signals**:
@@ -190,6 +199,37 @@ The application has several important relationships between models across apps:
 
 4. **Conversations**: The `Conversation` model links multiple `User` instances through a many-to-many relationship, while `Message` instances are linked to a specific `Conversation` and a `User` sender.
 
+## Architecture Patterns
+
+The application uses several architecture patterns for better organization and maintainability:
+
+### Service Layer Pattern
+
+The service layer pattern separates business logic from presentation logic. Key aspects:
+
+- **Services**: Classes that encapsulate business logic with no HTTP/presentation concerns
+- **Views**: Classes that handle HTTP requests/responses and use services for business logic
+- **Benefits**:
+  - Cleaner separation of concerns
+  - Improved testability
+  - Reusable business logic across different views
+
+Example services in the job_seekers app:
+- `ProfileManager`: Handles job seeker profile operations
+- `ResumeProcessor`: Manages resume processing tasks
+- `TalentPoolManager`: Handles talent pool and role recommendation operations
+
+### Mixin Pattern
+
+Mixins provide reusable functionality that can be applied to multiple views:
+
+- **HTMXViewMixin**: Handles HTMX-specific request detection and response rendering
+- **ProfileAccessMixin**: Controls access permissions for job seekers
+- **Benefits**:
+  - Avoids code duplication
+  - Promotes consistent behavior across views
+  - Simplifies view classes by moving common functionality to mixins
+
 ## Frontend Structure
 
 The application uses a modern frontend approach:
@@ -198,6 +238,15 @@ The application uses a modern frontend approach:
 - **CSS**: Tailwind CSS from CDN (<https://cdn.tailwindcss.com>)
 - **UI Components**: DaisyUI from CDN (<https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css>)
 - **Dynamic Interactions**: HTMX from CDN (<https://unpkg.com/htmx.org@1.9.2>)
+
+### HTMX Integration
+
+The application uses HTMX for dynamic interactions without writing custom JavaScript:
+
+- **HTMXViewMixin**: Provides helper methods to detect HTMX requests and render appropriate responses
+- **Response Headers**: Uses special HTMX response headers (HX-Redirect, HX-Trigger, etc.)
+- **Partial Templates**: Many templates have partial versions for HTMX requests that return just the HTML fragment needed
+- **Progressive Enhancement**: Fallbacks to standard form submissions when JavaScript is disabled
 
 ## Authentication Flow
 
@@ -303,6 +352,8 @@ When working with this codebase:
 6. **Handle errors gracefully** with proper error messages
 7. **Use Django messages framework** for user feedback
 8. **Follow Django's best practices** for URL naming and organization
+9. **Separate business logic into services** to maintain clean separation of concerns
+10. **Use mixins for reusable view functionality** rather than duplicating code
 
 ## Working with the User Model
 
@@ -333,6 +384,24 @@ profile = user.job_seeker_profile
 # Accessing a recruiter profile
 user = User.objects.get(email="recruiter@example.com")
 profile = user.recruiter_profile
+```
+
+## Using Service Classes
+
+Service classes encapsulate business logic separately from views:
+
+```python
+# Using a service class
+from apps.job_seekers.services import ProfileManager, ResumeProcessor
+
+# Get a profile
+profile = ProfileManager.get_profile(user)
+
+# Update a profile
+updated_profile = ProfileManager.create_or_update_profile(user, profile_data)
+
+# Process a resume
+task = ResumeProcessor.create_processing_task(user, task_id)
 ```
 
 ## Project Configuration
