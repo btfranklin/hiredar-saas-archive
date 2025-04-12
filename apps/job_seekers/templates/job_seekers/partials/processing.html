@@ -1,0 +1,55 @@
+<!-- partials/processing.html -->
+<div id="processing-content">
+    <h2 class="text-2xl font-semibold mb-6 text-center">Building Your Profile</h2>
+    
+    <div class="flex flex-col items-center space-y-6">
+        <!-- Progress bar and percentage -->
+        <div class="w-full max-w-sm">
+            <div class="flex justify-between mb-1">
+                <span class="text-base font-medium">{{ current_step_name|default:"Processing..." }}</span>
+                <span class="text-sm font-medium">{{ progress_percent|default:"0" }}%</span>
+            </div>
+            
+            <!-- Progress indicators -->
+            {% if progress_percent < 0 or not steps %}
+                <!-- Show loading spinner for indeterminate progress -->
+                <div class="flex justify-center py-3">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                </div>
+            {% else %}
+                <!-- Show progress bar for determinate progress -->
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-primary h-2.5 rounded-full" style="width: {{ progress_percent }}%"></div>
+                </div>
+            {% endif %}
+            
+            <p class="text-sm mt-2 text-base-content/70">
+                {{ current_step_description|default:"Preparing to process your resume..." }}
+            </p>
+        </div>
+        
+        <!-- Steps list -->
+        <div class="w-full max-w-sm">
+            <ul class="steps steps-vertical">
+                {% for step in steps %}
+                <li class="step {% if step.completed %}step-primary{% endif %} {% if step.current %}step-accent{% endif %}" 
+                    data-step-id="{{ step.id }}">
+                    <div class="flex items-center gap-2">
+                        {{ step.name }}
+                        {% if step.current %}
+                        <span class="loading loading-spinner loading-xs text-primary ml-2"></span>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Polling mechanism -->
+    <div id="status-polling" 
+         hx-get="{{ status_url }}"
+         hx-trigger="every 3s"
+         hx-target="#processing-content">
+    </div>
+</div> 
