@@ -5,14 +5,35 @@ from typing import TYPE_CHECKING, cast
 from django.db import models
 
 from apps.authentication.models import User
+from apps.recruiters.models import JobOpening
 
 
 class Conversation(models.Model):
     """Model for conversations between users"""
 
+    CONVERSATION_STATUS = (
+        ("interest_requested", "Interest Requested"),
+        ("candidate_interested", "Candidate Interested"),
+        ("candidate_not_interested", "Candidate Not Interested"),
+        ("active", "Active"),
+        ("archived", "Archived"),
+    )
+
     participants = models.ManyToManyField(
         User,
         related_name="conversations",
+    )
+    job_opening = models.ForeignKey(
+        JobOpening,
+        on_delete=models.CASCADE,
+        related_name="conversations",
+        null=True,
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=30,
+        choices=CONVERSATION_STATUS,
+        default="interest_requested",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -24,11 +45,11 @@ class Conversation(models.Model):
     def get_other_participant(self, user: User) -> User:
         """Get the other participant in a conversation"""
         return cast(User, self.participants.exclude(pk=user.pk).first())
-        
+
     @property
     def other_participant(self) -> User | None:
         """Property accessor for templates to get the other participant without parameters.
-        
+
         Note: This is used when the conversation has exactly 2 participants and
         returns the first participant (which could be any of the two).
         For specific user-relative lookup, use get_other_participant(user) instead.

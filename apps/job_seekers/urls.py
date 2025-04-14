@@ -14,7 +14,11 @@ from apps.job_seekers.views.dashboard_views import (
     RoleRecommendationsView,
     TalentSheetDetailsView,
 )
-from apps.job_seekers.views.job_seeker_profile_views import ProfileView, SettingsView
+from apps.job_seekers.views.job_seeker_profile_views import (
+    ProfileView,
+    ResumeView,
+    SettingsView,
+)
 from apps.job_seekers.views.resume_processing_views import (
     ProfileCreateView,
     ResumeProcessingTaskProgressView,
@@ -28,6 +32,8 @@ urlpatterns: list[URLPattern] = [
     path("profile/", ProfileView.as_view(), name="profile"),
     path("profile/create/", ProfileCreateView.as_view(), name="profile_create"),
     path("settings/", SettingsView.as_view(), name="settings"),
+    # Resume view for recruiters
+    path("resume/<int:pk>/", ResumeView.as_view(), name="resume_view"),
     # Recommendations
     path(
         "recommendations/",

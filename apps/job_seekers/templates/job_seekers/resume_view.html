@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Candidate Resume | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col gap-8">
+        <!-- Header with navigation and candidate info -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                {% if conversation %}
+                <a href="{% url 'messaging:conversation_detail' conversation.id %}" class="btn btn-ghost btn-sm mb-2">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Conversation
+                </a>
+                {% else %}
+                <a href="{% url 'recruiters:dashboard' %}" class="btn btn-ghost btn-sm mb-2">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                </a>
+                {% endif %}
+                
+                <h1 class="text-3xl font-bold">Candidate Resume</h1>
+                <p class="text-lg text-base-content/70">{{ profile.user.name }}</p>
+            </div>
+            
+            {% if job_opening %}
+            <div class="card bg-base-200 p-4 max-w-sm">
+                <div class="flex items-center gap-3">
+                    <div class="badge badge-primary">Related Job</div>
+                    <h2 class="card-title text-lg">{{ job_opening.title }}</h2>
+                </div>
+                <p class="text-sm text-base-content/70">{{ job_opening.company }}</p>
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-sm btn-outline">
+                        View Job
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Candidate details -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Left sidebar with contact info -->
+            <div class="md:col-span-1">
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="avatar placeholder">
+                                <div class="bg-neutral text-neutral-content rounded-full w-16">
+                                    <span class="text-xl">{{ profile.user.get_initials }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h2 class="card-title">{{ profile.user.name }}</h2>
+                                <p class="text-sm">{{ profile.most_recent_title }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="divider"></div>
+                        
+                        <h3 class="text-lg font-semibold mb-2">Contact Information</h3>
+                        <ul class="space-y-2">
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-envelope text-primary"></i>
+                                <span>{{ profile.user.email }}</span>
+                            </li>
+                            {% if profile.phone %}
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-phone text-primary"></i>
+                                <span>{{ profile.phone }}</span>
+                            </li>
+                            {% endif %}
+                            {% if profile.location %}
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                <span>{{ profile.location }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        
+                        {% if profile.linkedin_url or profile.github_url or profile.portfolio_url %}
+                        <div class="divider"></div>
+                        
+                        <h3 class="text-lg font-semibold mb-2">Social Links</h3>
+                        <ul class="space-y-2">
+                            {% if profile.linkedin_url %}
+                            <li>
+                                <a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener" class="flex items-center gap-2 link link-hover">
+                                    <i class="fab fa-linkedin text-primary"></i>
+                                    <span>LinkedIn Profile</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if profile.github_url %}
+                            <li>
+                                <a href="{{ profile.github_url }}" target="_blank" rel="noopener" class="flex items-center gap-2 link link-hover">
+                                    <i class="fab fa-github text-primary"></i>
+                                    <span>GitHub Profile</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if profile.portfolio_url %}
+                            <li>
+                                <a href="{{ profile.portfolio_url }}" target="_blank" rel="noopener" class="flex items-center gap-2 link link-hover">
+                                    <i class="fas fa-globe text-primary"></i>
+                                    <span>Portfolio Website</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                        
+                        {% if profile.years_of_experience %}
+                        <div class="divider"></div>
+                        <div class="stat">
+                            <div class="stat-title">Years of Experience</div>
+                            <div class="stat-value text-primary">{{ profile.years_of_experience }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main content area with resume details -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Professional Summary -->
+                {% if profile.professional_summary %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Professional Summary</h2>
+                        <p class="whitespace-pre-line">{{ profile.professional_summary }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Skills -->
+                {% if profile.skills %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Skills</h2>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            {% for skill in profile.skills_list %}
+                            <span class="badge badge-primary">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Experience -->
+                {% if profile.experience %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Work Experience</h2>
+                        <div class="mt-2 whitespace-pre-line">
+                            {{ profile.experience|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Education -->
+                {% if profile.education %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Education</h2>
+                        <div class="mt-2 whitespace-pre-line">
+                            {{ profile.education|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Certifications -->
+                {% if profile.certifications %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Certifications</h2>
+                        <div class="mt-2 whitespace-pre-line">
+                            {{ profile.certifications|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Action buttons -->
+                <div class="flex justify-end mt-4">
+                    {% if conversation %}
+                    <a href="{% url 'messaging:conversation_detail' conversation.id %}" class="btn btn-primary">
+                        Continue Conversation
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

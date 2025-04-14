@@ -9,13 +9,16 @@ from typing import Any, cast
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest, HttpResponseBase
+from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
 
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models import JobSeekerProfile as JobSeeker
+from apps.job_seekers.models import TalentSheet
 from apps.matching.models import CandidateMatch
+from apps.messaging.models import Conversation
 from apps.recruiters.models import JobOpening
 
 
@@ -94,4 +97,88 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         context["job_opening"] = self.job_opening
         context["talent_sheet"] = self.object.talent_sheet
         context["job_seeker"] = self.object.talent_sheet.job_seeker
+
+        # Get existing conversation between the recruiter and job seeker for this job opening
+        try:
+            # Use filter with multiple conditions instead of repeating parameters
+            conversation = (
+                Conversation.objects.filter(
+                    job_opening=self.job_opening, participants=self.request.user
+                )
+                .filter(participants=self.object.talent_sheet.job_seeker.user)
+                .get()
+            )
+            context["candidate_conversation"] = conversation
+        except Conversation.DoesNotExist:
+            context["candidate_conversation"] = None
+
         return context
+
+
+def withdraw_interest(request, job_id, candidate_id):
+    """
+    API endpoint to withdraw interest in a candidate
+    """
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Method not allowed"}, status=405
+        )
+
+    # Get the job opening and ensure the user has access to it
+    job_opening = get_object_or_404(JobOpening, id=job_id)
+
+    # Check if the current user has access to this job opening
+    if job_opening.recruiter.user.id != request.user.id:
+        return JsonResponse(
+            {"status": "error", "message": "Permission denied"}, status=403
+        )
+
+    # Get the job seeker
+    job_seeker = get_object_or_404(JobSeeker, id=candidate_id)
+
+    # Find and delete the conversation
+    try:
+        # Use filter with multiple conditions instead of repeating parameters
+        conversation = (
+            Conversation.objects.filter(
+                job_opening=job_opening, participants=request.user
+            )
+            .filter(
+                participants=job_seeker.user,
+                status="interest_requested",  # Only delete if status is interest_requested
+            )
+            .get()
+        )
+        conversation.delete()
+
+        # Check if this is an HTMX request
+        is_htmx = "HX-Request" in request.headers
+
+        if is_htmx:
+            # Return the updated button HTML for HTMX
+            contact_button_html = """
+            <button class="btn btn-primary" onclick="document.getElementById('confirm-interest-modal').showModal()">
+                <i class="fas fa-envelope mr-2"></i> Contact Candidate
+            </button>
+            """
+            # Close the modal via HX-Trigger
+            response = HttpResponse(contact_button_html)
+            response["HX-Trigger"] = '{"closeModal": {"id": "confirm-withdraw-modal"}}'
+            response["HX-Reswap"] = "outerHTML"
+            response["HX-Target"] = ".flex.gap-2"
+            return response
+        else:
+            # For non-HTMX requests, return JSON
+            return JsonResponse({"status": "success"})
+
+    except Conversation.DoesNotExist:
+        if "HX-Request" in request.headers:
+            return HttpResponse(
+                '<div class="alert alert-error">No active interest request found</div>',
+                status=404,
+            )
+        else:
+            return JsonResponse(
+                {"status": "error", "message": "No active interest request found"},
+                status=404,
+            )

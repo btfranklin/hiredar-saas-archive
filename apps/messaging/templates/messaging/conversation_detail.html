@@ -46,12 +46,71 @@
                     </div>
                     <div>
                         <h2 class="text-xl font-bold">{{ other_participant.get_full_name }}</h2>
-                        {% if job_opening %}
-                            <div class="badge badge-outline">{{ job_opening.title }}</div>
-                        {% endif %}
+                        <div class="flex gap-2 mt-1">
+                            <!-- Status badge -->
+                            {% if conversation.status != "active" %}
+                            <div class="badge 
+                                {% if conversation.status == 'interest_requested' %}badge-warning
+                                {% elif conversation.status == 'candidate_interested' %}badge-success
+                                {% elif conversation.status == 'candidate_not_interested' %}badge-error
+                                {% elif conversation.status == 'archived' %}badge-ghost
+                                {% endif %}">
+                                {{ conversation.get_status_display }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if job_opening %}
+                                <div class="badge badge-outline">{{ job_opening.title }}</div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Interest request response section (for job seekers) -->
+            {% if request.user.user_type == 'job_seeker' and conversation.status == 'interest_requested' %}
+            <div class="alert alert-info mb-6" id="interest-response-alert">
+                <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        <h3 class="font-bold">You've been invited to apply for a role!</h3>
+                        <div class="text-sm">Are you interested in this position?</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button 
+                        class="btn btn-sm btn-success"
+                        hx-post="{% url 'messaging:respond_to_interest' conversation.id %}"
+                        hx-vals='{"is_interested": "true"}'
+                        hx-swap="outerHTML"
+                        hx-target="#interest-response-alert">
+                        Yes, I'm interested
+                    </button>
+                    <button 
+                        class="btn btn-sm btn-error"
+                        hx-post="{% url 'messaging:respond_to_interest' conversation.id %}"
+                        hx-vals='{"is_interested": "false"}'
+                        hx-swap="outerHTML"
+                        hx-target="#interest-response-alert">
+                        No, thanks
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Resume access notification (for recruiters) -->
+            {% if request.user.user_type == 'recruiter' and conversation.status == 'candidate_interested' %}
+            <div class="alert alert-success mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div>
+                    <span>Good news! {{ other_participant.name }} is interested in this role.</span>
+                    <div class="text-sm">You can now view their full resume.</div>
+                </div>
+                <a href="{% url 'job_seekers:resume_view' other_participant.job_seeker_profile.id %}" class="btn btn-sm btn-primary">
+                    View Resume
+                </a>
+            </div>
+            {% endif %}
             
             <div class="bg-base-200 rounded-box p-6 shadow-md">
                 <!-- Messages container -->
@@ -91,7 +150,8 @@
                     {% endif %}
                 </div>
                 
-                <!-- Message form -->
+                <!-- Message form - only show if conversation is active or candidate is interested -->
+                {% if conversation.status == 'active' or conversation.status == 'candidate_interested' %}
                 <form 
                     hx-post="{% url 'messaging:send_message' conversation.id %}"
                     hx-swap="none"
@@ -111,6 +171,12 @@
                         <span class="ml-2">Send</span>
                     </button>
                 </form>
+                {% elif conversation.status == 'candidate_not_interested' %}
+                <div class="alert alert-error mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>This candidate is not interested in this position. Further messaging is disabled.</span>
+                </div>
+                {% endif %}
             </div>
             
             {% if job_opening %}
@@ -134,12 +200,23 @@
                             <p class="text-base-content/70">{{ job_opening.description|truncatewords:50 }}</p>
                         </div>
                         <div class="flex justify-end">
-                            <a href="{% url 'recruiters:job_opening_detail' job_opening.id %}" class="btn btn-outline btn-sm">
+                            <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-outline btn-sm">
                                 View Full Job Details
                             </a>
                         </div>
                     </div>
                 </div>
+            {% endif %}
+            
+            <!-- Resume section (for recruiters if candidate is interested) -->
+            {% if request.user.user_type == 'recruiter' and conversation.status == 'candidate_interested' %}
+            <div class="mt-6 bg-base-200 rounded-box p-6 shadow-md">
+                <h3 class="text-lg font-semibold mb-4">Candidate Resume</h3>
+                <p class="mb-4">
+                    You now have access to view {{ other_participant.get_full_name }}'s full resume details.
+                </p>
+                <a href="{% url 'job_seekers:resume_view' other_participant.job_seeker_profile.id %}" class="btn btn-primary btn-sm">View Full Resume</a>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -161,6 +238,11 @@
                         const messageContainer = document.getElementById('message-container');
                         messageContainer.insertAdjacentHTML('beforeend', response.message_html);
                         messageContainer.scrollTop = messageContainer.scrollHeight;
+                    }
+                    
+                    // Reload page after successful interest response
+                    if (response.status === "success" && evt.detail.requestConfig.path.includes('respond_to_interest')) {
+                        window.location.reload();
                     }
                 } catch (e) {
                     console.error('Error parsing response:', e);

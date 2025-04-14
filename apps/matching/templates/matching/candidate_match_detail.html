@@ -4,6 +4,17 @@
 {% block title %}{{ job_seeker.user.name }} | Match Details | Hiredar{% endblock %}
 
 {% block content %}
+<style>
+  .htmx-indicator {
+    display: none;
+  }
+  .htmx-request .htmx-indicator {
+    display: inline-block;
+  }
+  .htmx-request.htmx-indicator {
+    display: inline-block;
+  }
+</style>
 <div class="container mx-auto px-4 py-8">
     <div class="mb-6">
         <div class="flex items-center gap-2 mb-1">
@@ -25,9 +36,27 @@
                         <p class="text-lg text-base-content/80 mt-1 italic">{{ job_seeker.personal_tagline }}</p>
                     </div>
                     <div class="flex gap-2">
-                        <a href="{% url 'messaging:conversation_create' job_opening.id job_seeker.id %}" class="btn btn-primary">
-                            <i class="fas fa-envelope mr-2"></i> Contact Candidate
-                        </a>
+                        <!-- Contact Button with different states -->
+                        {% if candidate_conversation %}
+                            {% if candidate_conversation.status == 'interest_requested' %}
+                                <button class="btn btn-success" id="interest-requested-btn" 
+                                    onclick="document.getElementById('confirm-withdraw-modal').showModal()">
+                                    <i class="fas fa-check-circle mr-2"></i> Interest Requested
+                                </button>
+                            {% elif candidate_conversation.status == 'candidate_interested' %}
+                                <a href="{% url 'messaging:conversation_detail' candidate_conversation.id %}" class="btn btn-primary">
+                                    <i class="fas fa-comments mr-2"></i> View Conversation
+                                </a>
+                            {% elif candidate_conversation.status == 'candidate_not_interested' %}
+                                <button class="btn btn-disabled">
+                                    <i class="fas fa-times-circle mr-2"></i> Candidate Not Interested
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <button class="btn btn-primary" onclick="document.getElementById('confirm-interest-modal').showModal()">
+                                <i class="fas fa-envelope mr-2"></i> Contact Candidate
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -122,4 +151,66 @@
         </div>
     </div>
 </div>
+
+<!-- Interest Request Confirmation Modal -->
+<dialog id="confirm-interest-modal" class="modal">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Express Interest in This Candidate</h3>
+    <p class="py-4">
+      You're about to express interest in {{ job_seeker.user.name }} for the {{ job_opening.title }} role.
+      <br><br>
+      The candidate will be notified and can choose whether they're interested.
+      If they respond positively, you'll be able to view their full resume and start a conversation.
+    </p>
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn btn-ghost">Cancel</button>
+      </form>
+      <form id="interest-form" 
+            hx-post="{% url 'messaging:conversation_create' job_opening.id job_seeker.id %}"
+            hx-swap="innerHTML">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">
+          <span class="htmx-indicator loading loading-spinner loading-xs mr-2"></span>
+          Proceed
+        </button>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<!-- Withdraw Interest Confirmation Modal -->
+<dialog id="confirm-withdraw-modal" class="modal">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Withdraw Your Interest?</h3>
+    <p class="py-4">
+      Do you want to withdraw your interest in {{ job_seeker.user.name }} for this job?
+      <br><br>
+      This will remove your message and the candidate will not be notified.
+    </p>
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn btn-ghost">Cancel</button>
+      </form>
+      <form id="withdraw-form" 
+            hx-post="{% url 'matching:withdraw_interest' job_opening.id job_seeker.id %}" 
+            hx-target=".flex.gap-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-error">
+          <span class="htmx-indicator loading loading-spinner loading-xs mr-2"></span>
+          Yes, withdraw
+        </button>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // Add a listener for the closeModal event from HX-Trigger
+  document.addEventListener('closeModal', function(event) {
+    if (event.detail && event.detail.id) {
+      document.getElementById(event.detail.id).close();
+    }
+  });
+</script>
 {% endblock %} 

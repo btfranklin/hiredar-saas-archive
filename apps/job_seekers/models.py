@@ -55,22 +55,34 @@ class JobSeekerProfile(models.Model):
 
     @property
     def skills_list(self) -> list[str]:
-        """Return a list of skill names"""
+        """
+        Returns a list of skill names from the pipe-separated skills field.
+
+        Returns:
+            list[str]: A list of skill names.
+        """
         if not self.skills:
             return []
-        return [skill.strip() for skill in self.skills.split(" | ") if skill.strip()]
+        return [skill.strip() for skill in self.skills.split("|") if skill.strip()]
 
     @property
     def in_talent_pool(self) -> bool:
         """
-        Determine if the job seeker is in the talent pool.
+        Determines if the job seeker is in the talent pool.
 
-        This is determined by whether they have a published talent sheet.
-        This is the source of truth for talent pool participation.
+        A job seeker is in the talent pool if they have a published talent sheet.
+
+        Returns:
+            bool: True if the job seeker is in the talent pool, False otherwise.
         """
+        # Prevent circular imports by importing here
+        from apps.job_seekers.models import TalentSheet
+
         try:
-            talent_sheet = getattr(self, "talent_sheet", None)
-            return talent_sheet is not None and talent_sheet.is_published
+            # Check if there's a published talent sheet for this job seeker
+            return TalentSheet.objects.filter(
+                job_seeker=self, is_published=True
+            ).exists()
         except Exception:
             return False
 

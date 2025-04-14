@@ -106,6 +106,8 @@ classDiagram
     
     class Conversation {
         +participants: ManyToManyField(User)
+        +job_opening: ForeignKey(JobOpening)
+        +status: CharField
         +created_at: DateTimeField
         +updated_at: DateTimeField
     }
@@ -366,6 +368,8 @@ Model for conversations between users.
 | Field | Type | Description |
 |-------|------|-------------|
 | `participants` | ManyToManyField | Users participating in the conversation |
+| `job_opening` | ForeignKey | Link to JobOpening the conversation is about (optional) |
+| `status` | CharField | Status of the conversation (interest_requested/candidate_interested/candidate_not_interested/active/archived) |
 | `created_at` | DateTimeField | When the conversation was created |
 | `updated_at` | DateTimeField | When the conversation was last updated |
 
@@ -374,6 +378,13 @@ Model for conversations between users.
 |--------|-------------|
 | `get_other_participant()` | Get the other participant in a conversation |
 | `other_participant` | Property to get the other participant (for templates) |
+
+**Business Rules:**
+| Rule | Description |
+|------|-------------|
+| Interest Flow | Conversations linked to job openings start with status "interest_requested" |
+| Messaging Permissions | Messages can only be sent when status is "candidate_interested" or "active" |
+| Resume Access | Recruiters can only view job seeker's full resume if status is "candidate_interested" |
 
 ### Message
 
@@ -423,9 +434,11 @@ Model for user notifications.
 ### JobOpening Relationships
 - Many-to-One with RecruiterProfile (as recruiter)
 - One-to-Many with CandidateMatch in the matching app (as job_opening)
+- One-to-Many with Conversation in the messaging app (as job_opening)
 
 ### Conversation Relationships
 - Many-to-Many with User (as participants)
+- Many-to-One with JobOpening (optional, as job_opening)
 - One-to-Many with Message (as conversation)
 
 ### TalentSheet Relationships

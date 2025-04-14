@@ -17,6 +17,7 @@ from django.views.generic import DetailView, ListView, View
 
 from apps.authentication.models import User
 from apps.messaging.models import Conversation, Message, Notification
+from apps.recruiters.models import JobOpening
 
 
 class ConversationListView(LoginRequiredMixin, ListView):
@@ -84,7 +85,9 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
     template_name = "messaging/conversation_detail.html"
     model = Conversation
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
         """
         Check if the user is a participant before processing the request.
 
@@ -128,9 +131,11 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
         context["messages"] = message_queryset
         # Cast request.user to Any to bypass strict type checking with Django's ORM
         user = cast(Any, self.request.user)
-        context["other_participant"] = conversation.get_other_participant(
-            user
-        )
+        context["other_participant"] = conversation.get_other_participant(user)
+
+        # Add job opening to context if it exists
+        if conversation.job_opening:
+            context["job_opening"] = conversation.job_opening
 
         return context
 
@@ -144,77 +149,128 @@ class StartConversationView(LoginRequiredMixin, View):
     """
 
     def post(
-        self, request: HttpRequest, user_id: int, *args: Any, **kwargs: Any
+        self,
+        request: HttpRequest,
+        job_id: int,
+        recipient_id: int,
+        *args: Any,
+        **kwargs: Any,
     ) -> HttpResponse:
         """
         Handle POST request to start a new conversation.
 
         Args:
             request: The HTTP request.
-            user_id: The ID of the user to start a conversation with.
+            job_id: The ID of the job opening this conversation is about.
+            recipient_id: The ID of the user to start a conversation with.
             *args: Additional arguments.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            JsonResponse: Response indicating success or failure.
+            HttpResponse: Appropriate response based on request type (HTMX or regular).
         """
         try:
-            recipient = get_object_or_404(User, id=user_id)
+            # Verify the current user is a recruiter
+            if cast(Any, request.user).user_type != "recruiter":
+                return JsonResponse(
+                    {
+                        "status": "error",
+                        "message": "Only recruiters can initiate conversations",
+                    },
+                    status=403,
+                )
 
-            # Check if conversation already exists
+            recipient = get_object_or_404(User, id=recipient_id)
+            job_opening = get_object_or_404(JobOpening, id=job_id)
+
+            # Verify the job belongs to the recruiter
+            if job_opening.recruiter.user != request.user:
+                return JsonResponse(
+                    {
+                        "status": "error",
+                        "message": "You can only create conversations for your own job openings",
+                    },
+                    status=403,
+                )
+
+            # Check if conversation already exists for this job and recipient
             existing_conversation = (
                 Conversation.objects.filter(participants=request.user)
                 .filter(participants=recipient)
+                .filter(job_opening=job_opening)
                 .first()
             )
 
+            redirect_url = ""
             if existing_conversation:
-                return JsonResponse(
-                    {
-                        "status": "success",
-                        "redirect_url": reverse(
-                            "messaging:conversation_detail",
-                            kwargs={"pk": existing_conversation.pk},
-                        ),
-                    }
+                redirect_url = reverse(
+                    "messaging:conversation_detail",
+                    kwargs={"pk": existing_conversation.pk},
+                )
+            else:
+                # Create new conversation
+                conversation = Conversation.objects.create(
+                    job_opening=job_opening, status="interest_requested"
+                )
+                # Cast user objects to Any to satisfy type checker with Django's ORM
+                conversation.participants.add(
+                    cast(Any, request.user), cast(Any, recipient)
                 )
 
-            # Create new conversation
-            conversation = Conversation.objects.create()
-            # Cast user objects to Any to satisfy type checker with Django's ORM
-            conversation.participants.add(cast(Any, request.user), cast(Any, recipient))
+                # Create initial message with job interest check
+                job_title = job_opening.title
+                job_company = job_opening.company
+                message_content = request.POST.get(
+                    "message",
+                    f"Hi there! I found your profile and think you might be a good fit for the {job_title} role at {job_company}. "
+                    f"Would you be interested in learning more about this opportunity?",
+                )
 
-            # Create initial message if provided
-            message_content = request.POST.get("message", "")
-            if message_content:
                 Message.objects.create(
                     conversation=conversation,
                     sender=request.user,
                     content=message_content,
                 )
 
-            # Create notification for recipient
-            Notification.objects.create(
-                user=recipient,
-                notification_type="message",
-                content=f"New message from {cast(Any, request.user).get_full_name()}",
-                link=reverse(
-                    "messaging:conversation_detail", kwargs={"pk": conversation.pk}
-                ),
-            )
-
-            return JsonResponse(
-                {
-                    "status": "success",
-                    "redirect_url": reverse(
-                        "messaging:conversation_detail",
-                        kwargs={"pk": conversation.pk},
+                # Create notification for recipient
+                Notification.objects.create(
+                    user=recipient,
+                    notification_type="match",  # Use match instead of message to indicate interest check
+                    content=f"New job opportunity from {cast(Any, request.user).get_full_name()}",
+                    link=reverse(
+                        "messaging:conversation_detail", kwargs={"pk": conversation.pk}
                     ),
-                }
-            )
+                )
+
+                redirect_url = reverse(
+                    "messaging:conversation_detail",
+                    kwargs={"pk": conversation.pk},
+                )
+
+            # Check if this is an HTMX request
+            if "HX-Request" in request.headers:
+                # For HTMX requests, use HX-Redirect for client-side redirection
+                response = HttpResponse("<div>Creating conversation...</div>")
+                response["HX-Redirect"] = redirect_url
+                return response
+            else:
+                # For non-HTMX requests (API), return JSON response with redirect URL
+                return JsonResponse(
+                    {
+                        "status": "success",
+                        "redirect_url": redirect_url,
+                    }
+                )
 
         except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)})
+            if "HX-Request" in request.headers:
+                # For HTMX requests, return error message as HTML
+                return HttpResponse(
+                    f"<div class='alert alert-error'>Error: {str(e)}</div>", status=500
+                )
+            else:
+                # For non-HTMX requests, return JSON error
+                return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 class SendMessageView(LoginRequiredMixin, View):
@@ -249,6 +305,16 @@ class SendMessageView(LoginRequiredMixin, View):
                     {"status": "error", "message": "Not authorized"}, status=403
                 )
 
+            # Only allow messages if conversation is in appropriate status
+            if conversation.status not in ["active", "candidate_interested"]:
+                return JsonResponse(
+                    {
+                        "status": "error",
+                        "message": "Cannot send messages in the current conversation state",
+                    },
+                    status=400,
+                )
+
             # Create message
             message = Message.objects.create(
                 conversation=conversation,
@@ -276,6 +342,92 @@ class SendMessageView(LoginRequiredMixin, View):
             )
 
             return JsonResponse({"status": "success", "message_html": message_html})
+
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+
+
+class RespondToInterestView(LoginRequiredMixin, View):
+    """
+    View for job seekers to respond to interest checks.
+
+    This view handles updating conversation status based on the job seeker's response.
+    """
+
+    def post(
+        self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        """
+        Handle POST request to respond to an interest check.
+
+        Args:
+            request: The HTTP request.
+            pk: The ID of the conversation.
+            *args: Additional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            JsonResponse: Response indicating success or failure.
+        """
+        try:
+            conversation = get_object_or_404(Conversation, pk=pk)
+
+            # Verify the current user is a participant and a job seeker
+            if (
+                cast(Any, request.user) not in conversation.participants.all()
+                or cast(Any, request.user).user_type != "job_seeker"
+            ):
+                return JsonResponse(
+                    {"status": "error", "message": "Not authorized"}, status=403
+                )
+
+            # Verify the conversation is in interest_requested status
+            if conversation.status != "interest_requested":
+                return JsonResponse(
+                    {
+                        "status": "error",
+                        "message": "This conversation has already been responded to",
+                    },
+                    status=400,
+                )
+
+            # Get response (interested or not interested)
+            is_interested = request.POST.get("is_interested") == "true"
+            new_status = (
+                "candidate_interested" if is_interested else "candidate_not_interested"
+            )
+
+            # Update conversation status
+            conversation.status = new_status
+            conversation.save()
+
+            # Create response message from job seeker
+            message_content = (
+                "Thank you for reaching out! I'm interested in learning more about this opportunity."
+                if is_interested
+                else "Thank you for considering me, but I'm not interested in this opportunity at this time."
+            )
+
+            Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                content=message_content,
+            )
+
+            # If interested, notify recruiter
+            if is_interested:
+                recruiter = conversation.get_other_participant(cast(Any, request.user))
+
+                Notification.objects.create(
+                    user=recruiter,
+                    notification_type="match",
+                    content=f"{cast(Any, request.user).get_full_name()} is interested in your job opening!",
+                    link=reverse(
+                        "messaging:conversation_detail", kwargs={"pk": conversation.pk}
+                    ),
+                )
+
+            return JsonResponse({"status": "success"})
 
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})

@@ -7,13 +7,18 @@ including conversations, messages, and notifications.
 
 from django.urls import path
 
-from apps.messaging.views.conversation_views import (ConversationDetailView,
-                                                     ConversationListView,
-                                                     SendMessageView,
-                                                     StartConversationView)
+from apps.messaging.views.conversation_views import (
+    ConversationDetailView,
+    ConversationListView,
+    RespondToInterestView,
+    SendMessageView,
+    StartConversationView,
+)
 from apps.messaging.views.notification_views import (
-    MarkAllNotificationsReadView, MarkNotificationReadView,
-    NotificationListView)
+    MarkAllNotificationsReadView,
+    MarkNotificationReadView,
+    NotificationListView,
+)
 
 app_name = "messaging"
 
@@ -34,6 +39,11 @@ urlpatterns = [
         "conversations/<int:conversation_id>/send/",
         SendMessageView.as_view(),
         name="send_message",
+    ),
+    path(
+        "conversations/<int:pk>/respond/",
+        RespondToInterestView.as_view(),
+        name="respond_to_interest",
     ),
     # Notification URLs
     path("notifications/", NotificationListView.as_view(), name="notifications"),
