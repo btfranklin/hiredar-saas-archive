@@ -16,7 +16,6 @@ from django.views.generic import DetailView
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import JobSeekerProfile as JobSeeker
-from apps.job_seekers.models import TalentSheet
 from apps.matching.models import CandidateMatch
 from apps.messaging.models import Conversation
 from apps.recruiters.models import JobOpening

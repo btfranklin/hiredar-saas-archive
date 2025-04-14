@@ -6,10 +6,9 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponseBase
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.views.generic import DetailView, TemplateView
 
-from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import JobSeekerProfile
 from apps.messaging.models import Conversation
