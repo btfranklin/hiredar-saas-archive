@@ -8,6 +8,8 @@ data extracted from resumes.
 import logging
 from typing import Any
 
+from django.db import transaction
+
 from apps.job_seekers.models import JobSeekerProfile
 
 # Setup logging
@@ -15,79 +17,94 @@ logger = logging.getLogger(__name__)
 
 
 def update_profile(
-    profile: JobSeekerProfile, parsed_data: dict[str, Any], xml_content: str
+    profile: JobSeekerProfile,
+    parsed_data: dict[str, Any],
+    xml_content: str | None = None,
 ) -> bool:
     """
-    Update a JobSeekerProfile with parsed resume data.
+    Update a JobSeekerProfile with data extracted from a resume.
 
     Args:
-        profile: The JobSeekerProfile instance to update
-        parsed_data: Dictionary of parsed resume data
-        xml_content: Original XML content (for storage)
+        profile: JobSeekerProfile to update
+        parsed_data: Dictionary of parsed data from the resume
+        xml_content: Optional raw XML content from the resume
 
     Returns:
-        True if update was successful, False otherwise
+        True if the profile was updated successfully, False otherwise
     """
     try:
-        # Update skills (now a formatted string)
-        skills_text = parsed_data.get("skills")
-        if skills_text:
-            profile.skills = skills_text
+        with transaction.atomic():
+            # Update profile fields
+            _update_profile_fields(profile, parsed_data)
 
-        # Update most recent title
-        most_recent_title = parsed_data.get("most_recent_title")
-        if most_recent_title:
-            profile.most_recent_title = most_recent_title
+            # Update XML if provided
+            if xml_content:
+                profile.resume_xml = xml_content
+                profile.save(update_fields=["resume_xml"])
 
-        # Update years of experience
-        years_experience = parsed_data.get("years_of_experience", 0)
-        if years_experience:
-            profile.years_of_experience = years_experience
+            logger.info("Profile updated successfully")
+            return True
+    except Exception as e:
+        logger.error("Error updating profile: %s", str(e))
+        return False
 
-        # Update professional summary
-        professional_summary = parsed_data.get("professional_summary")
-        if professional_summary:
-            profile.professional_summary = professional_summary
 
-        # Update full experience text
-        experience_text = parsed_data.get("experience")
-        if experience_text:
-            profile.experience = experience_text
+def _update_profile_fields(profile: JobSeekerProfile, data: dict[str, Any]) -> None:
+    """
+    Update specific fields on a JobSeekerProfile from parsed resume data.
 
-        # Update education text
-        education_text = parsed_data.get("education")
-        if education_text:
-            profile.education = education_text
+    Args:
+        profile: JobSeekerProfile to update
+        data: Dictionary of parsed data from the resume
+    """
+    # Update basic profile fields
+    if "name" in data.get("personal_details", {}):
+        profile.personal_tagline = f"{data['personal_details']['name']}"
 
-        # Update certifications text
-        certifications_text = parsed_data.get("certifications")
-        if certifications_text:
-            profile.certifications = certifications_text
+    # Update skills as a pipe-separated list
+    if "skills" in data:
+        profile.skills = " | ".join(skill for skill in data["skills"] if skill.strip())
 
-        # Update personal details if available
-        personal_details = parsed_data.get("personal_details", {})
-        if personal_details.get("name"):
-            # Update the user's name from parsed data
-            profile.user.name = personal_details["name"]
-            profile.user.save()
+    # Update experience fields
+    if "experience" in data:
+        profile.experience = data["experience"]
 
-        # Update user location if provided
-        if personal_details.get("location"):
-            profile.user.location = personal_details["location"]
-            profile.user.save()
+    # Update education
+    if "education" in data:
+        profile.education = data["education"]
 
-        # Update phone number if provided
-        if personal_details.get("phone"):
+    # Update certifications
+    if "certifications" in data:
+        profile.certifications = data["certifications"]
+
+    # Update years of experience
+    if "years_of_experience" in data:
+        profile.years_of_experience = data["years_of_experience"]
+
+    # Update most recent job title
+    if "current_title" in data:
+        profile.most_recent_title = data["current_title"]
+
+    # Update professional summary
+    if "summary" in data:
+        profile.professional_summary = data["summary"]
+
+    # Update personal details (applicable to user-owned profiles)
+    if profile.user_owner and "personal_details" in data:
+        personal_details = data["personal_details"]
+
+        # Update user name if available
+        if "name" in personal_details:
+            profile.user_owner.name = personal_details["name"]
+            profile.user_owner.save()
+
+        # Update location
+        if "location" in personal_details:
+            profile.location = personal_details["location"]
+
+        # Update phone
+        if "phone" in personal_details:
             profile.phone = personal_details["phone"]
 
-        # Store the XML for potential future use
-        profile.resume_xml = xml_content
-
-        # Save the profile
-        profile.save()
-
-        logger.info("Profile updated successfully with parsed resume data")
-        return True
-    except Exception as e:
-        logger.error("Error updating profile from parsed data: %s", str(e))
-        return False
+    # Save the updated profile
+    profile.save()

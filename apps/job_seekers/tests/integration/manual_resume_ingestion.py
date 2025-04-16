@@ -145,14 +145,14 @@ class ResumeIngestionTest(ManualTestCase):
             result = generate_talent_sheet_task(profile.id)
             self.assertTrue(
                 result.get("success", False),
-                f"Failed to generate talent sheet for {profile.user.email}: {result.get('message')}",
+                f"Failed to generate talent sheet for {profile.user_owner.email if profile.user_owner else 'unknown@example.com'}: {result.get('message')}",
             )
 
             # Get the talent sheet
             profile.refresh_from_db()
             self.assertTrue(
                 hasattr(profile, "talent_sheet"),
-                f"No talent sheet created for {profile.user.email}",
+                f"No talent sheet created for {profile.user_owner.email if profile.user_owner else 'unknown@example.com'}",
             )
 
             talent_sheets.append(profile.talent_sheet)
@@ -167,7 +167,9 @@ class ResumeIngestionTest(ManualTestCase):
             try:
                 # Generate personal tagline if not already present
                 if not profile.personal_tagline and profile.resume_xml:
-                    print(f"Generating tagline for {profile.user.email}")
+                    print(
+                        f"Generating tagline for {profile.user_owner.email if profile.user_owner else 'unknown@example.com'}"
+                    )
                     tagline = generate_personal_tagline(profile.resume_xml)
                     profile.personal_tagline = tagline
                     profile.save(update_fields=["personal_tagline"])
@@ -203,7 +205,9 @@ class ResumeIngestionTest(ManualTestCase):
             )
 
             # A JobSeekerProfile should be created automatically via signals
-            profile = JobSeekerProfile.objects.get(user=user)
+            profile = JobSeekerProfile.objects.get(
+                owner_content_type__model="user", owner_object_id=user.id
+            )
 
             return user, profile
         except Exception as e:
@@ -325,7 +329,7 @@ class ResumeIngestionTest(ManualTestCase):
             html_content.append(
                 f"""
         <div class="card">
-            <h3 class="text-xl font-bold">{profile.user.name} <span class="text-sm text-gray-500">({profile.user.email})</span></h3>
+            <h3 class="text-xl font-bold">{profile.user_owner.name if profile.user_owner else 'Unknown'} <span class="text-sm text-gray-500">({profile.user_owner.email if profile.user_owner else 'unknown@example.com'})</span></h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                 <div>

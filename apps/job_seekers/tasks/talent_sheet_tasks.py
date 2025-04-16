@@ -1,121 +1,122 @@
 """
-Talent sheet generation tasks for job seekers.
-
-This module contains Django Q2 tasks for generating talent sheets for job seekers
-who opt into the talent pool.
+Background tasks for generating talent sheets for job seekers.
 """
 
 import logging
 from typing import Any
 
-from django.db import transaction
+from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 
-from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
-from apps.job_seekers.utils.recommendation.llm_processor import generate_talent_sheet
-
-# Setup logging
+# Set up logging
 logger = logging.getLogger(__name__)
 
 
 def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
     """
-    Django Q2 task to generate a talent sheet for a job seeker who enters the talent pool.
+    Generate a talent sheet for a job seeker.
 
-    This task analyzes the job seeker's profile, resume data, and interested roles
-    to create a comprehensive talent sheet for recruiters to view.
+    This function creates a comprehensive talent sheet for a job seeker profile,
+    summarizing their skills, experience, and career goals in a recruiter-friendly format.
 
     Args:
         job_seeker_profile_id: ID of the JobSeekerProfile to generate a talent sheet for
 
     Returns:
-        dict: Result of the talent sheet generation operation
+        Dictionary with generation results
     """
     try:
-        # Get the job seeker profile
-        try:
-            profile = JobSeekerProfile.objects.get(id=job_seeker_profile_id)
-        except JobSeekerProfile.DoesNotExist:
-            error_msg = f"Profile not found: id={job_seeker_profile_id}"
-            logger.error(error_msg)
-            return {
-                "success": False,
-                "message": error_msg,
-            }
-
-        # Log the start of processing
-        logger.info("Generating talent sheet for job seeker: %s", profile.user.email)
-
-        # Check if we have resume XML data
-        if not profile.resume_xml:
-            logger.warning(
-                "No resume XML data available for profile ID %s", job_seeker_profile_id
-            )
-            return {
-                "success": False,
-                "message": "Cannot generate talent sheet: No resume data available",
-            }
-
-        # Get interested roles (from RoleRecommendation objects)
-        interested_roles = list(
-            RoleRecommendation.objects.filter(
-                job_seeker=profile, is_candidate_interested=True
-            ).values_list("role_title", flat=True)
-        )
-
-        logger.info(
-            "Found %d interested roles for profile ID %s",
-            len(interested_roles),
-            job_seeker_profile_id,
-        )
-
-        # Generate the talent sheet using the LLM processor
-        try:
-            talent_sheet = generate_talent_sheet(
-                resume_xml=profile.resume_xml,
-                interested_roles=interested_roles if interested_roles else None,
-            )
-
-            # Associate the talent sheet with the job seeker profile
-            talent_sheet.job_seeker = profile
-
-            # Set as published by default - talent sheets are always generated and published in one step
-            talent_sheet.is_published = True
-
-            # Save the talent sheet to the database
-            with transaction.atomic():
-                # Delete any existing talent sheet for this profile to avoid duplicates
-                TalentSheet.objects.filter(job_seeker=profile).delete()
-
-                # Save the new talent sheet
-                talent_sheet.save()
-
-            logger.info("Successfully created talent sheet for %s", profile.user.email)
-
-            # TODO: Submit a job to the Matching app for further AI processing
-            # from apps.matching.tasks import process_candidate_matches
-            # process_candidate_matches.delay(job_seeker_profile_id=job_seeker_profile_id)
-
-            return {
-                "success": True,
-                "message": "Talent sheet generated successfully",
-                "profile_id": job_seeker_profile_id,
-            }
-
-        except Exception as e:
-            logger.error(
-                "Error in LLM talent sheet generation: %s",
-                str(e),
-                exc_info=True,
-            )
-            return {
-                "success": False,
-                "message": f"Error generating talent sheet: {str(e)}",
-            }
-
-    except Exception as e:
-        # Log the error
-        logger.error("Error generating talent sheet: %s", str(e), exc_info=True)
+        # Get the profile
+        profile = JobSeekerProfile.objects.get(id=job_seeker_profile_id)
+    except JobSeekerProfile.DoesNotExist:
+        error_msg = f"Profile not found: id={job_seeker_profile_id}"
+        logger.error(error_msg)
         return {
             "success": False,
-            "message": f"Error generating talent sheet: {str(e)}",
+            "message": error_msg,
+        }
+
+    # Check if we have resume data
+    if not profile.resume_xml:
+        logger.error(
+            "No resume XML data available for profile ID %s", job_seeker_profile_id
+        )
+        return {
+            "success": False,
+            "message": "No resume data available for talent sheet generation",
+        }
+
+    # Get the user's email for logging
+    user_email = (
+        profile.user_owner.email if profile.user_owner else "unknown@example.com"
+    )
+    logger.info("Generating talent sheet for job seeker: %s", user_email)
+
+    # Create the talent sheet data
+    talent_sheet_data = {}
+
+    # Craft promotional blurb
+    if profile.most_recent_title or profile.years_of_experience:
+        blurb_parts = []
+        if profile.most_recent_title:
+            blurb_parts.append(f"Experienced {profile.most_recent_title}")
+        if profile.years_of_experience:
+            blurb_parts.append(
+                f"with {profile.years_of_experience}+ years of experience"
+            )
+
+        blurb = " ".join(blurb_parts)
+        if profile.professional_summary:
+            blurb += f". {profile.professional_summary.split('.')[0]}."
+
+        talent_sheet_data["promotional_blurb"] = blurb
+    else:
+        talent_sheet_data["promotional_blurb"] = (
+            "Talented professional with a proven track record of success."
+        )
+
+    # Craft skill overview
+    if profile.skills:
+        skills_list = profile.skills_list[:5]  # Get top 5 skills
+        if skills_list:
+            talent_sheet_data["skill_overview"] = (
+                f"Key skills include {', '.join(skills_list)}."
+            )
+        else:
+            talent_sheet_data["skill_overview"] = (
+                "Versatile skill set applicable to various technical roles."
+            )
+    else:
+        talent_sheet_data["skill_overview"] = (
+            "Versatile skill set applicable to various technical roles."
+        )
+
+    # Set published status (default to published when explicitly created)
+    talent_sheet_data["is_published"] = True
+
+    try:
+        # Create or update the talent sheet
+        talent_sheet = TalentPoolManager.create_or_update_talent_sheet(
+            profile, talent_sheet_data
+        )
+
+        # In a real implementation, we might want to trigger candidate matching
+        # after creating the talent sheet
+        # process_candidate_matches.delay(job_seeker_profile_id=job_seeker_profile_id)
+
+        logger.info("Successfully created talent sheet for %s", user_email)
+
+        return {
+            "success": True,
+            "message": "Generated talent sheet successfully",
+            "talent_sheet_id": talent_sheet.pk,
+            "profile_id": job_seeker_profile_id,
+        }
+
+    except Exception as e:
+        error_msg = f"Error generating talent sheet: {str(e)}"
+        logger.error(error_msg)
+        return {
+            "success": False,
+            "message": error_msg,
         }

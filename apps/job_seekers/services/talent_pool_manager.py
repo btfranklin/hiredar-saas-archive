@@ -6,7 +6,8 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django_q.tasks import async_task
 
-from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
+from apps.job_seekers.models import RoleRecommendation, TalentSheet
+from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 
@@ -25,7 +26,14 @@ class TalentPoolManager:
             Dictionary with talent pool status information
         """
         try:
-            profile = JobSeekerProfile.objects.get(user=user)
+            profile = ProfileManager.get_profile(user)
+            if not profile:
+                return {
+                    "in_talent_pool": False,
+                    "has_talent_sheet": False,
+                    "is_published": False,
+                }
+
             in_talent_pool = profile.in_talent_pool
 
             # Get talent sheet if it exists
@@ -40,7 +48,7 @@ class TalentPoolManager:
                 "has_talent_sheet": talent_sheet is not None,
                 "is_published": talent_sheet.is_published if talent_sheet else False,
             }
-        except JobSeekerProfile.DoesNotExist:
+        except Exception:
             return {
                 "in_talent_pool": False,
                 "has_talent_sheet": False,
@@ -61,7 +69,15 @@ class TalentPoolManager:
             Dictionary with updated talent pool status
         """
         try:
-            profile = JobSeekerProfile.objects.get(user=user)
+            profile = ProfileManager.get_profile(user)
+            if not profile:
+                return {
+                    "in_talent_pool": False,
+                    "has_talent_sheet": False,
+                    "is_published": False,
+                    "error": "Profile not found",
+                }
+
             profile_id = getattr(profile, "id", None)
 
             if profile_id is None:
@@ -109,12 +125,12 @@ class TalentPoolManager:
                 "has_talent_sheet": True,
                 "is_published": join,
             }
-        except JobSeekerProfile.DoesNotExist:
+        except Exception:
             return {
                 "in_talent_pool": False,
                 "has_talent_sheet": False,
                 "is_published": False,
-                "error": "Profile not found",
+                "error": "An error occurred",
             }
 
     @staticmethod

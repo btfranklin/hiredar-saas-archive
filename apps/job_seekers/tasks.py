@@ -5,6 +5,8 @@ Background tasks for the job_seekers app.
 import os
 from typing import Any
 
+from django.contrib.contenttypes.models import ContentType
+
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet, UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.job_seekers.utils.resume_processing.pipeline import process_resume
@@ -33,7 +35,13 @@ def process_resume_for_pool(
     # Process the resume file
     try:
         # Create a temporary profile for processing
-        temp_profile = JobSeekerProfile(user=resume_pool.recruiter)
+        owner_content_type = ContentType.objects.get_for_model(
+            resume_pool.recruiter.__class__
+        )
+        temp_profile = JobSeekerProfile(
+            owner_content_type=owner_content_type,
+            owner_object_id=resume_pool.recruiter.pk,
+        )
 
         # Extract data from resume using the process_resume pipeline
         result = process_resume(file_path, temp_profile, task_id)

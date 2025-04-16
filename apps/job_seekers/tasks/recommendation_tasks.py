@@ -47,7 +47,8 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
 
         # Log the start of processing
         logger.info(
-            "Generating role recommendations for job seeker: %s", profile.user.email
+            "Generating role recommendations for job seeker: %s",
+            profile.user_owner.email,
         )
 
         # Check if we have resume XML data
@@ -98,7 +99,7 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
             logger.info(
                 "Created %d role recommendations for %s",
                 len(created_recommendations),
-                profile.user.email,
+                profile.user_owner.email,
             )
 
             # Return success response with recommendations
@@ -164,7 +165,7 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
 
         # Log the start of processing
         logger.info(
-            "Generating personal tagline for job seeker: %s", profile.user.email
+            "Generating personal tagline for job seeker: %s", profile.user_owner.email
         )
 
         # Check if we have resume XML data
@@ -192,7 +193,9 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
             profile.personal_tagline = tagline
             profile.save(update_fields=["personal_tagline"])
 
-            logger.info("Generated tagline for %s: %s", profile.user.email, tagline)
+            logger.info(
+                "Generated tagline for %s: %s", profile.user_owner.email, tagline
+            )
 
             return {
                 "success": True,

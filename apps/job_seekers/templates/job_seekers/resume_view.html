@@ -19,7 +19,15 @@
                 {% endif %}
                 
                 <h1 class="text-3xl font-bold">Candidate Resume</h1>
-                <p class="text-lg text-base-content/70">{{ profile.user.name }}</p>
+                <p class="text-lg text-base-content/70">
+                    {% if profile.user_owner %}
+                        {{ profile.user_owner.name }}
+                    {% elif profile.uploaded_resume_pool %}
+                        Candidate from {{ profile.uploaded_resume_pool.name }}
+                    {% else %}
+                        Candidate
+                    {% endif %}
+                </p>
             </div>
             
             {% if job_opening %}
@@ -47,11 +55,25 @@
                         <div class="flex items-center gap-4 mb-4">
                             <div class="avatar placeholder">
                                 <div class="bg-neutral text-neutral-content rounded-full w-16">
-                                    <span class="text-xl">{{ profile.user.get_initials }}</span>
+                                    <span class="text-xl">
+                                        {% if profile.user_owner %}
+                                            {{ profile.user_owner.get_initials }}
+                                        {% else %}
+                                            JS
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
                             <div>
-                                <h2 class="card-title">{{ profile.user.name }}</h2>
+                                <h2 class="card-title">
+                                    {% if profile.user_owner %}
+                                        {{ profile.user_owner.name }}
+                                    {% elif profile.most_recent_title %}
+                                        {{ profile.most_recent_title }}
+                                    {% else %}
+                                        Job Seeker
+                                    {% endif %}
+                                </h2>
                                 <p class="text-sm">{{ profile.most_recent_title }}</p>
                             </div>
                         </div>
@@ -60,10 +82,12 @@
                         
                         <h3 class="text-lg font-semibold mb-2">Contact Information</h3>
                         <ul class="space-y-2">
+                            {% if profile.user_owner %}
                             <li class="flex items-center gap-2">
                                 <i class="fas fa-envelope text-primary"></i>
-                                <span>{{ profile.user.email }}</span>
+                                <span>{{ profile.user_owner.email }}</span>
                             </li>
+                            {% endif %}
                             {% if profile.phone %}
                             <li class="flex items-center gap-2">
                                 <i class="fas fa-phone text-primary"></i>

@@ -13,11 +13,8 @@ from django.db import transaction
 from django_q.tasks import async_task, result
 
 from apps.authentication.models import User
-from apps.job_seekers.models import (
-    JobSeekerProfile,
-    ResumeProcessingTaskProgress,
-    UploadedResumePool,
-)
+from apps.job_seekers.models import ResumeProcessingTaskProgress, UploadedResumePool
+from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.recruiters.models import JobOpening
 
 
@@ -171,8 +168,12 @@ class ResumeProcessor:
         Returns:
             The updated job seeker profile
         """
-        # Get or create the profile
-        profile, created = JobSeekerProfile.objects.get_or_create(user=user)
+        # Get or create the profile using ProfileManager
+        profile = ProfileManager.get_profile(user)
+
+        if not profile:
+            # Create a new profile for this user
+            profile = ProfileManager.create_or_update_profile(user, {})
 
         # Map resume data fields to profile fields
         field_mapping = {

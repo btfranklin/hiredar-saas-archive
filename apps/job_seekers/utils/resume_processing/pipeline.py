@@ -152,7 +152,19 @@ def process_resume(
             }
 
         # Step 5: Update profile
-        logger.info("Updating profile for user %s", profile.user.email)
+        # Create a profile identifier that works for both user-owned and pool-owned profiles
+        if profile.user_owner:
+            profile_identifier = (
+                f"Profile #{profile.pk} (User: {profile.user_owner.email})"
+            )
+        elif profile.uploaded_resume_pool:
+            profile_identifier = (
+                f"Profile #{profile.pk} (Pool: {profile.uploaded_resume_pool.name})"
+            )
+        else:
+            profile_identifier = f"Profile #{profile.pk} (Orphaned)"
+
+        logger.info("Updating %s", profile_identifier)
         update_success = update_profile(profile, parsed_data, xml_content)
         pipeline_steps.append("profile_updated")
 
@@ -173,7 +185,9 @@ def process_resume(
         # Calculate processing time
         processing_time = time.time() - start_time
         logger.info(
-            "Resume processing completed successfully in %.2fs", processing_time
+            "Resume processing completed successfully for %s in %.2fs",
+            profile_identifier,
+            processing_time,
         )
 
         # Final progress update
@@ -201,12 +215,10 @@ def process_resume(
         # Save diagnostic information if possible
         diagnostic_info = {}
         if resume_text and isinstance(resume_text, str):
-            # Safe way to extract a sample that won't trigger unsubscriptable errors
             sample_length = min(len(resume_text), 500)
             diagnostic_info["text_sample"] = resume_text[0:sample_length] + "..."
 
         if xml_content and isinstance(xml_content, str):
-            # Safe way to extract a sample that won't trigger unsubscriptable errors
             sample_length = min(len(xml_content), 500)
             diagnostic_info["xml_sample"] = xml_content[0:sample_length] + "..."
 

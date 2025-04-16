@@ -216,7 +216,9 @@ class Command(BaseCommand):
             )
 
             # A JobSeekerProfile should be created automatically via signals
-            profile = JobSeekerProfile.objects.get(user=user)
+            profile = JobSeekerProfile.objects.get(
+                owner_content_type__model="user", owner_object_id=user.id
+            )
 
             return user, profile
         except Exception as e:
@@ -239,9 +241,12 @@ class Command(BaseCommand):
         task_id = None
         try:
             if verbosity >= 1:
-                self.stdout.write(
-                    f"  - Scheduling talent sheet generation for {profile.user.email}"
+                email = (
+                    profile.user_owner.email
+                    if profile.user_owner
+                    else "unknown@example.com"
                 )
+                self.stdout.write(f"  - Scheduling talent sheet generation for {email}")
 
             # Schedule the talent sheet generation task to run asynchronously
             profile_id = getattr(profile, "id")
@@ -290,10 +295,13 @@ class Command(BaseCommand):
                 # Task object's result field contains the return value of the task function
                 result_data = task.result
                 if verbosity >= 1:
+                    email = (
+                        profile.user_owner.email
+                        if profile.user_owner
+                        else "unknown@example.com"
+                    )
                     self.stdout.write(
-                        self.style.SUCCESS(
-                            f"  - Created talent sheet for {profile.user.email}"
-                        )
+                        self.style.SUCCESS(f"  - Created talent sheet for {email}")
                     )
                 return True
             else:

@@ -73,7 +73,7 @@ class ResumeView(LoginRequiredMixin, DetailView):
 
         # Get the job seeker profile
         profile = self.get_object()
-        job_seeker = profile.user
+        job_seeker = profile.user_owner
 
         # Check if there's a conversation where the job seeker has expressed interest
         conversation = Conversation.objects.filter(
@@ -99,7 +99,7 @@ class ResumeView(LoginRequiredMixin, DetailView):
         # Get the conversation for context
         conversation = Conversation.objects.filter(
             Q(participants=self.request.user)
-            & Q(participants=profile.user)
+            & Q(participants=profile.user_owner)
             & Q(status="candidate_interested")
         ).first()
 
