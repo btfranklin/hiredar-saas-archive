@@ -71,6 +71,7 @@ Manages job seeker-specific functionality:
   - `ResumeProcessingTaskProgress`: Tracks progress of resume processing tasks
   - `RoleRecommendation`: Career recommendations for job seekers based on their skills and experience
   - `TalentSheet`: AI-generated talent sheet for job seekers in the talent pool
+  - `UploadedResumePool`: Represents a batch of resumes uploaded by a recruiter for a specific job opening
 - **Views**:
   - Organized in subdirectories for better maintainability:
     - `dashboard_views.py`: Dashboard view for job seekers
@@ -85,12 +86,24 @@ Manages job seeker-specific functionality:
     - `resume_processing.py`: Services for handling resume uploads and processing
     - `profile_manager.py`: Services for job seeker profile operations
     - `talent_pool_manager.py`: Services for talent pool and role interest management
+- **Utils**:
+  - Utility functions and classes for specific operations:
+    - `resume_processing/`: Resume processing utilities:
+      - `pipeline.py`: Orchestrates the complete resume processing pipeline
+      - `extraction.py`: Functions for extracting text from PDF files
+      - `llm_processor.py`: Handles interaction with LLM for resume parsing
+      - `profile_updater.py`: Updates profiles with extracted resume data
+      - `xml_parser.py`: Parses XML representations of resumes
+      - `xml_error_reporting.py`: Handles and reports XML parsing errors
+- **Tasks**:
+  - Background tasks for asynchronous processing:
+    - `tasks.py`: General tasks for processing resumes and cleanup
+    - `tasks/resume_processing_tasks.py`: Specialized tasks for resume processing
+    - `tasks/talent_sheet_tasks.py`: Tasks for talent sheet generation
 - **Templates**:
   - Job seeker-specific templates for signup, profiles, and dashboards
 - **Signals**:
   - Signal handlers for job seeker-specific actions
-- **Tasks**:
-  - Background tasks for resume processing and AI analysis
 - **URLs**:
   - `/job-seekers/profile/`: Job seeker profile
   - `/job-seekers/profile/create/`: Profile creation
@@ -286,7 +299,11 @@ The job matching process is one of the key features of the application:
 
 1. **Job Creation**: Recruiters create job openings with required skills and details.
 2. **Resume Upload**: Job seekers upload their resumes, which are processed by the system.
-3. **Skill Extraction**: AI processes extract skills and experience from resumes.
+3. **Resume Processing Pipeline**: 
+   - Text extraction from PDF files
+   - Conversion to structured XML using LLM integration
+   - Parsing XML to extract key information
+   - Updating JobSeekerProfile with extracted information
 4. **Vector Generation**: The system creates embeddings for both jobs and talent sheets.
 5. **Matching Algorithm**: Vector similarity is used to match job seekers to job openings based on skills, experience, and other factors.
 6. **Match Presentation**: Recruiters are shown matching candidates for their job openings with rating scores out of 10.
@@ -334,7 +351,7 @@ The project uses custom linter rules to enforce consistent type annotations:
 
 The application uses Django Q for background tasks:
 
-- **Resume Processing**: Asynchronous processing of uploaded resumes
+- **Resume Processing**: Asynchronous processing of uploaded resumes via the `process_resume` pipeline in `apps/job_seekers/utils/resume_processing/pipeline.py`
 - **AI Analysis**: Background AI analysis for matching and recommendations
 - **Email Notifications**: Sending emails in the background
 - **Vector Generation**: Creating embeddings for jobs and talent sheets in the background
@@ -392,7 +409,7 @@ Service classes encapsulate business logic separately from views:
 
 ```python
 # Using a service class
-from apps.job_seekers.services import ProfileManager, ResumeProcessor
+from apps.job_seekers.services import ProfileManager, ResumeProcessor, TalentPoolManager
 
 # Get a profile
 profile = ProfileManager.get_profile(user)
@@ -400,8 +417,12 @@ profile = ProfileManager.get_profile(user)
 # Update a profile
 updated_profile = ProfileManager.create_or_update_profile(user, profile_data)
 
-# Process a resume
-task = ResumeProcessor.create_processing_task(user, task_id)
+# Process a resume (using the pipeline)
+from apps.job_seekers.utils.resume_processing.pipeline import process_resume
+result = process_resume(file_path, profile, task_id)
+
+# Manage talent pool
+talent_sheet = TalentPoolManager.create_or_update_talent_sheet(profile, talent_sheet_data)
 ```
 
 ## Project Configuration

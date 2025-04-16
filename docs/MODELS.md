@@ -17,6 +17,8 @@ classDiagram
     User <|-- Message : one-to-many (sender)
     Conversation <|-- Message : one-to-many
     User <|-- Notification : one-to-many
+    User <|-- UploadedResumePool : one-to-many
+    UploadedResumePool <|-- JobSeekerProfile : one-to-many
 
     class User {
         +username: CharField
@@ -29,7 +31,9 @@ classDiagram
     }
     
     class JobSeekerProfile {
-        +user: OneToOneField(User)
+        +owner_content_type: ForeignKey(ContentType)
+        +owner_object_id: PositiveIntegerField
+        +owner: GenericForeignKey
         +skills: TextField
         +experience: TextField
         +education: TextField
@@ -67,6 +71,13 @@ classDiagram
         +is_active: BooleanField
         +created_at: DateTimeField
         +updated_at: DateTimeField
+    }
+    
+    class UploadedResumePool {
+        +recruiter: ForeignKey(User)
+        +job_opening: ForeignKey(JobOpening)
+        +name: CharField
+        +created_at: DateTimeField
     }
     
     class CandidateMatch {
@@ -166,13 +177,15 @@ The custom User model that serves as the base for all user accounts.
 
 ### JobSeekerProfile
 
-Extended profile for job seekers with career-related information.
+Extended profile for job seekers with career-related information. This model uses a polymorphic ownership pattern, meaning it can be owned by either a User or an UploadedResumePool through a generic relation.
 
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `user` | OneToOneField | Link to User model (with user_type="job_seeker") |
-| `skills` | TextField | Comma-separated list of skills |
+| `owner_content_type` | ForeignKey | ContentType for polymorphic relationship |
+| `owner_object_id` | PositiveIntegerField | Object ID for polymorphic relationship |
+| `owner` | GenericForeignKey | Combined field linking to either User or UploadedResumePool |
+| `skills` | TextField | Pipe-separated list of skills |
 | `experience` | TextField | Description of work experience |
 | `education` | TextField | Description of educational background |
 | `certifications` | TextField | Description of professional certifications |
@@ -191,8 +204,39 @@ Extended profile for job seekers with career-related information.
 **Key Methods:**
 | Method | Description |
 |--------|-------------|
-| `skills_list` | Property that returns a list of skill names |
+| `skills_list` | Property that returns a list of skill names from the pipe-separated skills field |
 | `in_talent_pool` | Property that determines if the job seeker is in the talent pool based on whether they have a published talent sheet |
+| `uploaded_resume_pool` | Property that returns the UploadedResumePool owner if applicable |
+| `user_owner` | Property that returns the User owner if applicable |
+
+**Business Rules:**
+- A JobSeekerProfile can be owned by either a User or an UploadedResumePool
+- If owned by a User, it represents a job seeker who registered on the platform
+- If owned by an UploadedResumePool, it represents a resume uploaded by a recruiter
+
+### UploadedResumePool
+
+Represents a batch of resumes uploaded by a recruiter for a specific job opening.
+
+**Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `recruiter` | ForeignKey | Link to the User who created this pool (with user_type="recruiter") |
+| `job_opening` | ForeignKey | Job opening associated with this pool (optional, non-ownership) |
+| `name` | CharField | Label for this pool (e.g., "March 2024 Upload") |
+| `created_at` | DateTimeField | When the pool was created |
+
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| `__str__` | Returns a string representation with pool name and recruiter email |
+
+**Business Rules:**
+| Rule | Description |
+|------|-------------|
+| Ownership | Resume pools belong to a recruiter, and may optionally be linked to a job opening |
+| Polymorphic Owner | Serves as a potential owner for JobSeekerProfile instances through the GenericForeignKey |
+| Purpose | Used for batch-processing resumes without requiring job seekers to register |
 
 ### ResumeProcessingTaskProgress
 
@@ -242,7 +286,8 @@ Model for AI-generated role recommendations for job seekers.
 **Key Methods:**
 | Method | Description |
 |--------|-------------|
-| No specific methods beyond default | |
+| `__str__` | Returns a string representation with role title and job seeker name |
+| `uploaded_resume_pool` | Property that accesses the resume pool through the job_seeker relationship |
 
 **Business Rules:**
 | Rule | Description |
@@ -270,7 +315,9 @@ This represents a comprehensive, recruiter-friendly presentation of a job seeker
 **Key Methods:**
 | Method | Description |
 |--------|-------------|
+| `__str__` | Returns a string representation with user name or profile ID |
 | `ideal_roles_list` | Property that returns a list of ideal roles from the comma-separated string |
+| `uploaded_resume_pool` | Property that accesses the resume pool through the job_seeker relationship |
 
 **Business Rules:**
 | Rule | Description |
@@ -416,16 +463,22 @@ Model for user notifications.
 ## Model Relationships
 
 ### User Relationships
-- One-to-One with JobSeekerProfile (for job seeker users)
+- One-to-One with JobSeekerProfile (for job seeker users, through the polymorphic owner field)
 - One-to-One with RecruiterProfile (for recruiter users)
+- One-to-Many with UploadedResumePool (as recruiter)
 - Many-to-Many with Conversation (as participants)
 - One-to-Many with Message (as sender)
 - One-to-Many with Notification (as recipient)
 
 ### JobSeekerProfile Relationships
-- One-to-One with User
+- Polymorphic relationship with either User or UploadedResumePool (as owner)
 - One-to-Many with RoleRecommendation (as job_seeker)
-- One-to-One with TalentSheet
+- One-to-One with TalentSheet (as job_seeker)
+
+### UploadedResumePool Relationships
+- Many-to-One with User (as recruiter)
+- Many-to-One with JobOpening (optional)
+- One-to-Many with JobSeekerProfile (through polymorphic ownership)
 
 ### RecruiterProfile Relationships
 - One-to-One with User
@@ -433,8 +486,9 @@ Model for user notifications.
 
 ### JobOpening Relationships
 - Many-to-One with RecruiterProfile (as recruiter)
-- One-to-Many with CandidateMatch in the matching app (as job_opening)
-- One-to-Many with Conversation in the messaging app (as job_opening)
+- One-to-Many with UploadedResumePool (non-ownership)
+- One-to-Many with CandidateMatch (as job_opening)
+- One-to-Many with Conversation (as job_opening)
 
 ### Conversation Relationships
 - Many-to-Many with User (as participants)
@@ -448,6 +502,7 @@ Model for user notifications.
 ## Database Schema Notes
 
 - The application uses a custom User model with email-based authentication
-- Profiles are created automatically via signals when a user is created
+- JobSeekerProfile uses polymorphic ownership to support both registered users and uploaded resumes
+- Profiles for registered users are created automatically via signals when a user is created
 - All models use proper foreign key constraints for data integrity
 - Most models include timestamps for created_at/updated_at 
