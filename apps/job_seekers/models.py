@@ -2,21 +2,52 @@ import json
 from datetime import timedelta
 from typing import Any
 
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
 
 from apps.authentication.models import User
 
 
-class JobSeekerProfile(models.Model):
-    """Extended profile for job seekers"""
+class UploadedResumePool(models.Model):
+    """
+    Represents a batch of resumes uploaded by a recruiter for a specific job opening.
+    """
 
-    user = models.OneToOneField(
-        User,
+    recruiter = models.ForeignKey(
+        "authentication.User",
         on_delete=models.CASCADE,
-        related_name="job_seeker_profile",
-        limit_choices_to={"user_type": "job_seeker"},
+        related_name="uploaded_resume_pools",
+        limit_choices_to={"user_type": "recruiter"},
     )
+    job_opening = models.ForeignKey(
+        "recruiters.JobOpening",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="uploaded_resume_pools",
+        help_text="Job opening associated with this pool (optional, non-ownership)",
+    )
+    name = models.CharField(
+        max_length=255, help_text='Label for this pool (e.g. "March 2024 Upload")'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"Resume Pool: {self.name} ({self.recruiter.email})"
+
+
+class JobSeekerProfile(models.Model):
+    """Extended profile for job seekers (now supports polymorphic owner)"""
+
+    # Polymorphic owner: can be User or UploadedResumePool
+    owner_content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, null=True, blank=True
+    )
+    owner_object_id = models.PositiveIntegerField(null=True, blank=True)
+    owner = GenericForeignKey("owner_content_type", "owner_object_id")
+
     skills = models.TextField(blank=True, help_text="Pipe-separated list of skills")
     experience = models.TextField(null=True, blank=True)
     education = models.TextField(null=True, blank=True)
@@ -51,7 +82,23 @@ class JobSeekerProfile(models.Model):
     portfolio_url = models.URLField(blank=True)
 
     def __str__(self) -> str:
-        return f"Job Seeker: {self.user.email}"
+        if self.user_owner:
+            return f"Job Seeker: {self.user_owner.email}"
+        if self.uploaded_resume_pool:
+            return f"Job Seeker (Pool: {self.uploaded_resume_pool.name})"
+        return f"Job SeekerProfile {self.pk}"
+
+    @property
+    def uploaded_resume_pool(self) -> UploadedResumePool | None:
+        if isinstance(self.owner, UploadedResumePool):
+            return self.owner
+        return None
+
+    @property
+    def user_owner(self) -> User | None:
+        if isinstance(self.owner, User):
+            return self.owner
+        return None
 
     @property
     def skills_list(self) -> list[str]:
@@ -334,7 +381,18 @@ class RoleRecommendation(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.role_title} for {self.job_seeker.user.name}"
+        # Use user_owner if available, otherwise just use the job_seeker pk
+        user_name = (
+            self.job_seeker.user_owner.name
+            if self.job_seeker.user_owner
+            else f"Profile {self.job_seeker.pk}"
+        )
+        return f"{self.role_title} for {user_name}"
+
+    @property
+    def uploaded_resume_pool(self) -> UploadedResumePool | None:
+        """Access the resume pool through the job_seeker relationship."""
+        return self.job_seeker.uploaded_resume_pool if self.job_seeker else None
 
     class Meta:
         ordering = ["role_title"]
@@ -382,7 +440,18 @@ class TalentSheet(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"Talent Sheet: {self.job_seeker.user.name}"
+        # Use user_owner if available, otherwise just use the job_seeker pk
+        user_name = (
+            self.job_seeker.user_owner.name
+            if self.job_seeker.user_owner
+            else f"Profile {self.job_seeker.pk}"
+        )
+        return f"Talent Sheet: {user_name}"
+
+    @property
+    def uploaded_resume_pool(self) -> UploadedResumePool | None:
+        """Access the resume pool through the job_seeker relationship."""
+        return self.job_seeker.uploaded_resume_pool if self.job_seeker else None
 
     @property
     def ideal_roles_list(self) -> list[str]:

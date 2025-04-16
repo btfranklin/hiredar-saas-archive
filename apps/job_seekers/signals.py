@@ -7,6 +7,7 @@ JobSeekerProfile instances when User instances are created or modified.
 
 from typing import Any, Type
 
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -28,4 +29,10 @@ def create_job_seeker_profile(
         **kwargs: Additional keyword arguments
     """
     if created and instance.user_type == "job_seeker":
-        JobSeekerProfile.objects.create(user=instance)
+        # Use the GenericForeignKey for the polymorphic owner relationship
+        user_content_type = ContentType.objects.get_for_model(User)
+        profile = JobSeekerProfile(
+            owner_content_type=user_content_type,
+            owner_object_id=instance.pk,
+        )
+        profile.save()
