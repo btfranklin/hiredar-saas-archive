@@ -2,6 +2,7 @@
 Service for managing job seeker profiles.
 """
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
 from apps.job_seekers.models import JobSeekerProfile
@@ -11,35 +12,48 @@ class ProfileManager:
     """Service for managing job seeker profiles."""
 
     @staticmethod
-    def get_profile(user):
+    def get_profile(owner):
         """
-        Get a job seeker profile for a user.
+        Get a job seeker profile for an owner (User or UploadedResumePool).
 
         Args:
-            user: The user to get the profile for
+            owner: The owner (User or UploadedResumePool) to get the profile for
 
         Returns:
             The job seeker profile, or None if it doesn't exist
         """
         try:
-            return JobSeekerProfile.objects.get(user=user)
+            # Get the content type for the owner class
+            owner_content_type = ContentType.objects.get_for_model(owner.__class__)
+            # Look up the profile by owner content type and ID
+            return JobSeekerProfile.objects.get(
+                owner_content_type=owner_content_type, owner_object_id=owner.pk
+            )
         except JobSeekerProfile.DoesNotExist:
             return None
 
     @staticmethod
     @transaction.atomic
-    def create_or_update_profile(user, profile_data):
+    def create_or_update_profile(owner, profile_data):
         """
         Create or update a job seeker profile.
 
         Args:
-            user: The user to create/update the profile for
+            owner: The owner (User or UploadedResumePool) to create/update the profile for
             profile_data: Dictionary of profile data
 
         Returns:
             The created or updated job seeker profile
         """
-        profile, created = JobSeekerProfile.objects.get_or_create(user=user)
+        # Check if profile exists
+        profile = ProfileManager.get_profile(owner)
+
+        if not profile:
+            # Create new profile with polymorphic owner
+            owner_content_type = ContentType.objects.get_for_model(owner.__class__)
+            profile = JobSeekerProfile(
+                owner_content_type=owner_content_type, owner_object_id=owner.pk
+            )
 
         # Update the profile with the provided data
         for field, value in profile_data.items():
@@ -48,6 +62,20 @@ class ProfileManager:
 
         profile.save()
         return profile
+
+    @staticmethod
+    def create_or_update_profile_for_resume_pool(resume_pool, profile_data):
+        """
+        Create or update a job seeker profile for a resume pool.
+
+        Args:
+            resume_pool: UploadedResumePool instance
+            profile_data: Dictionary of profile data
+
+        Returns:
+            The created or updated job seeker profile
+        """
+        return ProfileManager.create_or_update_profile(resume_pool, profile_data)
 
     @staticmethod
     def format_skills(skills_list):

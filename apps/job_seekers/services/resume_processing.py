@@ -2,11 +2,23 @@
 Service for handling resume processing tasks.
 """
 
+import os
+import shutil
+import tempfile
+import uuid
+from zipfile import ZipFile
+
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from django_q.tasks import result
+from django_q.tasks import async_task, result
 
 from apps.authentication.models import User
-from apps.job_seekers.models import JobSeekerProfile, ResumeProcessingTaskProgress
+from apps.job_seekers.models import (
+    JobSeekerProfile,
+    ResumeProcessingTaskProgress,
+    UploadedResumePool,
+)
+from apps.recruiters.models import JobOpening
 
 
 class DummyTaskProgress:
@@ -194,3 +206,77 @@ class ResumeProcessor:
 
         profile.save()
         return profile
+
+    @staticmethod
+    def process_resume_batch_from_zip(
+        recruiter: User,
+        zip_file: UploadedFile,
+        pool_name: str,
+        job_opening_id: int | None = None,
+    ) -> tuple[UploadedResumePool, list[str]]:
+        """
+        Process a batch of resumes from a ZIP file.
+
+        Args:
+            recruiter: The recruiter user who uploaded the ZIP file
+            zip_file: The uploaded ZIP file containing resumes
+            pool_name: Name for the resume pool
+            job_opening_id: Optional job opening ID to associate with the pool
+
+        Returns:
+            Tuple of (created resume pool, list of task IDs for monitoring)
+        """
+        # Create the resume pool
+        pool = UploadedResumePool.objects.create(
+            recruiter=recruiter,
+            name=pool_name,
+        )
+
+        # Set job opening if provided
+        if job_opening_id:
+            try:
+                job_opening = JobOpening.objects.get(pk=job_opening_id)
+                pool.job_opening = job_opening
+                pool.save()
+            except JobOpening.DoesNotExist:
+                # Log but continue with processing
+                print(f"Warning: Job opening with ID {job_opening_id} not found.")
+
+        # Create temp directory for extracted files
+        temp_dir = tempfile.mkdtemp(prefix="resume_batch_")
+        task_ids = []
+
+        try:
+            # Extract ZIP file
+            with ZipFile(zip_file, "r") as zip_ref:
+                zip_ref.extractall(temp_dir)
+
+            # Process each resume file
+            for root, _, files in os.walk(temp_dir):
+                for filename in files:
+                    # Only process PDF files (common resume format)
+                    if filename.lower().endswith(".pdf"):
+                        file_path = os.path.join(root, filename)
+
+                        # Generate a task ID
+                        task_id = str(uuid.uuid4())
+
+                        # Queue the resume processing task
+                        async_task(
+                            "apps.job_seekers.tasks.process_resume_for_pool",
+                            file_path,
+                            pool.pk,
+                            task_id,
+                            hook="apps.job_seekers.tasks.cleanup_temp_resume_file",
+                        )
+
+                        task_ids.append(task_id)
+        except Exception as e:
+            # Log the error but don't re-raise
+            print(f"Error processing ZIP file: {str(e)}")
+            # Clean up temp directory in case of error
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            # Return the pool and empty task list
+            return pool, []
+
+        return pool, task_ids

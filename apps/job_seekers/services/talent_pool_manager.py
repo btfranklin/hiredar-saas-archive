@@ -173,3 +173,22 @@ class TalentPoolManager:
                 pass
 
         return role
+
+    @staticmethod
+    @transaction.atomic
+    def create_or_update_talent_sheet(profile, talent_sheet_data):
+        """
+        Create or update a talent sheet for a job seeker profile.
+
+        Args:
+            profile: JobSeekerProfile to create/update talent sheet for
+            talent_sheet_data: Dictionary of data for the talent sheet
+
+        Returns:
+            The created or updated TalentSheet
+        """
+        talent_sheet, created = TalentSheet.objects.update_or_create(
+            job_seeker=profile, defaults=talent_sheet_data
+        )
+
+        return talent_sheet
