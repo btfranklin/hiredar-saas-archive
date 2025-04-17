@@ -74,7 +74,7 @@ def resume_processing_completed(task: Task) -> None:
 
             # Generate personal tagline
             tagline_task_id = async_task(
-                "apps.job_seekers.tasks.recommendation_tasks.generate_personal_tagline",
+                "apps.job_seekers.tasks.personal_tagline_tasks.generate_personal_tagline",
                 profile_id,
                 group=group_name,
                 task_name=f"personal_tagline_{profile_id}",
