@@ -9,6 +9,8 @@ import logging
 
 from django_q.tasks import Task, async_task
 
+from apps.job_seekers.models import JobSeekerProfile
+
 # Setup logging
 logger = logging.getLogger(__name__)
 
@@ -47,32 +49,51 @@ def resume_processing_completed(task: Task) -> None:
     profile_id = task.args[1]
     logger.info("Starting follow-up tasks for profile ID: %s", profile_id)
 
-    # Start multiple follow-up tasks individually for now
-    # We'll use a common group name to logically group them
-    group_name = f"resume_followup_{profile_id}"
+    # Check if the profile is owned by a User (not a pool)
+    try:
+        profile = JobSeekerProfile.objects.get(id=profile_id)
 
-    # Generate role recommendations
-    rec_task_id = async_task(
-        "apps.job_seekers.tasks.recommendation_tasks.generate_role_recommendations",
-        profile_id,
-        group=group_name,
-        task_name=f"role_recommendations_{profile_id}",
-    )
+        # Start multiple follow-up tasks individually for now
+        # We'll use a common group name to logically group them
+        group_name = f"resume_followup_{profile_id}"
 
-    # Generate personal tagline
-    tagline_task_id = async_task(
-        "apps.job_seekers.tasks.recommendation_tasks.generate_personal_tagline",
-        profile_id,
-        group=group_name,
-        task_name=f"personal_tagline_{profile_id}",
-    )
+        # Only generate recommendations and taglines if the profile has a user_owner
+        if profile.user_owner:
+            logger.info(
+                "Profile %s is owned by a user, generating role recommendations and personal tagline",
+                profile_id,
+            )
 
-    logger.info(
-        "Queued follow-up tasks with IDs: %s, %s (group: %s)",
-        rec_task_id,
-        tagline_task_id,
-        group_name,
-    )
+            # Generate role recommendations
+            rec_task_id = async_task(
+                "apps.job_seekers.tasks.recommendation_tasks.generate_role_recommendations",
+                profile_id,
+                group=group_name,
+                task_name=f"role_recommendations_{profile_id}",
+            )
+
+            # Generate personal tagline
+            tagline_task_id = async_task(
+                "apps.job_seekers.tasks.recommendation_tasks.generate_personal_tagline",
+                profile_id,
+                group=group_name,
+                task_name=f"personal_tagline_{profile_id}",
+            )
+
+            logger.info(
+                "Queued follow-up tasks with IDs: %s, %s (group: %s)",
+                rec_task_id,
+                tagline_task_id,
+                group_name,
+            )
+        else:
+            logger.info(
+                "Profile %s is owned by a pool, skipping role recommendations and personal tagline",
+                profile_id,
+            )
+
+    except JobSeekerProfile.DoesNotExist:
+        logger.error("Profile with ID %s does not exist", profile_id)
 
 
 def all_processing_complete(group_result: list[Task]) -> None:
