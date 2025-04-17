@@ -304,10 +304,15 @@ The job matching process is one of the key features of the application:
    - Conversion to structured XML using LLM integration
    - Parsing XML to extract key information
    - Updating JobSeekerProfile with extracted information
-4. **Vector Generation**: The system creates embeddings for both jobs and talent sheets.
-5. **Matching Algorithm**: Vector similarity is used to match job seekers to job openings based on skills, experience, and other factors.
-6. **Match Presentation**: Recruiters are shown matching candidates for their job openings with rating scores out of 10.
-7. **Match Analysis**: AI analyzes why a match is suitable and provides detailed summaries.
+4. **Talent Sheet Generation**:
+   - When job seekers join the talent pool, a basic placeholder talent sheet is created immediately
+   - An asynchronous task then enhances this talent sheet using LLM with a structured prompt
+   - The LLM-generated talent sheet includes a promotional blurb, skill overview, and ideal roles
+   - For job seekers who have shown interest in role recommendations, these are incorporated into the talent sheet
+5. **Vector Generation**: The system creates embeddings for both jobs and talent sheets.
+6. **Matching Algorithm**: Vector similarity is used to match job seekers to job openings based on skills, experience, and other factors.
+7. **Match Presentation**: Recruiters are shown matching candidates for their job openings with rating scores out of 10.
+8. **Match Analysis**: AI analyzes why a match is suitable and provides detailed summaries.
 
 ## URL Structure
 
@@ -352,6 +357,7 @@ The project uses custom linter rules to enforce consistent type annotations:
 The application uses Django Q for background tasks:
 
 - **Resume Processing**: Asynchronous processing of uploaded resumes via the `process_resume` pipeline in `apps/job_seekers/utils/resume_processing/pipeline.py`
+- **Talent Sheet Generation**: Asynchronous enhancement of talent sheets using LLM via `generate_talent_sheet_task`
 - **AI Analysis**: Background AI analysis for matching and recommendations
 - **Email Notifications**: Sending emails in the background
 - **Vector Generation**: Creating embeddings for jobs and talent sheets in the background

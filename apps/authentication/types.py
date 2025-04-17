@@ -26,6 +26,7 @@ class AuthenticatedUser(Protocol):
     is_job_seeker: bool
     is_recruiter: bool
     is_admin: bool
+    is_authenticated: bool
 
     # Relationships managed by related managers
     # These are not directly on the User model but are included here for type checking

@@ -5,8 +5,9 @@ Background tasks for generating talent sheets for job seekers.
 import logging
 from typing import Any
 
-from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
 from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
+from apps.job_seekers.utils.recommendation.llm_processor import generate_talent_sheet
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -18,6 +19,8 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
 
     This function creates a comprehensive talent sheet for a job seeker profile,
     summarizing their skills, experience, and career goals in a recruiter-friendly format.
+    The talent sheet is generated using LLM, ensuring high-quality content that effectively
+    highlights the candidate's qualifications.
 
     Args:
         job_seeker_profile_id: ID of the JobSeekerProfile to generate a talent sheet for
@@ -52,64 +55,41 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
     )
     logger.info("Generating talent sheet for job seeker: %s", user_email)
 
-    # Create the talent sheet data
-    talent_sheet_data = {}
-
-    # Craft promotional blurb
-    if profile.most_recent_title or profile.years_of_experience:
-        blurb_parts = []
-        if profile.most_recent_title:
-            blurb_parts.append(f"Experienced {profile.most_recent_title}")
-        if profile.years_of_experience:
-            blurb_parts.append(
-                f"with {profile.years_of_experience}+ years of experience"
-            )
-
-        blurb = " ".join(blurb_parts)
-        if profile.professional_summary:
-            blurb += f". {profile.professional_summary.split('.')[0]}."
-
-        talent_sheet_data["promotional_blurb"] = blurb
-    else:
-        talent_sheet_data["promotional_blurb"] = (
-            "Talented professional with a proven track record of success."
-        )
-
-    # Craft skill overview
-    if profile.skills:
-        skills_list = profile.skills_list[:5]  # Get top 5 skills
-        if skills_list:
-            talent_sheet_data["skill_overview"] = (
-                f"Key skills include {', '.join(skills_list)}."
-            )
-        else:
-            talent_sheet_data["skill_overview"] = (
-                "Versatile skill set applicable to various technical roles."
-            )
-    else:
-        talent_sheet_data["skill_overview"] = (
-            "Versatile skill set applicable to various technical roles."
-        )
-
-    # Set published status (default to published when explicitly created)
-    talent_sheet_data["is_published"] = True
-
     try:
-        # Create or update the talent sheet
-        talent_sheet = TalentPoolManager.create_or_update_talent_sheet(
-            profile, talent_sheet_data
+        # Get interested roles if available
+        interested_roles = []
+        role_recs = RoleRecommendation.objects.filter(
+            job_seeker=profile, is_candidate_interested=True
+        )
+        if role_recs.exists():
+            interested_roles = list(role_recs.values_list("role_title", flat=True))
+            logger.info(
+                "Found %d interested roles for talent sheet generation",
+                len(interested_roles),
+            )
+
+        # Generate talent sheet using LLM
+        talent_sheet = generate_talent_sheet(profile.resume_xml, interested_roles)
+
+        # Create or update the talent sheet with the LLM-generated content
+        saved_talent_sheet = TalentPoolManager.create_or_update_talent_sheet(
+            profile,
+            {
+                "promotional_blurb": talent_sheet.promotional_blurb,
+                "skill_overview": talent_sheet.skill_overview,
+                "ideal_roles": talent_sheet.ideal_roles,
+                "is_published": True,  # Publish it now that we have real content
+            },
         )
 
-        # In a real implementation, we might want to trigger candidate matching
-        # after creating the talent sheet
-        # process_candidate_matches.delay(job_seeker_profile_id=job_seeker_profile_id)
-
-        logger.info("Successfully created talent sheet for %s", user_email)
+        logger.info(
+            "Created/updated talent sheet with LLM-generated content for %s", user_email
+        )
 
         return {
             "success": True,
             "message": "Generated talent sheet successfully",
-            "talent_sheet_id": talent_sheet.pk,
+            "talent_sheet_id": saved_talent_sheet.pk,
             "profile_id": job_seeker_profile_id,
         }
 

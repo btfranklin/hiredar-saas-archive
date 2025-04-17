@@ -46,14 +46,14 @@
                         <label class="label">
                             <span class="label-text">Location</span>
                         </label>
-                        <input type="text" name="location" value="{{ user.job_seeker_profile.location|default:'' }}" class="input input-bordered">
+                        <input type="text" name="location" value="{{ job_seeker_profile.location|default:'' }}" class="input input-bordered">
                     </div>
 
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Phone Number</span>
                         </label>
-                        <input type="tel" name="phone" value="{{ user.job_seeker_profile.phone|default:'' }}" class="input input-bordered">
+                        <input type="tel" name="phone" value="{{ job_seeker_profile.phone|default:'' }}" class="input input-bordered">
                     </div>
                     
                     <div class="divider">Social Media Links</div>
@@ -62,21 +62,21 @@
                         <label class="label">
                             <span class="label-text">LinkedIn URL</span>
                         </label>
-                        <input type="url" name="linkedin_url" value="{{ user.job_seeker_profile.linkedin_url|default:'' }}" class="input input-bordered" placeholder="https://linkedin.com/in/yourprofile">
+                        <input type="url" name="linkedin_url" value="{{ job_seeker_profile.linkedin_url|default:'' }}" class="input input-bordered" placeholder="https://linkedin.com/in/yourprofile">
                     </div>
                     
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">GitHub URL</span>
                         </label>
-                        <input type="url" name="github_url" value="{{ user.job_seeker_profile.github_url|default:'' }}" class="input input-bordered" placeholder="https://github.com/yourusername">
+                        <input type="url" name="github_url" value="{{ job_seeker_profile.github_url|default:'' }}" class="input input-bordered" placeholder="https://github.com/yourusername">
                     </div>
                     
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Portfolio URL</span>
                         </label>
-                        <input type="url" name="portfolio_url" value="{{ user.job_seeker_profile.portfolio_url|default:'' }}" class="input input-bordered" placeholder="https://yourportfolio.com">
+                        <input type="url" name="portfolio_url" value="{{ job_seeker_profile.portfolio_url|default:'' }}" class="input input-bordered" placeholder="https://yourportfolio.com">
                     </div>
                     
                     <div class="form-control mt-6">

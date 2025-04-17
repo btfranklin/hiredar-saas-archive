@@ -10,6 +10,7 @@ from django.views.generic import ListView, TemplateView
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import RoleRecommendation, TalentSheet
+from apps.job_seekers.services import ProfileManager
 from apps.matching.models import CandidateMatch
 from apps.messaging.models import Notification
 
@@ -30,7 +31,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Check if job seeker profile exists, if not redirect to profile creation
         try:
             # This will raise RelatedObjectDoesNotExist if profile doesn't exist
-            user.job_seeker_profile
+            ProfileManager.get_profile_for_user(user)
         except Exception:
             # Redirect to profile creation page
             return redirect("job_seekers:profile_create")
@@ -41,7 +42,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         """Get context data for the dashboard."""
         context = super().get_context_data(**kwargs)
         user = cast(AuthenticatedUser, self.request.user)
-        profile = user.job_seeker_profile
+        profile = ProfileManager.get_profile_for_user(user)
 
         # Get job matches
         context["job_matches"] = CandidateMatch.objects.filter(
@@ -130,7 +131,7 @@ class RoleRecommendationsView(LoginRequiredMixin, ListView):
         """
         user = cast(AuthenticatedUser, self.request.user)
         return RoleRecommendation.objects.filter(
-            job_seeker=user.job_seeker_profile
+            job_seeker=ProfileManager.get_profile_for_user(user)
         ).order_by("role_title")
 
 
@@ -179,7 +180,9 @@ class TalentSheetDetailsView(LoginRequiredMixin, TemplateView):
         user = cast(AuthenticatedUser, self.request.user)
 
         try:
-            talent_sheet = TalentSheet.objects.get(job_seeker=user.job_seeker_profile)
+            # Get the job seeker and talent sheet
+            job_seeker = ProfileManager.get_profile_for_user(user)
+            talent_sheet = TalentSheet.objects.get(job_seeker=job_seeker)
             context["talent_sheet"] = talent_sheet
             context["has_talent_sheet"] = True
         except TalentSheet.DoesNotExist:

@@ -137,3 +137,46 @@ class ProfileManager:
                 return False
 
         return True
+
+    @staticmethod
+    def get_profile_by_user_id(user_id):
+        """
+        Get a job seeker profile for a user by user ID.
+
+        This is a convenience method for views that have the user ID.
+
+        Args:
+            user_id: The ID of the user to get the profile for
+
+        Returns:
+            The job seeker profile, or None if it doesn't exist
+        """
+        try:
+            from django.contrib.auth import get_user_model
+
+            User = get_user_model()
+
+            # Get the content type for the User model
+            owner_content_type = ContentType.objects.get_for_model(User)
+
+            # Look up the profile by owner content type and user ID
+            return JobSeekerProfile.objects.get(
+                owner_content_type=owner_content_type, owner_object_id=user_id
+            )
+        except JobSeekerProfile.DoesNotExist:
+            return None
+
+    @staticmethod
+    def get_profile_for_user(user):
+        """
+        Get a job seeker profile for a user object.
+
+        This is a convenience method for views that already have the user object.
+
+        Args:
+            user: The user object to get the profile for
+
+        Returns:
+            The job seeker profile, or None if it doesn't exist
+        """
+        return ProfileManager.get_profile(user)

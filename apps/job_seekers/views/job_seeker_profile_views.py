@@ -11,6 +11,7 @@ from django.views.generic import DetailView, TemplateView
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.services import ProfileManager
 from apps.messaging.models import Conversation
 
 
@@ -33,8 +34,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = cast(AuthenticatedUser, self.request.user)
 
-        # Add job_seeker_profile to context
-        context["job_seeker_profile"] = user.job_seeker_profile
+        # Add job_seeker_profile to context using ProfileManager
+        context["job_seeker_profile"] = ProfileManager.get_profile_for_user(user)
 
         return context
 
@@ -126,4 +127,9 @@ class SettingsView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Get context data for the settings view."""
         context = super().get_context_data(**kwargs)
+
+        # Add job_seeker_profile to context using ProfileManager
+        user = cast(AuthenticatedUser, self.request.user)
+        context["job_seeker_profile"] = ProfileManager.get_profile_for_user(user)
+
         return context

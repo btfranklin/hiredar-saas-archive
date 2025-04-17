@@ -2,18 +2,14 @@
 
 import json
 import logging
-from typing import Any, cast
+from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
-from django.shortcuts import get_object_or_404
 from django.views import View
-from django_q.tasks import async_task
 
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.models import RoleRecommendation, TalentSheet
-from apps.job_seekers.services import TalentPoolManager
-from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
+from apps.job_seekers.services import ProfileManager, TalentPoolManager
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 
 # Setup logging
@@ -37,11 +33,8 @@ class PersonalTaglineView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin,
         if error_response:
             return error_response
 
-        # Get the job seeker's profile
-        if not hasattr(user, "job_seeker_profile"):
-            return JsonResponse({"error": "Job seeker profile not found"}, status=404)
-
-        profile = user.job_seeker_profile
+        # Get the user's profile
+        profile = ProfileManager.get_profile_for_user(user)
 
         # Safely get the personal tagline
         tagline = getattr(profile, "personal_tagline", "") or ""
@@ -149,21 +142,8 @@ class ToggleRoleInterestView(
         if error_response:
             return error_response
 
-        # Get the job seeker's profile
-        if not hasattr(user, "job_seeker_profile"):
-            if self.is_htmx_request(request):
-                return self.render_for_htmx(
-                    request,
-                    "job_seekers/partials/error.html",
-                    {"message": "Job seeker profile not found"},
-                    status=404,
-                )
-            else:
-                return JsonResponse(
-                    {"error": "Job seeker profile not found"}, status=404
-                )
-
-        profile = user.job_seeker_profile
+        # Get the user's profile
+        profile = ProfileManager.get_profile_for_user(user)
 
         # Get the role recommendation
         try:

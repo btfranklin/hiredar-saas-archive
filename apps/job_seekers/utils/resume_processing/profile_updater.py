@@ -37,15 +37,17 @@ def update_profile(
             # Update profile fields
             _update_profile_fields(profile, parsed_data)
 
-            # Update XML if provided
+            # Update XML if provided - do this before save to call save only once
             if xml_content:
                 profile.resume_xml = xml_content
-                profile.save(update_fields=["resume_xml"])
 
-            logger.info("Profile updated successfully")
+            # Save the profile once with all changes
+            profile.save()
+
+            logger.info("Profile updated successfully with parsed resume data")
             return True
     except Exception as e:
-        logger.error("Error updating profile: %s", str(e))
+        logger.error("Error updating profile from parsed data: %s", str(e))
         return False
 
 
@@ -63,7 +65,7 @@ def _update_profile_fields(profile: JobSeekerProfile, data: dict[str, Any]) -> N
 
     # Update skills as a pipe-separated list
     if "skills" in data:
-        profile.skills = " | ".join(skill for skill in data["skills"] if skill.strip())
+        profile.skills = data["skills"]
 
     # Update experience fields
     if "experience" in data:
@@ -82,12 +84,12 @@ def _update_profile_fields(profile: JobSeekerProfile, data: dict[str, Any]) -> N
         profile.years_of_experience = data["years_of_experience"]
 
     # Update most recent job title
-    if "current_title" in data:
-        profile.most_recent_title = data["current_title"]
+    if "most_recent_title" in data:
+        profile.most_recent_title = data["most_recent_title"]
 
     # Update professional summary
-    if "summary" in data:
-        profile.professional_summary = data["summary"]
+    if "professional_summary" in data:
+        profile.professional_summary = data["professional_summary"]
 
     # Update personal details (applicable to user-owned profiles)
     if profile.user_owner and "personal_details" in data:
@@ -106,5 +108,4 @@ def _update_profile_fields(profile: JobSeekerProfile, data: dict[str, Any]) -> N
         if "phone" in personal_details:
             profile.phone = personal_details["phone"]
 
-    # Save the updated profile
-    profile.save()
+    # The update_profile function will handle saving the profile
