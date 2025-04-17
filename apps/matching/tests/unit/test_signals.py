@@ -5,9 +5,10 @@ This module tests the handling of signals for job openings and talent sheets,
 particularly focusing on embedding management during status transitions.
 """
 
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from apps.matching.signals import (
@@ -79,10 +80,12 @@ class JobOpeningSignalTests(TestCase):
             sender=self.JobOpening, instance=job_draft, created=True
         )
 
-        # Verify that remove_job_opening_embeddings was called for non-active job
-        mock_async_task.assert_called_with(
-            "apps.matching.tasks.remove_job_opening_embeddings", job_draft.id
-        )
+        # Verify both task calls for non-active job
+        expected_calls = [
+            call("apps.matching.tasks.remove_job_opening_embeddings", job_draft.id),
+            call("apps.matching.tasks.remove_job_opening_matches", job_draft.id),
+        ]
+        mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
         # Reset mock
         mock_async_task.reset_mock()
@@ -101,10 +104,12 @@ class JobOpeningSignalTests(TestCase):
             sender=self.JobOpening, instance=job_closed, created=True
         )
 
-        # Verify that remove_job_opening_embeddings was called for non-active job
-        mock_async_task.assert_called_with(
-            "apps.matching.tasks.remove_job_opening_embeddings", job_closed.id
-        )
+        # Verify both task calls for non-active job
+        expected_calls = [
+            call("apps.matching.tasks.remove_job_opening_embeddings", job_closed.id),
+            call("apps.matching.tasks.remove_job_opening_matches", job_closed.id),
+        ]
+        mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
     @patch("apps.matching.signals.async_task")
     def test_job_opening_delete_handler(self, mock_async_task):
@@ -121,10 +126,12 @@ class JobOpeningSignalTests(TestCase):
         # Call the delete handler directly
         handle_job_opening_delete(sender=self.JobOpening, instance=job)
 
-        # Verify that remove_job_opening_embeddings was called
-        mock_async_task.assert_called_with(
-            "apps.matching.tasks.remove_job_opening_embeddings", job.id
-        )
+        # Verify both task calls for delete handler
+        expected_calls = [
+            call("apps.matching.tasks.remove_job_opening_embeddings", job.id),
+            call("apps.matching.tasks.remove_job_opening_matches", job.id),
+        ]
+        mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
 
 class TalentSheetSignalTests(TestCase):
@@ -147,7 +154,10 @@ class TalentSheetSignalTests(TestCase):
         )
 
         # Get the JobSeekerProfile that was automatically created via signal
-        self.test_job_seeker = self.JobSeekerProfile.objects.get(user=self.test_user)
+        user_content_type = ContentType.objects.get_for_model(self.User)
+        self.test_job_seeker = self.JobSeekerProfile.objects.get(
+            owner_content_type=user_content_type, owner_object_id=self.test_user.id
+        )
 
     @patch("apps.matching.signals.async_task")
     def test_talent_sheet_save_handler(self, mock_async_task):
@@ -186,10 +196,17 @@ class TalentSheetSignalTests(TestCase):
             sender=self.TalentSheet, instance=talent_unpublished, created=True
         )
 
-        # Verify that remove_talent_sheet_embeddings was called for unpublished talent sheet
-        mock_async_task.assert_called_with(
-            "apps.matching.tasks.remove_talent_sheet_embeddings", talent_unpublished.id
-        )
+        # Verify both task calls for unpublished talent sheet
+        expected_calls = [
+            call(
+                "apps.matching.tasks.remove_talent_sheet_embeddings",
+                talent_unpublished.id,
+            ),
+            call(
+                "apps.matching.tasks.remove_talent_sheet_matches", talent_unpublished.id
+            ),
+        ]
+        mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
     @patch("apps.matching.signals.async_task")
     def test_talent_sheet_delete_handler(self, mock_async_task):
@@ -205,7 +222,9 @@ class TalentSheetSignalTests(TestCase):
         # Call the delete handler directly
         handle_talent_sheet_delete(sender=self.TalentSheet, instance=talent)
 
-        # Verify that remove_talent_sheet_embeddings was called
-        mock_async_task.assert_called_with(
-            "apps.matching.tasks.remove_talent_sheet_embeddings", talent.id
-        )
+        # Verify both task calls for delete handler
+        expected_calls = [
+            call("apps.matching.tasks.remove_talent_sheet_embeddings", talent.id),
+            call("apps.matching.tasks.remove_talent_sheet_matches", talent.id),
+        ]
+        mock_async_task.assert_has_calls(expected_calls, any_order=True)

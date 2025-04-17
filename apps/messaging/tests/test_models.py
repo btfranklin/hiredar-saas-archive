@@ -1,5 +1,6 @@
 """Tests for messaging models."""
 
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from apps.authentication.models import User
@@ -27,8 +28,13 @@ class ConversationModelTest(TestCase):
         )
 
         # Get the automatically created profiles
-        self.profile1 = JobSeekerProfile.objects.get(user=self.user1)
-        self.profile2 = JobSeekerProfile.objects.get(user=self.user2)
+        user_content_type = ContentType.objects.get_for_model(User)
+        self.profile1 = JobSeekerProfile.objects.get(
+            owner_content_type=user_content_type, owner_object_id=self.user1.id
+        )
+        self.profile2 = JobSeekerProfile.objects.get(
+            owner_content_type=user_content_type, owner_object_id=self.user2.id
+        )
 
         # Create a conversation with User objects (not profiles)
         self.conversation = Conversation.objects.create()
@@ -66,8 +72,13 @@ class MessageModelTest(TestCase):
         )
 
         # Get the automatically created profiles
-        self.profile1 = JobSeekerProfile.objects.get(user=self.user1)
-        self.profile2 = JobSeekerProfile.objects.get(user=self.user2)
+        user_content_type = ContentType.objects.get_for_model(User)
+        self.profile1 = JobSeekerProfile.objects.get(
+            owner_content_type=user_content_type, owner_object_id=self.user1.id
+        )
+        self.profile2 = JobSeekerProfile.objects.get(
+            owner_content_type=user_content_type, owner_object_id=self.user2.id
+        )
 
         # Create a conversation with User objects (not profiles)
         self.conversation = Conversation.objects.create()
