@@ -16,7 +16,10 @@ from django.core.files.storage import default_storage
 from apps.job_seekers.models import JobSeekerProfile, ResumeProcessingTaskProgress
 from apps.job_seekers.utils.resume_processing.extraction import extract_text_from_pdf
 from apps.job_seekers.utils.resume_processing.llm_processor import convert_text_to_xml
-from apps.job_seekers.utils.resume_processing.profile_updater import update_profile
+from apps.job_seekers.utils.resume_processing.profile_updater import (
+    generate_and_save_personal_tagline,
+    update_profile_fields,
+)
 from apps.job_seekers.utils.resume_processing.xml_error_reporting import (
     log_xml_error,
     save_diagnostic_xml,
@@ -40,6 +43,7 @@ def process_resume(
     2. Convert to structured XML using LLM
     3. Parse XML to extract key information
     4. Update the JobSeekerProfile with extracted information
+    5. Generate personal tagline (integrated into the profile update step)
 
     Args:
         file_path: Path to the resume file (absolute or relative to MEDIA_ROOT)
@@ -151,7 +155,7 @@ def process_resume(
                 "pipeline_steps": pipeline_steps,
             }
 
-        # Step 5: Update profile
+        # Step 5: Update profile (fields only)
         # Create a profile identifier that works for both user-owned and pool-owned profiles
         if profile.user_owner:
             profile_identifier = (
@@ -163,16 +167,25 @@ def process_resume(
             )
         else:
             profile_identifier = f"Profile #{profile.pk} (Orphaned)"
-
         logger.info("Updating %s", profile_identifier)
-        update_success = update_profile(profile, parsed_data, xml_content)
+        update_success = update_profile_fields(profile, parsed_data)
         pipeline_steps.append("profile_updated")
-
-        # Update progress
+        # Update progress for profile update
         if progress_tracker:
             progress_tracker.mark_step_complete("profile_updated")
 
-        # Step 6: Delete the temporary file if it's in MEDIA_ROOT
+        # Step 6: Generate personal tagline
+        logger.info("Generating personal tagline for %s", profile_identifier)
+        # Generate and save personal tagline
+        tagline_success = generate_and_save_personal_tagline(
+            profile, xml_content, parsed_data
+        )
+        pipeline_steps.append("personal_tagline_generated")
+        # Update progress for tagline generation
+        if progress_tracker:
+            progress_tracker.mark_step_complete("personal_tagline_generated")
+
+        # Step 7: Delete the temporary file if it's in MEDIA_ROOT
         if not os.path.isabs(file_path):
             logger.info("Deleting temporary file: %s", file_path)
             default_storage.delete(file_path)
@@ -201,7 +214,7 @@ def process_resume(
 
         # Return success response
         return {
-            "success": update_success,
+            "success": update_success and tagline_success,
             "message": "Resume processed successfully",
             "profile_data": parsed_data,
             "pipeline_steps": pipeline_steps,
@@ -213,14 +226,21 @@ def process_resume(
         logger.error(traceback.format_exc())
 
         # Save diagnostic information if possible
-        diagnostic_info = {}
-        if resume_text and isinstance(resume_text, str):
-            sample_length = min(len(resume_text), 500)
-            diagnostic_info["text_sample"] = resume_text[0:sample_length] + "..."
+        diagnostic_info = {
+            "text_sample": "Resume text unavailable or error extracting sample",
+            "xml_sample": "XML content unavailable or error extracting sample",
+            "error": str(e),
+        }
 
-        if xml_content and isinstance(xml_content, str):
-            sample_length = min(len(xml_content), 500)
-            diagnostic_info["xml_sample"] = xml_content[0:sample_length] + "..."
+        if resume_text:
+            diagnostic_info["text_sample"] = (
+                resume_text[:500] + "..." if len(resume_text) > 500 else resume_text
+            )
+
+        if xml_content:
+            diagnostic_info["xml_sample"] = (
+                xml_content[:500] + "..." if len(xml_content) > 500 else xml_content
+            )
 
         # Update progress tracker
         if progress_tracker:

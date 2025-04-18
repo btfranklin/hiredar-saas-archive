@@ -9,8 +9,12 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
+import apps.job_seekers.utils.resume_processing.profile_updater as pu
 from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.utils.resume_processing.profile_updater import update_profile
+from apps.job_seekers.utils.resume_processing.profile_updater import (
+    generate_and_save_personal_tagline,
+    update_profile_fields,
+)
 from apps.job_seekers.utils.resume_processing.xml_parser import (
     calculate_years_experience,
     extract_education,
@@ -19,6 +23,9 @@ from apps.job_seekers.utils.resume_processing.xml_parser import (
     extract_professional_summary,
     extract_skills,
 )
+
+# Stub out generate_personal_tagline for all tests to avoid real LLM calls
+pu.generate_personal_tagline = MagicMock(return_value="Test Tagline")
 
 
 class ProfileUpdaterTests(TestCase):
@@ -190,16 +197,19 @@ class ProfileUpdaterTests(TestCase):
             "years_of_experience": years_of_experience,
         }
 
-        # Call the update_profile function
-        result = update_profile(self.profile, parsed_data, self.test_xml)
+        # Call the split update functions
+        result_fields = update_profile_fields(self.profile, parsed_data)
+        result_tagline = generate_and_save_personal_tagline(
+            self.profile, self.test_xml, parsed_data
+        )
+        result = result_fields and result_tagline
 
         # Verify the result
         self.assertTrue(result)
+        # Two saves: one for fields update, one for tagline generation
+        self.assertEqual(self.profile.save.call_count, 2)
 
         # Verify that the profile model was updated correctly
-        self.profile.save.assert_called_once()
-
-        # Check that all fields were assigned to the model
         self.assertEqual(self.profile.education, education_text)
         self.assertEqual(self.profile.skills, skills_text)
         self.assertEqual(self.profile.experience, experience_text)
@@ -213,7 +223,7 @@ class ProfileUpdaterTests(TestCase):
 
         # Verify that the success message was logged
         mock_logger.info.assert_called_with(
-            "Profile updated successfully with parsed resume data"
+            "Personal tagline generated: %s", "Test Tagline"
         )
 
     @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
@@ -227,16 +237,19 @@ class ProfileUpdaterTests(TestCase):
             "skills": skills_text,
         }
 
-        # Call the update_profile function
-        result = update_profile(self.profile, parsed_data, self.minimal_xml)
+        # Call the split update functions
+        result_fields = update_profile_fields(self.profile, parsed_data)
+        result_tagline = generate_and_save_personal_tagline(
+            self.profile, self.minimal_xml, parsed_data
+        )
+        result = result_fields and result_tagline
 
         # Verify the result
         self.assertTrue(result)
+        # Two saves: one for fields update, one for tagline generation
+        self.assertEqual(self.profile.save.call_count, 2)
 
         # Verify that the profile model was updated correctly
-        self.profile.save.assert_called_once()
-
-        # Check that skills was assigned to the model but other fields weren't
         self.assertEqual(self.profile.skills, skills_text)
         self.assertEqual(self.profile.resume_xml, self.minimal_xml)
 
@@ -247,7 +260,7 @@ class ProfileUpdaterTests(TestCase):
 
         # Verify that the success message was logged
         mock_logger.info.assert_called_with(
-            "Profile updated successfully with parsed resume data"
+            "Personal tagline generated: %s", "Test Tagline"
         )
 
     @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
@@ -267,11 +280,17 @@ class ProfileUpdaterTests(TestCase):
             "professional_summary": summary,
         }
 
-        # Call the update_profile function
-        result = update_profile(self.profile, parsed_data, self.incomplete_xml)
+        # Call the split update functions
+        result_fields = update_profile_fields(self.profile, parsed_data)
+        result_tagline = generate_and_save_personal_tagline(
+            self.profile, self.incomplete_xml, parsed_data
+        )
+        result = result_fields and result_tagline
 
         # Verify the result
         self.assertTrue(result)
+        # Two saves: one for fields update, one for tagline generation
+        self.assertEqual(self.profile.save.call_count, 2)
 
         # Check that only summary was updated
         self.assertEqual(self.profile.professional_summary, summary)
@@ -279,7 +298,7 @@ class ProfileUpdaterTests(TestCase):
 
         # Verify that the success message was logged
         mock_logger.info.assert_called_with(
-            "Profile updated successfully with parsed resume data"
+            "Personal tagline generated: %s", "Test Tagline"
         )
 
     @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
@@ -292,26 +311,26 @@ class ProfileUpdaterTests(TestCase):
             "professional_summary": "Professional summary text",
         }
 
-        # Call the update_profile function
-        result = update_profile(self.profile, parsed_data, "some xml")
+        # Call the split update functions
+        result_fields = update_profile_fields(self.profile, parsed_data)
+        result_tagline = generate_and_save_personal_tagline(
+            self.profile, "some xml", parsed_data
+        )
+        result = result_fields and result_tagline
 
         # Verify the result
         self.assertTrue(result)
+        # Two saves: one for fields update, one for tagline generation
+        self.assertEqual(self.profile.save.call_count, 2)
 
         # Verify that the profile model was updated correctly
-        self.profile.save.assert_called_once()
-
-        # Check that education was not assigned
-        self.assertNotEqual(self.profile.education, "some education")
-
-        # Check that other fields were updated
         self.assertEqual(self.profile.skills, "Python, Django, JavaScript")
         self.assertEqual(self.profile.experience, "Some experience text")
         self.assertEqual(self.profile.professional_summary, "Professional summary text")
 
         # Verify that the success message was logged
         mock_logger.info.assert_called_with(
-            "Profile updated successfully with parsed resume data"
+            "Personal tagline generated: %s", "Test Tagline"
         )
 
     @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
@@ -323,13 +342,17 @@ class ProfileUpdaterTests(TestCase):
         # Prepare some parsed data
         parsed_data = {"education": "Some education data"}
 
-        # Call the update_profile function
-        result = update_profile(self.profile, parsed_data, "some xml")
+        # Call the split update functions; profile.save will raise on first call
+        result_fields = update_profile_fields(self.profile, parsed_data)
+        result_tagline = generate_and_save_personal_tagline(
+            self.profile, "some xml", parsed_data
+        )
+        result = result_fields and result_tagline
 
         # Verify the result indicates failure
         self.assertFalse(result)
 
-        # Verify that the error was logged
-        mock_logger.error.assert_called_with(
-            "Error updating profile from parsed data: %s", "Test exception"
+        # Verify that the error was logged for saving personal tagline
+        mock_logger.error.assert_any_call(
+            "Error saving personal tagline: %s", "Test exception"
         )

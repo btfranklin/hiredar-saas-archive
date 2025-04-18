@@ -196,7 +196,7 @@ class ResumeProcessingTaskProgress(models.Model):
             "id": "xml_generated",
             "name": "Analyzing Resume",
             "description": "Analyzing resume with AI to extract structured data",
-            "weight": 40,
+            "weight": 35,
         },
         {
             "id": "xml_parsed",
@@ -209,6 +209,12 @@ class ResumeProcessingTaskProgress(models.Model):
             "name": "Updating Profile",
             "description": "Updating your profile with the extracted information",
             "weight": 15,
+        },
+        {
+            "id": "personal_tagline_generated",
+            "name": "Generating Tagline",
+            "description": "Creating your personal identity tagline",
+            "weight": 5,
         },
         {
             "id": "temp_file_deleted",
