@@ -12,9 +12,10 @@ The resume processing pipeline follows these steps:
 4. The PDF is converted to plain text
 5. The text is sent to an LLM (OpenAI API) to generate a structured XML representation
 6. The XML representation is parsed to extract key information (skills, experience, etc.)
-7. The job seeker's profile is updated with the extracted information
-8. The original PDF is deleted to conserve storage space
-9. The user is redirected to their dashboard with the updated profile
+7. The job seeker's profile fields are updated with the extracted information
+8. A personal identity tagline is generated via LLM and saved to the profile
+9. The original PDF is deleted to conserve storage space
+10. The user is redirected to their dashboard with the updated profile
 
 ## Components
 
@@ -72,7 +73,9 @@ The resume processing utilities are organized in a modular structure:
   - `extract_bio`: Extracts personal summary/bio
 
 - **Profile Updating**: `apps/job_seekers/utils/resume_processing/profile_updater.py`
-  - Updates the profile with all extracted data
+  - Split into two operations for clearer progress tracking:
+    1. `update_profile_fields` – updates parsed data fields on the profile (skills, experience, education, etc.)
+    2. `generate_and_save_personal_tagline` – generates a personal tagline from XML and saves it to the profile
 
 ### Models
 
@@ -157,7 +160,8 @@ apps/job_seekers/views/resume_processing_views.py::ResumeUploadView.post()
             │
             ├── apps/job_seekers/utils/resume_processing/xml_parser.py::parse_resume_xml()
             │
-            ├── apps/job_seekers/utils/resume_processing/profile_updater.py::update_profile()
+            ├── apps/job_seekers/utils/resume_processing/profile_updater.py::update_profile_fields()
+            ├── apps/job_seekers/utils/resume_processing/profile_updater.py::generate_and_save_personal_tagline()
             │
             └── django.core.files.storage::default_storage.delete()
 ```
