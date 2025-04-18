@@ -4,7 +4,6 @@ from django.urls import path
 from django.urls.resolvers import URLPattern
 
 from apps.job_seekers.views.api_views import (
-    PersonalTaglineView,
     TalentPoolStatusView,
     ToggleRoleInterestView,
     ToggleTalentPoolView,
@@ -54,11 +53,6 @@ urlpatterns: list[URLPattern] = [
         name="task_status",
     ),
     # API endpoints
-    path(
-        "api/personal-tagline/",
-        PersonalTaglineView.as_view(),
-        name="api_personal_tagline",
-    ),
     path(
         "api/toggle-role-interest/<int:role_id>/",
         ToggleRoleInterestView.as_view(),

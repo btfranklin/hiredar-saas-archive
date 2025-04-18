@@ -16,50 +16,6 @@ from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 logger = logging.getLogger(__name__)
 
 
-class PersonalTaglineView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, View):
-    """API view to retrieve the personal tagline for a job seeker."""
-
-    def get(self, request: HttpRequest) -> HttpResponseBase:
-        """
-        Get the personal tagline for the authenticated job seeker.
-
-        Returns:
-            HttpResponse: Either HTML for HTMX requests or JSON for API requests
-        """
-        user = cast(AuthenticatedUser, request.user)
-
-        # Ensure user is a job seeker
-        error_response = self.ensure_job_seeker(request)
-        if error_response:
-            return error_response
-
-        # Get the user's profile
-        profile = ProfileManager.get_profile_for_user(user)
-
-        # Safely get the personal tagline
-        tagline = getattr(profile, "personal_tagline", "") or ""
-
-        # Check if request came from HTMX
-        is_htmx = self.is_htmx_request(request)
-
-        # If tagline is available and this is an HTMX request, return HTML
-        if is_htmx:
-            if tagline:
-                # Return the tagline without spinner and use status code 286 to stop polling
-                html = f"<span>{tagline}</span>"
-                return HttpResponse(html, status=286)
-            else:
-                # Return the original content with spinner for HTMX
-                html = """
-                <span id="tagline-spinner" class="loading loading-spinner loading-xs mr-1"></span>
-                <span>Job Seeker</span>
-                """
-                return HttpResponse(html)
-
-        # For regular API requests, return JSON
-        return JsonResponse({"personal_tagline": tagline})
-
-
 class ToggleTalentPoolView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, View):
     """API view to toggle a job seeker's talent pool status."""
 
@@ -175,7 +131,7 @@ class ToggleRoleInterestView(
                 if updated_role.is_candidate_interested:
                     # Button to remove interest
                     button_html = f"""
-                    <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/" 
+                    <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/"
                             hx-headers='{{"Content-Type": "application/json"}}'
                             hx-swap="outerHTML"
                             hx-trigger="click"

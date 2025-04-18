@@ -81,6 +81,11 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             profile.in_talent_pool if profile is not None else False
         )
 
+        # Include the personal tagline directly in the context for sidebar rendering
+        context["personal_tagline"] = (
+            getattr(profile, "personal_tagline", None) or "Job Seeker"
+        )
+
         return context
 
 

@@ -425,6 +425,12 @@ class TalentSheet(models.Model):
         blank=True,
         help_text="Comma-separated list of ideal roles, populated from their interested role recommendations",
     )
+    personal_tagline = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+        help_text="AI-generated personal identity tagline",
+    )
     salary_min = models.DecimalField(
         max_digits=10,
         decimal_places=2,

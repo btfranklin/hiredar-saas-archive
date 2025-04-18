@@ -15,14 +15,7 @@
             <h1 class="text-xl font-bold">{{ user.get_full_name }}</h1>
             <p class="text-sm text-base-content/70">{{ user.email }}</p>
             <div id="tagline-container" class="bg-primary text-primary-content p-2 rounded-md mt-3 text-sm max-w-full text-center">
-                <div 
-                    hx-get="{% url 'job_seekers:api_personal_tagline' %}" 
-                    hx-trigger="load, every 5s"
-                    hx-swap="innerHTML"
-                    hx-target="this">
-                    <span id="tagline-spinner" class="loading loading-spinner loading-xs mr-1"></span>
-                    <span>Job Seeker</span>
-                </div>
+                {{ personal_tagline }}
             </div>
         </div>
         
