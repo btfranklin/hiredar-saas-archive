@@ -159,8 +159,8 @@ def parse_talent_sheet_xml(
         logger.info(
             "Successfully parsed talent sheet XML for %s",
             (
-                job_seeker.user.name
-                if job_seeker and hasattr(job_seeker, "user")
+                job_seeker.user_owner.get_full_name()
+                if job_seeker and job_seeker.user_owner
                 else "unknown user"
             ),
         )
