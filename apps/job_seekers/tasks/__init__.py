@@ -4,18 +4,20 @@ Task definitions for asynchronous processing in the job_seekers app.
 This package contains Django Q2 tasks organized by functional area.
 """
 
-from apps.job_seekers.tasks.cleanup_tasks import (
-    cleanup_resume_processing_progress,
-    ensure_cleanup_scheduled,
-)
 from apps.job_seekers.tasks.hooks import resume_processing_completed
 from apps.job_seekers.tasks.personal_tagline_tasks import generate_personal_tagline
 from apps.job_seekers.tasks.recommendation_tasks import generate_role_recommendations
-from apps.job_seekers.tasks.resume_processing_tasks import (
+from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
+
+# Import cleanup helpers from canonical resume_processing app
+from apps.resume_processing.tasks.cleanup_tasks import (
+    cleanup_resume_processing_progress,
+    ensure_cleanup_scheduled,
+)
+from apps.resume_processing.tasks.resume_processing_tasks import (
     handle_resume_upload_task,
     save_resume_file,
 )
-from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 # Export all tasks at the module level
 __all__ = [

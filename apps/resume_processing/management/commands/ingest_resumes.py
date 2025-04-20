@@ -12,7 +12,7 @@ from django_q.tasks import async_task, fetch
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.utils.resume_processing.pipeline import process_resume
+from apps.resume_processing.utils.pipeline import process_resume
 
 # Define a timeout for waiting for the task (e.g., 5 minutes)
 TASK_WAIT_TIMEOUT = 300  # seconds

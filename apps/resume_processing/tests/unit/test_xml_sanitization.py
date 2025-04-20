@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from apps.job_seekers.utils.resume_processing.llm_processor import sanitize_xml
+from apps.resume_processing.utils.llm_processor import sanitize_xml
 
 
 class XMLSanitizationTests(SimpleTestCase):
@@ -78,7 +78,7 @@ class XMLSanitizationTests(SimpleTestCase):
   </personal>
 </resume>"""
 
-    @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
+    @patch("apps.resume_processing.utils.llm_processor.logger")
     def test_no_sanitization_needed(self, mock_logger):
         """Test when no sanitization is needed for well-formed XML."""
         result = sanitize_xml(self.valid_xml)
@@ -89,7 +89,7 @@ class XMLSanitizationTests(SimpleTestCase):
         # Logger should not have been called for sanitization logs
         mock_logger.debug.assert_not_called()
 
-    @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
+    @patch("apps.resume_processing.utils.llm_processor.logger")
     def test_markdown_code_block_removal(self, mock_logger):
         """Test removal of Markdown code blocks from XML content."""
         result = sanitize_xml(self.markdown_xml)
@@ -105,7 +105,7 @@ class XMLSanitizationTests(SimpleTestCase):
             "Sanitization: Removed Markdown code block syntax"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
+    @patch("apps.resume_processing.utils.llm_processor.logger")
     def test_add_root_element(self, mock_logger):
         """Test adding root element when missing from XML content."""
         result = sanitize_xml(self.no_root_xml)
@@ -119,7 +119,7 @@ class XMLSanitizationTests(SimpleTestCase):
             "Sanitization: Added missing root <resume> element"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
+    @patch("apps.resume_processing.utils.llm_processor.logger")
     def test_close_root_element(self, mock_logger):
         """Test closing root element when missing from XML content."""
         result = sanitize_xml(self.unclosed_root_xml)
@@ -132,7 +132,7 @@ class XMLSanitizationTests(SimpleTestCase):
             "Sanitization: Added missing closing </resume> tag"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
+    @patch("apps.resume_processing.utils.llm_processor.logger")
     def test_character_replacements(self, mock_logger):
         """Test replacement of problematic characters in XML content."""
         result = sanitize_xml(self.problematic_chars_xml)
@@ -144,7 +144,7 @@ class XMLSanitizationTests(SimpleTestCase):
         # Logger should have recorded the sanitization
         # We don't check the exact messages here as they depend on the specific characters found
 
-    @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
+    @patch("apps.resume_processing.utils.llm_processor.logger")
     def test_multiple_sanitizations(self, mock_logger):
         """Test XML with multiple sanitization needs applied correctly."""
         complex_xml = """```xml
@@ -180,7 +180,7 @@ class XMLSanitizationTests(SimpleTestCase):
             ampersand_message_found, "No log message about escaped ampersands found"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.llm_processor.logger")
+    @patch("apps.resume_processing.utils.llm_processor.logger")
     def test_edge_cases(self, mock_logger):
         """Test edge cases like empty strings and non-XML content."""
         # Empty string

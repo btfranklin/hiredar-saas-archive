@@ -36,7 +36,7 @@ def ensure_cleanup_scheduled() -> None:
         # Check if valid schedules already exist
         existing_schedules = Schedule.objects.filter(
             name="cleanup_resume_processing_progress",
-            func="apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress",
+            func="apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
             minutes=15,
         )
 
@@ -44,7 +44,7 @@ def ensure_cleanup_scheduled() -> None:
         invalid_schedules = Schedule.objects.filter(
             name="cleanup_resume_processing_progress"
         ).exclude(
-            func="apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress",
+            func="apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
             minutes=15,
         )
 
@@ -77,7 +77,7 @@ def ensure_cleanup_scheduled() -> None:
         # Create schedule if it doesn't exist
         if not existing:
             schedule(
-                "apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress",
+                "apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
                 name="cleanup_resume_processing_progress",
                 schedule_type=Schedule.MINUTES,
                 minutes=15,

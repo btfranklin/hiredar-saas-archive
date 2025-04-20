@@ -32,7 +32,7 @@ from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 from apps.job_seekers.utils.recommendation.llm_processor import (
     generate_personal_tagline,
 )
-from apps.job_seekers.utils.resume_processing.pipeline import process_resume
+from apps.resume_processing.utils.pipeline import process_resume
 from apps.matching.signals import handle_talent_sheet_save
 
 # Setup logging

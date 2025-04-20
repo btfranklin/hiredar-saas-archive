@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from promptdown import StructuredPrompt
 
-from apps.job_seekers.utils.resume_processing.xml_error_reporting import log_xml_error
+from apps.resume_processing.utils.xml_error_reporting import log_xml_error
 
 # Load environment variables
 load_dotenv()

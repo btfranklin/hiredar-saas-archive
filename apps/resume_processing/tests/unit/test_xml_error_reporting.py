@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from apps.job_seekers.utils.resume_processing.xml_error_reporting import (
+from apps.resume_processing.utils.xml_error_reporting import (
     create_marked_xml,
     format_error_for_console,
     get_error_context,
@@ -107,7 +107,7 @@ class XMLErrorReportingTests(SimpleTestCase):
             any("Error position not available" in line for line in lines_no_pos)
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.xml_error_reporting.logger")
+    @patch("apps.resume_processing.utils.xml_error_reporting.logger")
     def test_log_xml_error(self, mock_logger):
         """Test logging of XML errors with proper formatting."""
         log_xml_error(self.error, self.test_xml)
@@ -132,7 +132,7 @@ class XMLErrorReportingTests(SimpleTestCase):
             "<!-- XML ERROR: generic error (position unknown) -->", marked_xml_no_pos
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.xml_error_reporting.logger.info")
+    @patch("apps.resume_processing.utils.xml_error_reporting.logger.info")
     def test_save_diagnostic_xml(self, mock_info):
         """Test saving diagnostic XML to file with error annotations."""
         # Create a temporary directory

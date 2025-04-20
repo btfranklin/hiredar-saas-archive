@@ -14,18 +14,18 @@ from typing import Any
 from django.core.files.storage import default_storage
 
 from apps.job_seekers.models.profile import JobSeekerProfile
-from apps.job_seekers.utils.resume_processing.extraction import extract_text_from_pdf
-from apps.job_seekers.utils.resume_processing.llm_processor import convert_text_to_xml
-from apps.job_seekers.utils.resume_processing.profile_updater import (
+from apps.resume_processing.models import ResumeProcessingTaskProgress
+from apps.resume_processing.utils.extraction import extract_text_from_pdf
+from apps.resume_processing.utils.llm_processor import convert_text_to_xml
+from apps.resume_processing.utils.profile_updater import (
     generate_and_save_personal_tagline,
     update_profile_fields,
 )
-from apps.job_seekers.utils.resume_processing.xml_error_reporting import (
+from apps.resume_processing.utils.xml_error_reporting import (
     log_xml_error,
     save_diagnostic_xml,
 )
-from apps.job_seekers.utils.resume_processing.xml_parser import parse_resume_xml
-from apps.resume_processing.models import ResumeProcessingTaskProgress
+from apps.resume_processing.utils.xml_parser import parse_resume_xml
 
 # Setup logging
 logger = logging.getLogger(__name__)

@@ -6,16 +6,19 @@ from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import TemplateView, View
-from django_q.tasks import async_task, result
+from django_q.tasks import async_task
 
+from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.services import ResumeProcessor
-from apps.job_seekers.tasks import handle_resume_upload_task, save_resume_file
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
-from apps.resume_processing.models import ResumeProcessingTaskProgress
+from apps.resume_processing.services.resume_processor import ResumeProcessor
+from apps.resume_processing.tasks.resume_processing_tasks import (
+    handle_resume_upload_task,
+    save_resume_file,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -67,6 +70,7 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         """Handle POST requests for resume uploads."""
         user = cast(AuthenticatedUser, request.user)
+        user_model = cast(User, user)
 
         # Ensure user is a job seeker
         error_response = self.ensure_job_seeker(request)
@@ -122,7 +126,7 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
             logger.info("Created task ID: %s", task_id)
 
             # Create a tracking record for this task using our service
-            task_progress = ResumeProcessor.create_processing_task(user, task_id)
+            task_progress = ResumeProcessor.create_processing_task(user_model, task_id)
 
             # Queue the resume processing task with a completion hook
             async_task(
@@ -209,6 +213,7 @@ class ResumeProcessingTaskProgressView(
     ) -> HttpResponseBase:
         """Get the status of a task by its ID."""
         user = cast(AuthenticatedUser, request.user)
+        user_model = cast(User, user)
 
         # Ensure user is a job seeker
         error_response = self.ensure_job_seeker(request)
@@ -219,7 +224,7 @@ class ResumeProcessingTaskProgressView(
 
         try:
             # Use the service to get the task status, passing the user to match original behavior
-            task_progress = ResumeProcessor.get_task_status(task_id, user=user)
+            task_progress = ResumeProcessor.get_task_status(task_id, user=user_model)
 
             if not task_progress:
                 return self.render_htmx_or_json(

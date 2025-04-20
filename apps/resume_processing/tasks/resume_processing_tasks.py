@@ -12,8 +12,8 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 
-from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.utils.resume_processing.pipeline import process_resume
+from apps.job_seekers.models.profile import JobSeekerProfile
+from apps.resume_processing.utils.pipeline import process_resume
 
 # Setup logging
 logger = logging.getLogger(__name__)

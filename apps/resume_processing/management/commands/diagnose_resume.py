@@ -13,13 +13,13 @@ import xml.etree.ElementTree as ET
 
 from django.core.management.base import BaseCommand
 
-from apps.job_seekers.utils.resume_processing.extraction import extract_text_from_pdf
-from apps.job_seekers.utils.resume_processing.llm_processor import convert_text_to_xml
-from apps.job_seekers.utils.resume_processing.xml_error_reporting import (
+from apps.resume_processing.utils.extraction import extract_text_from_pdf
+from apps.resume_processing.utils.llm_processor import convert_text_to_xml
+from apps.resume_processing.utils.xml_error_reporting import (
     format_error_for_console,
     save_diagnostic_xml,
 )
-from apps.job_seekers.utils.resume_processing.xml_parser import parse_resume_xml
+from apps.resume_processing.utils.xml_parser import parse_resume_xml
 
 # Setup logging
 logger = logging.getLogger(__name__)

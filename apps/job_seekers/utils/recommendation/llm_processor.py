@@ -171,7 +171,9 @@ def generate_personal_tagline(resume_xml: str) -> str:
         return "Unable to generate tagline: No resume data provided"
 
     prompt_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
+        settings.BASE_DIR,
+        "apps",
+        "resume_processing",
         "prompts",
         "generate_personal_tagline_from_xml.prompt.md",
     )

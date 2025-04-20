@@ -8,7 +8,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from apps.job_seekers.tasks.cleanup_tasks import ensure_cleanup_scheduled
+from apps.resume_processing.tasks.cleanup_tasks import ensure_cleanup_scheduled
 
 
 class Command(BaseCommand):

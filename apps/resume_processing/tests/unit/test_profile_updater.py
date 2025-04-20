@@ -9,13 +9,13 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-import apps.job_seekers.utils.resume_processing.profile_updater as pu
+import apps.resume_processing.utils.profile_updater as pu
 from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.utils.resume_processing.profile_updater import (
+from apps.resume_processing.utils.profile_updater import (
     generate_and_save_personal_tagline,
     update_profile_fields,
 )
-from apps.job_seekers.utils.resume_processing.xml_parser import (
+from apps.resume_processing.utils.xml_parser import (
     calculate_years_experience,
     extract_education,
     extract_experience,
@@ -176,7 +176,7 @@ class ProfileUpdaterTests(TestCase):
         # Just check it's a number (integer), not trying to validate the exact calculation
         self.assertIsInstance(years, int)
 
-    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    @patch("apps.resume_processing.utils.profile_updater.logger")
     def test_update_profile_with_all_fields(self, mock_logger):
         """Test updating a profile with complete parsed data."""
         # Parse the XML to get all data fields
@@ -226,7 +226,7 @@ class ProfileUpdaterTests(TestCase):
             "Personal tagline generated: %s", "Test Tagline"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    @patch("apps.resume_processing.utils.profile_updater.logger")
     def test_update_profile_with_minimal_data(self, mock_logger):
         """Test updating a profile with minimal parsed data."""
         # Parse the minimal XML
@@ -263,7 +263,7 @@ class ProfileUpdaterTests(TestCase):
             "Personal tagline generated: %s", "Test Tagline"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    @patch("apps.resume_processing.utils.profile_updater.logger")
     def test_update_profile_incomplete_data(self, mock_logger):
         """Test updating a profile with incomplete XML (missing sections)."""
         # Parse the incomplete XML
@@ -301,7 +301,7 @@ class ProfileUpdaterTests(TestCase):
             "Personal tagline generated: %s", "Test Tagline"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    @patch("apps.resume_processing.utils.profile_updater.logger")
     def test_update_profile_without_education(self, mock_logger):
         """Test updating a profile with parsed data that has no education."""
         # Prepare parsed data without education
@@ -333,7 +333,7 @@ class ProfileUpdaterTests(TestCase):
             "Personal tagline generated: %s", "Test Tagline"
         )
 
-    @patch("apps.job_seekers.utils.resume_processing.profile_updater.logger")
+    @patch("apps.resume_processing.utils.profile_updater.logger")
     def test_update_profile_exception_handling(self, mock_logger):
         """Test that exceptions during profile updating are handled correctly."""
         # Make the save method raise an exception

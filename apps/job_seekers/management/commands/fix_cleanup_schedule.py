@@ -4,10 +4,11 @@ Management command to fix cleanup task scheduling issues.
 This command inspects and repairs the resume processing cleanup task schedule.
 """
 
-import logging
-
 from django.core.management.base import BaseCommand
 from django_q.models import Schedule
+from django_q.tasks import schedule
+
+from apps.resume_processing.tasks.cleanup_tasks import ensure_cleanup_scheduled
 
 
 class Command(BaseCommand):
@@ -21,7 +22,7 @@ class Command(BaseCommand):
 
         # Find all schedules for the cleanup task
         cleanup_schedules = Schedule.objects.filter(
-            func="apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress"
+            func="apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress"
         )
 
         count = cleanup_schedules.count()
@@ -31,7 +32,6 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING("No schedules found. Creating a new one...")
             )
-            from apps.job_seekers.tasks.cleanup_tasks import ensure_cleanup_scheduled
 
             ensure_cleanup_scheduled()
             self.stdout.write(
@@ -54,10 +54,9 @@ class Command(BaseCommand):
             cleanup_schedules.delete()
 
             self.stdout.write("Creating a new schedule with correct settings...")
-            from django_q.tasks import schedule
 
             schedule(
-                "apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress",
+                "apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
                 name="cleanup_resume_processing_progress",
                 schedule_type=Schedule.MINUTES,
                 minutes=15,
@@ -78,7 +77,7 @@ class Command(BaseCommand):
         # List all current schedules
         self.stdout.write("\nCurrent cleanup schedules:")
         for s in Schedule.objects.filter(
-            func="apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress"
+            func="apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress"
         ):
             self.stdout.write(
                 f"ID: {getattr(s, 'id', 'unknown')}, Name: {s.name}, Minutes: {s.minutes}, Next: {s.next_run}"

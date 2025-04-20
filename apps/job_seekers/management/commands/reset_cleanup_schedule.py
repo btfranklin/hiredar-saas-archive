@@ -44,7 +44,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Setting next run time to: {next_run}")
 
         new_schedule = schedule(
-            "apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress",
+            "apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
             name="cleanup_resume_processing_progress",
             schedule_type=Schedule.MINUTES,
             minutes=15,

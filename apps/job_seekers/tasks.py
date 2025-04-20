@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet, UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
-from apps.job_seekers.utils.resume_processing.pipeline import process_resume
+from apps.resume_processing.utils.pipeline import process_resume
 
 
 def process_resume_for_pool(
