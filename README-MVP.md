@@ -76,10 +76,10 @@ To guide an automated deep-dive competitor analysis, include these details:
 
 ## Technology Stack
 
-- **Django 4.x** with class‑based views for backend
+- **Django 5.2** with class‑based views for backend
 - **Tailwind CSS** + **DaisyUI** for rapid UI styling
 - **HTMX** for dynamic status updates without JS frameworks
-- **OpenAI GPT‑4** for XML conversion and AI features
+- **OpenAI APIs** for XML conversion and AI features
 
 ## Going Forward
 
