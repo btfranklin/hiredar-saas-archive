@@ -10,7 +10,7 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.job_seekers.models import ResumeProcessingTaskProgress
+from apps.resume_processing.models import ResumeProcessingTaskProgress
 
 
 class Command(BaseCommand):

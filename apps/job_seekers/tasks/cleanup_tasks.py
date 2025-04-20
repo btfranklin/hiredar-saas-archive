@@ -11,7 +11,7 @@ from django.core.cache import cache
 from django_q.models import Schedule
 from django_q.tasks import schedule
 
-from apps.job_seekers.models import ResumeProcessingTaskProgress
+from apps.resume_processing.models import ResumeProcessingTaskProgress
 
 # Setup logging
 logger = logging.getLogger(__name__)

@@ -12,10 +12,10 @@ from django.views.generic import TemplateView, View
 from django_q.tasks import async_task, result
 
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.models import ResumeProcessingTaskProgress
 from apps.job_seekers.services import ResumeProcessor
 from apps.job_seekers.tasks import handle_resume_upload_task, save_resume_file
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
+from apps.resume_processing.models import ResumeProcessingTaskProgress
 
 # Configure logging
 logger = logging.getLogger(__name__)

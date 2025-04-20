@@ -64,6 +64,8 @@ INSTALLED_APPS = [
     "apps.matching.apps.MatchingConfig",
     "apps.messaging.apps.MessagingConfig",
     "apps.core.apps.CoreConfig",
+    # Resume processing subsystem
+    "apps.resume_processing.apps.ResumeProcessingConfig",
 ]
 
 # Enable Django to find tests in the proper directories

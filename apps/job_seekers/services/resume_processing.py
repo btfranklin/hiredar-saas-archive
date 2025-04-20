@@ -13,9 +13,10 @@ from django.db import transaction
 from django_q.tasks import async_task, result
 
 from apps.authentication.models import User
-from apps.job_seekers.models import ResumeProcessingTaskProgress, UploadedResumePool
+from apps.job_seekers.models.profile import UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.recruiters.models import JobOpening
+from apps.resume_processing.models import ResumeProcessingTaskProgress
 
 
 class DummyTaskProgress:

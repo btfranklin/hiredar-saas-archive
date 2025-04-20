@@ -9,7 +9,8 @@ import logging
 
 from django_q.tasks import Task, async_task
 
-from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.models.profile import JobSeekerProfile
+from apps.resume_processing.models import ResumeProcessingJob
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -27,6 +28,25 @@ def resume_processing_completed(task: Task) -> None:
         task: The completed Task object with result and arguments
     """
     logger.info("Resume processing completed hook triggered")
+
+    # Record the resume processing job for quota tracking
+    if len(task.args) >= 2:
+        profile_id = task.args[1]
+        try:
+            profile = JobSeekerProfile.objects.get(id=profile_id)
+            if profile.user_owner:
+                # Determine status based on the task result
+                result_data = task.result if isinstance(task.result, dict) else {}
+                job_status = (
+                    "success" if result_data.get("status") == "success" else "failed"
+                )
+                ResumeProcessingJob.objects.create(
+                    user=profile.user_owner,
+                    job_seeker_profile=profile,
+                    status=job_status,
+                )
+        except Exception as e:
+            logger.error("Error recording ResumeProcessingJob: %s", e)
 
     # Check if the task was successful
     if not task.success:
