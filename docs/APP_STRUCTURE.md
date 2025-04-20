@@ -228,6 +228,7 @@ The service layer pattern separates business logic from presentation logic. Key 
   - Reusable business logic across different views
 
 Example services in the job_seekers app:
+
 - `ProfileManager`: Handles job seeker profile operations
 - `ResumeProcessor`: Manages resume processing tasks
 - `TalentPoolManager`: Handles talent pool and role recommendation operations
@@ -299,7 +300,7 @@ The job matching process is one of the key features of the application:
 
 1. **Job Creation**: Recruiters create job openings with required skills and details.
 2. **Resume Upload**: Job seekers upload their resumes, which are processed by the system.
-3. **Resume Processing Pipeline**: 
+3. **Resume Processing Pipeline**:
    - Text extraction from PDF files
    - Conversion to structured XML using LLM integration
    - Parsing XML to extract key information

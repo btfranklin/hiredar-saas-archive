@@ -5,14 +5,14 @@ This command displays detailed information about the match or lack of match betw
 a specified job seeker and job opening.
 """
 
-import json
-from typing import Any
+from typing import Any, cast
 
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from apps.authentication.models import User
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet
+from apps.job_seekers.models import TalentSheet
+from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.matching.models import CandidateMatch
 from apps.recruiters.models import JobOpening
 
@@ -69,8 +69,8 @@ class Command(BaseCommand):
                 self.stdout.write(f"{i+1}. {user.name} ({user.email})")
             return
 
-        # Get the user
-        user = users.first()
+        # Get the user (guaranteed by previous existence and count checks)
+        user = cast(User, users.first())
         self.stdout.write(
             self.style.SUCCESS(f"Found job seeker: {user.name} ({user.email})")
         )
@@ -100,18 +100,17 @@ class Command(BaseCommand):
                 self.stdout.write(f"{i+1}. {job.title} - {job.company}")
             return
 
-        # Get the job opening
-        job_opening = job_openings.first()
+        # Get the job opening (guaranteed by previous existence and count checks)
+        job_opening = cast(JobOpening, job_openings.first())
         self.stdout.write(
             self.style.SUCCESS(
                 f"Found job opening: {job_opening.title} at {job_opening.company}"
             )
         )
 
-        # Check if user has a job seeker profile
-        try:
-            profile = user.job_seeker_profile
-        except JobSeekerProfile.DoesNotExist:
+        # Retrieve the job seeker profile
+        profile = ProfileManager.get_profile_for_user(user)
+        if not profile:
             self.stdout.write(
                 self.style.ERROR(f"Job seeker {user.name} does not have a profile")
             )
@@ -119,7 +118,7 @@ class Command(BaseCommand):
 
         # Check if job seeker has a talent sheet
         try:
-            talent_sheet = profile.talent_sheet
+            talent_sheet = getattr(profile, "talent_sheet")
             self.stdout.write(
                 f"Found talent sheet (Published: {'Yes' if talent_sheet.is_published else 'No'})"
             )

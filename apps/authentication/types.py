@@ -20,12 +20,14 @@ class UserType(TypedDict):
 class AuthenticatedUser(Protocol):
     """A protocol for the authenticated user type."""
 
+    pk: int
     email: str
     name: str
     user_type: Literal["job_seeker", "recruiter", "admin"]
     is_job_seeker: bool
     is_recruiter: bool
     is_admin: bool
+    is_staff: bool
     is_authenticated: bool
 
     # Relationships managed by related managers
