@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hiredar - AI-Powered Job Matching Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white">
+    <div class="container mx-auto py-20 px-4">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h1 class="text-5xl font-bold mb-4">The Ideal Candidate, the Perfect Position</h1>
+                <p class="text-xl mb-8">
+                    Our AI-powered platform revolutionizes hiring by eliminating the noise and inefficiencies 
+                    of traditional job searching. 
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary">Join as Job Seeker</a>
+                    <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary">Join as Recruiter</a>
+                </div>
+            </div>
+            <div class="hidden md:block">
+                <img src="{% static 'img/hero-image.png' %}" alt="Job Matching" class="rounded-lg shadow-xl w-full">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-20 bg-base-100">
+    <div class="container mx-auto px-4">
+        <h2 class="text-4xl font-bold text-center mb-16">How Hiredar Works</h2>
+        
+        <div class="grid md:grid-cols-3 gap-12">
+            <!-- Feature 1 -->
+            <div class="card bg-base-200 shadow-xl">
+                <figure class="px-10 pt-10">
+                    <div class="text-5xl text-primary">
+                        <i class="fas fa-user-plus"></i>
+                        1
+                    </div>
+                </figure>
+                <div class="card-body items-center text-center">
+                    <h3 class="card-title text-2xl">Create Rich Profiles</h3>
+                    <p>Job seekers create detailed profiles for free by uploading their résumé. Our AI extracts and organizes your skills and experience.</p>
+                </div>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="card bg-base-200 shadow-xl">
+                <figure class="px-10 pt-10">
+                    <div class="text-5xl text-primary">
+                        <i class="fas fa-brain"></i>
+                        2
+                    </div>
+                </figure>
+                <div class="card-body items-center text-center">
+                    <h3 class="card-title text-2xl">AI-Powered Matching</h3>
+                    <p>Our intelligent algorithm matches candidates to job openings with detailed explanations of why they're a great fit.</p>
+                </div>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="card bg-base-200 shadow-xl">
+                <figure class="px-10 pt-10">
+                    <div class="text-5xl text-primary">
+                        <i class="fas fa-comments"></i>
+                        3
+                    </div>
+                </figure>
+                <div class="card-body items-center text-center">
+                    <h3 class="card-title text-2xl">Direct Connections</h3>
+                    <p>Recruiters can directly message top candidates, eliminating endless applications and ghosting.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- User Types Section -->
+<section class="py-20 bg-base-200">
+    <div class="container mx-auto px-4">
+        <h2 class="text-4xl font-bold text-center mb-16">Choose Your Path</h2>
+        
+        <div class="grid md:grid-cols-2 gap-12">
+            <!-- Job Seekers -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title text-3xl text-center mb-4">For Job Seekers</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>Create a rich profile for free</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>Get personalized role recommendations</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>Be found by recruiters looking for your skills</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>No more endless applications</span>
+                        </li>
+                    </ul>
+                    <div class="card-actions justify-center mt-6">
+                        <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary btn-block">Sign Up as Job Seeker</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recruiters -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title text-3xl text-center mb-4">For Recruiters</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>Access curated candidate lists for your job openings</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>Get AI-driven insights on why candidates match</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>Discover both top matches and hidden gems</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-success mr-2">✓</span>
+                            <span>Contact candidates directly through the platform</span>
+                        </li>
+                    </ul>
+                    <div class="card-actions justify-center mt-6">
+                        <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-block">Sign Up as Recruiter</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials/Stats Section - For future implementation -->
+<section class="py-20 bg-base-100">
+    <div class="container mx-auto px-4 text-center">
+        <h2 class="text-4xl font-bold mb-8">Ready to Transform Your Hiring Experience?</h2>
+        <p class="text-xl mb-8 max-w-3xl mx-auto">
+            Join Hiredar today and experience a smarter, fairer way to connect talent with opportunity.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary btn-lg">Get Started as Job Seeker</a>
+            <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Get Started as Recruiter</a>
+        </div>
+    </div>
+</section>
+{% endblock %} 
