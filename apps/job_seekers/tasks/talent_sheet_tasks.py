@@ -6,8 +6,8 @@ import logging
 from typing import Any
 
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
+from apps.job_seekers.services.recommendation.llm_processor import generate_talent_sheet
 from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
-from apps.job_seekers.utils.recommendation.llm_processor import generate_talent_sheet
 
 # Set up logging
 logger = logging.getLogger(__name__)

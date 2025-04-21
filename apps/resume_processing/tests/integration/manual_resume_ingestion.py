@@ -28,12 +28,12 @@ from django.test import TestCase
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet
-from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
-from apps.job_seekers.utils.recommendation.llm_processor import (
+from apps.job_seekers.services.recommendation.llm_processor import (
     generate_personal_tagline,
 )
-from apps.resume_processing.utils.pipeline import process_resume
+from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 from apps.matching.signals import handle_talent_sheet_save
+from apps.resume_processing.utils.pipeline import process_resume
 
 # Setup logging
 logger = logging.getLogger(__name__)

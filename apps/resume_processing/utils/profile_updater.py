@@ -11,7 +11,7 @@ from typing import Any
 from django.db import transaction
 
 from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.utils.recommendation.llm_processor import (
+from apps.job_seekers.services.recommendation.llm_processor import (
     generate_personal_tagline,
 )
 

@@ -9,7 +9,7 @@ import logging
 from typing import Any
 
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
-from apps.job_seekers.utils.recommendation.llm_processor import (
+from apps.job_seekers.services.recommendation.llm_processor import (
     generate_role_recommendations as generate_role_recommendations_from_xml,
 )
 

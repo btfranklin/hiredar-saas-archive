@@ -16,7 +16,7 @@ from openai import OpenAI
 from promptdown import StructuredPrompt
 
 from apps.job_seekers.models import RoleRecommendation, TalentSheet
-from apps.job_seekers.utils.recommendation.xml_parser import (
+from apps.job_seekers.services.recommendation.xml_parser import (
     parse_role_recommendations_xml,
     parse_talent_sheet_xml,
 )
