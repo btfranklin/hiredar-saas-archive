@@ -1,1 +1,3 @@
-# This package contains tests for the resume_processing app
+"""
+Test package for resume_processing app.
+"""
