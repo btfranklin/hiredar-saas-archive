@@ -6,7 +6,8 @@ import logging
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from django_q.tasks import async_task
+# Use centralised helper to decouple from task queue implementation
+from apps.core.tasks import safe_async_task
 
 from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.services.profile_manager import ProfileManager
@@ -101,10 +102,9 @@ class TalentPoolManager:
                 # Schedule the talent sheet generation task
                 try:
                     # Use a string reference to the task to avoid circular imports
-                    task_id = async_task(
+                    task_id = safe_async_task(
                         "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
                         profile_id,
-                        hook=None,  # No callback needed
                         task_name=f"generate_talent_sheet_{profile_id}",
                     )
                     logger.info("Scheduled talent sheet generation task: %s", task_id)

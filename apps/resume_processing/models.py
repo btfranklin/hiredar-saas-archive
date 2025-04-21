@@ -150,6 +150,14 @@ class ResumeProcessingTaskProgress(models.Model):
             int((completed_weight / total_weight) * 100) if total_weight else 0
         )
 
+    def __str__(self) -> str:  # noqa: D401 – human readable identifier
+        """Return a concise representation suitable for admin lists."""
+
+        return (
+            f"TaskProgress {self.task_id} – {self.user.email} ({self.status}, "
+            f"{self.progress_percent}%)"
+        )
+
     def to_dict(self) -> dict[str, Any]:
         all_steps = {step["id"]: step for step in self.RESUME_PROCESSING_STEPS}
         completed_ids = self.completed_steps

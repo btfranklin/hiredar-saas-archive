@@ -24,7 +24,21 @@ class UserManager(BaseUserManager[T]):
     def create_user(
         self, email: str, password: str | None = None, **extra_fields: Any
     ) -> T:
-        """Create and save a regular user."""
+        """Create and save a regular user.
+
+        The project relies on password‑based authentication (or social
+        back‑ends that set their own unusable password afterwards). Allowing
+        ``password=None`` would create *active* users that might later be able
+        to request a password‑reset token and gain access without any prior
+        credential. To avoid that ambiguity we *require* an explicit password
+        value. Callers that intentionally want a login‑less account should
+        instead set an unusable password via
+
+        ``user.set_unusable_password()`` **after** creating the user.
+        """
+
+        if password is None:
+            raise ValueError("A password must be provided when creating users.")
         if not email:
             raise ValueError(_("The Email field must be set"))
         email = self.normalize_email(email)

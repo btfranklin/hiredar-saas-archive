@@ -24,6 +24,12 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
     This task creates a concise, professional tagline that highlights the
     job seeker's key strengths, skills, and career focus.
 
+    Idempotency & concurrency:
+        The generated value *overwrites* the existing ``personal_tagline``
+        field, therefore the task is idempotent.  Concurrent runs are safe –
+        the last write wins – but they do waste tokens; upstream callers
+        should still de‑duplicate schedule requests.
+
     Args:
         job_seeker_profile_id: ID of the JobSeekerProfile to generate a tagline for
 

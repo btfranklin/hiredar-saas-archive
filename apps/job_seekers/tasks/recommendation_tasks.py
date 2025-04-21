@@ -24,6 +24,12 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
     This task analyzes the job seeker's skills, experience, and other profile
     data to generate career role recommendations.
 
+    Idempotency & concurrency:
+        The task deletes existing recommendations and creates a fresh set each
+        time it runs.  It is therefore *idempotent* but **not** concurrency‑
+        safe – parallel executions will race against one another.  Up‑stream
+        scheduling logic must ensure at most one active run per profile.
+
     Args:
         job_seeker_profile_id: ID of the JobSeekerProfile to generate recommendations for
 

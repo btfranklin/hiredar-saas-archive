@@ -7,7 +7,10 @@ to create task chains and manage next steps in asynchronous processing.
 
 import logging
 
-from django_q.tasks import Task, async_task
+from django_q.tasks import Task
+
+# Use centralised helper instead of importing async_task directly
+from apps.core.tasks import safe_async_task
 
 from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.resume_processing.models import ResumeProcessingJob
@@ -85,7 +88,7 @@ def resume_processing_completed(task: Task) -> None:
             )
 
             # Generate role recommendations
-            rec_task_id = async_task(
+            rec_task_id = safe_async_task(
                 "apps.job_seekers.tasks.recommendation_tasks.generate_role_recommendations",
                 profile_id,
                 group=group_name,
