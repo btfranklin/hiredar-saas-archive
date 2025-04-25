@@ -4,6 +4,8 @@ from django.urls import path
 from django.urls.resolvers import URLPattern
 
 from apps.recruiters.views import (
+    BulkResumeUploadListView,
+    BulkResumeUploadView,
     DashboardView,
     JobOpeningCreateView,
     JobOpeningDeleteView,
@@ -51,5 +53,10 @@ urlpatterns: list[URLPattern] = [
         "job-openings/<int:pk>/delete/",
         JobOpeningDeleteView.as_view(),
         name="job_openings_delete",
+    ),
+    # Bulk resume upload
+    path("bulk-upload/", BulkResumeUploadView.as_view(), name="bulk_upload_create"),
+    path(
+        "bulk-upload/list/", BulkResumeUploadListView.as_view(), name="bulk_upload_list"
     ),
 ]

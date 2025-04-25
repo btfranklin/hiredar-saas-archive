@@ -23,6 +23,7 @@ dependencies = [
     "numpy>=2.2.5",
     "whitenoise>=6.9.0",
     "python-magic>=0.4.27",
+    "django-storages[boto3]>=1.14.6",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

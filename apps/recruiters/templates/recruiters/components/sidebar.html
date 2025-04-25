@@ -34,9 +34,11 @@
             <li><a href="{% url 'recruiters:job_openings_list' %}" class="{% if active_page == 'jobs' %}active{% endif %}">
                 <i class="fas fa-briefcase mr-2"></i> My Job Openings
             </a></li>
+            {% comment %}
             <li><a href="{% url 'messaging:conversations' %}" class="{% if active_page == 'messages' %}active{% endif %}">
                 <i class="fas fa-envelope mr-2"></i> Messages
             </a></li>
+            {% endcomment %}
             <li><a href="#" class="{% if active_page == 'subscription' %}active{% endif %}">
                 <i class="fas fa-credit-card mr-2"></i> Subscription
             </a></li>

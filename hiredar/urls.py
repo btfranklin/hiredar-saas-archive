@@ -27,7 +27,7 @@ urlpatterns = [
     # App URLs
     path("auth/", include("apps.authentication.urls", namespace="authentication")),
     path("matching/", include("apps.matching.urls", namespace="matching")),
-    path("messaging/", include("apps.messaging.urls", namespace="messaging")),
+    # path("messaging/", include("apps.messaging.urls", namespace="messaging")),  # messaging temporarily disabled
     path("job-seekers/", include("apps.job_seekers.urls", namespace="job_seekers")),
     path("recruiters/", include("apps.recruiters.urls", namespace="recruiters")),
     # Home page and core functionality

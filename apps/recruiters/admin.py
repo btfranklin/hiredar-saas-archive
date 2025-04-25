@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import JobOpening, RecruiterProfile
+from .models import BulkResumeUpload, JobOpening, RecruiterProfile, ResumeFile
 
 
 @admin.register(RecruiterProfile)
@@ -64,3 +64,28 @@ class JobOpeningAdmin(admin.ModelAdmin):
         ),
         ("Status", {"fields": ("status",)}),
     )
+
+
+@admin.register(BulkResumeUpload)
+class BulkResumeUploadAdmin(admin.ModelAdmin):
+    """Admin for managing resume pools."""
+
+    list_display = (
+        "name",
+        "recruiter",
+        "created_at",
+        "processed",
+        "total_files",
+        "processed_files",
+    )
+    list_filter = ("processed", "created_at")
+    search_fields = ("name", "recruiter__user__email")
+
+
+@admin.register(ResumeFile)
+class ResumeFileAdmin(admin.ModelAdmin):
+    """Admin for managing individual resumes in pools."""
+
+    list_display = ("original_filename", "bulk_upload", "recruiter", "uploaded_at")
+    list_filter = ("uploaded_at",)
+    search_fields = ("original_filename", "recruiter__user__email")

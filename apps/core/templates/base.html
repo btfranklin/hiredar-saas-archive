@@ -229,7 +229,9 @@
                                             {% endfor %}
                                         </ul>
                                         <div class="card-actions mt-2">
+                                            {% comment %}
                                             <a href="{% url 'messaging:notifications' %}" class="btn btn-primary btn-sm btn-block">View All</a>
+                                            {% endcomment %}
                                         </div>
                                     {% else %}
                                         <p class="text-center py-2 text-base-content/70">No new notifications</p>
@@ -252,7 +254,9 @@
                             {% else %}
                                 <li><a href="{% url 'job_seekers:profile' %}">Profile</a></li>
                             {% endif %}
+                            {% comment %}
                             <li><a href="{% url 'messaging:conversations' %}">Messages</a></li>
+                            {% endcomment %}
                             {% if user.user_type == 'job_seeker' %}
                                 <li><a href="{% url 'job_seekers:settings' %}">Settings</a></li>
                             {% else %}

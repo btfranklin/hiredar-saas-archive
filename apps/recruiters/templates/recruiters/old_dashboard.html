@@ -18,51 +18,19 @@
                     <a href="{% url 'recruiters:job_openings_create' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                         <div class="card-body items-center text-center p-4">
                             <i class="fas fa-plus-circle text-primary text-3xl mb-2"></i>
-                            <h3 class="card-title text-base">Create a Job Opening</h3>
+                            <h3 class="card-title text-base">Post a Job</h3>
                             <p class="text-sm">Create a new job opening</p>
                         </div>
                     </a>
-                    <a href="{% url 'recruiters:bulk_upload_create' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                    
+                    <a href="{% url 'messaging:conversations' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                         <div class="card-body items-center text-center p-4">
-                            <i class="fas fa-upload text-primary text-3xl mb-2"></i>
-                            <h3 class="card-title text-base">Upload Resume Pool</h3>
-                            <p class="text-sm">Create a new pool of resumes</p>
+                            <i class="fas fa-envelope text-info text-3xl mb-2"></i>
+                            <h3 class="card-title text-base">Messages</h3>
+                            <p class="text-sm">View and send messages</p>
                         </div>
                     </a>
                 </div>
-            </div>
-            
-            <!-- Resume Pools -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">Resume Pools</h2>
-                    <a href="{% url 'recruiters:bulk_upload_list' %}" class="text-primary hover:underline">View all</a>
-                </div>
-                
-                {% if resume_pools %}
-                    <div class="space-y-4">
-                        {% for pool in resume_pools %}
-                            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="card-body p-4 flex justify-between items-center">
-                                    <div>
-                                        <h3 class="font-bold">{{ pool.name }}</h3>
-                                        <p class="text-sm text-base-content/70">{{ pool.created_at|date:"M j, Y H:i" }}</p>
-                                        <p class="text-sm">Processed {{ pool.processed_files }}/{{ pool.total_files }}</p>
-                                    </div>
-                                    <a href="{% url 'recruiters:bulk_upload_list' %}" class="btn btn-sm btn-ghost">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <span>No resume pools found yet.</span>
-                        <a href="{% url 'recruiters:bulk_upload_create' %}" class="btn btn-sm btn-primary ml-4">Upload Pool</a>
-                    </div>
-                {% endif %}
             </div>
             
             <!-- Active Jobs -->
@@ -131,11 +99,65 @@
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle mr-2"></i>
                         <span>You don't have any job openings.</span>
-                        <a href="{% url 'recruiters:job_openings_create' %}" class="btn btn-sm btn-primary ml-4">Create a Job Opening</a>
+                        <a href="{% url 'recruiters:job_openings_create' %}" class="btn btn-sm btn-primary ml-4">Post a Job</a>
                     </div>
                 {% endif %}
             </div>
             
+            <!-- Recent Candidates -->
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Recent Candidates</h2>
+                    <a href="{% url 'recruiters:job_openings_list' %}" class="text-primary hover:underline">View all jobs</a>
+                </div>
+                
+                {% if recent_candidates %}
+                    <div class="space-y-4">
+                        {% for candidate in recent_candidates %}
+                            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="card-body p-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex items-center">
+                                            <div class="avatar placeholder mr-3">
+                                                <div class="bg-neutral text-neutral-content rounded-full w-12">
+                                                    <span>{{ candidate.talent_sheet.job_seeker.user.get_full_name|first }}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <h3 class="font-bold">{{ candidate.talent_sheet.job_seeker.user.get_full_name }}</h3>
+                                                <p class="text-sm text-base-content/70">{{ candidate.talent_sheet.job_seeker.most_recent_title|default:"" }}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="badge badge-primary badge-lg">{{ candidate.get_rating_for_type }}/10 Match</div>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center mt-3">
+                                        <div class="text-sm">
+                                            <span class="font-medium">For:</span> {{ candidate.job_opening.title }}
+                                        </div>
+                                        
+                                        <div class="flex space-x-2">
+                                            <a href="{% url 'matching:candidate_match_detail' candidate.job_opening.id candidate.talent_sheet.job_seeker.id %}" class="btn btn-sm btn-outline">
+                                                View Match Details
+                                            </a>
+                                            <a href="{% url 'messaging:conversation_create' candidate.job_opening.id candidate.talent_sheet.job_seeker.id %}" class="btn btn-sm btn-primary">
+                                                Contact
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>No candidate matches found yet.</span>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

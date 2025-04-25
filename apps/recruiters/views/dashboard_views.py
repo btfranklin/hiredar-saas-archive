@@ -14,7 +14,7 @@ from django.views.generic import TemplateView
 from apps.authentication.types import AuthenticatedUser
 from apps.matching.models import CandidateMatch
 from apps.messaging.models import Notification
-from apps.recruiters.models import JobOpening
+from apps.recruiters.models import BulkResumeUpload, JobOpening
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -44,6 +44,11 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         """Get context data for the dashboard."""
         context = super().get_context_data(**kwargs)
         user = cast(AuthenticatedUser, self.request.user)
+
+        # Resume Pools (recent)
+        context["resume_pools"] = BulkResumeUpload.objects.filter(
+            recruiter=user.recruiter_profile
+        ).order_by("-created_at")[:5]
 
         # Get active job openings
         context["active_jobs"] = JobOpening.objects.filter(

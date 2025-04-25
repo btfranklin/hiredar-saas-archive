@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.db import models
+from django.utils import timezone
 
 from apps.authentication.models import User
 
@@ -267,7 +268,7 @@ class JobOpening(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"{self.title} - {self.company}"
+        return f"Job Opening: {self.title} ({self.status})"
 
     @property
     def is_active(self) -> bool:
@@ -287,3 +288,73 @@ class JobOpening(models.Model):
             for skill in self.required_skills.split(" | ")
             if skill.strip()
         ]
+
+
+# --- Bulk Resume Upload -----------------------------------------------------
+
+
+def default_pool_name() -> str:
+    """Generate a default name for a resume pool based on current date/time."""
+    return timezone.now().strftime("%Y-%m-%d %H:%M")
+
+
+class BulkResumeUpload(models.Model):
+    """An uploaded named pool of many resumes."""
+
+    name = models.CharField(
+        max_length=255,
+        default=default_pool_name,
+        help_text="Name of this resume pool",
+    )
+    recruiter = models.ForeignKey(
+        RecruiterProfile,
+        on_delete=models.CASCADE,
+        related_name="bulk_resume_uploads",
+    )
+    zip_file = models.FileField(
+        upload_to="bulk_resumes/zips/",
+        help_text="ZIP archive containing PDF resumes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed = models.BooleanField(default=False)
+    total_files = models.PositiveIntegerField(default=0)
+    processed_files = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Bulk Resume Upload"
+        verbose_name_plural = "Bulk Resume Uploads"
+
+    def __str__(self) -> str:  # noqa: D401 – admin friendly string
+        return (
+            f"ResumePool '{self.name}' – {self.recruiter.user.email} "
+            f"({self.processed_files}/{self.total_files})"
+        )
+
+
+class ResumeFile(models.Model):
+    """Individual PDF resume extracted from a named pool."""
+
+    bulk_upload = models.ForeignKey(
+        BulkResumeUpload,
+        on_delete=models.CASCADE,
+        related_name="resume_files",
+    )
+    recruiter = models.ForeignKey(
+        RecruiterProfile,
+        on_delete=models.CASCADE,
+        related_name="resume_files",
+    )
+    file = models.FileField(upload_to="bulk_resumes/items/")
+    original_filename = models.CharField(max_length=255)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+        verbose_name = "Resume File"
+        verbose_name_plural = "Resume Files"
+        # Ensure a resume file name is unique within a bulk upload
+        unique_together = ["bulk_upload", "original_filename"]
+
+    def __str__(self) -> str:  # noqa: D401 – friendly string
+        return f"{self.original_filename}"

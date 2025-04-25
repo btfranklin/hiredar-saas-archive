@@ -38,6 +38,71 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
+#
+# Storage configuration
+#
+
+# 1) Tell Django what the “default” file‐storage backend is
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+# 2) Cloudflare-R2 / S3 options
+AWS_S3_ENDPOINT_URL = os.getenv("SEVALLA_S3_ENDPOINT")
+AWS_ACCESS_KEY_ID = os.getenv("SEVALLA_S3_KEY")
+AWS_SECRET_ACCESS_KEY = os.getenv("SEVALLA_S3_SECRET")
+AWS_STORAGE_BUCKET_NAME = os.getenv("SEVALLA_S3_BUCKET")
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_REGION_NAME = "auto"
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_S3_ADDRESSING_STYLE = "virtual"
+AWS_S3_USE_SSL = True
+
+# 3) Staticfiles / media storages
+
+# Django 5+ uses the STORAGES setting. Configure both the default storage
+# (for uploaded media) and the staticfiles storage explicitly so that
+# `django.core.files.storage.default_storage` resolves to our S3 backend and
+# Whitenoise continues to serve compressed static assets locally.
+#
+# See: https://docs.djangoproject.com/en/5.1/ref/settings/#std-setting-STORAGES
+#
+# The "default" alias is what `django.core.files.storage.default_storage` picks
+# up, while the "staticfiles" alias is used by Django's staticfiles app.
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        # No OPTIONS are required because the S3 credentials are provided via
+        # the various AWS_* settings declared above.
+        "OPTIONS": {},
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "OPTIONS": {},
+    },
+}
+
+# In development we don't want the strict manifest check because it requires
+# running `collectstatic` after **every** front-end change. When DEBUG is on,
+# fall back to the non-manifest variant so files are served directly.
+if DEBUG:
+    STORAGES["staticfiles"][
+        "BACKEND"
+    ] = "whitenoise.storage.CompressedStaticFilesStorage"
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Add MIME type for WebP images if you use them
+WHITENOISE_MIMETYPES = {
+    ".webp": "image/webp",
+}
 
 # Application definition
 
@@ -57,6 +122,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.linkedin_oauth2",
     "django_htmx",
     "django_q",  # Django Q2 for background tasks
+    "storages",  # django-storages for S3 support
     # Project apps
     "apps.authentication.apps.AuthenticationConfig",
     "apps.job_seekers.apps.JobSeekersConfig",
@@ -151,24 +217,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Configure Whitenoise
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-# Add MIME type for WebP images if you use them
-WHITENOISE_MIMETYPES = {
-    ".webp": "image/webp",
-}
-
-# Media files (Uploaded files)
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -204,6 +252,22 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
 ACCOUNT_USERNAME_BLACKLIST = []
+
+# Email and Social Account Verification Settings
+# Require email and mandate verification for all accounts
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+# Configure SendGrid for transactional emails
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = "Hiredar <noreply@hiredar.com>"
+
+# Social account email handling: trust provider for Google, but do not auto-verify others
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 
 
 # Custom function to generate usernames
@@ -280,9 +344,6 @@ SOCIALACCOUNT_LOGIN_ON_GET = (
 SOCIALACCOUNT_FORMS = {
     "signup": "apps.authentication.forms.SocialAccountSignupForm",
 }
-
-# Email backend (for development)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # CSRF Settings
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
@@ -398,3 +459,5 @@ PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "job-matcher")
 PINECONE_DIMENSIONS = int(os.getenv("PINECONE_DIMENSIONS", "3072"))
 PINECONE_PROJECT_NAME = os.getenv("PINECONE_PROJECT_NAME", "Hiredar")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST", None)
+# Ensure STATICFILES_STORAGE mirrors the chosen backend (development or production).
+STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
