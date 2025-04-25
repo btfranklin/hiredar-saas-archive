@@ -1,6 +1,8 @@
 from typing import Any
 
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils import timezone
 
 from apps.authentication.models import User
@@ -331,6 +333,11 @@ class BulkResumeUpload(models.Model):
             f"({self.processed_files}/{self.total_files})"
         )
 
+    def delete(self, using: str | None = None, keep_parents: bool = False) -> None:
+        # Delete the associated ZIP file from storage
+        self.zip_file.delete(save=False)
+        super().delete(using=using, keep_parents=keep_parents)
+
 
 class ResumeFile(models.Model):
     """Individual PDF resume extracted from a named pool."""
@@ -358,3 +365,23 @@ class ResumeFile(models.Model):
 
     def __str__(self) -> str:  # noqa: D401 – friendly string
         return f"{self.original_filename}"
+
+    def delete(self, using: str | None = None, keep_parents: bool = False) -> None:
+        # Delete the associated file from storage
+        self.file.delete(save=False)
+        super().delete(using=using, keep_parents=keep_parents)
+
+
+# Ensure file is deleted even when using QuerySet.delete()
+@receiver(post_delete, sender=ResumeFile)
+def delete_resume_file_file(sender, instance: ResumeFile, **kwargs) -> None:
+    # Delete the associated file from storage
+    instance.file.delete(save=False)
+
+
+@receiver(post_delete, sender=BulkResumeUpload)
+def delete_bulk_resume_upload_file(
+    sender, instance: BulkResumeUpload, **kwargs
+) -> None:
+    # Delete the associated ZIP file from storage
+    instance.zip_file.delete(save=False)
