@@ -22,6 +22,10 @@ from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models.profile import UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
+from apps.job_seekers.tasks.pool_tasks import (
+    cleanup_temp_resume_file,
+    process_resume_for_pool,
+)
 from apps.recruiters.models import JobOpening
 from apps.resume_processing.models import ResumeProcessingTaskProgress
 
@@ -177,12 +181,13 @@ class ResumeProcessor:  # noqa: D401 – Service class, not data‑class
                     file_path = os.path.join(root, filename)
                     task_id = str(uuid.uuid4())
 
+                    # Process each resume via the job_seekers pool pipeline
                     async_task(
-                        "apps.job_seekers.tasks.process_resume_for_pool",
+                        process_resume_for_pool,
                         file_path,
                         pool.pk,
                         task_id,
-                        hook="apps.job_seekers.tasks.cleanup_temp_resume_file",
+                        hook=cleanup_temp_resume_file,
                     )
                     task_ids.append(task_id)
         except Exception as exc:  # noqa: BLE001 – keep broad to ensure cleanup

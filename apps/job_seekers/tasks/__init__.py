@@ -19,6 +19,8 @@ from apps.resume_processing.tasks.resume_processing_tasks import (
     save_resume_file,
 )
 
+from .pool_tasks import cleanup_temp_resume_file, process_resume_for_pool
+
 # Export all tasks at the module level
 __all__ = [
     # Resume processing tasks
@@ -35,4 +37,7 @@ __all__ = [
     "generate_personal_tagline",
     # Talent sheet tasks
     "generate_talent_sheet_task",
+    # Pool processing tasks
+    "process_resume_for_pool",
+    "cleanup_temp_resume_file",
 ]

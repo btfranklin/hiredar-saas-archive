@@ -13,6 +13,7 @@ from django.views.generic import TemplateView, View
 from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
+from apps.job_seekers.tasks.hooks import resume_processing_completed
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 from apps.resume_processing.services.resume_processor import ResumeProcessor
 from apps.resume_processing.tasks.resume_processing_tasks import (
@@ -138,7 +139,7 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
                 profile_id,
                 task_id=task_progress.task_id,
                 task_name=f"resume_processing_{task_progress.task_id}",
-                hook="apps.job_seekers.tasks.hooks.resume_processing_completed",
+                hook=resume_processing_completed,
             )
 
             # Update the task to mark the first step as complete

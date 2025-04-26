@@ -1,18 +1,17 @@
 """
-Views for the messaging app.
+Messaging views module.
 
-This module imports and exposes all views from the messaging app's view modules,
-making them available for import directly from apps.messaging.views.
+This package re-exports all views from the modular messaging views structure.
 """
 
-from apps.messaging.views.conversation_views import (
+from .conversation_views import (
     ConversationDetailView,
     ConversationListView,
     RespondToInterestView,
     SendMessageView,
     StartConversationView,
 )
-from apps.messaging.views.notification_views import (
+from .notification_views import (
     MarkAllNotificationsReadView,
     MarkNotificationReadView,
     NotificationListView,

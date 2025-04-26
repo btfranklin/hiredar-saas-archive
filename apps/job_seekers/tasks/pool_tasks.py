@@ -1,7 +1,3 @@
-"""
-Background tasks for the job_seekers app.
-"""
-
 import os
 from typing import Any
 
@@ -12,6 +8,7 @@ from apps.job_seekers.models import JobSeekerProfile, TalentSheet, UploadedResum
 from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.resume_processing.utils.pipeline import process_resume
 
+# Alias for decoupled task queue
 async_task = safe_async_task
 
 
@@ -29,15 +26,13 @@ def process_resume_for_pool(
     Returns:
         Dictionary with processing results
     """
-    # Get the resume pool
     try:
         resume_pool = UploadedResumePool.objects.get(pk=pool_id)
     except UploadedResumePool.DoesNotExist:
         return {"success": False, "error": f"Resume pool with ID {pool_id} not found"}
 
-    # Process the resume file
     try:
-        # Create a temporary profile for processing
+        # Create a temporary profile for processing owned by the recruiter
         owner_content_type = ContentType.objects.get_for_model(
             resume_pool.recruiter.__class__
         )
@@ -46,15 +41,14 @@ def process_resume_for_pool(
             owner_object_id=resume_pool.recruiter.pk,
         )
 
-        # Extract data from resume using the process_resume pipeline
+        # Run the unified resume-processing pipeline
         result = process_resume(file_path, temp_profile, task_id)
-
-        if not result["success"]:
-            return {"success": False, "error": "Failed to extract data from resume"}
+        if not result.get("success", False):
+            return {"success": False, "error": result.get("message", "Failed to process resume")}  # type: ignore
 
         resume_data = result.get("profile_data", {})
 
-        # Create a profile for this resume in the pool
+        # Build profile data dict
         profile_data = {
             "skills": ProfileManager.format_skills(resume_data.get("skills", [])),
             "experience": resume_data.get("experience", ""),
@@ -68,24 +62,28 @@ def process_resume_for_pool(
             "resume_xml": resume_data.get("resume_xml", ""),
         }
 
-        # Create profile with pool as owner
+        # Create or update profile in the pool
         profile = ProfileManager.create_or_update_profile(resume_pool, profile_data)
 
-        # Create a talent sheet for this profile (published by default since it's from a pool)
+        # Generate a TalentSheet for the new profile
         talent_sheet_data = {
-            "promotional_blurb": f"Experienced {profile.most_recent_title or 'professional'} with {profile.years_of_experience or 'relevant'} years of experience.",
-            "skill_overview": f"Key skills include {', '.join(profile.skills_list[:5]) if profile.skills_list else 'various technical competencies'}.",
+            "promotional_blurb": (
+                f"Experienced {profile.most_recent_title or 'professional'}"
+                f" with {profile.years_of_experience or 'relevant'} years of experience."
+            ),
+            "skill_overview": (
+                f"Key skills include {', '.join(profile.skills_list[:5])}"
+                if profile.skills_list
+                else "Various competencies"
+            ),
             "is_published": True,
         }
-
-        # Create talent sheet for the profile
         talent_sheet = TalentSheet.objects.create(
             job_seeker=profile, **talent_sheet_data
         )
 
-        # If the pool has an associated job opening, we could also create a candidate match here
+        # If associated with a JobOpening, trigger matching
         if resume_pool.job_opening:
-            # Trigger matching task
             async_task(
                 "apps.matching.tasks.match_talent_sheet_to_job",
                 talent_sheet.pk,
@@ -96,25 +94,23 @@ def process_resume_for_pool(
             "success": True,
             "profile_id": profile.pk,
             "file_processed": os.path.basename(file_path),
-            "file_path": file_path,  # Add the file path for cleanup hook
+            "file_path": file_path,
         }
 
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
-def cleanup_temp_resume_file(task_result: dict) -> None:
+def cleanup_temp_resume_file(task_result: dict[str, Any]) -> None:
     """
     Clean up temporary resume file after processing.
 
     Args:
         task_result: Result from the resume processing task
     """
-    # The task result should contain the file path
     file_path = task_result.get("file_path")
     if file_path and os.path.exists(file_path):
         try:
             os.unlink(file_path)
         except Exception:
-            # Just log and continue if deletion fails
             pass
