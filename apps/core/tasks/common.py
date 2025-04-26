@@ -28,8 +28,6 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from django_q.tasks import async_task
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +57,9 @@ def safe_async_task(
     attempt = 0
     while True:
         try:
+            # Lazy import of async_task to avoid early ORM loading issues
+            from django_q.tasks import async_task
+
             return async_task(func_path, *args, **kwargs)
         except Exception:  # noqa: BLE001 – we want to catch any broker error
             attempt += 1
