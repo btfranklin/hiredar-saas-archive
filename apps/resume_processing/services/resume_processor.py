@@ -186,7 +186,6 @@ class ResumeProcessor:  # noqa: D401 – Service class, not data‑class
                         process_resume_for_pool,
                         file_path,
                         pool.pk,
-                        task_id,
                         hook=cleanup_temp_resume_file,
                     )
                     task_ids.append(task_id)

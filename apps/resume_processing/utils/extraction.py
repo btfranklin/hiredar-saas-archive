@@ -4,9 +4,17 @@ PDF text extraction utilities.
 This module contains functions for extracting text content from resume PDFs.
 """
 
+# Suppress noisy CropBox/MediaBox warnings from pdfminer that clutter logs
 import logging
 
 import pdfplumber
+
+# Ensure pdfminer logger stays quiet unless error
+for _name in (
+    "pdfminer",
+    "pdfminer.pdfpage",
+):
+    logging.getLogger(_name).setLevel(logging.ERROR)
 
 # Setup logging
 logger = logging.getLogger(__name__)

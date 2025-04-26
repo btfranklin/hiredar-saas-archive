@@ -13,16 +13,13 @@ from apps.resume_processing.utils.pipeline import process_resume
 async_task = safe_async_task
 
 
-def process_resume_for_pool(
-    file_path: str, pool_id: int, task_id: str
-) -> dict[str, Any]:
+def process_resume_for_pool(file_path: str, pool_id: int) -> dict[str, Any]:
     """
     Process a resume for an UploadedResumePool.
 
     Args:
         file_path: Path to the resume file
         pool_id: ID of the UploadedResumePool
-        task_id: Task ID for tracking
 
     Returns:
         Dictionary with processing results
@@ -33,17 +30,18 @@ def process_resume_for_pool(
         return {"success": False, "error": f"Resume pool with ID {pool_id} not found"}
 
     try:
-        # Create a temporary profile for processing owned by the recruiter
-        owner_content_type = ContentType.objects.get_for_model(
-            resume_pool.recruiter.__class__
-        )
+        # Create a temporary profile owned by the *resume_pool* so we don't mutate the recruiter
+        owner_content_type = ContentType.objects.get_for_model(resume_pool.__class__)
         temp_profile = JobSeekerProfile(
             owner_content_type=owner_content_type,
-            owner_object_id=resume_pool.recruiter.pk,
+            owner_object_id=resume_pool.pk,
         )
+        # Save immediately so ``process_resume`` can update it atomically
+        temp_profile.save()
 
-        # Run the unified resume-processing pipeline
-        result = process_resume(file_path, temp_profile, task_id)
+        # Run the unified resume-processing pipeline without progress-tracker integration
+        # to avoid noisy "Progress tracker not found" logs for bulk uploads
+        result = process_resume(file_path, temp_profile, None)
         if not result.get("success", False):
             return {"success": False, "error": result.get("message", "Failed to process resume")}  # type: ignore
 
@@ -63,7 +61,9 @@ def process_resume_for_pool(
             "resume_xml": resume_data.get("resume_xml", ""),
         }
 
-        # Create or update profile in the pool
+        # Create or update the *same* profile (avoids duplicates). Since we saved a
+        # profile with this owner above, the manager will return and update that
+        # instance instead of creating a new row.
         profile = ProfileManager.create_or_update_profile(resume_pool, profile_data)
 
         # Generate a TalentSheet for the new profile

@@ -105,7 +105,6 @@ def unpack_and_process_zip(bulk_pk: int) -> dict[str, Any]:
                     process_resume_for_pool,
                     local_path,
                     resume_pool.pk,
-                    task_id,
                     task_name=f"resume_pool_process_{task_id}",
                     hook=cleanup_temp_resume_file,
                 )
