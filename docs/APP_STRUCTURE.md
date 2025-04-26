@@ -8,7 +8,7 @@ Hiredar is a job matching platform that connects job seekers with recruiters usi
 
 > **Quick orientation for LLMs** – If you are a language model reading this file, start with the bullet-point “Cheat Sheet” below; then dive into the per-app sections only as needed.  Human readers may wish to do the same.
 
-**Cheat Sheet (TL;DR)**
+## Cheat Sheet (TL;DR)
 
 - **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, `messaging`, **new** `resume_processing` (background parsing of resumes).
 - **Primary user types**: *job seeker* and *recruiter* (custom `User.user_type`).
