@@ -11,9 +11,11 @@ from django_q.tasks import Task
 
 # Use centralised helper instead of importing async_task directly
 from apps.core.tasks import safe_async_task
-
 from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.resume_processing.models import ResumeProcessingJob
+from apps.resume_processing.tasks.cleanup_tasks import (
+    cleanup_resume_processing_progress,
+)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -107,6 +109,12 @@ def resume_processing_completed(task: Task) -> None:
 
     except JobSeekerProfile.DoesNotExist:
         logger.error("Profile with ID %s does not exist", profile_id)
+
+    # Perform ad-hoc cleanup of stale progress records
+    try:
+        cleanup_resume_processing_progress()
+    except Exception as e:
+        logger.error("Error running ad-hoc cleanup: %s", e)
 
 
 def all_processing_complete(group_result: list[Task]) -> None:

@@ -12,7 +12,7 @@ from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 # Import cleanup helpers from canonical resume_processing app
 from apps.resume_processing.tasks.cleanup_tasks import (
     cleanup_resume_processing_progress,
-    ensure_cleanup_scheduled,
+    initialize_cleanup_once,
 )
 from apps.resume_processing.tasks.resume_processing_tasks import (
     handle_resume_upload_task,
@@ -26,7 +26,7 @@ __all__ = [
     "handle_resume_upload_task",
     # Cleanup tasks
     "cleanup_resume_processing_progress",
-    "ensure_cleanup_scheduled",
+    "initialize_cleanup_once",
     # Hook functions
     "resume_processing_completed",
     # Recommendation tasks

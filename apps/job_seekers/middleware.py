@@ -9,7 +9,7 @@ import logging
 from django.conf import settings
 from django.core.cache import cache
 
-from apps.job_seekers.tasks import ensure_cleanup_scheduled
+from apps.job_seekers.tasks import initialize_cleanup_once
 
 
 class CleanupSchedulerMiddleware:
@@ -29,7 +29,7 @@ class CleanupSchedulerMiddleware:
             try:
                 # Check if another process already handled this
                 if not cache.get("job_seekers_first_request_handled"):
-                    ensure_cleanup_scheduled()
+                    initialize_cleanup_once()
                     cache.set(
                         "job_seekers_first_request_handled", True, 60 * 60
                     )  # Cache for an hour

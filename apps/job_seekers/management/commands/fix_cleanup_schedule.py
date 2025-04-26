@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from django_q.models import Schedule
 from django_q.tasks import schedule
 
-from apps.resume_processing.tasks.cleanup_tasks import ensure_cleanup_scheduled
+from apps.resume_processing.tasks.cleanup_tasks import initialize_cleanup_once
 
 
 class Command(BaseCommand):
@@ -30,12 +30,16 @@ class Command(BaseCommand):
 
         if count == 0:
             self.stdout.write(
-                self.style.WARNING("No schedules found. Creating a new one...")
+                self.style.WARNING(
+                    "No schedules found. Disabling any stray schedule and running cleanup..."
+                )
             )
 
-            ensure_cleanup_scheduled()
+            initialize_cleanup_once()
             self.stdout.write(
-                self.style.SUCCESS("Successfully created cleanup schedule")
+                self.style.SUCCESS(
+                    "Successfully removed periodic schedule and ran cleanup once"
+                )
             )
             return
 

@@ -9,7 +9,6 @@ import logging
 
 from django.core.cache import cache
 from django_q.models import Schedule
-from django_q.tasks import schedule
 
 from apps.resume_processing.models import ResumeProcessingTaskProgress
 
@@ -17,12 +16,12 @@ from apps.resume_processing.models import ResumeProcessingTaskProgress
 logger = logging.getLogger(__name__)
 
 
-def ensure_cleanup_scheduled() -> None:
+def initialize_cleanup_once() -> None:
     """
-    Ensure the cleanup task is scheduled.
+    Disable periodic cleanup schedules and perform a one-time cleanup.
 
-    This function checks if the cleanup task is already scheduled and if not,
-    schedules it. It's designed to be called lazily after the app is fully loaded.
+    This function removes any existing scheduled cleanup tasks and performs an immediate cleanup.
+    It uses a cache lock and flag to prevent duplicate execution in the same process.
     """
     # Use a cache to prevent duplicate checks in the same process
 
@@ -33,65 +32,26 @@ def ensure_cleanup_scheduled() -> None:
         return
 
     try:
-        # Check if valid schedules already exist
-        existing_schedules = Schedule.objects.filter(
+        # Always remove any existing schedules for this task so it does NOT run periodically
+        removed = Schedule.objects.filter(
             name="cleanup_resume_processing_progress",
             func="apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
-            minutes=15,
-        )
+        ).delete()[0]
 
-        # Clean up any duplicate or invalid schedules
-        invalid_schedules = Schedule.objects.filter(
-            name="cleanup_resume_processing_progress"
-        ).exclude(
-            func="apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
-            minutes=15,
-        )
-
-        if invalid_schedules.exists():
-            logger.warning(
-                "Found %s invalid cleanup schedules - deleting",
-                invalid_schedules.count(),
-            )
-            invalid_schedules.delete()
-
-        # If we have multiple valid schedules, keep only the oldest one
-        if existing_schedules.count() > 1:
-            logger.warning(
-                "Found %s duplicate cleanup schedules - keeping only the oldest",
-                existing_schedules.count(),
-            )
-            # Keep the oldest schedule (assuming it has the lowest ID)
-            oldest = existing_schedules.order_by("pk").first()
-            if oldest:
-                existing_schedules.exclude(pk=oldest.pk).delete()
-                existing = oldest
-            else:
-                # Somehow we had multiple schedules but couldn't get the first one
-                # Delete all and create a new one
-                existing_schedules.delete()
-                existing = None
-        else:
-            existing = existing_schedules.first()
-
-        # Create schedule if it doesn't exist
-        if not existing:
-            schedule(
-                "apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
-                name="cleanup_resume_processing_progress",
-                schedule_type=Schedule.MINUTES,
-                minutes=15,
-            )
+        if removed:
             logger.info(
-                "Scheduled task cleanup_resume_processing_progress to run every 15 minutes"
+                "Removed %s existing periodic cleanup_schedule entries to disable cron",
+                removed,
             )
 
-        # Set a cache flag to prevent repeated checks for 60 minutes
-        # This is much longer than before to reduce DB access
+        # Perform an immediate cleanup run to ensure any stale records are removed
+        cleanup_resume_processing_progress()
+
+        # Set cache flag to avoid doing this repeatedly
         cache.set(cache_key, True, 60 * 60)
 
     except Exception as e:
-        logger.error("Failed to schedule cleanup task: %s", e)
+        logger.error("Error while disabling cleanup schedule: %s", e)
 
 
 def cleanup_resume_processing_progress() -> None:
