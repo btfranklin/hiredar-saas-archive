@@ -17,13 +17,13 @@ python manage.py test -v 2
 python manage.py test apps.job_seekers
 
 # Run tests for a specific module
-python manage.py test apps.job_seekers.tests.test_xml_sanitization
+python manage.py test apps.resume_processing.tests.unit.test_xml_sanitization
 
 # Run a specific test class
-python manage.py test apps.job_seekers.tests.test_xml_sanitization.XMLSanitizationTests
+python manage.py test apps.resume_processing.tests.unit.test_xml_sanitization.XMLSanitizationTests
 
 # Run a specific test method
-python manage.py test apps.job_seekers.tests.test_xml_sanitization.XMLSanitizationTests.test_character_replacements
+python manage.py test apps.resume_processing.tests.unit.test_xml_sanitization.XMLSanitizationTests.test_character_replacements
 ```
 
 ## Test Structure

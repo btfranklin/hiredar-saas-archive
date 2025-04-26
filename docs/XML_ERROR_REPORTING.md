@@ -17,7 +17,7 @@ The Hiredar system processes résumés by converting them to structured XML and 
 ## Architecture
 
 The XML error reporting system is implemented as a dedicated module:
-`apps/job_seekers/utils/resume_processing/xml_error_reporting.py`
+`apps/resume_processing/utils/xml_error_reporting.py`
 
 ### Core Functions
 

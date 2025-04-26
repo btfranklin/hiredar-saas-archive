@@ -12,7 +12,7 @@ The following scheduled tasks are configured in the system:
 
 | Task | Function | Schedule | Description |
 |------|----------|----------|-------------|
-| Resume Processing Cleanup | `apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress` | Every 15 minutes | Cleans up completed and old resume processing task records |
+| Resume Processing Cleanup | `apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress` | Every 15 minutes | Cleans up completed and old resume processing task records |
 
 ## Management & Troubleshooting
 
@@ -54,7 +54,7 @@ The resume processing cleanup task handles temporary records created during the 
 ### Schedule Details
 
 - **Frequency**: Runs every 15 minutes
-- **Function**: `apps.job_seekers.tasks.cleanup_tasks.cleanup_resume_processing_progress`
+- **Function**: `apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress`
 - **Cache Key**: `job_seekers_cleanup_task_scheduled`
 
 ### Cleanup Policies

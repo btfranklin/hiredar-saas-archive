@@ -6,6 +6,17 @@ This document describes the structure and organization of the Hiredar applicatio
 
 Hiredar is a job matching platform that connects job seekers with recruiters using AI-powered matching algorithms. The application follows a modular Django architecture with separate apps for different functional areas. This document provides an overview of the codebase organization to help you navigate and understand the application.
 
+> **Quick orientation for LLMs** – If you are a language model reading this file, start with the bullet-point “Cheat Sheet” below; then dive into the per-app sections only as needed.  Human readers may wish to do the same.
+
+**Cheat Sheet (TL;DR)**
+
+- **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, `messaging`, **new** `resume_processing` (background parsing of resumes).
+- **Primary user types**: *job seeker* and *recruiter* (custom `User.user_type`).
+- **Key models**: `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
+- **Async engine**: Django-Q; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
+- **Front-end stack**: Tailwind + DaisyUI, HTMX for interactivity.
+- **Python 3.12 typing conventions**: built-ins (`list`, `dict`) and `| None` instead of `Optional`.
+
 ## Application Architecture
 
 The application is built using Django 5.1.7 and follows a modular approach with the following key components:
@@ -68,7 +79,6 @@ Manages job seeker-specific functionality:
 
 - **Models**:
   - `JobSeekerProfile`: Extended profile for job seekers including skills, experience, education, certifications, contact information, and social media links
-  - `ResumeProcessingTaskProgress`: Tracks progress of resume processing tasks
   - `RoleRecommendation`: Career recommendations for job seekers based on their skills and experience
   - `TalentSheet`: AI-generated talent sheet for job seekers in the talent pool
   - `UploadedResumePool`: Represents a batch of resumes uploaded by a recruiter for a specific job opening
@@ -83,18 +93,11 @@ Manages job seeker-specific functionality:
       - `ProfileAccessMixin`: Controls access permissions for job seekers
 - **Services**:
   - Handles business logic separate from views:
-    - `resume_processing.py`: Services for handling resume uploads and processing
     - `profile_manager.py`: Services for job seeker profile operations
     - `talent_pool_manager.py`: Services for talent pool and role interest management
 - **Utils**:
   - Utility functions and classes for specific operations:
-    - `resume_processing/`: Resume processing utilities:
-      - `pipeline.py`: Orchestrates the complete resume processing pipeline
-      - `extraction.py`: Functions for extracting text from PDF files
-      - `llm_processor.py`: Handles interaction with LLM for resume parsing
-      - `profile_updater.py`: Updates profiles with extracted resume data
-      - `xml_parser.py`: Parses XML representations of resumes
-      - `xml_error_reporting.py`: Handles and reports XML parsing errors
+    - `talent_pool_manager.py`: Services for talent pool and role interest management
 - **Tasks**:
   - Background tasks for asynchronous processing:
     - `tasks.py`: General tasks for processing resumes and cleanup
@@ -199,6 +202,25 @@ Handles conversations and notifications between users:
   - `/messaging/conversations/`: List of conversations
   - `/messaging/conversations/<id>/`: Specific conversation
   - `/messaging/notifications/`: User notifications
+
+### Resume Processing App (`apps/resume_processing`)
+
+Dedicated background processing pipeline for PDF resumes.
+
+- **Models**:
+  - `ResumeProcessingTaskProgress`: Tracks multi-step progress for a single resume upload/parse
+  - `ResumeProcessingJob`: Quota-tracking record for each completed resume parse
+- **Utils**:
+  - `pipeline.py`: Orchestrates the full resume-processing workflow
+  - `extraction.py`: Extracts raw text from PDF
+  - `xml_error_reporting.py`: Shared utilities for high-fidelity error reporting (see `docs/XML_ERROR_REPORTING.md`)
+- **Tasks**:
+  - `cleanup_tasks.py`: Periodic pruning of old task progress records (scheduled every 15 min)
+  - `pipeline_tasks.py`: Task wrappers that call the pipeline in the background
+- **Management/Commands**:
+  - `fix_cleanup_schedule.py`, `reset_cleanup_schedule.py`: Admin helpers to ensure only one periodic schedule exists
+
+This separation lets the heavy lifting run in its own app while job-seeker views remain thin.
 
 ## Key Relationships Between Apps
 
