@@ -293,8 +293,6 @@ class Command(BaseCommand):
 
             # Check the result from the completed task object
             if task and task.success:
-                # Task object's result field contains the return value of the task function
-                result_data = task.result
                 if verbosity >= 1:
                     email = (
                         profile.user_owner.email

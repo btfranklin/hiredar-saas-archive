@@ -120,7 +120,6 @@ class TalentPoolManager:
 
                 # Check if a talent sheet already exists (e.g., from a previous pool participation)
                 has_talent_sheet = False
-                is_published = False
                 try:
                     talent_sheet = TalentSheet.objects.get(job_seeker=profile)
                     has_talent_sheet = True

@@ -30,7 +30,7 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def test_func(self) -> bool:
         """Verify the user is a recruiter."""
-        return self.request.user.user_type == "recruiter"
+        return getattr(self.request.user, "user_type", "") == "recruiter"
 
     def post(self, request: HttpRequest) -> HttpResponse:
         """Process the text job description and queue an async task."""
@@ -149,7 +149,7 @@ class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def test_func(self) -> bool:
         """Verify the user is a recruiter."""
-        return self.request.user.user_type == "recruiter"
+        return getattr(self.request.user, "user_type", "") == "recruiter"
 
     def get(self, request: HttpRequest, task_id: str) -> HttpResponse:
         """
@@ -173,7 +173,7 @@ class JobOpeningTaskStatusView(LoginRequiredMixin, UserPassesTestMixin, View):
             response["Content-Type"] = "application/json"
             return response
         except JobOpeningProcessingTask.DoesNotExist:
-            logger.warning("Task not found: %s for user %s", task_id, request.user.id)
+            logger.warning("Task not found: %s for user %s", task_id, request.user.pk)
             response = JsonResponse(
                 {
                     "status": "error",
