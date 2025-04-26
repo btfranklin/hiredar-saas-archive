@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import AbstractBaseUser
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.generic import View
@@ -83,7 +84,9 @@ class ChangePasswordView(LoginRequiredMixin, View):
         """Handle POST requests for changing passwords."""
         # Using Django's built-in password change form for validation
         user = cast(AuthenticatedUser, request.user)
-        form = PasswordChangeForm(user=user, data=request.POST)
+        # Cast to AbstractBaseUser so PasswordChangeForm accepts it
+        user_for_form = cast(AbstractBaseUser, user)
+        form = PasswordChangeForm(user=user_for_form, data=request.POST)
 
         if form.is_valid():
             # Save the new password

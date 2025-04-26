@@ -1,12 +1,6 @@
 """Type definitions for the authentication app."""
 
-import sys
-from typing import Any, Literal, Protocol, TypedDict
-
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
+from typing import Any, Literal, Protocol, Self, TypedDict
 
 
 class UserType(TypedDict):
@@ -42,6 +36,12 @@ class AuthenticatedUser(Protocol):
     def to_dict(self) -> dict[str, Any]:
         """Convert user instance to a dictionary."""
         raise NotImplementedError("to_dict must be implemented")
+
+    def save(
+        self, using: str | None = None, update_fields: list[str] | None = None
+    ) -> None:
+        """Save the user instance to the database."""
+        raise NotImplementedError("save must be implemented")
 
     # Class methods
     @classmethod
