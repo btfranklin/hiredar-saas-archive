@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
+from django_q.models import Task
 
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet, UploadedResumePool
@@ -101,14 +102,16 @@ def process_resume_for_pool(
         return {"success": False, "error": str(e)}
 
 
-def cleanup_temp_resume_file(task_result: dict[str, Any]) -> None:
+def cleanup_temp_resume_file(task: Task) -> None:
     """
     Clean up temporary resume file after processing.
 
     Args:
-        task_result: Result from the resume processing task
+        task: Task model instance containing the result dict from resume processing
     """
-    file_path = task_result.get("file_path")
+    # Extract the file_path from the Task result payload
+    result_data = task.result or {}
+    file_path = result_data.get("file_path") if isinstance(result_data, dict) else None
     if file_path and os.path.exists(file_path):
         try:
             os.unlink(file_path)

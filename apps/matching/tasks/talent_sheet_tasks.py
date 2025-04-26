@@ -13,6 +13,7 @@ from apps.core.tasks import safe_async_task
 
 # Import shared utilities and alias safe_async_task
 from apps.matching.tasks.common import get_embedding, get_index, logger
+from apps.resume_processing.utils.xml_parser import extract_personal_details
 
 async_task = safe_async_task
 
@@ -108,12 +109,25 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         vector_id = f"talent_{talent_sheet.id}_{section_slug}"
         vector_ids.append(vector_id)
 
-        # Enhanced metadata for better search filtering and result display
+        # Determine candidate name from stored resume XML or fallback to profile's user owner name
+        xml_content = talent_sheet.job_seeker.resume_xml or ""
+        candidate_name: str | None = None
+        if xml_content:
+            try:
+                personal_details = extract_personal_details(xml_content)
+                candidate_name = personal_details.get("name")
+            except Exception:
+                candidate_name = None
+        job_seeker_user = talent_sheet.job_seeker.user_owner
+        job_seeker_name = candidate_name or (
+            job_seeker_user.get_full_name() if job_seeker_user else None
+        )
+
         metadata = {
             "talent_sheet_id": talent_sheet.id,
             "section": section,
             "job_seeker_id": talent_sheet.job_seeker.id,
-            "job_seeker_name": talent_sheet.job_seeker.user.get_full_name(),
+            "job_seeker_name": job_seeker_name,
             "content_preview": (
                 raw_text[:100] + "..." if len(raw_text) > 100 else raw_text
             ),
