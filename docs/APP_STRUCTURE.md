@@ -75,7 +75,7 @@ Handles user authentication, user types, and base user profile:
 
 ### Job Seekers App (`apps/job_seekers`)
 
-Manages job seeker-specific functionality:
+Manages job seeker–specific functionality:
 
 - **Models**:
   - `JobSeekerProfile`: Extended profile for job seekers including skills, experience, education, certifications, contact information, and social media links
@@ -83,36 +83,35 @@ Manages job seeker-specific functionality:
   - `TalentSheet`: AI-generated talent sheet for job seekers in the talent pool
   - `UploadedResumePool`: Represents a batch of resumes uploaded by a recruiter for a specific job opening
 - **Views**:
-  - Organized in subdirectories for better maintainability:
-    - `dashboard_views.py`: Dashboard view for job seekers
-    - `job_seeker_profile_views.py`: Profile and settings views
-    - `resume_processing_views.py`: Resume upload and processing views
-    - `api_views.py`: API endpoints for HTMX and JSON responses
-    - `mixins.py`: Reusable mixins for views:
-      - `HTMXViewMixin`: Handles HTMX-specific request processing and response rendering
-      - `ProfileAccessMixin`: Controls access permissions for job seekers
+  - Organized in subdirectories for maintainability:
+    - `dashboard_views.py`: Dashboard and role recommendation views
+    - `job_seeker_profile_views.py`: Profile, resume view, and settings
+    - `resume_processing_views.py`: Resume upload and processing views (`ResumeUploadView`, `ResumeProcessingTaskProgressView`, `ProfileCreateView`)
+    - `api_views.py`: API endpoints for HTMX and JSON responses (`ToggleRoleInterestView`, `ToggleTalentPoolView`, `TalentPoolStatusView`)
+    - `mixins.py`: Reusable mixins (`HTMXViewMixin`, `ProfileAccessMixin`)
 - **Services**:
-  - Handles business logic separate from views:
+  - Business logic encapsulated in services:
     - `profile_manager.py`: Services for job seeker profile operations
-    - `talent_pool_manager.py`: Services for talent pool and role interest management
-- **Utils**:
-  - Utility functions and classes for specific operations:
-    - `talent_pool_manager.py`: Services for talent pool and role interest management
+    - `talent_pool_manager.py`: Services for talent pool management
+    - `recommendation/`: LLM-based recommendation processing (`llm_processor.py`, `xml_parser.py`)
+    - `prompts/`: AI prompt templates
 - **Tasks**:
-  - Background tasks for asynchronous processing:
-    - `tasks.py`: General tasks for processing resumes and cleanup
-    - `tasks/resume_processing_tasks.py`: Specialized tasks for resume processing
-    - `tasks/talent_sheet_tasks.py`: Tasks for talent sheet generation
+  - Asynchronous tasks in `apps/job_seekers/tasks`:
+    - `hooks.py`: Hook functions for task chaining
+    - `pool_tasks.py`: Pool processing tasks (`process_resume_for_pool`, `cleanup_temp_resume_file`)
+    - `personal_tagline_tasks.py`: Tasks for generating personal taglines
+    - `recommendation_tasks.py`: Tasks for generating role recommendations
+    - `talent_sheet_tasks.py`: Tasks for generating talent sheets
+    - Imports from `apps.resume_processing.tasks`: `cleanup_resume_processing_progress`, `initialize_cleanup_once`, `save_resume_file`, `handle_resume_upload_task`
 - **Templates**:
-  - Job seeker-specific templates for signup, profiles, and dashboards
+  - Job seeker–specific templates for signup, profiles, dashboards, and HTMX partials
 - **Signals**:
-  - Signal handlers for job seeker-specific actions
+  - Signal handlers for job seeker–specific actions
 - **URLs**:
-  - `/job-seekers/profile/`: Job seeker profile
-  - `/job-seekers/profile/create/`: Profile creation
-  - `/job-seekers/dashboard/`: Job seeker dashboard
-  - `/job-seekers/settings/`: Job seeker settings
-  - `/job-seekers/recommendations/`: Role recommendations for job seekers
+  - `/job-seekers/profile/`, `/job-seekers/profile/create/`, `/job-seekers/dashboard/`, `/job-seekers/settings/`
+  - `/job-seekers/resume/<pk>/`, `/job-seekers/resume-upload/`, `/job-seekers/task-status/<task_id>/`
+  - `/job-seekers/recommendations/`, `/job-seekers/talent-sheet/`
+  - API endpoints under `/job-seekers/api/`
 
 ### Recruiters App (`apps/recruiters`)
 
@@ -208,17 +207,21 @@ Handles conversations and notifications between users:
 Dedicated background processing pipeline for PDF resumes.
 
 - **Models**:
-  - `ResumeProcessingTaskProgress`: Tracks multi-step progress for a single resume upload/parse
-  - `ResumeProcessingJob`: Quota-tracking record for each completed resume parse
+  - `ResumeProcessingTaskProgress`: Tracks progress of the resume processing workflow
+  - `ResumeProcessingJob`: Tracks completed resume processing events for quota enforcement
 - **Utils**:
-  - `pipeline.py`: Orchestrates the full resume-processing workflow
-  - `extraction.py`: Extracts raw text from PDF
-  - `xml_error_reporting.py`: Shared utilities for high-fidelity error reporting (see `docs/XML_ERROR_REPORTING.md`)
+  - `pipeline.py`: Orchestrates the resume-processing workflow
+  - `extraction.py`: Extracts raw text from PDF files
+  - `xml_error_reporting.py`: Utilities for XML error reporting
+  - `profile_updater.py`: Updates `JobSeekerProfile` with extracted data
+  - `llm_processor.py`: Handles AI-powered data extraction
+  - `xml_parser.py`: Parses structured XML into model fields
 - **Tasks**:
-  - `cleanup_tasks.py`: Periodic pruning of old task progress records (scheduled every 15 min)
-  - `pipeline_tasks.py`: Task wrappers that call the pipeline in the background
+  - `cleanup_tasks.py`: Cleanup of old or completed progress records
+  - `resume_processing_tasks.py`: Tasks for saving and processing resume uploads (`save_resume_file`, `handle_resume_upload_task`)
 - **Management/Commands**:
-  - `fix_cleanup_schedule.py`, `reset_cleanup_schedule.py`: Admin helpers to ensure only one periodic schedule exists
+  - `ingest_resumes.py`: Batch ingest sample resumes
+  - `diagnose_resume.py`: Diagnose resume parsing issues
 
 This separation lets the heavy lifting run in its own app while job-seeker views remain thin.
 
