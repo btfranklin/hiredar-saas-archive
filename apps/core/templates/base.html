@@ -153,7 +153,19 @@
     <header class="bg-base-100 shadow-md">
         <div class="navbar container mx-auto">
             <div class="navbar-start">
-                <a href="{% url 'core:home' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
+                {% if user.is_authenticated %}
+                    {% if user.user_type == 'recruiter' %}
+                        <a href="{% url 'recruiters:dashboard' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
+                    {% elif user.user_type == 'job_seeker' %}
+                        <a href="{% url 'job_seekers:dashboard' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
+                    {% elif user.user_type == 'admin' %}
+                        <a href="/admin/" class="font-bold text-3xl tracking-tight">Hiredar</a>
+                    {% else %}
+                        <a href="{% url 'core:home' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'core:home' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
+                {% endif %}
             </div>
             <div class="navbar-center hidden lg:flex">
                 <ul class="menu menu-horizontal px-1">
