@@ -42,7 +42,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 # Storage configuration
 #
 
-# 1) Tell Django what the “default” file‐storage backend is
+# 1) Tell Django what the "default" file-storage backend is
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # 2) Cloudflare-R2 / S3 options
@@ -180,8 +180,12 @@ WSGI_APPLICATION = "hiredar.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
     }
 }
 

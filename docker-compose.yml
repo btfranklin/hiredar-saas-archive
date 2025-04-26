@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: hiredar-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=metacognitron
+      - POSTGRES_PASSWORD=VelocityK
+      - POSTGRES_DB=hiredar-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    driver: local 
