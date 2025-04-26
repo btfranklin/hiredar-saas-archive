@@ -26,7 +26,7 @@ Design considerations
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Callable
 
 from django_q.tasks import async_task
 
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 def safe_async_task(
-    func_path: str,
+    func_path: str | Callable[..., Any],
     *args: Any,
     retries: int = 2,
     raise_on_failure: bool = False,

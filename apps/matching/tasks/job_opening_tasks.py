@@ -9,8 +9,12 @@ from typing import Any
 # Use get_model to handle importing from another app without circular imports
 from django.apps import apps
 
+from apps.core.tasks import safe_async_task
+
 # Import shared utilities
 from apps.matching.tasks.common import get_embedding, get_index, logger
+
+async_task = safe_async_task
 
 
 def generate_enriched_text_for_job(section_name: str, raw_text: str) -> str:
@@ -145,9 +149,6 @@ def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
     logger.info("Completed processing embeddings for JobOpening %s", job.id)
 
     # Trigger matching task after successfully creating embeddings
-    # Import here to avoid circular imports
-    from django_q.tasks import async_task
-
     logger.info("Triggering candidate matching for JobOpening %s", job.id)
     async_task("apps.matching.tasks.create_candidate_matches", job.id)
 

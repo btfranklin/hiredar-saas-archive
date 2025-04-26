@@ -20,6 +20,9 @@ from apps.resume_processing.tasks.cleanup_tasks import (
 # Setup logging
 logger = logging.getLogger(__name__)
 
+# Alias safe_async_task as async_task
+async_task = safe_async_task
+
 
 def resume_processing_completed(task: Task) -> None:
     """
@@ -90,7 +93,7 @@ def resume_processing_completed(task: Task) -> None:
             )
 
             # Generate role recommendations
-            rec_task_id = safe_async_task(
+            rec_task_id = async_task(
                 "apps.job_seekers.tasks.recommendation_tasks.generate_role_recommendations",
                 profile_id,
                 group=group_name,

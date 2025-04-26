@@ -8,9 +8,10 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
-from django_q.tasks import async_task, fetch
+from django_q.tasks import fetch
 
 from apps.authentication.models import User
+from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile
 from apps.resume_processing.utils.pipeline import process_resume
 
@@ -250,7 +251,7 @@ class Command(BaseCommand):
 
             # Schedule the talent sheet generation task to run asynchronously
             profile_id = getattr(profile, "id")
-            task_id = async_task(
+            task_id = safe_async_task(
                 "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
                 profile_id,
                 task_name=f"generate_talent_sheet_{profile_id}",

@@ -14,12 +14,15 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import View
-from django_q.tasks import async_task
 
+from apps.core.tasks import safe_async_task
 from apps.recruiters.models import JobOpeningProcessingTask, RecruiterProfile
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+# Alias safe_async_task as async_task
+async_task = safe_async_task
 
 
 class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):

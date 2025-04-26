@@ -9,10 +9,10 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonRespons
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import TemplateView, View
-from django_q.tasks import async_task
 
 from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
+from apps.core.tasks import safe_async_task
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 from apps.resume_processing.services.resume_processor import ResumeProcessor
 from apps.resume_processing.tasks.resume_processing_tasks import (
@@ -22,6 +22,9 @@ from apps.resume_processing.tasks.resume_processing_tasks import (
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# Alias safe_async_task to async_task
+async_task = safe_async_task
 
 
 class ProfileCreateView(

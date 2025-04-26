@@ -1,14 +1,16 @@
 from django.contrib import admin, messages
 from django.db.models import Q
-from django_q.tasks import async_task
 
 from apps.authentication.models import User
+from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import (
     JobSeekerProfile,
     RoleRecommendation,
     TalentSheet,
     UploadedResumePool,
 )
+
+async_task = safe_async_task
 
 
 class InTalentPoolFilter(admin.SimpleListFilter):

@@ -7,9 +7,12 @@ from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
 
+from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet, UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.resume_processing.utils.pipeline import process_resume
+
+async_task = safe_async_task
 
 
 def process_resume_for_pool(
@@ -83,8 +86,6 @@ def process_resume_for_pool(
         # If the pool has an associated job opening, we could also create a candidate match here
         if resume_pool.job_opening:
             # Trigger matching task
-            from django_q.tasks import async_task
-
             async_task(
                 "apps.matching.tasks.match_talent_sheet_to_job",
                 talent_sheet.pk,

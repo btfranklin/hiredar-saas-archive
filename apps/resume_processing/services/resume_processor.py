@@ -16,9 +16,10 @@ from zipfile import ZipFile
 
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from django_q.tasks import async_task, result
+from django_q.tasks import result
 
 from apps.authentication.models import User
+from apps.core.tasks import safe_async_task
 from apps.job_seekers.models.profile import UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.recruiters.models import JobOpening
@@ -27,6 +28,8 @@ from apps.resume_processing.models import ResumeProcessingTaskProgress
 __all__ = [
     "ResumeProcessor",
 ]
+
+async_task = safe_async_task
 
 
 class _DummyTaskProgress:  # noqa: D401 – internal helper

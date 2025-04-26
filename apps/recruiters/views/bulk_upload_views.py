@@ -5,8 +5,8 @@ from django.http import HttpRequest, HttpResponseBase, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, ListView
-from django_q.tasks import async_task
 
+from apps.core.tasks import safe_async_task
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
 from apps.recruiters.tasks.bulk_resume_tasks import unpack_and_process_zip
@@ -14,6 +14,8 @@ from apps.recruiters.tasks.bulk_resume_tasks import unpack_and_process_zip
 # ---------------------------------------------------------------------------
 # Create (upload) view
 # ---------------------------------------------------------------------------
+
+async_task = safe_async_task
 
 
 class BulkResumeUploadView(LoginRequiredMixin, CreateView):
@@ -37,7 +39,7 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         bulk.recruiter = self.request.user.recruiter_profile  # type: ignore[attr-defined]
         bulk.save()
         self.object = bulk  # set object for success_url formatting
-        # Schedule background unpack/processing via Django Q
+        # Schedule background unpack/processing via alias async_task
         async_task(unpack_and_process_zip, bulk.pk)
         return HttpResponseRedirect(self.get_success_url())
 
