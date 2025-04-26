@@ -5,7 +5,6 @@ This command forcibly refreshes the match score between a job seeker and job ope
 clearing existing matches and triggering a fresh match computation.
 """
 
-import json
 from typing import Any
 
 from django.core.management.base import BaseCommand
