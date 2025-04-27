@@ -332,11 +332,13 @@ class JobOpeningDeleteView(LoginRequiredMixin, DeleteView):
     Attributes:
         model: The model to delete (JobOpening).
         template_name: The template to render for confirmation.
+        context_object_name: The name of the context variable for the job opening.
         success_url: URL to redirect to after successful deletion.
     """
 
     model: ClassVar[type[JobOpening]] = JobOpening
     template_name = "recruiters/job_openings/confirm_delete.html"
+    context_object_name = "job_opening"
     success_url = reverse_lazy("recruiters:job_openings_list")
 
     def dispatch(
