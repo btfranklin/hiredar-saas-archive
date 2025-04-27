@@ -280,3 +280,13 @@ class TalentSheetAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(UploadedResumePool)
+class UploadedResumePoolAdmin(admin.ModelAdmin):
+    """Admin configuration for UploadedResumePool model."""
+
+    list_display = ("id", "name", "recruiter", "job_opening", "created_at")
+    list_filter = ("recruiter", "job_opening")
+    search_fields = ("name", "recruiter__email", "job_opening__title")
+    ordering = ("-created_at",)
