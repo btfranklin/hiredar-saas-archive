@@ -5,7 +5,7 @@ Service for managing job seeker profiles.
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
-from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
 
 
 class ProfileManager:
@@ -57,8 +57,12 @@ class ProfileManager:
 
         # Update the profile with the provided data
         for field, value in profile_data.items():
+            # Only update fields that exist on the model
             if hasattr(profile, field):
                 setattr(profile, field, value)
+            # Handle candidate_name specifically for pool-owned profiles
+            elif field == "candidate_name" and isinstance(owner, UploadedResumePool):
+                setattr(profile, "candidate_name", value)
 
         profile.save()
         return profile

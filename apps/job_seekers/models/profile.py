@@ -65,7 +65,7 @@ class JobSeekerProfile(models.Model):
         null=True, blank=True, help_text="XML representation of the parsed resume"
     )
     phone = models.CharField(
-        max_length=20, null=True, blank=True, help_text="Phone number"
+        max_length=30, null=True, blank=True, help_text="Phone number"
     )
     location = models.CharField(
         max_length=100, blank=True, help_text="Job seeker's location"
@@ -74,6 +74,11 @@ class JobSeekerProfile(models.Model):
     linkedin_url = models.URLField(blank=True)
     github_url = models.URLField(blank=True)
     portfolio_url = models.URLField(blank=True)
+    candidate_name = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="Parsed candidate name from resume for pool-owned profiles",
+    )
 
     def __str__(self) -> str:
         if self.user_owner:

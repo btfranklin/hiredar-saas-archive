@@ -60,6 +60,19 @@ def process_resume(
     parsed_data: dict[str, Any] | None = None
     start_time = time.time()
 
+    # Get a profile identifier that works for logging
+    if profile.user_owner:
+        profile_identifier = f"Profile #{profile.pk} (User: {profile.user_owner.email})"
+    elif profile.uploaded_resume_pool:
+        profile_identifier = (
+            f"Profile #{profile.pk} (Pool: {profile.uploaded_resume_pool.name})"
+        )
+    else:
+        profile_identifier = f"Profile #{profile.pk} (Orphaned)"
+
+    # Log that we're starting processing
+    logger.info("Starting resume processing for %s", profile_identifier)
+
     # Initialize or get progress tracker if task_id is provided
     progress_tracker = None
     if task_id:
@@ -80,10 +93,22 @@ def process_resume(
 
     try:
         # Step 1: Get the absolute file path
-        if not os.path.isabs(file_path):
-            abs_file_path = default_storage.path(file_path)
-        else:
+        if os.path.isabs(file_path):
+            # Already an absolute path, use it directly
             abs_file_path = file_path
+        else:
+            # Relative path, try to use default_storage.path if possible
+            try:
+                abs_file_path = default_storage.path(file_path)
+            except NotImplementedError:
+                # If the storage doesn't support path, we need to use the file directly
+                logger.warning(
+                    "Storage doesn't support absolute paths. Using original path: %s",
+                    file_path,
+                )
+                abs_file_path = file_path
+
+        logger.info("Resolved file path: %s", abs_file_path)
         pipeline_steps.append("file_path_resolved")
 
         # Update progress
@@ -157,18 +182,7 @@ def process_resume(
             }
 
         # Step 5: Update profile (fields only)
-        # Create a profile identifier that works for both user-owned and pool-owned profiles
-        if profile.user_owner:
-            profile_identifier = (
-                f"Profile #{profile.pk} (User: {profile.user_owner.email})"
-            )
-        elif profile.uploaded_resume_pool:
-            profile_identifier = (
-                f"Profile #{profile.pk} (Pool: {profile.uploaded_resume_pool.name})"
-            )
-        else:
-            profile_identifier = f"Profile #{profile.pk} (Orphaned)"
-        logger.info("Updating %s", profile_identifier)
+        logger.info("Updating fields for %s", profile_identifier)
         update_success = update_profile_fields(profile, parsed_data)
         pipeline_steps.append("profile_updated")
         # Update progress for profile update
@@ -186,11 +200,16 @@ def process_resume(
         if progress_tracker:
             progress_tracker.mark_step_complete("personal_tagline_generated")
 
-        # Step 7: Delete the temporary file if it's in MEDIA_ROOT
+        # Step 7: Delete the temporary file if it's not an absolute path
         if not os.path.isabs(file_path):
-            logger.info("Deleting temporary file: %s", file_path)
-            default_storage.delete(file_path)
-            pipeline_steps.append("temp_file_deleted")
+            try:
+                logger.info("Deleting temporary file: %s", file_path)
+                default_storage.delete(file_path)
+                pipeline_steps.append("temp_file_deleted")
+            except Exception as e:
+                logger.warning(
+                    "Could not delete temporary file: %s - %s", file_path, str(e)
+                )
 
             # Update progress
             if progress_tracker:

@@ -120,8 +120,12 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
 
     def get_name(self, obj):
         """Get the name of the owner."""
+        # For user-owned profiles, show the user's name
         if obj.user_owner:
             return obj.user_owner.name
+        # For pool-owned profiles, show the parsed candidate name
+        if obj.uploaded_resume_pool:
+            return obj.candidate_name or ""
         return ""
 
     get_name.short_description = "Name"

@@ -47,26 +47,31 @@ def process_resume_for_pool(file_path: str, pool_id: int) -> dict[str, Any]:
 
         resume_data = result.get("profile_data", {})
 
-        # Build profile data dict
+        # Map parsed_data into profile_data using the correct keys
+        personal = resume_data.get("personal_details", {}) or {}
         profile_data = {
             "skills": ProfileManager.format_skills(resume_data.get("skills", [])),
             "experience": resume_data.get("experience", ""),
             "education": resume_data.get("education", ""),
             "certifications": resume_data.get("certifications", ""),
             "years_of_experience": resume_data.get("years_of_experience", 0),
-            "most_recent_title": resume_data.get("current_title", ""),
-            "professional_summary": resume_data.get("summary", ""),
-            "phone": resume_data.get("phone", ""),
-            "location": resume_data.get("location", ""),
+            "most_recent_title": resume_data.get("most_recent_title", ""),
+            "professional_summary": resume_data.get("professional_summary", ""),
+            # Save parsed name, phone, location into pool-owned profile
+            "candidate_name": personal.get("name", ""),
+            "phone": (personal.get("phone", "") or "")[:20],
+            "location": (personal.get("location", "") or ""),
             "resume_xml": resume_data.get("resume_xml", ""),
         }
 
-        # Create or update the *same* profile (avoids duplicates). Since we saved a
-        # profile with this owner above, the manager will return and update that
-        # instance instead of creating a new row.
-        profile = ProfileManager.create_or_update_profile(resume_pool, profile_data)
+        # Update the temporary profile we created for this resume
+        for field, value in profile_data.items():
+            if hasattr(temp_profile, field):
+                setattr(temp_profile, field, value)
+        temp_profile.save()
+        profile = temp_profile
 
-        # Generate a TalentSheet for the new profile
+        # Create a TalentSheet for this resume-specific profile
         talent_sheet_data = {
             "promotional_blurb": (
                 f"Experienced {profile.most_recent_title or 'professional'}"

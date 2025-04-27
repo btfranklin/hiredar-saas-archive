@@ -5,8 +5,6 @@ import uuid
 from pathlib import Path
 
 from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 from django_q.tasks import fetch
 
@@ -364,19 +362,30 @@ class Command(BaseCommand):
 
             # Step 2: Save the resume temporarily
             temp_dir = "resumes"
-            # Make sure the directory exists
-            os.makedirs(os.path.join(settings.MEDIA_ROOT, temp_dir), exist_ok=True)
+            # Make sure the directory exists in MEDIA_ROOT
+            media_temp_dir = os.path.join(settings.MEDIA_ROOT, temp_dir)
+            os.makedirs(media_temp_dir, exist_ok=True)
 
-            temp_path = f"{temp_dir}/temp_{uuid.uuid4().hex}.pdf"
-            saved_path = default_storage.save(temp_path, ContentFile(file_content))
+            # Create a unique filename
+            temp_filename = f"temp_{uuid.uuid4().hex}.pdf"
+            temp_rel_path = f"{temp_dir}/{temp_filename}"
+            temp_abs_path = os.path.join(settings.MEDIA_ROOT, temp_rel_path)
+
+            # Save the file directly to the filesystem
+            with open(temp_abs_path, "wb") as f:
+                f.write(file_content)
+
+            # Keep track of the path for cleanup
+            saved_path = temp_abs_path
 
             self.stdout.write(f"Processing resume: {os.path.basename(resume_path)}")
 
-            # Use the unified pipeline to process the resume
             if verbosity >= 2:
+                self.stdout.write(f"  - Using temporary file: {temp_abs_path}")
                 self.stdout.write("  - Processing resume through pipeline...")
 
-            result = process_resume(saved_path, profile)
+            # Use the unified pipeline to process the resume with the absolute path
+            result = process_resume(temp_abs_path, profile)
 
             if not result["success"]:
                 # Display detailed error information
@@ -408,9 +417,9 @@ class Command(BaseCommand):
                     )
 
                 # Always clean up temporary file if it exists
-                if saved_path:
+                if saved_path and os.path.exists(saved_path):
                     try:
-                        default_storage.delete(saved_path)
+                        os.remove(saved_path)
                     except Exception:
                         pass
 
@@ -443,6 +452,13 @@ class Command(BaseCommand):
                         f"  - Processing time: {result['processing_time']:.2f}s"
                     )
 
+            # Clean up temporary file if it exists
+            if saved_path and os.path.exists(saved_path):
+                try:
+                    os.remove(saved_path)
+                except Exception:
+                    pass
+
             return True
 
         except Exception as e:
@@ -453,9 +469,9 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(f"    {line}"))
 
             # Always clean up temporary file if it exists
-            if saved_path:
+            if saved_path and os.path.exists(saved_path):
                 try:
-                    default_storage.delete(saved_path)
+                    os.remove(saved_path)
                 except Exception:
                     pass
 
