@@ -44,8 +44,11 @@ class TalentSheetEmbeddingTests(TestCase):
         mock_talent_sheet.promotional_blurb = "Experienced developer"
         mock_talent_sheet.skill_overview = "Python, Django, JavaScript"
         mock_talent_sheet.ideal_roles = "Backend Developer, Full Stack"
+        # Set up job seeker ID and mock user_owner for naming
         mock_talent_sheet.job_seeker.id = 456
-        mock_talent_sheet.job_seeker.user.get_full_name.return_value = "John Doe"
+        mock_user_owner = MagicMock()
+        mock_user_owner.get_full_name.return_value = "John Doe"
+        mock_talent_sheet.job_seeker.user_owner = mock_user_owner
 
         # Make the get_model return a mock model class that returns our mock object
         mock_model = MagicMock()
