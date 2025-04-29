@@ -16,7 +16,7 @@ from apps.recruiters.views import (
     SettingsView,
     TextProcessJobOpeningView,
 )
-from apps.recruiters.views.subscription_views import (
+from apps.recruiters.views.credit_views import (
     CheckoutSuccessView,
     CreditsView,
     create_checkout_session,

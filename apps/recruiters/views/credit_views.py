@@ -1,4 +1,3 @@
-# pylint: disable=import-error
 import stripe
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -7,7 +6,7 @@ from django.db.models import F
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView
-from stripe.error import StripeError
+from stripe.error import StripeError  # type: ignore
 
 
 class CreditsView(LoginRequiredMixin, TemplateView):
