@@ -54,8 +54,8 @@ classDiagram
     
     class RecruiterProfile {
         +user: OneToOneField(User)
-        +is_subscribed: BooleanField
-        +subscription_tier: CharField
+        +credits_total: IntegerField
+        +credits_available: IntegerField
     }
     
     class JobOpening {
@@ -335,8 +335,20 @@ Extended profile for recruiters with subscription information.
 | Field | Type | Description |
 |-------|------|-------------|
 | `user` | OneToOneField | Link to User model (with user_type="recruiter") |
-| `is_subscribed` | BooleanField | Whether recruiter has an active subscription |
-| `subscription_tier` | CharField | Subscription tier (free/premium) |
+| `credits_total` | IntegerField | Total credits ever purchased by the recruiter (default: 100) |
+| `credits_available` | IntegerField | Credits currently available to spend (default: 100) |
+
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| `__str__` | Returns a string representation with recruiter email |
+
+**Business Rules:**
+| Rule | Description |
+|------|-------------|
+| Credit Purchase | Recruiters purchase credits in bundles via Stripe; credits are required for premium actions (e.g., resume processing). |
+| Credit Deduction | Credits are automatically deducted when a premium action is completed. |
+| No Subscriptions | There are no subscription tiers or recurring payments. |
 
 ### JobOpening
 

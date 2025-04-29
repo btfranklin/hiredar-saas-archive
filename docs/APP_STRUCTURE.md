@@ -6,7 +6,7 @@ This document describes the structure and organization of the Hiredar applicatio
 
 Hiredar is a job matching platform that connects job seekers with recruiters using AI-powered matching algorithms. The application follows a modular Django architecture with separate apps for different functional areas. This document provides an overview of the codebase organization to help you navigate and understand the application.
 
-> **Quick orientation for LLMs** – If you are a language model reading this file, start with the bullet-point “Cheat Sheet” below; then dive into the per-app sections only as needed.  Human readers may wish to do the same.
+> **Quick orientation for LLMs** – If you are a language model reading this file, start with the bullet-point "Cheat Sheet" below; then dive into the per-app sections only as needed.  Human readers may wish to do the same.
 
 ## Cheat Sheet (TL;DR)
 
@@ -16,6 +16,7 @@ Hiredar is a job matching platform that connects job seekers with recruiters usi
 - **Async engine**: Django-Q; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
 - **Front-end stack**: Tailwind + DaisyUI, HTMX for interactivity.
 - **Python 3.12 typing conventions**: built-ins (`list`, `dict`) and `| None` instead of `Optional`.
+- **Recruiter monetization**: Recruiters use a credit-based system. Credits are purchased in bundles via Stripe and are required for premium actions (e.g., resume processing). No subscriptions or tiers exist.
 
 ## Application Architecture
 
@@ -118,18 +119,20 @@ Manages job seeker–specific functionality:
 Manages recruiter-specific functionality:
 
 - **Models**:
-  - `RecruiterProfile`: Extended profile for recruiters with subscription information
+  - `RecruiterProfile`: Extended profile for recruiters with credit balance fields (`credits_total`, `credits_available`). Recruiters purchase credits in bundles via Stripe; credits are required for actions like resume processing. No subscription or tier fields exist.
   - `JobOpening`: Job opening details posted by recruiters
 - **Views**:
   - Various views for recruiter profile management and dashboard
   - Job opening management views (create, list, detail, edit, delete)
   - Candidate matching views for viewing potential candidates for job openings
+  - **Credits management views**: Allow recruiters to view their credit balance, purchase more credits via Stripe, and see purchase history.
 - **Templates**:
   - Recruiter-specific templates for signup, profiles, and dashboards
   - Job opening management templates
   - Candidate matching templates
+  - **Credits templates**: Show credit balance and purchase options.
 - **Signals**:
-  - Signal handlers for recruiter-specific actions
+  - Signal handlers for recruiter-specific actions, including automatic deduction of credits when premium actions (like resume processing) are completed.
 - **URLs**:
   - `/recruiters/profile/`: Recruiter profile
   - `/recruiters/dashboard/`: Recruiter dashboard
@@ -139,6 +142,9 @@ Manages recruiter-specific functionality:
   - `/recruiters/job-openings/<id>/`: Job details
   - `/recruiters/job-openings/<id>/edit/`: Job editing
   - `/recruiters/job-openings/<id>/delete/`: Job deletion
+  - `/recruiters/credits/`: View and purchase credits
+  - `/recruiters/credits/create/<credits_amount>/`: Start Stripe checkout for credits
+  - `/recruiters/credits/success/`: Stripe payment success and credit grant
 
 ### Matching App (`apps/matching`)
 
@@ -518,3 +524,12 @@ When developing new features:
 3. Use parameterized queries to prevent SQL injection
 4. Implement proper access controls
 5. Follow the principle of least privilege
+
+## Recruiter Credits System
+
+Recruiters use credits to access premium features such as resume processing. Credits can be purchased in bundles via Stripe and are deducted automatically as features are used.
+
+- **Purchasing Credits**: Recruiters can purchase credits from the Credits page. Each bundle (e.g., 10, 50, 100 credits) is linked to a Stripe price. After successful payment, credits are added to the recruiter's account.
+- **Spending Credits**: Credits are deducted for actions such as resume processing. If a recruiter has insufficient credits, they are prompted to purchase more.
+- **Stripe Integration**: Stripe Checkout is used for secure payments. Price IDs are managed in Django settings. Credits are only granted after payment is confirmed.
+- **Admin and UI**: Admins can view and search recruiter credit balances. Recruiters see their credit balance in the sidebar and on the credits page.
