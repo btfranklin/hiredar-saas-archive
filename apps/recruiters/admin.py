@@ -7,8 +7,8 @@ from .models import BulkResumeUpload, JobOpening, RecruiterProfile, ResumeFile
 class RecruiterProfileAdmin(admin.ModelAdmin):
     """Admin configuration for RecruiterProfile model."""
 
-    list_display = ("user", "subscription_tier")
-    list_filter = ("subscription_tier",)
+    list_display = ("user", "credits_available", "credits_total")
+    list_filter = ()
     search_fields = ("user__email", "user__name")
 
 

@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:7f060b07e5705914b54f3daf56c6728fd4c4419da9a205f304935633b75dfab9"
+content_hash = "sha256:e9fce95bc1f2b10203b14d2fd0277629742d4fb6095dad47885357c76f0de71b"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -805,7 +805,7 @@ name = "psycopg"
 version = "3.2.6"
 requires_python = ">=3.8"
 summary = "PostgreSQL database adapter for Python"
-groups = ["default"]
+groups = ["default", "dev"]
 dependencies = [
     "backports-zoneinfo>=0.2.0; python_version < \"3.9\"",
     "typing-extensions>=4.6; python_version < \"3.13\"",
@@ -821,7 +821,7 @@ name = "psycopg-binary"
 version = "3.2.6"
 requires_python = ">=3.8"
 summary = "PostgreSQL database adapter for Python -- C optimisation distribution"
-groups = ["default"]
+groups = ["default", "dev"]
 marker = "implementation_name != \"pypy\""
 files = [
     {file = "psycopg_binary-3.2.6-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:f27a46ff0497e882e8c0286e8833c785b4d1a80f23e1bf606f4c90e5f9f3ce75"},
@@ -843,7 +843,7 @@ version = "3.2.6"
 extras = ["binary"]
 requires_python = ">=3.8"
 summary = "PostgreSQL database adapter for Python"
-groups = ["default"]
+groups = ["default", "dev"]
 dependencies = [
     "psycopg-binary==3.2.6; implementation_name != \"pypy\"",
     "psycopg==3.2.6",
@@ -993,11 +993,13 @@ dependencies = [
     "pillow>=11.2.1",
     "pinecone[grpc]>=6.0.2",
     "promptdown>=0.9.0",
+    "psycopg[binary]>=3.2.6",
     "pyjwt>=2.10.1",
     "pymupdf>=1.25.4",
     "python-dotenv>=1.1.0",
     "python-magic>=0.4.27",
     "requests>=2.32.3",
+    "stripe>=5.0.0",
     "whitenoise>=6.9.0",
 ]
 
@@ -1171,6 +1173,22 @@ groups = ["default", "dev"]
 files = [
     {file = "sqlparse-0.5.3-py3-none-any.whl", hash = "sha256:cf2196ed3418f3ba5de6af7e82c694a9fbdbfecccdfc72e281548517081f16ca"},
     {file = "sqlparse-0.5.3.tar.gz", hash = "sha256:09f67787f56a0b16ecdbde1bfc7f5d9c3371ca683cfeaa8e6ff60b4807ec9272"},
+]
+
+[[package]]
+name = "stripe"
+version = "12.0.1"
+requires_python = ">=3.6"
+summary = "Python bindings for the Stripe API"
+groups = ["default", "dev"]
+dependencies = [
+    "requests>=2.20; python_version >= \"3.0\"",
+    "typing-extensions<=4.2.0,>3.7.2; python_version < \"3.7\"",
+    "typing-extensions>=4.5.0; python_version >= \"3.7\"",
+]
+files = [
+    {file = "stripe-12.0.1-py2.py3-none-any.whl", hash = "sha256:b10b19dbd0622868b98a7c6e879ebde704be96ad75c780944bca4069bb427988"},
+    {file = "stripe-12.0.1.tar.gz", hash = "sha256:3fc7cc190946d8ebcc5b637e7e04f387d61b9c5156a89619a3ba90704ac09d4a"},
 ]
 
 [[package]]

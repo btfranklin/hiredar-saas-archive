@@ -18,14 +18,13 @@ class RecruiterProfile(models.Model):
         limit_choices_to={"user_type": "recruiter"},
     )
 
-    # Subscription status
-    subscription_tier = models.CharField(
-        max_length=20,
-        choices=(
-            ("free", "Free"),
-            ("premium", "Premium"),
-        ),
-        default="free",
+    credits_total = models.IntegerField(
+        default=100,
+        help_text="Total resume processing credits for the recruiter",
+    )
+    credits_available = models.IntegerField(
+        default=100,
+        help_text="Remaining resume processing credits available",
     )
 
     def __str__(self) -> str:

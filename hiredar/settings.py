@@ -465,3 +465,12 @@ PINECONE_PROJECT_NAME = os.getenv("PINECONE_PROJECT_NAME", "Hiredar")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST", None)
 # Ensure STATICFILES_STORAGE mirrors the chosen backend (development or production).
 STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
+
+# Stripe configuration
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
+STRIPE_PRICE_IDS = {
+    100: os.getenv("STRIPE_PRICE_ID_100", "prod_SD8kW8iecpxmGJ"),
+    500: os.getenv("STRIPE_PRICE_ID_500", "prod_SD8mpUBQ3863q0"),
+    1000: os.getenv("STRIPE_PRICE_ID_1000", "prod_SD8oe2ca7Wd7O1"),
+}

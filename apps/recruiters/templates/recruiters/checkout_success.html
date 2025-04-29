@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Purchase Successful | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="flex flex-col lg:flex-row gap-8">
+    {% include 'recruiters/components/sidebar.html' with active_page='credits' %}
+    <div class="w-full lg:w-3/4">
+      <div class="bg-base-200 rounded-box p-6 shadow-md text-center">
+        <h1 class="text-2xl font-bold mb-4">Thank you for your purchase!</h1>
+        <p class="mb-6">Your credits have been added to your account. You can continue using Hiredar now.</p>
+        <a href="{% url 'recruiters:credits' %}" class="btn btn-primary">Back to Credits</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

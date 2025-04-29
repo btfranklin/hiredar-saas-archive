@@ -16,6 +16,11 @@ from apps.recruiters.views import (
     SettingsView,
     TextProcessJobOpeningView,
 )
+from apps.recruiters.views.subscription_views import (
+    CheckoutSuccessView,
+    CreditsView,
+    create_checkout_session,
+)
 
 app_name = "recruiters"
 
@@ -59,4 +64,12 @@ urlpatterns: list[URLPattern] = [
     path(
         "bulk-upload/list/", BulkResumeUploadListView.as_view(), name="bulk_upload_list"
     ),
+    # Credits / subscription routes
+    path("credits/", CreditsView.as_view(), name="credits"),
+    path(
+        "credits/create/<int:credits_amount>/",
+        create_checkout_session,
+        name="create_checkout",
+    ),
+    path("credits/success/", CheckoutSuccessView.as_view(), name="checkout_success"),
 ]
