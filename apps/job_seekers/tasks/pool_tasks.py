@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django_q.models import Task
 
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet, UploadedResumePool
+from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.resume_processing.utils.pipeline import process_resume
 
@@ -71,30 +71,12 @@ def process_resume_for_pool(file_path: str, pool_id: int) -> dict[str, Any]:
         temp_profile.save()
         profile = temp_profile
 
-        # Create a TalentSheet for this resume-specific profile
-        talent_sheet_data = {
-            "promotional_blurb": (
-                f"Experienced {profile.most_recent_title or 'professional'}"
-                f" with {profile.years_of_experience or 'relevant'} years of experience."
-            ),
-            "skill_overview": (
-                f"Key skills include {', '.join(profile.skills_list[:5])}"
-                if profile.skills_list
-                else "Various competencies"
-            ),
-            "is_published": True,
-        }
-        talent_sheet = TalentSheet.objects.create(
-            job_seeker=profile, **talent_sheet_data
+        # Schedule LLM-powered TalentSheet generation for this pool profile
+        async_task(
+            "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+            profile.pk,
+            task_name=f"generate_talent_sheet_{profile.pk}",
         )
-
-        # If associated with a JobOpening, trigger matching
-        if resume_pool.job_opening:
-            async_task(
-                "apps.matching.tasks.match_talent_sheet_to_job",
-                talent_sheet.pk,
-                resume_pool.job_opening.pk,
-            )
 
         return {
             "success": True,
