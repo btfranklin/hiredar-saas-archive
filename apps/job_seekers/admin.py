@@ -286,7 +286,10 @@ class TalentSheetAdmin(admin.ModelAdmin):
 class UploadedResumePoolAdmin(admin.ModelAdmin):
     """Admin configuration for UploadedResumePool model."""
 
-    list_display = ("id", "name", "recruiter", "job_opening", "created_at")
-    list_filter = ("recruiter", "job_opening")
-    search_fields = ("name", "recruiter__email", "job_opening__title")
+    list_display = ("id", "name", "recruiter", "created_at")
+    list_filter = ("recruiter",)
+    search_fields = (
+        "name",
+        "recruiter__email",
+    )
     ordering = ("-created_at",)

@@ -7,7 +7,7 @@ from apps.authentication.models import User
 
 class UploadedResumePool(models.Model):
     """
-    Represents a batch of resumes uploaded by a recruiter for a specific job opening.
+    Represents a batch of resumes uploaded by a recruiter.
     """
 
     recruiter = models.ForeignKey(
@@ -15,14 +15,6 @@ class UploadedResumePool(models.Model):
         on_delete=models.CASCADE,
         related_name="uploaded_resume_pools",
         limit_choices_to={"user_type": "recruiter"},
-    )
-    job_opening = models.ForeignKey(
-        "recruiters.JobOpening",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="uploaded_resume_pools",
-        help_text="Job opening associated with this pool (optional, non-ownership)",
     )
     name = models.CharField(
         max_length=255, help_text='Label for this pool (e.g. "March 2024 Upload")'

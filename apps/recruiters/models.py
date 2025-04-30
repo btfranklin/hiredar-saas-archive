@@ -317,6 +317,7 @@ class BulkResumeUpload(models.Model):
         help_text="ZIP archive containing PDF resumes",
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     processed = models.BooleanField(default=False)
     total_files = models.PositiveIntegerField(default=0)
     processed_files = models.PositiveIntegerField(default=0)
@@ -384,3 +385,9 @@ def delete_bulk_resume_upload_file(
 ) -> None:
     # Delete the associated ZIP file from storage
     instance.zip_file.delete(save=False)
+    # Delete any UploadedResumePool created with the same name and recruiter
+    from apps.job_seekers.models.profile import UploadedResumePool
+
+    UploadedResumePool.objects.filter(
+        recruiter=instance.recruiter.user, name=instance.name
+    ).delete()

@@ -6,7 +6,6 @@ from django_q.models import Task
 
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
-from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.resume_processing.utils.pipeline import process_resume
 
 # Alias for decoupled task queue
@@ -50,7 +49,7 @@ def process_resume_for_pool(file_path: str, pool_id: int) -> dict[str, Any]:
         # Map parsed_data into profile_data using the correct keys
         personal = resume_data.get("personal_details", {}) or {}
         profile_data = {
-            "skills": ProfileManager.format_skills(resume_data.get("skills", [])),
+            "skills": resume_data.get("skills", ""),
             "experience": resume_data.get("experience", ""),
             "education": resume_data.get("education", ""),
             "certifications": resume_data.get("certifications", ""),
@@ -61,7 +60,6 @@ def process_resume_for_pool(file_path: str, pool_id: int) -> dict[str, Any]:
             "candidate_name": personal.get("name", ""),
             "phone": (personal.get("phone", "") or "")[:20],
             "location": (personal.get("location", "") or ""),
-            "resume_xml": resume_data.get("resume_xml", ""),
         }
 
         # Update the temporary profile we created for this resume
