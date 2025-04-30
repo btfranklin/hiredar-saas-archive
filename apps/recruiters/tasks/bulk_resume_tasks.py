@@ -105,18 +105,14 @@ def unpack_and_process_zip(bulk_pk: int) -> dict[str, Any]:
                     process_resume_for_pool,
                     local_path,
                     resume_pool.pk,
+                    bulk.pk,
                     task_name=f"resume_pool_process_{task_id}",
                     hook=cleanup_temp_resume_file,
                 )
 
-                # Increment processed count (number of files extracted so far)
-                BulkResumeUpload.objects.filter(pk=bulk.pk).update(
-                    processed_files=F("processed_files") + 1
-                )
-
         bulk.processed = True
         bulk.save(update_fields=["processed"])
-        return {"status": "ok", "processed": bulk.processed_files}
+        return {"status": "ok", "processed_profiles": bulk.processed_profiles}
 
     except Exception as exc:  # pragma: no cover – guard for unexpected
         logger.exception("Error unpacking zip for bulk upload %s: %s", bulk_pk, exc)

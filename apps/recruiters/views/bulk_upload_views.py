@@ -92,10 +92,6 @@ class BulkResumeUploadDeleteView(LoginRequiredMixin, View):
             pk=pk,
             recruiter=user.recruiter_profile,  # type: ignore[attr-defined]
         )
-        # Also remove the associated UploadedResumePool created during processing
-        UploadedResumePool.objects.filter(
-            recruiter=user, name=pool.name  # User who owns this pool
-        ).delete()
         # Delete the bulk upload record and its ZIP file
         pool.delete()
         return redirect("recruiters:bulk_upload_list")

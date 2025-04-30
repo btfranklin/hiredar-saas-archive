@@ -320,7 +320,7 @@ class BulkResumeUpload(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     processed = models.BooleanField(default=False)
     total_files = models.PositiveIntegerField(default=0)
-    processed_files = models.PositiveIntegerField(default=0)
+    processed_profiles = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at"]
@@ -330,7 +330,7 @@ class BulkResumeUpload(models.Model):
     def __str__(self) -> str:  # noqa: D401 – admin friendly string
         return (
             f"ResumePool '{self.name}' – {self.recruiter.user.email} "
-            f"({self.processed_files}/{self.total_files})"
+            f"({self.processed_profiles}/{self.total_files})"
         )
 
     def delete(self, using: str | None = None, keep_parents: bool = False) -> None:
@@ -385,9 +385,4 @@ def delete_bulk_resume_upload_file(
 ) -> None:
     # Delete the associated ZIP file from storage
     instance.zip_file.delete(save=False)
-    # Delete any UploadedResumePool created with the same name and recruiter
-    from apps.job_seekers.models.profile import UploadedResumePool
-
-    UploadedResumePool.objects.filter(
-        recruiter=instance.recruiter.user, name=instance.name
-    ).delete()
+    # Pools have independent lifespans; do not auto-delete the resume pool here

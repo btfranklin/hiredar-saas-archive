@@ -76,7 +76,7 @@ class BulkResumeUploadAdmin(admin.ModelAdmin):
         "created_at",
         "processed",
         "total_files",
-        "processed_files",
+        "processed_profiles",
     )
     list_filter = ("processed", "created_at")
     search_fields = ("name", "recruiter__user__email")

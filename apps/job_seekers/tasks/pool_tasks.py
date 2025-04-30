@@ -2,23 +2,28 @@ import os
 from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import F
 from django_q.models import Task
 
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
+from apps.recruiters.models import BulkResumeUpload
 from apps.resume_processing.utils.pipeline import process_resume
 
 # Alias for decoupled task queue
 async_task = safe_async_task
 
 
-def process_resume_for_pool(file_path: str, pool_id: int) -> dict[str, Any]:
+def process_resume_for_pool(
+    file_path: str, pool_id: int, bulk_pk: int
+) -> dict[str, Any]:
     """
     Process a resume for an UploadedResumePool.
 
     Args:
         file_path: Path to the resume file
         pool_id: ID of the UploadedResumePool
+        bulk_pk: Primary key of the BulkResumeUpload
 
     Returns:
         Dictionary with processing results
@@ -75,6 +80,15 @@ def process_resume_for_pool(file_path: str, pool_id: int) -> dict[str, Any]:
             profile.pk,
             task_name=f"generate_talent_sheet_{profile.pk}",
         )
+
+        # Update bulk upload processed_profiles count
+        BulkResumeUpload.objects.filter(pk=bulk_pk).update(
+            processed_profiles=F("processed_profiles") + 1
+        )
+        # If all profiles processed, delete the bulk upload and associated files
+        BulkResumeUpload.objects.filter(
+            pk=bulk_pk, processed_profiles__gte=F("total_files")
+        ).delete()
 
         return {
             "success": True,
