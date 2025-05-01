@@ -1,4 +1,5 @@
 from typing import Any, cast
+from zipfile import ZipFile
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponseBase, HttpResponseRedirect
@@ -36,11 +37,34 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form: BulkResumeUploadForm):  # type: ignore[override]
+        # Prepare bulk upload without saving to check credits
         bulk = form.save(commit=False)
-        bulk.recruiter = self.request.user.recruiter_profile  # type: ignore[attr-defined]
+        recruiter_profile = self.request.user.recruiter_profile  # type: ignore[attr-defined]
+        bulk.recruiter = recruiter_profile
+
+        # Count PDF resumes inside the uploaded ZIP
+        uploaded_zip = form.cleaned_data["zip_file"]
+        with ZipFile(uploaded_zip) as zf:
+            pdf_count = sum(
+                1 for name in zf.namelist() if name.lower().endswith(".pdf")
+            )
+
+        # Ensure recruiter has enough credits
+        credits_available = recruiter_profile.credits_available
+        if pdf_count > credits_available:
+            form.add_error(
+                "zip_file",
+                f"Insufficient credits: you have {credits_available} credits but uploaded {pdf_count} resumes.",
+            )
+            return self.form_invalid(form)
+
+        # Deduct credits up-front
+        recruiter_profile.credits_available = credits_available - pdf_count
+        recruiter_profile.save(update_fields=["credits_available"])
+
+        # Save bulk upload and schedule processing
         bulk.save()
-        self.object = bulk  # set object for success_url formatting
-        # Schedule background unpack/processing via alias async_task
+        self.object = bulk
         async_task(unpack_and_process_zip, bulk.pk)
         return HttpResponseRedirect(self.get_success_url())
 

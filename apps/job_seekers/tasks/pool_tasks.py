@@ -7,7 +7,7 @@ from django_q.models import Task
 
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
-from apps.recruiters.models import BulkResumeUpload, RecruiterProfile
+from apps.recruiters.models import BulkResumeUpload
 from apps.resume_processing.utils.pipeline import process_resume
 
 # Alias for decoupled task queue
@@ -89,13 +89,6 @@ def process_resume_for_pool(
         BulkResumeUpload.objects.filter(
             pk=bulk_pk, processed_profiles__gte=F("total_files")
         ).delete()
-        # Deduct one credit from the recruiter for each processed resume
-        try:
-            RecruiterProfile.objects.filter(user=resume_pool.recruiter).update(
-                credits_available=F("credits_available") - 1
-            )
-        except Exception:
-            pass
 
         return {
             "success": True,
