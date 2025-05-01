@@ -3,21 +3,42 @@
 {% block content %}
 <div class="max-w-xl mx-auto mt-10 p-6 bg-base-200 rounded-box shadow-lg">
   <h1 class="text-2xl font-bold mb-4">Bulk Upload Resumes</h1>
-  <form method="post" enctype="multipart/form-data" class="space-y-4">
-    {% csrf_token %}
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-semibold">Pool Name</span>
-      </label>
-      {{ form.name }}
-    </div>
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-semibold">ZIP file of PDF resumes</span>
-      </label>
-      {{ form.zip_file }}
-    </div>
-    <button type="submit" class="btn btn-primary w-full">Upload &amp; Start Processing</button>
-  </form>
+  <div id="bulk-upload-form-container">
+    <form 
+      hx-post="{% url 'recruiters:bulk_upload_create' %}" 
+      hx-target="#bulk-upload-form-container" 
+      hx-swap="innerHTML" 
+      method="post" 
+      enctype="multipart/form-data" 
+      id="bulk-upload-form" 
+      class="space-y-4"
+    >
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          {% for err in form.non_field_errors %}
+            <div>{{ err }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-semibold">Pool Name</span>
+        </label>
+        {{ form.name }}
+        {{ form.name.errors }}
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-semibold">ZIP file of PDF resumes</span>
+        </label>
+        {{ form.zip_file }}
+        {{ form.zip_file.errors }}
+      </div>
+      <button type="submit" class="btn btn-primary w-full">Upload &amp; Start Processing</button>
+    </form>
+  </div>
 </div>
 {% endblock %} 

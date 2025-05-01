@@ -3,8 +3,8 @@ from zipfile import ZipFile
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponseBase, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView, View
 
 from apps.authentication.types import AuthenticatedUser
@@ -52,10 +52,20 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         # Ensure recruiter has enough credits
         credits_available = recruiter_profile.credits_available
         if pdf_count > credits_available:
-            form.add_error(
-                "zip_file",
-                f"Insufficient credits: you have {credits_available} credits but uploaded {pdf_count} resumes.",
-            )
+            error_message = f"Insufficient credits: you have {credits_available} credits but uploaded {pdf_count} resumes."
+            # If HTMX request, return an error fragment with Buy More Credits button
+            if self.request.headers.get("HX-Request"):
+                return render(
+                    self.request,
+                    "recruiters/partials/credit_error.html",
+                    {
+                        "message": error_message,
+                        "credits_url": reverse("recruiters:credits"),
+                    },
+                    status=200,
+                )
+            # Otherwise, attach to form errors in full page
+            form.add_error("zip_file", error_message)
             return self.form_invalid(form)
 
         # Deduct credits up-front
@@ -67,6 +77,20 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         self.object = bulk
         async_task(unpack_and_process_zip, bulk.pk)
         return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(
+        self, form: BulkResumeUploadForm
+    ):  # HTMX-aware invalid form handling
+        # If this is an HTMX request, return only the form container snippet with errors
+        if self.request.headers.get("HX-Request"):
+            return render(
+                self.request,
+                "recruiters/partials/bulk_upload_form.html",
+                {"form": form},
+                status=200,
+            )
+        # Fallback to default full-page form invalid handling
+        return super().form_invalid(form)
 
 
 # ---------------------------------------------------------------------------

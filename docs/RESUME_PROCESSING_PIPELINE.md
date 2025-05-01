@@ -37,7 +37,7 @@ flowchart LR
 ### 2.2  Bulk ZIP upload (recruiter)
 | Step | Code | Notes |
 |------|------|-------|
-|HTTP POST|`apps/recruiters/views/bulk_upload_views.py::BulkResumeUploadView.form_valid`|– Validates credit balance (counts PDF resumes, errors if insufficient)<br>– Deducts credits up-front (one per PDF)<br>– Persists `BulkResumeUpload` row and enqueues processing|
+|HTTP POST|`apps/recruiters/views/bulk_upload_views.py::BulkResumeUploadView.form_valid`|– Validates credit balance (counts PDF resumes, errors if insufficient)<br>– If HTMX request, returns an error fragment with a "Buy More Credits" button<br>– Deducts credits up-front (one per PDF)<br>– Persists `BulkResumeUpload` row and enqueues processing|
 |Task|`apps/recruiters/tasks/bulk_resume_tasks.py::unpack_and_process_zip`|– Extracts PDFs in-memory<br>– Creates an **`UploadedResumePool`** to "own" the generated profiles<br>– For each PDF it writes a temp file and queues `process_resume_for_pool()`|
 |Child task|`apps/job_seekers/tasks/pool_tasks.py::process_resume_for_pool`|– Creates a **new** `JobSeekerProfile` owned by the pool (not the recruiter)<br>– Calls `process_resume(path, profile, task_id=None)` (no progress row – avoids noise)<br>– Schedules TalentSheet generation
 |Cleanup hook|`apps/job_seekers/tasks/pool_tasks.py::cleanup_temp_resume_file`|– Deletes the temp file after each pool resume finishes|
