@@ -12,7 +12,6 @@ from django.dispatch import receiver
 
 from apps.authentication.models import User
 from apps.recruiters.models import RecruiterProfile
-from apps.resume_processing.models import ResumeProcessingJob
 
 
 @receiver(post_save, sender=User)
@@ -30,22 +29,3 @@ def create_recruiter_profile(
     """
     if created and instance.user_type == "recruiter":
         RecruiterProfile.objects.create(user=instance)
-
-
-@receiver(post_save, sender=ResumeProcessingJob)
-def deduct_credit_on_success(sender, instance, created, **kwargs):
-    """
-    Deduct one credit when a resume processing job completes successfully.
-    """
-    if not created or instance.status != "success":
-        return
-    try:
-        profile = instance.user.recruiter_profile  # type: ignore[attr-defined]
-    except Exception:
-        return
-    # Decrement available credits atomically
-    from django.db.models import F
-
-    RecruiterProfile.objects.filter(pk=profile.pk).update(
-        credits_available=F("credits_available") - 1
-    )

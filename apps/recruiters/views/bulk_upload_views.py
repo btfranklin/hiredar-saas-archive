@@ -8,7 +8,6 @@ from django.views.generic import CreateView, DetailView, ListView, View
 
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models.profile import UploadedResumePool
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
 from apps.recruiters.tasks.bulk_resume_tasks import unpack_and_process_zip

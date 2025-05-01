@@ -6,9 +6,11 @@ This document explains **how PDF resumes flow through Hiredar – from the momen
 
 ## 1. High-level lifecycle
 
-```
-Browser  ─►  Django view                     ─►  Django Q2 task               ─►  Unified pipeline
-         (save file / create progress row)      (IO-bound / async)               (CPU/IO/LLM work)
+```mermaid
+flowchart LR
+    Browser -- "Upload PDF or ZIP" --> View["Django view<br/>save file / create progress row"]
+    View --> Task["Django Q2 task<br/>IO-bound / async"]
+    Task --> Pipeline["Unified pipeline<br/>CPU/IO/LLM work"]
 ```
 
 1. A **PDF** is uploaded (either a single file by a job-seeker or a ZIP archive by a recruiter).
@@ -115,7 +117,9 @@ The steps, weights & messages live in `ResumeProcessingTaskProgress.RESUME_PROCE
 
 ## 7. Credit / quota enforcement
 
-`resume_processing_completed` creates a `ResumeProcessingJob` *only* when the processed profile has `user_owner` set (i.e. single uploads).  A separate signal listens to `ResumeProcessingJob` inserts to deduct credits.
+The single-upload path (job-seeker) never consumes any credits.
+For recruiter-initiated bulk uploads, each resume processed by `process_resume_for_pool` deducts one credit from the uploader's `RecruiterProfile.credits_available`.
+This deduction happens in `apps/job_seekers/tasks/pool_tasks.py` immediately after each resume is processed.
 
 ---
 
