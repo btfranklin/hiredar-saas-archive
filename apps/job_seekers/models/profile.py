@@ -103,7 +103,7 @@ class JobSeekerProfile(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     (
                         models.Q(user_owner__isnull=False)
                         & models.Q(uploaded_resume_pool__isnull=True)
