@@ -13,10 +13,6 @@ from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
 from apps.recruiters.tasks.bulk_resume_tasks import unpack_and_process_zip
 
-# ---------------------------------------------------------------------------
-# Create (upload) view
-# ---------------------------------------------------------------------------
-
 async_task = safe_async_task
 
 
@@ -45,9 +41,20 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         # Count PDF resumes inside the uploaded ZIP
         uploaded_zip = form.cleaned_data["zip_file"]
         with ZipFile(uploaded_zip) as zf:
-            pdf_count = sum(
-                1 for name in zf.namelist() if name.lower().endswith(".pdf")
-            )
+            # Count only real PDF files – skip macOS metadata and temp files
+            pdf_names: list[str] = []
+            for member in zf.namelist():
+                member_lower = member.lower()
+                if not member_lower.endswith(".pdf"):
+                    continue
+                # Skip macOS resource-fork entries
+                if member_lower.startswith("__macosx/") or "/__macosx/" in member_lower:
+                    continue
+                # Skip dot-underscore files
+                if member_lower.startswith("._") or "/._" in member_lower:
+                    continue
+                pdf_names.append(member)
+            pdf_count = len(pdf_names)
 
         # Ensure recruiter has enough credits
         credits_available = recruiter_profile.credits_available
@@ -91,11 +98,6 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
             )
         # Fallback to default full-page form invalid handling
         return super().form_invalid(form)
-
-
-# ---------------------------------------------------------------------------
-# List view
-# ---------------------------------------------------------------------------
 
 
 class BulkResumeUploadListView(LoginRequiredMixin, ListView):

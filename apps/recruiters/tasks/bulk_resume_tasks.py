@@ -10,7 +10,6 @@ import zipfile
 from typing import Any
 
 from django.core.files.base import ContentFile
-from django.db.models import F
 
 # graceful import for runtime, fallback no-op decorator for type-checkers
 try:

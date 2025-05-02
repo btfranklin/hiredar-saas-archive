@@ -7,26 +7,14 @@ uploads.
 
 from __future__ import annotations
 
-import os
-import shutil
-import tempfile
-import uuid
 from typing import Any
-from zipfile import ZipFile
 
-from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django_q.tasks import result
 
 from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models.profile import UploadedResumePool
 from apps.job_seekers.services.profile_manager import ProfileManager
-from apps.job_seekers.tasks.pool_tasks import (
-    cleanup_temp_resume_file,
-    process_resume_for_pool,
-)
-from apps.recruiters.models import JobOpening
 from apps.resume_processing.models import ResumeProcessingTaskProgress
 
 __all__ = [
@@ -146,52 +134,3 @@ class ResumeProcessor:  # noqa: D401 – Service class, not data‑class
 
         profile.save()
         return profile
-
-    # ------------------------------------------------------------------
-    # Bulk‑ZIP helper – used by recruiters uploading pools of résumés
-    # ------------------------------------------------------------------
-    @staticmethod
-    def process_resume_batch_from_zip(
-        recruiter: User,
-        zip_file: UploadedFile,
-        pool_name: str,
-        job_opening_id: int | None = None,
-    ) -> tuple[UploadedResumePool, list[str]]:
-        # 1. Create a pool row so we can attach profiles later
-        pool = UploadedResumePool.objects.create(recruiter=recruiter, name=pool_name)
-
-        if job_opening_id:
-            try:
-                pool.job_opening = JobOpening.objects.get(pk=job_opening_id)
-                pool.save()
-            except JobOpening.DoesNotExist:
-                print(f"Warning: Job opening with ID {job_opening_id} not found.")
-
-        temp_dir = tempfile.mkdtemp(prefix="resume_batch_")
-        task_ids: list[str] = []
-
-        try:
-            with ZipFile(zip_file, "r") as zip_ref:
-                zip_ref.extractall(temp_dir)
-
-            for root, _, files in os.walk(temp_dir):
-                for filename in files:
-                    if not filename.lower().endswith(".pdf"):
-                        continue
-                    file_path = os.path.join(root, filename)
-                    task_id = str(uuid.uuid4())
-
-                    # Process each resume via the job_seekers pool pipeline
-                    async_task(
-                        process_resume_for_pool,
-                        file_path,
-                        pool.pk,
-                        hook=cleanup_temp_resume_file,
-                    )
-                    task_ids.append(task_id)
-        except Exception as exc:  # noqa: BLE001 – keep broad to ensure cleanup
-            print(f"Error processing ZIP file: {exc}")
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            return pool, []
-
-        return pool, task_ids
