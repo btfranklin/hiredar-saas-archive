@@ -8,7 +8,6 @@ particularly focusing on embedding management during status transitions.
 from unittest.mock import call, patch
 
 from django.apps import apps
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from apps.matching.signals import (
@@ -154,9 +153,8 @@ class TalentSheetSignalTests(TestCase):
         )
 
         # Get the JobSeekerProfile that was automatically created via signal
-        user_content_type = ContentType.objects.get_for_model(self.User)
         self.test_job_seeker = self.JobSeekerProfile.objects.get(
-            owner_content_type=user_content_type, owner_object_id=self.test_user.id
+            user_owner=self.test_user
         )
 
     @patch("apps.matching.signals.async_task")
