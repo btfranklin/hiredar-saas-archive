@@ -1,7 +1,6 @@
 from django.contrib import admin, messages
 from django.db.models import Q
 
-from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import (
     JobSeekerProfile,
@@ -48,15 +47,10 @@ class OwnerTypeFilter(admin.SimpleListFilter):
         )
 
     def queryset(self, request, queryset):
-        from django.contrib.contenttypes.models import ContentType
-
-        user_type = ContentType.objects.get_for_model(User)
-        pool_type = ContentType.objects.get_for_model(UploadedResumePool)
-
         if self.value() == "user":
-            return queryset.filter(owner_content_type=user_type)
+            return queryset.filter(user_owner__isnull=False)
         if self.value() == "pool":
-            return queryset.filter(owner_content_type=pool_type)
+            return queryset.filter(uploaded_resume_pool__isnull=False)
         return queryset
 
 
@@ -74,19 +68,7 @@ class ResumePoolFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         if not self.value():
             return queryset
-
-        # Use a custom filter based on the model
-        if self.value():
-            # For RoleRecommendation and TalentSheet, we need to filter through job_seeker
-            from django.contrib.contenttypes.models import ContentType
-
-            pool_type = ContentType.objects.get_for_model(UploadedResumePool)
-
-            return queryset.filter(
-                job_seeker__owner_content_type=pool_type,
-                job_seeker__owner_object_id=self.value(),
-            )
-        return queryset
+        return queryset.filter(job_seeker__uploaded_resume_pool__pk=self.value())
 
 
 @admin.register(JobSeekerProfile)
@@ -184,7 +166,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
     leave_talent_pool.short_description = "Remove selected job seekers from talent pool"
 
     fieldsets = (
-        (None, {"fields": ("owner_content_type", "owner_object_id")}),
+        (None, {"fields": ("user_owner", "uploaded_resume_pool")}),
         (
             "Profile Information",
             {

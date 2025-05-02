@@ -1,8 +1,4 @@
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
-
-from apps.authentication.models import User
 
 
 class UploadedResumePool(models.Model):
@@ -26,14 +22,22 @@ class UploadedResumePool(models.Model):
 
 
 class JobSeekerProfile(models.Model):
-    """Extended profile for job seekers (now supports polymorphic owner)"""
+    """Extended profile for job seekers"""
 
-    # Polymorphic owner: can be User or UploadedResumePool
-    owner_content_type = models.ForeignKey(
-        ContentType, on_delete=models.CASCADE, null=True, blank=True
+    user_owner = models.ForeignKey(
+        "authentication.User",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="job_seeker_profiles",
     )
-    owner_object_id = models.PositiveIntegerField(null=True, blank=True)
-    owner = GenericForeignKey("owner_content_type", "owner_object_id")
+    uploaded_resume_pool = models.ForeignKey(
+        UploadedResumePool,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="job_seeker_profiles",
+    )
 
     skills = models.TextField(blank=True, help_text="Pipe-separated list of skills")
     experience = models.TextField(null=True, blank=True)
@@ -80,18 +84,6 @@ class JobSeekerProfile(models.Model):
         return f"JobSeekerProfile {self.pk}"
 
     @property
-    def uploaded_resume_pool(self) -> UploadedResumePool | None:
-        if isinstance(self.owner, UploadedResumePool):
-            return self.owner
-        return None
-
-    @property
-    def user_owner(self) -> User | None:
-        if isinstance(self.owner, User):
-            return self.owner
-        return None
-
-    @property
     def skills_list(self) -> list[str]:
         if not self.skills:
             return []
@@ -107,3 +99,20 @@ class JobSeekerProfile(models.Model):
             ).exists()
         except Exception:
             return False
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (
+                        models.Q(user_owner__isnull=False)
+                        & models.Q(uploaded_resume_pool__isnull=True)
+                    )
+                    | (
+                        models.Q(user_owner__isnull=True)
+                        & models.Q(uploaded_resume_pool__isnull=False)
+                    )
+                ),
+                name="jobseekerprofile_owner_xor",
+            )
+        ]

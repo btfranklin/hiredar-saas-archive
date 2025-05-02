@@ -2,7 +2,12 @@ from typing import Any, cast
 from zipfile import ZipFile
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest, HttpResponseBase, HttpResponseRedirect
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBase,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView, View
@@ -83,7 +88,13 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         bulk.save()
         self.object = bulk
         async_task(unpack_and_process_zip, bulk.pk)
-        return HttpResponseRedirect(self.get_success_url())
+        # If this is an HTMX request, instruct client to redirect to list view
+        success_url = self.get_success_url()
+        if self.request.headers.get("HX-Request"):
+            response = HttpResponse(status=200)
+            response["HX-Redirect"] = success_url
+            return response
+        return HttpResponseRedirect(success_url)
 
     def form_invalid(
         self, form: BulkResumeUploadForm

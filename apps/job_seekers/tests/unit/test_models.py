@@ -4,7 +4,6 @@ These tests focus on the light‑weight helper properties and __str__ methods so
 they can run without any heavy external dependencies.
 """
 
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from apps.authentication.models import User
@@ -21,21 +20,22 @@ class JobSeekerProfileModelTests(TestCase):
 
     def setUp(self):
         # Create a user who will own the profile
-        self.user = User.objects.create_user(
+        self.user = User.objects.create_user(  # type: ignore[attr-defined]
             email="jsmith@example.com",
             password="password123",
             name="John Smith",
             user_type="job_seeker",
         )
 
-        # The JobSeekerProfile is created automatically by signal – fetch it
-        user_content_type = ContentType.objects.get_for_model(User)
+        # Fetch the automatically created profile via user_owner foreign key
         self.profile: JobSeekerProfile = JobSeekerProfile.objects.get(
-            owner_content_type=user_content_type, owner_object_id=self.user.id
+            user_owner=self.user
         )
 
         # Populate some skills so we can test skills_list
-        self.profile.skills = "Python |  Django |React | "  # note extra spaces & trailing pipe
+        self.profile.skills = (
+            "Python |  Django |React | "  # note extra spaces & trailing pipe
+        )
         self.profile.save(update_fields=["skills"])
 
     def test_skills_list_property(self):
@@ -53,7 +53,7 @@ class JobSeekerProfileModelTests(TestCase):
         """When the profile owner is a resume pool, __str__ should reflect that."""
 
         # Create a recruiter and a resume pool which will own a new profile.
-        recruiter = User.objects.create_user(
+        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
             email="recruiter@example.com",
             password="recruiter_pw",
             name="Recruiter",
@@ -65,11 +65,8 @@ class JobSeekerProfileModelTests(TestCase):
             name="March Batch",
         )
 
-        pool_content_type = ContentType.objects.get_for_model(UploadedResumePool)
-
-        pool_profile = JobSeekerProfile.objects.create(
-            owner_content_type=pool_content_type, owner_object_id=resume_pool.id
-        )
+        # Create a profile owned by the resume pool using uploaded_resume_pool field
+        pool_profile = JobSeekerProfile.objects.create(uploaded_resume_pool=resume_pool)
 
         self.assertIn("Resume Pool: March Batch", str(resume_pool))
         # The profile's __str__ should reference the pool label
@@ -83,7 +80,7 @@ class RoleRecommendationModelTests(TestCase):
         """uploaded_resume_pool should bubble up from the related profile."""
 
         # Build minimal objects
-        recruiter = User.objects.create_user(
+        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
             email="recruiter2@example.com",
             password="pw",
             user_type="recruiter",
@@ -94,10 +91,8 @@ class RoleRecommendationModelTests(TestCase):
             name="April Uploads",
         )
 
-        pool_ct = ContentType.objects.get_for_model(UploadedResumePool)
-        profile = JobSeekerProfile.objects.create(
-            owner_content_type=pool_ct, owner_object_id=resume_pool.id
-        )
+        # Create a profile owned by the resume pool
+        profile = JobSeekerProfile.objects.create(uploaded_resume_pool=resume_pool)
 
         rec = RoleRecommendation.objects.create(
             job_seeker=profile,
@@ -111,17 +106,15 @@ class RoleRecommendationModelTests(TestCase):
     def test_str_contains_role_and_user(self):
         """__str__ should combine role title and job seeker identity."""
 
-        user = User.objects.create_user(
+        user = User.objects.create_user(  # type: ignore[attr-defined]
             email="alice@example.com",
             password="pw",
             user_type="job_seeker",
             name="Alice Example",
         )
 
-        user_ct = ContentType.objects.get_for_model(User)
-        profile = JobSeekerProfile.objects.get(
-            owner_content_type=user_ct, owner_object_id=user.id
-        )
+        # Fetch the profile created by signal via user_owner foreign key
+        profile = JobSeekerProfile.objects.get(user_owner=user)
 
         rec = RoleRecommendation.objects.create(
             job_seeker=profile,
@@ -139,17 +132,15 @@ class TalentSheetModelTests(TestCase):
 
     def setUp(self):
         # Create a job seeker
-        self.user = User.objects.create_user(
+        self.user = User.objects.create_user(  # type: ignore[attr-defined]
             email="talent@example.com",
             password="pw",
             user_type="job_seeker",
             name="Tal En T",
         )
 
-        user_ct = ContentType.objects.get_for_model(User)
-        self.profile = JobSeekerProfile.objects.get(
-            owner_content_type=user_ct, owner_object_id=self.user.id
-        )
+        # Fetch the profile created by signal
+        self.profile = JobSeekerProfile.objects.get(user_owner=self.user)
 
         self.talent_sheet = TalentSheet.objects.create(
             job_seeker=self.profile,

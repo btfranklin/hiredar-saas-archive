@@ -2,9 +2,9 @@
 Service for managing job seeker profiles.
 """
 
-from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
+from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
 
 
@@ -13,24 +13,12 @@ class ProfileManager:
 
     @staticmethod
     def get_profile(owner):
-        """
-        Get a job seeker profile for an owner (User or UploadedResumePool).
-
-        Args:
-            owner: The owner (User or UploadedResumePool) to get the profile for
-
-        Returns:
-            The job seeker profile, or None if it doesn't exist
-        """
-        try:
-            # Get the content type for the owner class
-            owner_content_type = ContentType.objects.get_for_model(owner.__class__)
-            # Look up the profile by owner content type and ID
-            return JobSeekerProfile.objects.get(
-                owner_content_type=owner_content_type, owner_object_id=owner.pk
-            )
-        except JobSeekerProfile.DoesNotExist:
-            return None
+        """Get a job seeker profile for an owner (User or UploadedResumePool)."""
+        if isinstance(owner, User):
+            return JobSeekerProfile.objects.filter(user_owner=owner).first()
+        if isinstance(owner, UploadedResumePool):
+            return JobSeekerProfile.objects.filter(uploaded_resume_pool=owner).first()
+        return None
 
     @staticmethod
     @transaction.atomic
@@ -45,15 +33,15 @@ class ProfileManager:
         Returns:
             The created or updated job seeker profile
         """
-        # Check if profile exists
         profile = ProfileManager.get_profile(owner)
-
         if not profile:
-            # Create new profile with polymorphic owner
-            owner_content_type = ContentType.objects.get_for_model(owner.__class__)
-            profile = JobSeekerProfile(
-                owner_content_type=owner_content_type, owner_object_id=owner.pk
-            )
+            # Create new profile with correct foreign key
+            if isinstance(owner, User):
+                profile = JobSeekerProfile(user_owner=owner)
+            elif isinstance(owner, UploadedResumePool):
+                profile = JobSeekerProfile(uploaded_resume_pool=owner)
+            else:
+                raise ValueError(f"Unsupported owner type: {type(owner)}")
 
         # Update the profile with the provided data
         for field, value in profile_data.items():
@@ -155,20 +143,8 @@ class ProfileManager:
         Returns:
             The job seeker profile, or None if it doesn't exist
         """
-        try:
-            from django.contrib.auth import get_user_model
-
-            User = get_user_model()
-
-            # Get the content type for the User model
-            owner_content_type = ContentType.objects.get_for_model(User)
-
-            # Look up the profile by owner content type and user ID
-            return JobSeekerProfile.objects.get(
-                owner_content_type=owner_content_type, owner_object_id=user_id
-            )
-        except JobSeekerProfile.DoesNotExist:
-            return None
+        # Look up the profile by the user_owner foreign key
+        return JobSeekerProfile.objects.get(user_owner__id=user_id)
 
     @staticmethod
     def get_profile_for_user(user):

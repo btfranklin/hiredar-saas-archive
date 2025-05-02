@@ -1,6 +1,5 @@
 """Unit tests for the ProfileManager service class."""
 
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from apps.authentication.models import User
@@ -49,18 +48,15 @@ class ProfileManagerDatabaseTests(TestCase):
     """Tests hitting the DB to ensure create_or_update_profile works."""
 
     def setUp(self):
-        self.user = User.objects.create_user(
+        self.user = User.objects.create_user(  # type: ignore[attr-defined]
             email="pmgr@example.com",
             password="pw",
             user_type="job_seeker",
         )
 
     def test_create_profile_for_user(self):
-        # The profile should already exist via signal – delete it to test create path
-        user_ct = ContentType.objects.get_for_model(User)
-        JobSeekerProfile.objects.filter(
-            owner_content_type=user_ct, owner_object_id=self.user.id
-        ).delete()
+        # Delete the existing profile created by signal to test creation path
+        JobSeekerProfile.objects.filter(user_owner=self.user).delete()
 
         data = {
             "skills": "Python",
@@ -69,7 +65,7 @@ class ProfileManagerDatabaseTests(TestCase):
 
         profile = ProfileManager.create_or_update_profile(self.user, data)
 
-        self.assertIsNotNone(profile.id)
+        self.assertIsNotNone(profile.pk)
         self.assertEqual(profile.skills, "Python")
         self.assertEqual(profile.user_owner, self.user)
 
@@ -84,13 +80,15 @@ class ProfileManagerDatabaseTests(TestCase):
         self.assertEqual(updated.professional_summary, "Updated summary")
 
     def test_create_profile_for_resume_pool(self):
-        recruiter = User.objects.create_user(
+        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
             email="recruit@example.com",
             password="rpw",
             user_type="recruiter",
         )
 
-        pool = UploadedResumePool.objects.create(recruiter=recruiter, name="May Uploads")
+        pool = UploadedResumePool.objects.create(
+            recruiter=recruiter, name="May Uploads"
+        )
 
         data = {"skills": "C++, Embedded"}
 

@@ -336,6 +336,18 @@ class BulkResumeUpload(models.Model):
     def delete(self, using: str | None = None, keep_parents: bool = False) -> None:
         # Delete the associated ZIP file from storage
         self.zip_file.delete(save=False)
+        # Also delete the job-seeker pool created for this upload (if any)
+        try:
+            from apps.job_seekers.models.profile import UploadedResumePool
+
+            # Match by recruiter user and pool name
+            resume_pool = UploadedResumePool.objects.get(
+                recruiter=self.recruiter.user,
+                name=self.name,
+            )
+            resume_pool.delete()
+        except (ImportError, UploadedResumePool.DoesNotExist):
+            pass
         super().delete(using=using, keep_parents=keep_parents)
 
 

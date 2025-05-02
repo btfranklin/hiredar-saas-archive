@@ -215,9 +215,7 @@ class Command(BaseCommand):
             )
 
             # A JobSeekerProfile should be created automatically via signals
-            profile = JobSeekerProfile.objects.get(
-                owner_content_type__model="user", owner_object_id=user.id
-            )
+            profile = JobSeekerProfile.objects.get(user_owner=user)
 
             return user, profile
         except Exception as e:

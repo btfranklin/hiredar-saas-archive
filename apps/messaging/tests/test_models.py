@@ -1,6 +1,5 @@
 """Tests for messaging models."""
 
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from apps.authentication.models import User
@@ -14,27 +13,22 @@ class ConversationModelTest(TestCase):
     def setUp(self):
         """Set up test data."""
         # Create test users using create_user method
-        self.user1 = User.objects.create_user(  # type: ignore
+        self.user1 = User.objects.create_user(  # type: ignore[attr-defined]
             email="conv_user1@example.com",
             password="password123",
             user_type="job_seeker",
             name="Test User1",
         )
-        self.user2 = User.objects.create_user(  # type: ignore
+        self.user2 = User.objects.create_user(  # type: ignore[attr-defined]
             email="conv_user2@example.com",
             password="password123",
             user_type="job_seeker",
             name="Test User2",
         )
 
-        # Get the automatically created profiles
-        user_content_type = ContentType.objects.get_for_model(User)
-        self.profile1 = JobSeekerProfile.objects.get(
-            owner_content_type=user_content_type, owner_object_id=self.user1.id
-        )
-        self.profile2 = JobSeekerProfile.objects.get(
-            owner_content_type=user_content_type, owner_object_id=self.user2.id
-        )
+        # Fetch the automatically created profiles via user_owner foreign key
+        self.profile1 = JobSeekerProfile.objects.get(user_owner=self.user1)
+        self.profile2 = JobSeekerProfile.objects.get(user_owner=self.user2)
 
         # Create a conversation with User objects (not profiles)
         self.conversation = Conversation.objects.create()
@@ -58,27 +52,22 @@ class MessageModelTest(TestCase):
     def setUp(self):
         """Set up test data."""
         # Create test users using create_user method with unique emails
-        self.user1 = User.objects.create_user(  # type: ignore
+        self.user1 = User.objects.create_user(  # type: ignore[attr-defined]
             email="msg_user1@example.com",
             password="password123",
             user_type="job_seeker",
             name="Test User1",
         )
-        self.user2 = User.objects.create_user(  # type: ignore
+        self.user2 = User.objects.create_user(  # type: ignore[attr-defined]
             email="msg_user2@example.com",
             password="password123",
             user_type="job_seeker",
             name="Test User2",
         )
 
-        # Get the automatically created profiles
-        user_content_type = ContentType.objects.get_for_model(User)
-        self.profile1 = JobSeekerProfile.objects.get(
-            owner_content_type=user_content_type, owner_object_id=self.user1.id
-        )
-        self.profile2 = JobSeekerProfile.objects.get(
-            owner_content_type=user_content_type, owner_object_id=self.user2.id
-        )
+        # Fetch the automatically created profiles via user_owner foreign key
+        self.profile1 = JobSeekerProfile.objects.get(user_owner=self.user1)
+        self.profile2 = JobSeekerProfile.objects.get(user_owner=self.user2)
 
         # Create a conversation with User objects (not profiles)
         self.conversation = Conversation.objects.create()

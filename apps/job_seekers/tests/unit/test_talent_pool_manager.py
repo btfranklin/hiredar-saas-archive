@@ -2,7 +2,6 @@
 
 from unittest.mock import patch
 
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from apps.authentication.models import User
@@ -14,17 +13,16 @@ class TalentPoolToggleTests(TestCase):
     """Verify join/leave behaviour without executing background jobs."""
 
     def setUp(self):
-        self.user = User.objects.create_user(
+        self.user = User.objects.create_user(  # type: ignore[attr-defined]
             email="toggle@example.com",
             password="pw",
             user_type="job_seeker",
             name="Toggle Tester",
         )
 
-        # Get related profile created by signal
-        user_ct = ContentType.objects.get_for_model(User)
+        # Fetch profile created by signal via user_owner foreign key
         self.profile: JobSeekerProfile = JobSeekerProfile.objects.get(
-            owner_content_type=user_ct, owner_object_id=self.user.id
+            user_owner=self.user
         )
 
     @patch("apps.job_seekers.services.talent_pool_manager.async_task")
@@ -51,13 +49,12 @@ class TalentPoolToggleTests(TestCase):
 
         # Leave the talent pool
         status = TalentPoolManager.toggle_talent_pool(self.user, join=False)
-
         self.assertFalse(status["in_talent_pool"])
-        self.assertTrue(status["has_talent_sheet"])  # Sheet still exists
+        self.assertTrue(status["has_talent_sheet"])
 
         # The sheet should now be unpublished
         self.profile.refresh_from_db()
-        sheet = self.profile.talent_sheet
+        sheet = self.profile.talent_sheet  # type: ignore[attr-defined]
         self.assertFalse(sheet.is_published)
 
         # Leaving the pool should not enqueue any tasks
@@ -68,17 +65,15 @@ class RoleInterestToggleTests(TestCase):
     """Test TalentPoolManager.toggle_role_interest convenience function."""
 
     def setUp(self):
-        self.user = User.objects.create_user(
+        self.user = User.objects.create_user(  # type: ignore[attr-defined]
             email="role@example.com",
             password="pw",
             user_type="job_seeker",
             name="Role Interest",
         )
 
-        user_ct = ContentType.objects.get_for_model(User)
-        self.profile = JobSeekerProfile.objects.get(
-            owner_content_type=user_ct, owner_object_id=self.user.id
-        )
+        # Fetch profile created by signal via user_owner foreign key
+        self.profile = JobSeekerProfile.objects.get(user_owner=self.user)
 
         # Create two recommendations so we can check list update
         self.rec1 = RoleRecommendation.objects.create(
@@ -106,7 +101,7 @@ class RoleInterestToggleTests(TestCase):
         self.assertFalse(self.rec2.is_candidate_interested)
 
         # Express interest in the first role
-        TalentPoolManager.toggle_role_interest(self.rec1.id, interested=True)
+        TalentPoolManager.toggle_role_interest(self.rec1.id, interested=True)  # type: ignore[attr-defined]
 
         # Reload from DB
         self.rec1.refresh_from_db()
@@ -116,28 +111,23 @@ class RoleInterestToggleTests(TestCase):
         self.assertIn("Backend Dev", self.sheet.ideal_roles)
 
         # Express interest in second role as well – ideal_roles should contain both
-        TalentPoolManager.toggle_role_interest(self.rec2.id, interested=True)
+        TalentPoolManager.toggle_role_interest(self.rec2.id, interested=True)  # type: ignore[attr-defined]
         self.sheet.refresh_from_db()
 
         self.assertIn("Backend Dev", self.sheet.ideal_roles)
         self.assertIn("Data Engineer", self.sheet.ideal_roles)
 
-    def test_unauthorized_profile_returns_none(self):
-        # Create another profile
-        other_user = User.objects.create_user(
+        # Unauthorized profile returns None when mismatched
+        other_user = User.objects.create_user(  # type: ignore[attr-defined]
             email="other@example.com",
             password="pw",
             user_type="job_seeker",
         )
 
-        other_ct = ContentType.objects.get_for_model(User)
-        other_profile = JobSeekerProfile.objects.get(
-            owner_content_type=other_ct, owner_object_id=other_user.id
-        )
+        other_profile = JobSeekerProfile.objects.get(user_owner=other_user)
 
-        # Attempt to toggle interest with mismatched profile – should return None
         result = TalentPoolManager.toggle_role_interest(
-            self.rec1.id, interested=True, profile=other_profile
+            self.rec1.id, interested=True, profile=other_profile  # type: ignore[attr-defined]
         )
 
         self.assertIsNone(result)

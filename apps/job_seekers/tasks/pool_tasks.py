@@ -1,7 +1,6 @@
 import os
 from typing import Any
 
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import F
 from django_q.models import Task
 
@@ -34,12 +33,8 @@ def process_resume_for_pool(
         return {"success": False, "error": f"Resume pool with ID {pool_id} not found"}
 
     try:
-        # Create a temporary profile owned by the *resume_pool* so we don't mutate the recruiter
-        owner_content_type = ContentType.objects.get_for_model(resume_pool.__class__)
-        temp_profile = JobSeekerProfile(
-            owner_content_type=owner_content_type,
-            owner_object_id=resume_pool.pk,
-        )
+        # Create a temporary profile owned by the resume pool
+        temp_profile = JobSeekerProfile(uploaded_resume_pool=resume_pool)
         # Save immediately so ``process_resume`` can update it atomically
         temp_profile.save()
 
