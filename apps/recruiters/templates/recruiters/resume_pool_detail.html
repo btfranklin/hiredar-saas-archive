@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Pool: {{ pool.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Pool: {{ pool.name }}</h1>
+    <a href="{% url 'recruiters:resume_pool_list' %}" class="btn btn-sm btn-ghost">Back to All Pools</a>
+  </div>
+
+  <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <p class="text-sm text-base-content/70">Created on: {{ pool.created_at|date:"M j, Y H:i" }}</p>
+        <p class="text-sm">Total Candidates: {{ pool.job_seeker_profiles.count }}</p>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="text-xl font-semibold mb-4">Candidates in this Pool</h2>
+  {% if pool.job_seeker_profiles.all %}
+    <div class="overflow-x-auto">
+      <table class="table w-full">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Tagline</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for profile in pool.job_seeker_profiles.all %}
+            <tr>
+              <td>{{ profile.candidate_name|default:"—" }}</td>
+              <td class="max-w-xs whitespace-normal">{{ profile.personal_tagline|default:"—" }}</td>
+              <td>
+                <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary">View Resume</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      <span>No candidates have been processed for this pool yet.</span>
+    </div>
+  {% endif %}
+</div>
+{% endblock %} 

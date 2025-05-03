@@ -12,9 +12,10 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models.profile import UploadedResumePool
 from apps.matching.models import CandidateMatch
 from apps.messaging.models import Notification
-from apps.recruiters.models import BulkResumeUpload, JobOpening
+from apps.recruiters.models import JobOpening
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -45,9 +46,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = cast(AuthenticatedUser, self.request.user)
 
-        # Resume Pools (recent)
-        context["resume_pools"] = BulkResumeUpload.objects.filter(
-            recruiter=user.recruiter_profile
+        # Resume Pools (recent) - show processed pools, not raw uploads
+        context["resume_pools"] = UploadedResumePool.objects.filter(
+            recruiter=user
         ).order_by("-created_at")[:5]
 
         # Get active job openings

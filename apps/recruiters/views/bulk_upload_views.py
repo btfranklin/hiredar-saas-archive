@@ -1,6 +1,7 @@
 from typing import Any, cast
 from zipfile import ZipFile
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import (
     HttpRequest,
@@ -14,6 +15,7 @@ from django.views.generic import CreateView, DetailView, ListView, View
 
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
+from apps.job_seekers.models.profile import UploadedResumePool
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
 from apps.recruiters.tasks.bulk_resume_tasks import unpack_and_process_zip
@@ -27,7 +29,7 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
     model = BulkResumeUpload
     form_class = BulkResumeUploadForm
     template_name = "recruiters/bulk_upload.html"
-    success_url = reverse_lazy("recruiters:bulk_upload_list")
+    success_url = reverse_lazy("recruiters:dashboard")
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
@@ -88,6 +90,8 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         bulk.save()
         self.object = bulk
         async_task(unpack_and_process_zip, bulk.pk)
+        # Notify recruiter that bulk upload succeeded and is processing
+        messages.success(self.request, "Bulk upload succeeded and is processing.")
         # If this is an HTMX request, instruct client to redirect to list view
         success_url = self.get_success_url()
         if self.request.headers.get("HX-Request"):
@@ -111,61 +115,46 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)
 
 
-class BulkResumeUploadListView(LoginRequiredMixin, ListView):
-    """Show uploads by the current recruiter."""
+class ResumePoolListView(LoginRequiredMixin, ListView):
+    """List view for all resume pools belonging to the recruiter, displayed as cards."""
 
-    model = BulkResumeUpload
-    template_name = "recruiters/bulk_upload_list.html"
-    context_object_name = "bulk_uploads"
+    model = UploadedResumePool
+    template_name = "recruiters/resume_pool_list.html"
+    context_object_name = "resume_pools"
 
     def get_queryset(self):  # type: ignore[override]
         user = cast(AuthenticatedUser, self.request.user)
-        return BulkResumeUpload.objects.filter(
-            recruiter=user.recruiter_profile  # type: ignore[attr-defined]
+        return UploadedResumePool.objects.filter(
+            recruiter=user  # type: ignore[attr-defined]
         ).order_by("-created_at")
 
 
-class BulkResumeUploadDetailView(LoginRequiredMixin, DetailView):
-    """Detail view for a single resume pool."""
+class ResumePoolDetailView(LoginRequiredMixin, DetailView):
+    """Detail view for a processed resume pool."""
 
-    model = BulkResumeUpload
-    template_name = "recruiters/bulk_upload_detail.html"
+    model = UploadedResumePool
+    template_name = "recruiters/resume_pool_detail.html"
     context_object_name = "pool"
 
-    def get_queryset(self):
-        # Ensure recruiters only see their own pools
+    def get_queryset(self):  # type: ignore[override]
         user = cast(AuthenticatedUser, self.request.user)
-        return BulkResumeUpload.objects.filter(
-            recruiter=user.recruiter_profile  # type: ignore[attr-defined]
+        return UploadedResumePool.objects.filter(
+            recruiter=user  # type: ignore[attr-defined]
         )
 
 
-class BulkResumeUploadDeleteView(LoginRequiredMixin, View):
-    """Handle deletion of a resume pool via POST."""
+class ResumePoolDeleteView(LoginRequiredMixin, View):
+    """Handle deletion of a processed resume pool via POST."""
 
     def post(
         self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any
     ) -> HttpResponseBase:
         user = cast(AuthenticatedUser, request.user)
         pool = get_object_or_404(
-            BulkResumeUpload,
+            UploadedResumePool,
             pk=pk,
-            recruiter=user.recruiter_profile,  # type: ignore[attr-defined]
+            recruiter=user,  # type: ignore[attr-defined]
         )
-        # Delete the bulk upload record and its ZIP file
+        # Deleting this pool cascades deletion of related profiles
         pool.delete()
-        return redirect("recruiters:bulk_upload_list")
-
-
-class ResumePoolListView(LoginRequiredMixin, ListView):
-    """List view for all resume pools belonging to the recruiter, displayed as cards."""
-
-    model = BulkResumeUpload
-    template_name = "recruiters/resume_pool_list.html"
-    context_object_name = "resume_pools"
-
-    def get_queryset(self):  # type: ignore[override]
-        user = cast(AuthenticatedUser, self.request.user)
-        return BulkResumeUpload.objects.filter(
-            recruiter=user.recruiter_profile  # type: ignore[attr-defined]
-        ).order_by("-created_at")
+        return redirect("recruiters:resume_pool_list")

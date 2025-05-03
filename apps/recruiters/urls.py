@@ -4,9 +4,6 @@ from django.urls import path
 from django.urls.resolvers import URLPattern
 
 from apps.recruiters.views import (
-    BulkResumeUploadDeleteView,
-    BulkResumeUploadDetailView,
-    BulkResumeUploadListView,
     BulkResumeUploadView,
     DashboardView,
     JobOpeningCreateView,
@@ -15,10 +12,12 @@ from apps.recruiters.views import (
     JobOpeningEditView,
     JobOpeningListView,
     JobOpeningTaskStatusView,
+    ResumePoolDetailView,
     ResumePoolListView,
     SettingsView,
     TextProcessJobOpeningView,
 )
+from apps.recruiters.views.bulk_upload_views import ResumePoolDeleteView
 from apps.recruiters.views.credit_views import (
     CheckoutSuccessView,
     CreditsView,
@@ -64,25 +63,23 @@ urlpatterns: list[URLPattern] = [
     ),
     # Bulk resume upload
     path("bulk-upload/", BulkResumeUploadView.as_view(), name="bulk_upload_create"),
-    path(
-        "bulk-upload/list/", BulkResumeUploadListView.as_view(), name="bulk_upload_list"
-    ),
-    # Detail and delete views for individual resume pools
-    path(
-        "bulk-upload/<int:pk>/",
-        BulkResumeUploadDetailView.as_view(),
-        name="bulk_upload_detail",
-    ),
-    path(
-        "bulk-upload/<int:pk>/delete/",
-        BulkResumeUploadDeleteView.as_view(),
-        name="bulk_upload_delete",
-    ),
     # Full resume pool list page
     path(
         "resume-pools/",
         ResumePoolListView.as_view(),
         name="resume_pool_list",
+    ),
+    # Detail view for processed resume pool
+    path(
+        "resume-pools/<int:pk>/",
+        ResumePoolDetailView.as_view(),
+        name="resume_pool_detail",
+    ),
+    # Delete view for processed resume pool
+    path(
+        "resume-pools/<int:pk>/delete/",
+        ResumePoolDeleteView.as_view(),
+        name="resume_pool_delete",
     ),
     # Credits / subscription routes
     path("credits/", CreditsView.as_view(), name="credits"),

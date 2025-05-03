@@ -17,11 +17,10 @@
                     <div class="space-y-1 text-left">
                         <h3 class="font-bold text-lg">{{ pool.name }}</h3>
                         <p class="text-sm text-base-content/70">Created: {{ pool.created_at|date:"M j, Y H:i" }}</p>
-                        <p class="text-sm text-base-content/70">Last modified: {{ pool.updated_at|date:"M j, Y H:i" }}</p>
-                        <p class="text-sm">{{ pool.processed_profiles }} candidates in pool</p>
+                        <p class="text-sm">{{ pool.job_seeker_profiles.count }} candidates in pool</p>
                     </div>
                     <div class="flex space-x-2">
-                        <a href="{% url 'recruiters:bulk_upload_detail' pool.pk %}" class="btn btn-sm btn-primary">Details</a>
+                        <a href="{% url 'recruiters:resume_pool_detail' pool.pk %}" class="btn btn-sm btn-primary">Details</a>
                         <label for="delete-pool-{{ pool.pk }}" class="btn btn-sm btn-error">Delete</label>
                     </div>
                 </div>
@@ -32,7 +31,7 @@
                         <p class="py-4">Are you sure you want to delete the resume pool &quot;{{ pool.name }}&quot;? All associated resumes will be removed.</p>
                         <div class="modal-action">
                             <label for="delete-pool-{{ pool.pk }}" class="btn">Cancel</label>
-                            <form method="post" action="{% url 'recruiters:bulk_upload_delete' pool.pk %}" class="inline">
+                            <form method="post" action="{% url 'recruiters:resume_pool_delete' pool.pk %}" class="inline">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-error">Delete</button>
                             </form>
