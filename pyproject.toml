@@ -26,6 +26,7 @@ dependencies = [
     "django-storages[boto3]>=1.14.6",
     "psycopg[binary]>=3.2.6",
     "stripe>=12.0.1",
+    "lxml>=5.4.0",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

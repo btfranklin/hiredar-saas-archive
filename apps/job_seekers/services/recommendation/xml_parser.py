@@ -6,12 +6,18 @@ and converting them into model instances.
 """
 
 import logging
+import re
 import xml.etree.ElementTree as ET
 
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+
+# Helper to remove XML 1.0 invalid control characters
+def remove_invalid_xml_chars(text: str) -> str:
+    return re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", text)
 
 
 def parse_role_recommendations_xml(
@@ -117,56 +123,71 @@ def parse_talent_sheet_xml(
 
     xml_content = xml_response[xml_start:xml_end]
 
+    # Clean out any invalid XML control characters before parsing
+    xml_content = remove_invalid_xml_chars(xml_content)
+    # Escape stray ampersands not part of an entity to avoid parse errors
+    xml_content = re.sub(
+        r"&(?!amp;|lt;|gt;|apos;|quot;|#[0-9]+;)", "&amp;", xml_content
+    )
+
+    # Attempt to parse XML, with fallback to lxml if necessary
     try:
-        # Parse the XML
         root = ET.fromstring(xml_content)
+    except ET.ParseError as error:
+        logger.warning("xml.etree parser failed: %s, attempting recovery", str(error))
+        try:
+            from lxml import etree as lxml_etree
 
-        # Extract required elements
-        promotional_blurb_elem = root.find("./promotional_blurb")
-        skill_overview_elem = root.find("./skill_overview")
-        ideal_roles_elem = root.find("./ideal_roles")
-        salary_min_elem = root.find("./salary_min")
+            parser = lxml_etree.XMLParser(recover=True)
+            root = lxml_etree.fromstring(xml_content.encode("utf-8"), parser)
+        except ImportError:
+            logger.error("lxml not installed, cannot recover malformed XML")
+            logger.debug("Response content: %s", xml_response[:1000])
+            raise ValueError(
+                f"Failed to parse talent sheet XML: {str(error)}"
+            ) from error
 
-        # Validate required elements exist
-        if promotional_blurb_elem is None or not promotional_blurb_elem.text:
-            raise ValueError("Missing promotional_blurb element in talent sheet XML")
+    # Extract required elements
+    promotional_blurb_elem = root.find("./promotional_blurb")
+    skill_overview_elem = root.find("./skill_overview")
+    ideal_roles_elem = root.find("./ideal_roles")
+    salary_min_elem = root.find("./salary_min")
 
-        if skill_overview_elem is None or not skill_overview_elem.text:
-            raise ValueError("Missing skill_overview element in talent sheet XML")
+    # Validate required elements exist
+    if promotional_blurb_elem is None or not promotional_blurb_elem.text:
+        raise ValueError("Missing promotional_blurb element in talent sheet XML")
 
-        # Create TalentSheet instance
-        talent_sheet = TalentSheet(
-            job_seeker=job_seeker,
-            promotional_blurb=promotional_blurb_elem.text.strip(),
-            skill_overview=skill_overview_elem.text.strip(),
-            is_published=True,  # Default to published - talent sheets are created and published together
-        )
+    if skill_overview_elem is None or not skill_overview_elem.text:
+        raise ValueError("Missing skill_overview element in talent sheet XML")
 
-        # Handle optional elements
-        if ideal_roles_elem is not None and ideal_roles_elem.text:
-            talent_sheet.ideal_roles = ideal_roles_elem.text.strip()
+    # Create TalentSheet instance
+    talent_sheet = TalentSheet(
+        job_seeker=job_seeker,
+        promotional_blurb=promotional_blurb_elem.text.strip(),
+        skill_overview=skill_overview_elem.text.strip(),
+        is_published=True,  # Default to published - talent sheets are created and published together
+    )
 
-        # Handle salary expectations (convert to decimal)
-        if salary_min_elem is not None and salary_min_elem.text:
-            try:
-                talent_sheet.salary_min = float(salary_min_elem.text.strip())
-            except ValueError:
-                logger.warning(
-                    "Invalid salary_min value in talent sheet XML: %s",
-                    salary_min_elem.text,
-                )
+    # Handle optional elements
+    if ideal_roles_elem is not None and ideal_roles_elem.text:
+        talent_sheet.ideal_roles = ideal_roles_elem.text.strip()
 
-        logger.info(
-            "Successfully parsed talent sheet XML for %s",
-            (
-                job_seeker.user_owner.get_full_name()
-                if job_seeker and job_seeker.user_owner
-                else "unknown user"
-            ),
-        )
-        return talent_sheet
+    # Handle salary expectations (convert to decimal)
+    if salary_min_elem is not None and salary_min_elem.text:
+        try:
+            talent_sheet.salary_min = float(salary_min_elem.text.strip())
+        except ValueError:
+            logger.warning(
+                "Invalid salary_min value in talent sheet XML: %s",
+                salary_min_elem.text,
+            )
 
-    except ET.ParseError as e:
-        logger.error("Failed to parse XML response: %s", str(e))
-        logger.debug("Response content: %s", xml_response[:1000])
-        raise ValueError(f"Failed to parse talent sheet XML: {str(e)}") from e
+    logger.info(
+        "Successfully parsed talent sheet XML for %s",
+        (
+            job_seeker.user_owner.get_full_name()
+            if job_seeker and job_seeker.user_owner
+            else "unknown user"
+        ),
+    )
+    return talent_sheet
