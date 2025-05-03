@@ -151,7 +151,16 @@ def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
         JobOpening = apps.get_model("recruiters", "JobOpening")
         TalentSheet = apps.get_model("job_seekers", "TalentSheet")
 
-        talent = TalentSheet.objects.get(id=talent_id)
+        # Gracefully handle missing talent sheets – they may have been deleted
+        try:
+            talent = TalentSheet.objects.get(id=talent_id)
+        except TalentSheet.DoesNotExist:
+            logger.warning(
+                "Talent sheet %s not found, skipping matching to active jobs",
+                talent_id,
+            )
+            return
+
         if not talent.is_published:
             logger.warning(
                 "Talent sheet %s is not published, skipping matching", talent_id
