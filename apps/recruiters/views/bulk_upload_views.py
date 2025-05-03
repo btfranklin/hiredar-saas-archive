@@ -157,4 +157,8 @@ class ResumePoolDeleteView(LoginRequiredMixin, View):
         )
         # Deleting this pool cascades deletion of related profiles
         pool.delete()
+        # If request is via HTMX, remove the card without redirecting
+        if request.headers.get("HX-Request"):
+            return HttpResponse(status=204)
+        # Fallback full-page redirect
         return redirect("recruiters:resume_pool_list")

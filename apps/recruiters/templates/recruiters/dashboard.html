@@ -40,9 +40,9 @@
                 </div>
                 
                 {% if resume_pools %}
-                    <div class="space-y-4">
+                    <div class="space-y-4" hx-on:htmx:afterSwap="document.querySelectorAll('.modal-toggle:checked').forEach(el => el.checked = false); document.documentElement.classList.remove('modal-open')">
                         {% for pool in resume_pools %}
-                            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+                            <div id="pool-{{ pool.pk }}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                                 <div class="card-body p-4 flex justify-between items-start">
                                     <div class="space-y-1 text-left">
                                         <h3 class="font-bold text-lg">{{ pool.name }}</h3>
@@ -61,7 +61,13 @@
                                         <p class="py-4">Are you sure you want to delete the resume pool &quot;{{ pool.name }}&quot;? All associated resumes will be removed.</p>
                                         <div class="modal-action">
                                             <label for="delete-pool-{{ pool.pk }}" class="btn">Cancel</label>
-                                            <form method="post" action="{% url 'recruiters:resume_pool_delete' pool.pk %}" class="inline">
+                                            <form method="post"
+                                                  action="{% url 'recruiters:resume_pool_delete' pool.pk %}"
+                                                  hx-post="{% url 'recruiters:resume_pool_delete' pool.pk %}"
+                                                  hx-target="#pool-{{ pool.pk }}"
+                                                  hx-swap="outerHTML"
+                                                  
+                                                  class="inline">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-error">Delete</button>
                                             </form>
@@ -74,7 +80,7 @@
                 {% else %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle mr-2"></i>
-                        <span>No resume pools found yet.</span>
+                        <span>No resume pools found.</span>
                         <a href="{% url 'recruiters:bulk_upload_create' %}" class="btn btn-sm btn-primary ml-4">Upload Pool</a>
                     </div>
                 {% endif %}
