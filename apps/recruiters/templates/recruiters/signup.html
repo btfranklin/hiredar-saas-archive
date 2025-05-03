@@ -67,6 +67,7 @@
             </div>
         </form>
         
+        {% comment %}
         <div class="divider">or</div>
         
         <div class="space-y-3">
@@ -83,6 +84,7 @@
                 {% endif %}
             {% endfor %}
         </div>
+        {% endcomment %}
         
         <div class="text-center mt-6">
             <p>Already have an account? <a href="{% url 'authentication:login' %}" class="text-primary hover:underline">Log in</a></p>

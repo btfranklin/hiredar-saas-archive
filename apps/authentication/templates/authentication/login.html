@@ -73,6 +73,8 @@
                     </div>
                 </form>
                 
+                {% comment %}
+                
                 {% get_providers as socialaccount_providers %}
                 {% if socialaccount_providers %}
                 <div class="divider">OR</div>
@@ -100,6 +102,8 @@
                         <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-sm btn-outline">Recruiter</a>
                     </div>
                 </div>
+
+                {% endcomment %}
             </div>
         </div>
     </div>
