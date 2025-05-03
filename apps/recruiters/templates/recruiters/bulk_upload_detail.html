@@ -17,12 +17,12 @@
             </div>
             <div>
                 <p class="text-sm">Total files: {{ pool.total_files }}</p>
-                <p class="text-sm">Processed: {{ pool.processed_profiles }}</p>
+                <p class="text-sm">{{ pool.processed_profiles }} candidates in pool</p>
             </div>
         </div>
     </div>
 
-    <h2 class="text-xl font-semibold mb-4">Resumes in this Pool</h2>
+    <h2 class="text-xl font-semibold mb-4">Candidates in this Pool</h2>
     {% if pool.resume_files.all %}
     <div class="overflow-x-auto">
         <table class="table w-full">
