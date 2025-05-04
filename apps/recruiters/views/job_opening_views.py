@@ -242,11 +242,15 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
 
     def get_template_names(self) -> list[str]:
         """
-        Return the template names for a full or HTMX request.
+        Return template names for HTMX pool updates or tab clicks.
 
-        If this is an HTMX request, return only the tabs-container partial.
+        If this is an HTMX request and 'pool_id' is in GET, swap only the tab content.
+        Otherwise if HTMX, swap the full tabs-container (tabs + content).
+        Otherwise render the full page template.
         """
         if self.request.headers.get("HX-Request") == "true":
+            if "pool_id" in self.request.GET:
+                return ["recruiters/job_openings/tab_content.html"]
             return ["recruiters/job_openings/partial_tabs_container.html"]
         return [self.template_name]
 
