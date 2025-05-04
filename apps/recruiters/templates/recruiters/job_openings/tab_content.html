@@ -1,6 +1,34 @@
 {% if tab == 'candidates' and request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
-    <!-- Candidate Matches Tab Content -->
-    {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
+    <!-- Candidate Pool Selector -->
+    <div class="p-4">
+      <form id="pool-form"
+            hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}"
+            hx-trigger="change from:select[name='pool_id']"
+            hx-target="#tab-content"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+            class="space-y-2">
+        <input type="hidden" name="tab" value="candidates">
+        <input type="hidden" name="section" value="{{ section }}">
+        <label for="candidate-pool-selector" class="label"><span class="label-text">Candidate Pool</span></label>
+        <select id="candidate-pool-selector"
+                name="pool_id"
+                class="select select-bordered w-full max-w-xs">
+          <option value="0" {% if candidate_pool_id == 0 %}selected{% endif %}>None</option>
+          {% for pool in candidate_pools %}
+            <option value="{{ pool.id }}" {% if pool.id == candidate_pool_id %}selected{% endif %}>{{ pool.name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+    {% if candidate_pool_id != 0 %}
+        {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
+    {% else %}
+        <div class="p-6 text-center text-base-content/70">
+            <p>Select a candidate pool to view matches.</p>
+        </div>
+    {% endif %}
 {% else %}
     <!-- Job Details Tab Content (default) -->
     <div class="p-6">

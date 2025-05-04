@@ -267,6 +267,11 @@ class JobOpening(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # Candidate pool selection: 0 = Global talent pool
+    candidate_pool_id = models.PositiveIntegerField(
+        default=0,
+        help_text="Candidate pool to match against (0 = global talent pool)",
+    )
 
     def __str__(self) -> str:
         return f"Job Opening: {self.title} ({self.status})"

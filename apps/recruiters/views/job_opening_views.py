@@ -180,31 +180,53 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
         context["section"] = self.request.GET.get("section", "holistic")
 
         if user.user_type == "recruiter":
-            # Only show candidate matches to the job owner
+            # Only show candidate pools and matches to the job owner
             if job_opening.recruiter.user == self.request.user:
-                # Get candidate matches - use related_name from model definition
-                matches = CandidateMatch.objects.filter(job_opening=job_opening)
+                # Load the recruiter's pools
+                from apps.job_seekers.models import UploadedResumePool
 
-                # Get candidate matches for the selected section
+                context["candidate_pools"] = UploadedResumePool.objects.filter(
+                    recruiter=self.request.user
+                )
+                # Determine selected pool (from query param or stored value)
+                selected_pool_id = int(
+                    self.request.GET.get("pool_id", job_opening.candidate_pool_id)
+                )
+                # Persist any change to the job opening
+                if selected_pool_id != job_opening.candidate_pool_id:
+                    job_opening.candidate_pool_id = selected_pool_id
+                    job_opening.save(update_fields=["candidate_pool_id"])
+                context["candidate_pool_id"] = selected_pool_id
+                # Filter matches by selected pool
+                if selected_pool_id != 0:
+                    matches = CandidateMatch.objects.filter(
+                        job_opening=job_opening,
+                        talent_sheet__job_seeker__uploaded_resume_pool_id=selected_pool_id,
+                    )
+                else:
+                    matches = CandidateMatch.objects.none()
+                # Determine matches for requested section
                 section = context["section"]
-                if section == "wildcard":
-                    context["candidate_matches"] = matches.filter(
-                        match_type="wildcard"
-                    ).order_by("-wildcard_score")
-                elif section == "skills":
-                    context["candidate_matches"] = matches.filter(
-                        match_type="skills"
-                    ).order_by("-skills_score")
-                elif section == "experience":
-                    context["candidate_matches"] = matches.filter(
-                        match_type="experience"
-                    ).order_by("-experience_score")
-                else:  # Default to holistic
-                    context["candidate_matches"] = matches.filter(
-                        match_type="holistic"
-                    ).order_by("-holistic_score")
-
-                # Add match counts to context for the tabs
+                if selected_pool_id != 0:
+                    if section == "wildcard":
+                        context["candidate_matches"] = matches.filter(
+                            match_type="wildcard"
+                        ).order_by("-wildcard_score")
+                    elif section == "skills":
+                        context["candidate_matches"] = matches.filter(
+                            match_type="skills"
+                        ).order_by("-skills_score")
+                    elif section == "experience":
+                        context["candidate_matches"] = matches.filter(
+                            match_type="experience"
+                        ).order_by("-experience_score")
+                    else:
+                        context["candidate_matches"] = matches.filter(
+                            match_type="holistic"
+                        ).order_by("-holistic_score")
+                else:
+                    context["candidate_matches"] = []
+                # Compute counts (for tabs)
                 context["holistic_count"] = matches.filter(
                     match_type="holistic"
                 ).count()
@@ -222,18 +244,12 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
         """
         Return the template names to be used for the view.
 
-        If this is an HTMX request and the hx-select header is present,
-        use the partial template (tab_content.html) for better performance.
-
-        Returns:
-            list[str]: List of template names.
+        If this is an HTMX request, use the partial template (tab_content.html).
         """
-        if self.request.headers.get(
-            "HX-Request"
-        ) == "true" and self.request.headers.get("HX-Select"):
-            # If this is an HTMX request and is targeting a specific fragment,
-            # serve just the tab content partial template
+        # If this is an HTMX request, serve just the tab content partial template
+        if self.request.headers.get("HX-Request") == "true":
             return ["recruiters/job_openings/tab_content.html"]
+        # Otherwise render full page
         return [self.template_name]
 
 

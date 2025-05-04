@@ -35,29 +35,9 @@
                         <h1 class="text-3xl font-bold">{{ job_seeker.user.name }}</h1>
                         <p class="text-lg text-base-content/80 mt-1 italic">{{ job_seeker.personal_tagline }}</p>
                     </div>
+                    {% comment %} Removed messaging UI block for MVP
                     <div class="flex gap-2">
-                        <!-- Contact Button with different states -->
-                        {% if candidate_conversation %}
-                            {% if candidate_conversation.status == 'interest_requested' %}
-                                <button class="btn btn-success" id="interest-requested-btn" 
-                                    onclick="document.getElementById('confirm-withdraw-modal').showModal()">
-                                    <i class="fas fa-check-circle mr-2"></i> Interest Requested
-                                </button>
-                            {% elif candidate_conversation.status == 'candidate_interested' %}
-                                <a href="{% url 'messaging:conversation_detail' candidate_conversation.id %}" class="btn btn-primary">
-                                    <i class="fas fa-comments mr-2"></i> View Conversation
-                                </a>
-                            {% elif candidate_conversation.status == 'candidate_not_interested' %}
-                                <button class="btn btn-disabled">
-                                    <i class="fas fa-times-circle mr-2"></i> Candidate Not Interested
-                                </button>
-                            {% endif %}
-                        {% else %}
-                            <button class="btn btn-primary" onclick="document.getElementById('confirm-interest-modal').showModal()">
-                                <i class="fas fa-envelope mr-2"></i> Contact Candidate
-                            </button>
-                        {% endif %}
-                    </div>
+                    {% endcomment %}
                 </div>
             </div>
 
@@ -152,7 +132,7 @@
     </div>
 </div>
 
-<!-- Interest Request Confirmation Modal -->
+{% comment %} Removed messaging interest confirmation modal for MVP
 <dialog id="confirm-interest-modal" class="modal">
   <div class="modal-box">
     <h3 class="font-bold text-lg">Express Interest in This Candidate</h3>
@@ -178,6 +158,7 @@
     </div>
   </div>
 </dialog>
+{% endcomment %}
 
 <!-- Withdraw Interest Confirmation Modal -->
 <dialog id="confirm-withdraw-modal" class="modal">

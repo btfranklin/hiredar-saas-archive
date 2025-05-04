@@ -104,7 +104,7 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
                 Conversation.objects.filter(
                     job_opening=self.job_opening, participants=self.request.user
                 )
-                .filter(participants=self.object.talent_sheet.job_seeker.user)
+                .filter(participants=self.object.talent_sheet.job_seeker.user_owner)
                 .get()
             )
             context["candidate_conversation"] = conversation
@@ -143,7 +143,7 @@ def withdraw_interest(request, job_id, candidate_id):
                 job_opening=job_opening, participants=request.user
             )
             .filter(
-                participants=job_seeker.user,
+                participants=job_seeker.user_owner,
                 status="interest_requested",  # Only delete if status is interest_requested
             )
             .get()

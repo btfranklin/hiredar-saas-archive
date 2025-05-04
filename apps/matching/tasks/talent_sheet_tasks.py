@@ -132,10 +132,11 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
                 raw_text[:100] + "..." if len(raw_text) > 100 else raw_text
             ),
         }
-
         # Remove None values from metadata
         metadata = {k: v for k, v in metadata.items() if v is not None}
-
+        # Add pool_id metadata (0 = global; else, the pool primary key)
+        pool_owner = talent_sheet.job_seeker.uploaded_resume_pool
+        metadata["pool_id"] = pool_owner.id if pool_owner else 0
         upsert_talent_embedding(vector_id, embedding, metadata)
         logger.info(
             "Upserted embedding for TalentSheet %s section '%s' (ID: %s)",
@@ -145,12 +146,6 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         )
 
     logger.info("Completed processing embeddings for TalentSheet %s", talent_sheet.id)
-
-    # Trigger matching task after successfully creating embeddings
-    logger.info(
-        "Triggering matching against active jobs for TalentSheet %s", talent_sheet.id
-    )
-    async_task("apps.matching.tasks.match_talent_to_active_jobs", talent_sheet.id)
 
 
 def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
