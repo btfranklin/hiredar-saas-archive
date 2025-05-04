@@ -62,16 +62,16 @@
                        class="tab tab-lg {% if tab|default:'details' == 'details' %}tab-active{% endif %}" 
                        hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=details" 
                        hx-target="#tabs-container" 
-                       hx-push-url="true"
-                       hx-select="#tabs-container">
+                       hx-swap="outerHTML" 
+                       hx-push-url="true">
                         <i class="fas fa-info-circle mr-2"></i> Job Details
                     </a>
                     <a role="tab" 
                        class="tab tab-lg {% if tab|default:'details' == 'candidates' %}tab-active{% endif %}"
                        hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=candidates" 
                        hx-target="#tabs-container" 
-                       hx-push-url="true"
-                       hx-select="#tabs-container">
+                       hx-swap="outerHTML" 
+                       hx-push-url="true">
                         <i class="fas fa-users mr-2"></i> Candidate Matches
                     </a>
                 </div>
