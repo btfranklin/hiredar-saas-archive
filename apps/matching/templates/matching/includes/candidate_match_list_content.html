@@ -16,45 +16,45 @@
     </a>
 </div>
 
-{% if not candidate_matches %}
-    <div class="card bg-base-100 shadow-md">
-        <div class="card-body">
-            <div class="flex flex-col items-center text-center py-8">
-                <div class="text-4xl mb-4">
-                    <i class="fas fa-search text-base-content/30"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">No Matches Found</h3>
-                <p class="text-base-content/70 max-w-md">
-                    {% if section == 'holistic' %}
-                        We haven't found any candidates that match all the requirements yet. Try adjusting the job requirements or check back later.
-                    {% elif section == 'skills' %}
-                        No candidates currently match the required skills. Consider broadening the skill requirements or check back later.
-                    {% elif section == 'experience' %}
-                        No candidates match the experience requirements. You might want to adjust the experience level or check back later.
-                    {% else %}
-                        No wildcard matches found. Consider adjusting the job requirements to find more potential candidates.
-                    {% endif %}
-                </p>
+<div class="card bg-base-200 shadow-md mb-6">
+  <div class="card-body p-4">
+    {% if not candidate_matches %}
+        <div class="flex flex-col items-center text-center py-8">
+            <div class="text-4xl mb-4">
+                <i class="fas fa-search text-base-content/30"></i>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">No Matches Found</h3>
+            <p class="text-base-content/70 max-w-md">
+                {% if section == 'holistic' %}
+                    We haven't found any candidates that match all the requirements yet. Try adjusting the job requirements or check back later.
+                {% elif section == 'skills' %}
+                    No candidates currently match the required skills. Consider broadening the skill requirements or check back later.
+                {% elif section == 'experience' %}
+                    No candidates match the experience requirements. You might want to adjust the experience level or check back later.
+                {% else %}
+                    No wildcard matches found. Consider adjusting the job requirements to find more potential candidates.
+                {% endif %}
+            </p>
+        </div>
+    {% else %}
+        <div class="mb-10 px-4">
+            <h2 class="text-2xl font-bold mb-4">{{ section|title }} Matches</h2>
+            {% if section == 'wildcard' %}
+            <p class="text-base-content/70 mb-4">These candidates might not be perfect matches, but have relevant skills or experience that could make them suitable.</p>
+            {% elif section == 'skills' %}
+            <p class="text-base-content/70 mb-4">These candidates show a strong alignment based primarily on their skills.</p>
+            {% elif section == 'experience' %}
+            <p class="text-base-content/70 mb-4">These candidates show a strong alignment based primarily on their work experience.</p>
+            {% else %} {# Holistic #}
+            <p class="text-base-content/70 mb-4">These candidates show a strong overall alignment based on skills, experience, and other profile factors.</p>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for match in candidate_matches %}
+                    {% include "matching/components/candidate_card.html" with match=match %}
+                {% endfor %}
             </div>
         </div>
-    </div>
-{% else %}
-    <div class="mb-10 px-4">
-        <h2 class="text-2xl font-bold mb-4">{{ section|title }} Matches</h2>
-        {% if section == 'wildcard' %}
-        <p class="text-base-content/70 mb-4">These candidates might not be perfect matches, but have relevant skills or experience that could make them suitable.</p>
-        {% elif section == 'skills' %}
-        <p class="text-base-content/70 mb-4">These candidates show a strong alignment based primarily on their skills.</p>
-        {% elif section == 'experience' %}
-        <p class="text-base-content/70 mb-4">These candidates show a strong alignment based primarily on their work experience.</p>
-        {% else %} {# Holistic #}
-        <p class="text-base-content/70 mb-4">These candidates show a strong overall alignment based on skills, experience, and other profile factors.</p>
-        {% endif %}
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for match in candidate_matches %}
-                {% include "matching/components/candidate_card.html" with match=match %}
-            {% endfor %}
-        </div>
-    </div>
-{% endif %} 
+    {% endif %}
+  </div>
+</div> 
