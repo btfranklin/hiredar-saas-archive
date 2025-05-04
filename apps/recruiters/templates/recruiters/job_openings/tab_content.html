@@ -23,7 +23,11 @@
     </div>
 
     {% if candidate_pool_id != 0 %}
-        {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
+        <div class="card bg-base-100 shadow-md mb-6">
+          <div class="card-body p-4">
+            {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
+          </div>
+        </div>
     {% else %}
         <div class="p-6 text-center text-base-content/70">
             <p>Select a candidate pool to view matches.</p>
