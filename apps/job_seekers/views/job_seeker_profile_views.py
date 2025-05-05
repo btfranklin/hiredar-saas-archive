@@ -74,6 +74,14 @@ class ResumeView(LoginRequiredMixin, DetailView):
 
         # Get the job seeker profile
         profile = self.get_object()
+
+        # Allow recruiters to view resumes from pools they own
+        if (
+            profile.uploaded_resume_pool
+            and profile.uploaded_resume_pool.recruiter == user
+        ):
+            return super().dispatch(request, *args, **kwargs)
+
         job_seeker = profile.user_owner
 
         # Check if there's a conversation where the job seeker has expressed interest
