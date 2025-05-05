@@ -7,8 +7,10 @@ and extracting structured data.
 
 import logging
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import date
 from typing import Any
+
+from dateutil.parser import parse as parse_date
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -154,57 +156,52 @@ def extract_most_recent_title(xml_content: str) -> str | None:
 
 def calculate_years_experience(xml_content: str) -> int:
     """
-    Calculate total years of experience from the XML resume.
+    Calculate total years of experience by merging overlapping job date intervals.
 
-    This is a simplified calculation that adds up the duration of all jobs.
-
-    Args:
-        xml_content: XML string representation of a resume
-
-    Returns:
-        Total years of experience (integer)
-
-    Raises:
-        ET.ParseError: If the XML is not well-formed
+    Parses all <experience><job> entries, extracts start/end dates (fallback to today for ongoing roles),
+    merges overlapping or contiguous intervals, and returns the total full years (days/365).
     """
     root = ET.fromstring(xml_content)
-
-    # Find all job elements
-    job_elements = root.findall(".//experience/job")
-
-    total_years = 0
-    for job in job_elements:
-        start_date = job.find("startDate")
-        end_date = job.find("endDate")
-
-        # Skip if we don't have both dates
-        if start_date is None or start_date.text is None:
+    intervals: list[tuple[date, date]] = []
+    for job in root.findall(".//experience/job"):
+        start_text = job.findtext("startDate")
+        if not start_text:
+            continue
+        try:
+            start_dt = parse_date(start_text).date()
+        except Exception:
             continue
 
-        # For current positions, use current year
-        if end_date is None or not end_date.text or "present" in end_date.text.lower():
-            end_year = datetime.now().year
+        end_text = job.findtext("endDate")
+        if not end_text or "present" in end_text.lower():
+            end_dt = date.today()
         else:
-            # Try to extract the year from the end date
             try:
-                # Assume format like "2022" or "May 2022"
-                end_year = int(end_date.text.strip().split()[-1])
-            except (ValueError, IndexError):
+                end_dt = parse_date(end_text).date()
+            except Exception:
                 continue
 
-        # Try to extract the year from the start date
-        try:
-            # Assume format like "2018" or "June 2018"
-            start_year = int(start_date.text.strip().split()[-1])
-
-            # Add the difference to our total
-            duration = end_year - start_year
-            if duration > 0:
-                total_years += duration
-        except (ValueError, IndexError):
+        if end_dt < start_dt:
             continue
 
-    return total_years
+        intervals.append((start_dt, end_dt))
+
+    # Merge overlapping intervals
+    intervals.sort(key=lambda x: x[0])
+    merged: list[tuple[date, date]] = []
+    for start_dt, end_dt in intervals:
+        if not merged:
+            merged.append((start_dt, end_dt))
+        else:
+            prev_start, prev_end = merged[-1]
+            if start_dt <= prev_end:
+                merged[-1] = (prev_start, max(prev_end, end_dt))
+            else:
+                merged.append((start_dt, end_dt))
+
+    # Sum total days and convert to years
+    total_days = sum((end - start).days for start, end in merged)
+    return int(total_days / 365)
 
 
 def extract_professional_summary(xml_content: str) -> str | None:
