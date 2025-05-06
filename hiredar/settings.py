@@ -262,13 +262,16 @@ ACCOUNT_USERNAME_BLACKLIST = []
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 # Configure SendGrid for transactional emails
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "apps.core.email_backends.SMTP2GOAPIEmailBackend"
 EMAIL_HOST = "smtp.sendgrid.net"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "apikey"
 EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = "Hiredar <noreply@hiredar.com>"
+
+# SMTP2GO HTTP API settings
+SMTP2GO_API_KEY = os.getenv("SMTP2GO_API_KEY")  # must be set in .env
 
 # Social account email handling: trust provider for Google, but do not auto-verify others
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
