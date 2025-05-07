@@ -1,0 +1,11 @@
+Hi {{ user.get_full_name|default:user.email }},
+
+We received a request to confirm your email address for your Hiredar account.
+
+Please click the link below to confirm your email:
+
+  {{ activate_url }}
+
+If you did not request this email, you can safely ignore it.
+
+— The Hiredar Team 

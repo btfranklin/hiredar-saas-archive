@@ -1,0 +1,9 @@
+Hi {{ user.get_full_name|default:user.email }},
+
+Thank you for signing up with Hiredar! Please verify your email address by clicking the link below:
+
+  {{ activate_url }}
+
+If you did not create a Hiredar account, you can safely ignore this email.
+
+— The Hiredar Team 

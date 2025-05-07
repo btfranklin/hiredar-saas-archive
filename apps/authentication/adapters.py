@@ -1,14 +1,23 @@
 """Custom account adapters for user registration and redirection."""
 
+import logging
 import uuid
 from typing import Any, cast
 
+from allauth.account import app_settings as account_settings
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.account.internal import flows
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.urls import reverse
 
+from apps.authentication.services.email_verifier import verify_email
 from apps.authentication.types import AuthenticatedUser
+
+logger = logging.getLogger(__name__)
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -78,6 +87,74 @@ class AccountAdapter(DefaultAccountAdapter):
             user.save()
 
         return user
+
+    def clean_email(self, email: str) -> str:
+        """
+        Validate email via QuickEmailVerification before Allauth confirmation.
+        Raises ValidationError if the API reports the address invalid.
+        """
+        try:
+            result = verify_email(email)
+        except Exception as e:
+            raise ValidationError(
+                "Could not verify email address. Please try again later."
+            ) from e
+        status = result.get("result", "").lower()
+        safe_to_send = result.get("safe_to_send")
+        ok = status in ("valid", "deliverable") or str(safe_to_send).lower() == "true"
+        if not ok:
+            reason = result.get("reason", "unknown error").replace("_", " ")
+            raise ValidationError(f"Email address appears invalid: {reason}.")
+        return super().clean_email(email)
+
+    def send_confirmation_mail(
+        self, request: HttpRequest, emailconfirmation, signup: bool
+    ) -> None:
+        """
+        Send the confirmation mail unless in DEBUG mode or
+        an override address is set, in which case log instead of sending.
+        """
+        # Build context for rendering the email
+        ctx: dict[str, Any] = {
+            "request": request,
+            "email": emailconfirmation.email_address.email,
+            "current_site": get_current_site(request),
+            "user": emailconfirmation.email_address.user,
+        }
+        if account_settings.EMAIL_VERIFICATION_BY_CODE_ENABLED:
+            ctx["code"] = emailconfirmation.key
+        else:
+            ctx["key"] = emailconfirmation.key
+            ctx["activate_url"] = flows.email_verification.get_email_verification_url(
+                request, emailconfirmation
+            )
+        template = (
+            "account/email/email_confirmation_signup"
+            if signup
+            else "account/email/email_confirmation"
+        )
+        message = self.render_mail(template, emailconfirmation.email_address.email, ctx)
+
+        # If in debug or override set, log and skip sending
+        if settings.DEBUG or getattr(
+            settings, "EMAIL_VERIFICATION_OVERRIDE_ADDRESS", None
+        ):
+            logger.info(
+                "Confirmation email for %s NOT sent. Subject: %s; Body: %s",
+                emailconfirmation.email_address.email,
+                getattr(message, "subject", ""),
+                getattr(message, "body", ""),
+            )
+            return
+
+        # Otherwise, optionally override recipient and send
+        override = getattr(settings, "EMAIL_VERIFICATION_OVERRIDE_ADDRESS", None)
+        if override:
+            original = emailconfirmation.email_address.email
+            emailconfirmation.email_address.email = override
+        super().send_confirmation_mail(request, emailconfirmation, signup)
+        if override:
+            emailconfirmation.email_address.email = original
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):

@@ -36,7 +36,18 @@
                 <label class="label" for="{{ form.email.id_for_label }}">
                     <span class="label-text">Email</span>
                 </label>
-                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" class="input input-bordered w-full {% if form.email.errors %}input-error{% endif %}" value="{{ form.email.value|default:'' }}">
+                <input
+                    type="email"
+                    name="{{ form.email.name }}"
+                    id="{{ form.email.id_for_label }}"
+                    class="input input-bordered w-full {% if form.email.errors %}input-error{% endif %}"
+                    value="{{ form.email.value|default:'' }}"
+                    hx-get="{% url 'authentication:verify_email' %}"
+                    hx-trigger="blur"
+                    hx-target="#email-verification"
+                    hx-include="[name='email']"
+                />
+                <div id="email-verification"></div>
                 {% if form.email.errors %}
                     <div class="text-error text-sm mt-1">{{ form.email.errors.0 }}</div>
                 {% endif %}

@@ -1,0 +1,14 @@
+<!-- HTMX snippet to show email verification status -->
+{% if error %}
+  <div class="alert alert-error mt-1 p-2">
+    {{ error }}
+  </div>
+{% elif success %}
+  <div class="alert alert-success mt-1 p-2">
+    Email looks good! 🎉
+  </div>
+{% else %}
+  <div class="alert alert-warning mt-1 p-2">
+    Cannot verify email: {{ reason }}
+  </div>
+{% endif %} 

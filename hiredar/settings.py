@@ -258,23 +258,27 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
 ACCOUNT_USERNAME_BLACKLIST = []
 
 # Email and Social Account Verification Settings
-# Require email and mandate verification for all accounts
+# Require email confirmation for all accounts
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
-# Configure SendGrid for transactional emails
-EMAIL_BACKEND = "apps.core.email_backends.SMTP2GOAPIEmailBackend"
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "apikey"
-EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
+# Email backend configuration
+if DEBUG:
+    # During development, output emails to console rather than sending
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_VERIFICATION_OVERRIDE_ADDRESS = "verification@hiredar.com"
+    print("DEBUG MODE: Using console email backend and override email address")
+else:
+    # Use SMTP2GO HTTP API backend in production
+    EMAIL_BACKEND = "apps.core.email_backends.SMTP2GOAPIEmailBackend"
+    EMAIL_VERIFICATION_OVERRIDE_ADDRESS = None
+
 DEFAULT_FROM_EMAIL = "Hiredar <noreply@hiredar.com>"
 
 # SMTP2GO HTTP API settings
 SMTP2GO_API_KEY = os.getenv("SMTP2GO_API_KEY")  # must be set in .env
 
-# Social account email handling: trust provider for Google, but do not auto-verify others
-SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+# Social account email handling follows main setting
+SOCIALACCOUNT_EMAIL_VERIFICATION = ACCOUNT_EMAIL_VERIFICATION
 
 
 # Custom function to generate usernames
@@ -287,10 +291,6 @@ def custom_username_from_email(email):
 
 
 ACCOUNT_ADAPTER = "apps.authentication.adapters.AccountAdapter"
-
-# Temporarily disable email verification, but keep for future with SendGrid
-# Set to "mandatory" when ready to enforce verification
-ACCOUNT_EMAIL_VERIFICATION = "none"  # Options: "none", "optional", "mandatory"
 
 
 def get_user_display(user):
@@ -413,6 +413,11 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": True,
         },
+        "apps.authentication": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 
@@ -420,6 +425,14 @@ LOGGING = {
 os.makedirs(os.path.join(BASE_DIR, "logs"), exist_ok=True)
 
 # --- Custom Application Settings ---
+
+# QuickEmailVerification settings
+QUICKEMAILVERIFICATION_API_KEY = os.getenv(
+    "QUICKEMAILVERIFICATION_API_KEY"
+)  # API key for QuickEmailVerification
+USE_QUICKEMAILVERIFICATION_SANDBOX = (
+    os.getenv("USE_QUICKEMAILVERIFICATION_SANDBOX", "True") == "True"
+)  # toggle sandbox mode
 
 # API Keys (Required - must be set in .env or environment)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
