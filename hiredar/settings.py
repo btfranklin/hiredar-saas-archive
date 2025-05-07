@@ -280,6 +280,13 @@ SMTP2GO_API_KEY = os.getenv("SMTP2GO_API_KEY")  # must be set in .env
 # Social account email handling follows main setting
 SOCIALACCOUNT_EMAIL_VERIFICATION = ACCOUNT_EMAIL_VERIFICATION
 
+# Make allauth automatically log the user back in as soon as their e-mail gets confirmed
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+
+# Have the GET request to /confirm‐email/<key>/ actually do
+# the confirmation immediately (instead of showing the “click to confirm” page)
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+
 
 # Custom function to generate usernames
 # - Uses portion of email before @ symbol
