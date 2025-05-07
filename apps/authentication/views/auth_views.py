@@ -74,16 +74,27 @@ class CustomLoginView(SuccessMessageMixin, LoginView):
         return reverse("job_seekers:dashboard")
 
     def form_valid(self, form: CustomAuthenticationForm) -> HttpResponseRedirect:
-        """Process the form if it is valid."""
-        # Let the parent class handle the login
-        result = super().form_valid(form)
+        """Process the form if it is valid, enforcing email verification."""
+        # Check if email verification is mandatory and user is unverified
+        user = getattr(form, "user_cache", None) or self.request.user
+        from allauth.account.utils import has_verified_email, send_email_confirmation
+        from django.conf import settings
+        from django.http import HttpResponseRedirect
+        from django.urls import reverse
 
-        # Customize the success message if needed
+        if getattr(settings, "ACCOUNT_EMAIL_VERIFICATION", "").lower() == "mandatory":
+            # If the user has not verified their primary email, resend confirmation and redirect
+            if not has_verified_email(user):
+                send_email_confirmation(self.request, user)
+                return HttpResponseRedirect(reverse("account_email_verification_sent"))
+
+        # Proceed with normal login
+        result = super().form_valid(form)
+        # Customize the success message
         if self.request.user.is_authenticated:
             user = cast(User, self.request.user)
             full_name = user.get_full_name() or user.email
             self.success_message = f"Welcome back, {full_name}!"
-
         return cast(HttpResponseRedirect, result)
 
 
