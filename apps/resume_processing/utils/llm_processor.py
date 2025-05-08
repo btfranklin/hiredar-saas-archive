@@ -73,7 +73,7 @@ def convert_text_to_xml(resume_text: str) -> str:
         completion = client.chat.completions.create(
             model=settings.JOBSEEKERS_RESUME_PROCESSING_MODEL,
             messages=cast(Iterable[Any], messages),
-            temperature=settings.JOBSEEKERS_RESUME_PROCESSING_TEMPERATURE,  # Use settings
+            temperature=settings.JOBSEEKERS_RESUME_PROCESSING_TEMPERATURE,
         )
 
         # Extract the XML content from the response
