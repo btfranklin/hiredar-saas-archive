@@ -36,7 +36,10 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+]
 
 #
 # Storage configuration
@@ -284,7 +287,7 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = ACCOUNT_EMAIL_VERIFICATION
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
 # Have the GET request to /confirm‐email/<key>/ actually do
-# the confirmation immediately (instead of showing the “click to confirm” page)
+# the confirmation immediately (instead of showing the "click to confirm" page)
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 
 
@@ -379,7 +382,7 @@ Q_CLUSTER = {
     "label": "Django Q2",
     "orm": "default",  # Use Django ORM as broker (no Redis needed)
     "orm_batch": int(os.getenv("DJANGO_Q_ORM_BATCH", "50")),
-    "poll": int(os.getenv("DJANGO_Q_POLL", "0.5")),
+    "poll": float(os.getenv("DJANGO_Q_POLL", "0.5")),
 }
 
 # Logging configuration
@@ -455,15 +458,17 @@ if not PINECONE_API_KEY:
 MATCHING_EMBEDDING_MODEL = os.getenv(
     "MATCHING_EMBEDDING_MODEL", "text-embedding-3-large"
 )
-RECRUITERS_JOB_PROCESSING_MODEL = os.getenv("RECRUITERS_JOB_PROCESSING_MODEL", "gpt-4o")
+RECRUITERS_JOB_PROCESSING_MODEL = os.getenv(
+    "RECRUITERS_JOB_PROCESSING_MODEL", "gpt-4.1"
+)
 JOBSEEKERS_RESUME_PROCESSING_MODEL = os.getenv(
-    "JOBSEEKERS_RESUME_PROCESSING_MODEL", "gpt-4o"
+    "JOBSEEKERS_RESUME_PROCESSING_MODEL", "gpt-4.1"
 )
 JOBSEEKERS_ROLE_RECOMMENDATION_MODEL = os.getenv(
-    "JOBSEEKERS_ROLE_RECOMMENDATION_MODEL", "gpt-4o"
+    "JOBSEEKERS_ROLE_RECOMMENDATION_MODEL", "gpt-4.1"
 )
 JOBSEEKERS_TAGLINE_GENERATION_MODEL = os.getenv(
-    "JOBSEEKERS_TAGLINE_GENERATION_MODEL", "gpt-4o-mini"
+    "JOBSEEKERS_TAGLINE_GENERATION_MODEL", "gpt-4.1-mini"
 )
 
 # AI Model Configuration (Temperature, Tokens, etc.)
