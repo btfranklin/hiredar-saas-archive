@@ -4,7 +4,13 @@
     <div class="card-body flex flex-col justify-between h-full">
         <div>
             <div class="flex justify-between items-start">
-                <h3 class="card-title">{{ match.talent_sheet.job_seeker.user.get_full_name }}</h3>
+                <h3 class="card-title">
+                    {% if match.talent_sheet.job_seeker.user_owner %}
+                        {{ match.talent_sheet.job_seeker.user_owner.get_full_name }}
+                    {% else %}
+                        {{ match.talent_sheet.job_seeker.candidate_name }}
+                    {% endif %}
+                </h3>
                 <div class="badge {% if match.match_type == 'holistic' %}badge-primary{% elif match.match_type == 'skills' %}badge-secondary{% elif match.match_type == 'experience' %}badge-accent{% else %}badge-ghost{% endif %}">{{ match.get_rating_for_type }}/10</div>
             </div>
 
