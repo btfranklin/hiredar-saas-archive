@@ -35,7 +35,10 @@
               <td>{{ profile.candidate_name|default:"—" }}</td>
               <td class="max-w-xs whitespace-normal">{{ profile.personal_tagline|default:"—" }}</td>
               <td>
-                <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary">View Resume</a>
+                <div class="flex gap-2">
+                  <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary">View Resume</a>
+                  <a href="{% url 'recruiters:resume_pool_profile_talent_sheet_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary">View Talent Sheet</a>
+                </div>
               </td>
             </tr>
           {% endfor %}

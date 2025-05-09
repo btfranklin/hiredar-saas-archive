@@ -11,11 +11,12 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DetailView, ListView, View
+from django.views.generic import CreateView, DetailView, ListView, TemplateView, View
 
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models.profile import UploadedResumePool
+from apps.job_seekers.models.profile import JobSeekerProfile, UploadedResumePool
+from apps.job_seekers.models.talent import TalentSheet
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
 from apps.recruiters.tasks.bulk_resume_tasks import unpack_and_process_zip
@@ -162,3 +163,40 @@ class ResumePoolDeleteView(LoginRequiredMixin, View):
             return HttpResponse(status=204)
         # Fallback full-page redirect
         return redirect("recruiters:resume_pool_list")
+
+
+class ResumePoolTalentSheetDetailView(LoginRequiredMixin, TemplateView):
+    """Detail view for a talent sheet of a resume pool candidate."""
+
+    template_name = "recruiters/talent_sheet_detail.html"
+
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
+        # Only recruiters can access candidate talent sheets
+        user = request.user
+        if not user.is_authenticated or getattr(user, "user_type", "") != "recruiter":
+            return redirect("core:home")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        # Load the candidate profile ensuring it belongs to this recruiter's pool
+        profile_id = self.kwargs.get("pk")
+        profile = get_object_or_404(
+            JobSeekerProfile,
+            pk=profile_id,
+            uploaded_resume_pool__recruiter=self.request.user,  # type: ignore[attr-defined]
+        )
+        context["profile"] = profile
+        # Include talent sheet if generated
+        try:
+            talent_sheet = TalentSheet.objects.get(job_seeker=profile)
+            context["talent_sheet"] = talent_sheet
+            context["has_talent_sheet"] = True
+        except TalentSheet.DoesNotExist:
+            context["talent_sheet"] = None
+            context["has_talent_sheet"] = False
+        # Include pool for navigation
+        context["pool"] = profile.uploaded_resume_pool
+        return context

@@ -38,12 +38,14 @@
         {% endif %}
         
         <!-- Info text about who can see this -->
-        <div class="alert alert-info mt-4">
-            <i class="fas fa-info-circle"></i>
-            <div>
-                <p class="text-sm">This is your talent sheet as seen by recruiters. When you're in the talent pool, recruiters can view this information when considering you for relevant positions. <strong>Recruiters can only see this talent sheet, not your full resume</strong> — your resume remains private until you specifically choose to share it with a recruiter. This talent sheet was generated using our AI to present your skills and experience in the best light for potential employers.</p>
+        {% if request.user.user_type == 'job_seeker' %}
+            <div class="alert alert-info mt-4">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <p class="text-sm">This is your talent sheet as seen by recruiters. When you're in the talent pool, recruiters can view this information when considering you for relevant positions. <strong>Recruiters can only see this talent sheet, not your full resume</strong> — your resume remains private until you specifically choose to share it with a recruiter. This talent sheet was generated using our AI to present your skills and experience in the best light for potential employers.</p>
+                </div>
             </div>
-        </div>
+        {% endif %}
     {% else %}
         <div class="alert alert-warning">
             <i class="fas fa-exclamation-triangle"></i>
