@@ -25,10 +25,13 @@ apps/matching/
 │   ├── talent_sheet_tasks.py   # Talent sheet processing
 │   └── job_opening_tasks.py    # Job opening processing
 ├── signals.py                  # Event handlers
-├── management/commands/
-│   └── process_talent_embeddings.py  # CLI tool
-└── tests/
-    └── test_talent_embeddings.py     # Unit tests
+├── management/commands/        # Miscellaneous matching and inspection commands
+├── tests/
+│   ├── unit/
+│   │   ├── test_signals.py
+│   │   ├── test_talent_embeddings.py
+│   │   └── test_matching.py
+│   └── manual/                 # Manual tests (integration and end-to-end)
 ```
 
 ## Workflow & Process
@@ -76,11 +79,14 @@ Each vector is stored with detailed metadata for filtering and display:
 ```python
 metadata = {
     "talent_sheet_id": talent_sheet.id,
-    "section": section,  # e.g., "Promotional Blurb"
+    "section": section,
     "job_seeker_id": talent_sheet.job_seeker.id,
-    "job_seeker_name": talent_sheet.job_seeker.user.get_full_name(),
-    "content_preview": raw_text[:100] + "..." if len(raw_text) > 100 else raw_text
+    "job_seeker_name": job_seeker_name,
+    "content_preview": raw_text[:100] + "..." if len(raw_text) > 100 else raw_text,
+    "pool_id": pool_owner.id if pool_owner else 0,
 }
+# Remove None values
+metadata = {k: v for k, v in metadata.items() if v is not None}
 ```
 
 #### 4. Status-Based Processing
@@ -88,8 +94,8 @@ metadata = {
 The system responds to talent sheet status changes:
 
 - **PUBLISHED**: Generate and store embeddings
-- **WITHDRAWN/INACTIVE**: Remove existing embeddings
-- **Deletion**: Remove all associated embeddings
+- **WITHDRAWN/INACTIVE**: Trigger asynchronous tasks `remove_talent_sheet_embeddings` and `remove_talent_sheet_matches`
+- **Deletion**: Trigger asynchronous tasks `remove_talent_sheet_embeddings` and `remove_talent_sheet_matches`
 
 ## Integration Points
 
@@ -98,19 +104,46 @@ The system responds to talent sheet status changes:
 ```python
 @receiver(post_save, sender="job_seekers.TalentSheet")
 def handle_talent_sheet_save(sender, instance, created, **kwargs):
-    """Process talent sheets based on status."""
+    """
+    Handle TalentSheet save events.
+
+    Process published talent sheets for embeddings, and remove embeddings and matches for unpublished ones.
+    """
+    # Only process embeddings for published talent sheets
     if instance.is_published:
-        # Embedding creation is automatically triggered for published sheets
-        async_task("apps.matching.tasks.create_talent_sheet_embeddings", instance.id)
+        transaction.on_commit(
+            lambda: async_task(
+                "apps.matching.tasks.create_talent_sheet_embeddings",
+                instance.id,
+            )
+        )
     else:
-        # If a talent sheet is unpublished or status changes, remove the embeddings
-        async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
+        def _cleanup_unpublished():
+            async_task(
+                "apps.matching.tasks.remove_talent_sheet_embeddings",
+                instance.id,
+            )
+            async_task(
+                "apps.matching.tasks.remove_talent_sheet_matches",
+                instance.id,
+            )
+        transaction.on_commit(_cleanup_unpublished)
 
 @receiver(post_delete, sender="job_seekers.TalentSheet")
 def handle_talent_sheet_delete(sender, instance, **kwargs):
-    """Remove embeddings on deletion."""
-    # On deletion, trigger removal of talent sheet embeddings
-    async_task("apps.matching.tasks.remove_talent_sheet_embeddings", instance.id)
+    """
+    Handle TalentSheet deletion events.
+
+    Remove embeddings and matches when a talent sheet is deleted.
+    """
+    async_task(
+        "apps.matching.tasks.remove_talent_sheet_embeddings",
+        instance.id,
+    )
+    async_task(
+        "apps.matching.tasks.remove_talent_sheet_matches",
+        instance.id,
+    )
 ```
 
 Talent sheet embeddings are now primarily managed automatically via these Django signals. When a `TalentSheet` is saved with `is_published=True`, the `create_talent_sheet_embeddings` task is triggered. If it's saved with `is_published=False` or deleted, the `remove_talent_sheet_embeddings` task is triggered.
@@ -124,15 +157,11 @@ Previously, manual management commands (`create_talent_embeddings`, `delete_tale
 The system also includes manual test scripts in the `apps/matching/tests/manual/` directory for end-to-end testing of the talent sheet creation and embedding process:
 
 ```bash
-# Run the end-to-end test for the complete matching process
+# Run the end-to-end test for the complete matching process (includes resume ingestion, talent sheet creation, job posting, embeddings, and matching)
 python -m apps.matching.tests.manual.manual_test_end_to_end_matching
 
-# Test just the resume ingestion and talent sheet creation
-# (This will trigger embedding creation automatically via signals)
+# Test just the resume ingestion and talent sheet creation (automatic embedding via signals)
 python -m apps.matching.tests.manual.manual_test_resume_ingestion
-
-# Test just the job opening posting and embedding
-python -m apps.matching.tests.manual.manual_test_post_job_openings
 ```
 
 These manual test scripts are interactive and guide you through the complete process of:

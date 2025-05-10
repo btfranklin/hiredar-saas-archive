@@ -25,7 +25,11 @@ apps/matching/
 │   └── talent_sheet_tasks.py   # Talent sheet processing
 ├── signals.py                  # Event handlers
 └── tests/
-    └── test_job_embeddings.py     # Unit tests
+    ├── unit/
+    │   ├── test_signals.py
+    │   ├── test_talent_embeddings.py
+    │   └── test_matching.py
+    └── manual/                  # Manual tests (integration and end-to-end)
 ```
 
 ## Workflow & Process
@@ -95,8 +99,8 @@ This rich metadata enables advanced filtering during vector search and improves 
 The system responds to job opening status changes:
 
 - **Active**: Trigger asynchronous task `create_job_opening_embeddings`
-- **Inactive**: Trigger asynchronous task `remove_job_opening_embeddings`
-- **Deletion**: Trigger asynchronous task `remove_job_opening_embeddings`
+- **Inactive**: Trigger asynchronous tasks `remove_job_opening_embeddings` and `remove_job_opening_matches`
+- **Deletion**: Trigger asynchronous tasks `remove_job_opening_embeddings` and `remove_job_opening_matches`
 
 ## Integration Points
 
@@ -105,17 +109,28 @@ The system responds to job opening status changes:
 ```python
 @receiver(post_save, sender="recruiters.JobOpening")
 def handle_job_opening_save(sender, instance, created, **kwargs):
+    """
+    Handle JobOpening save events.
+
+    Process active job openings for embeddings, and remove embeddings and matches for inactive ones.
+    """
     # Only process embeddings for active jobs
     if instance.status == "active":
         async_task("apps.matching.tasks.create_job_opening_embeddings", instance.id)
     else:
-        # If a job is inactive, remove the embeddings
+        # If a job is inactive, remove embeddings and matches
         async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
+        async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
 
 @receiver(post_delete, sender="recruiters.JobOpening")
 def handle_job_opening_delete(sender, instance, **kwargs):
-    """Remove embeddings on deletion."""
+    """
+    Handle JobOpening delete events.
+
+    Remove embeddings and matches when a job opening is deleted.
+    """
     async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
+    async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
 ```
 
 This signal-based approach ensures that embedding operations are performed automatically in response to job opening changes.
