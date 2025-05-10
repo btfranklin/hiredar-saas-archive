@@ -1,15 +1,16 @@
 from django.db import models
 
 
-class UploadedResumePool(models.Model):
+class CandidatePool(models.Model):
     """
-    Represents a batch of resumes uploaded by a recruiter.
+    Represents a pool of candidates. These may have been uploaded by a recruiter,
+    or may represent the "global" pool of candidates.
     """
 
     recruiter = models.ForeignKey(
         "authentication.User",
         on_delete=models.CASCADE,
-        related_name="uploaded_resume_pools",
+        related_name="candidate_pools",
         limit_choices_to={"user_type": "recruiter"},
     )
     name = models.CharField(
@@ -18,7 +19,7 @@ class UploadedResumePool(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return f"Resume Pool: {self.name} ({self.recruiter.email})"
+        return f"Candidate Pool: {self.name} ({self.recruiter.email})"
 
 
 class JobSeekerProfile(models.Model):
@@ -31,8 +32,8 @@ class JobSeekerProfile(models.Model):
         blank=True,
         related_name="job_seeker_profiles",
     )
-    uploaded_resume_pool = models.ForeignKey(
-        UploadedResumePool,
+    candidate_pool = models.ForeignKey(
+        CandidatePool,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -79,8 +80,8 @@ class JobSeekerProfile(models.Model):
     def __str__(self) -> str:
         if self.user_owner:
             return f"Job Seeker: {self.user_owner.email}"
-        if self.uploaded_resume_pool:
-            return f"Job Seeker (Pool: {self.uploaded_resume_pool.name})"
+        if self.candidate_pool:
+            return f"Job Seeker (Pool: {self.candidate_pool.name})"
         return f"JobSeekerProfile {self.pk}"
 
     @property
@@ -106,11 +107,11 @@ class JobSeekerProfile(models.Model):
                 condition=(
                     (
                         models.Q(user_owner__isnull=False)
-                        & models.Q(uploaded_resume_pool__isnull=True)
+                        & models.Q(candidate_pool__isnull=True)
                     )
                     | (
                         models.Q(user_owner__isnull=True)
-                        & models.Q(uploaded_resume_pool__isnull=False)
+                        & models.Q(candidate_pool__isnull=False)
                     )
                 ),
                 name="jobseekerprofile_owner_xor",

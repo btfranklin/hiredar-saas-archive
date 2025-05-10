@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Resume Pool: {{ pool.name }}{% endblock %}
+{% block title %}Candidate Pool: {{ pool.name }}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">Pool: {{ pool.name }}</h1>
-    <a href="{% url 'recruiters:resume_pool_list' %}" class="btn btn-sm btn-ghost">Back to All Pools</a>
+    <a href="{% url 'recruiters:candidate_pool_list' %}" class="btn btn-sm btn-ghost">Back to All Pools</a>
   </div>
 
   <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
@@ -37,7 +37,7 @@
               <td>
                 <div class="flex gap-2">
                   <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary">View Resume</a>
-                  <a href="{% url 'recruiters:resume_pool_profile_talent_sheet_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary">View Talent Sheet</a>
+                  <a href="{% url 'recruiters:candidate_pool_profile_talent_sheet_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary">View Talent Sheet</a>
                 </div>
               </td>
             </tr>

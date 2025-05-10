@@ -15,7 +15,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models.profile import JobSeekerProfile, UploadedResumePool
+from apps.job_seekers.models.profile import CandidatePool, JobSeekerProfile
 from apps.job_seekers.models.talent import TalentSheet
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
@@ -116,43 +116,43 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         return super().form_invalid(form)
 
 
-class ResumePoolListView(LoginRequiredMixin, ListView):
-    """List view for all resume pools belonging to the recruiter, displayed as cards."""
+class CandidatePoolListView(LoginRequiredMixin, ListView):
+    """List view for all candidate pools belonging to the recruiter, displayed as cards."""
 
-    model = UploadedResumePool
-    template_name = "recruiters/resume_pool_list.html"
-    context_object_name = "resume_pools"
+    model = CandidatePool  # type: ignore[name-defined]
+    template_name = "recruiters/candidate_pool_list.html"
+    context_object_name = "candidate_pools"
 
     def get_queryset(self):  # type: ignore[override]
         user = cast(AuthenticatedUser, self.request.user)
-        return UploadedResumePool.objects.filter(
+        return CandidatePool.objects.filter(
             recruiter=user  # type: ignore[attr-defined]
         ).order_by("-created_at")
 
 
-class ResumePoolDetailView(LoginRequiredMixin, DetailView):
-    """Detail view for a processed resume pool."""
+class CandidatePoolDetailView(LoginRequiredMixin, DetailView):
+    """Detail view for a processed candidate pool."""
 
-    model = UploadedResumePool
-    template_name = "recruiters/resume_pool_detail.html"
+    model = CandidatePool  # type: ignore[name-defined]
+    template_name = "recruiters/candidate_pool_detail.html"
     context_object_name = "pool"
 
     def get_queryset(self):  # type: ignore[override]
         user = cast(AuthenticatedUser, self.request.user)
-        return UploadedResumePool.objects.filter(
+        return CandidatePool.objects.filter(
             recruiter=user  # type: ignore[attr-defined]
         )
 
 
-class ResumePoolDeleteView(LoginRequiredMixin, View):
-    """Handle deletion of a processed resume pool via POST."""
+class CandidatePoolDeleteView(LoginRequiredMixin, View):
+    """Handle deletion of a processed candidate pool via POST."""
 
     def post(
         self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any
     ) -> HttpResponseBase:
         user = cast(AuthenticatedUser, request.user)
         pool = get_object_or_404(
-            UploadedResumePool,
+            CandidatePool,
             pk=pk,
             recruiter=user,  # type: ignore[attr-defined]
         )
@@ -162,11 +162,11 @@ class ResumePoolDeleteView(LoginRequiredMixin, View):
         if request.headers.get("HX-Request"):
             return HttpResponse(status=204)
         # Fallback full-page redirect
-        return redirect("recruiters:resume_pool_list")
+        return redirect("recruiters:candidate_pool_list")
 
 
-class ResumePoolTalentSheetDetailView(LoginRequiredMixin, TemplateView):
-    """Detail view for a talent sheet of a resume pool candidate."""
+class CandidatePoolTalentSheetDetailView(LoginRequiredMixin, TemplateView):
+    """Detail view for a talent sheet of a candidate in a candidate pool."""
 
     template_name = "recruiters/talent_sheet_detail.html"
 
@@ -186,7 +186,7 @@ class ResumePoolTalentSheetDetailView(LoginRequiredMixin, TemplateView):
         profile = get_object_or_404(
             JobSeekerProfile,
             pk=profile_id,
-            uploaded_resume_pool__recruiter=self.request.user,  # type: ignore[attr-defined]
+            candidate_pool__recruiter=self.request.user,  # type: ignore[attr-defined]
         )
         context["profile"] = profile
         # Include talent sheet if generated
@@ -198,5 +198,5 @@ class ResumePoolTalentSheetDetailView(LoginRequiredMixin, TemplateView):
             context["talent_sheet"] = None
             context["has_talent_sheet"] = False
         # Include pool for navigation
-        context["pool"] = profile.uploaded_resume_pool
+        context["pool"] = profile.candidate_pool
         return context

@@ -8,10 +8,10 @@ from django.test import TestCase
 
 from apps.authentication.models import User
 from apps.job_seekers.models import (
+    CandidatePool,
     JobSeekerProfile,
     RoleRecommendation,
     TalentSheet,
-    UploadedResumePool,
 )
 
 
@@ -49,7 +49,7 @@ class JobSeekerProfileModelTests(TestCase):
 
         self.assertIn(self.user.email, str(self.profile))
 
-    def test_str_for_resume_pool_owned_profile(self):
+    def test_str_for_candidate_pool_owned_profile(self):
         """When the profile owner is a resume pool, __str__ should reflect that."""
 
         # Create a recruiter and a resume pool which will own a new profile.
@@ -60,15 +60,15 @@ class JobSeekerProfileModelTests(TestCase):
             user_type="recruiter",
         )
 
-        resume_pool = UploadedResumePool.objects.create(
+        candidate_pool = CandidatePool.objects.create(
             recruiter=recruiter,
             name="March Batch",
         )
 
-        # Create a profile owned by the resume pool using uploaded_resume_pool field
-        pool_profile = JobSeekerProfile.objects.create(uploaded_resume_pool=resume_pool)
+        # Create a profile owned by the resume pool using candidate_pool field
+        pool_profile = JobSeekerProfile.objects.create(candidate_pool=candidate_pool)
 
-        self.assertIn("Resume Pool: March Batch", str(resume_pool))
+        self.assertIn("Candidate Pool: March Batch", str(candidate_pool))
         # The profile's __str__ should reference the pool label
         self.assertIn("March Batch", str(pool_profile))
 
@@ -76,8 +76,8 @@ class JobSeekerProfileModelTests(TestCase):
 class RoleRecommendationModelTests(TestCase):
     """Test helper methods on RoleRecommendation model."""
 
-    def test_uploaded_resume_pool_property(self):
-        """uploaded_resume_pool should bubble up from the related profile."""
+    def test_candidate_pool_property(self):
+        """candidate_pool should bubble up from the related profile."""
 
         # Build minimal objects
         recruiter = User.objects.create_user(  # type: ignore[attr-defined]
@@ -86,13 +86,13 @@ class RoleRecommendationModelTests(TestCase):
             user_type="recruiter",
             name="Rec",
         )
-        resume_pool = UploadedResumePool.objects.create(
+        candidate_pool = CandidatePool.objects.create(
             recruiter=recruiter,
             name="April Uploads",
         )
 
         # Create a profile owned by the resume pool
-        profile = JobSeekerProfile.objects.create(uploaded_resume_pool=resume_pool)
+        profile = JobSeekerProfile.objects.create(candidate_pool=candidate_pool)
 
         rec = RoleRecommendation.objects.create(
             job_seeker=profile,
@@ -100,8 +100,8 @@ class RoleRecommendationModelTests(TestCase):
             description="Work on APIs",
         )
 
-        # The property should return the resume_pool instance
-        self.assertEqual(rec.uploaded_resume_pool, resume_pool)
+        # The property should return the candidate_pool instance
+        self.assertEqual(rec.candidate_pool, candidate_pool)
 
     def test_str_contains_role_and_user(self):
         """__str__ should combine role title and job seeker identity."""
@@ -156,7 +156,7 @@ class TalentSheetModelTests(TestCase):
         expected = ["Backend Dev", "API Engineer"]
         self.assertEqual(self.talent_sheet.ideal_roles_list, expected)
 
-    def test_uploaded_resume_pool_none_for_user_owned(self):
-        """User‑owned profiles should yield None for uploaded_resume_pool."""
+    def test_candidate_pool_none_for_user_owned(self):
+        """User‑owned profiles should yield None for candidate_pool."""
 
-        self.assertIsNone(self.talent_sheet.uploaded_resume_pool)
+        self.assertIsNone(self.talent_sheet.candidate_pool)

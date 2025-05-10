@@ -3,10 +3,10 @@ from django.db.models import Q
 
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import (
+    CandidatePool,
     JobSeekerProfile,
     RoleRecommendation,
     TalentSheet,
-    UploadedResumePool,
 )
 
 async_task = safe_async_task
@@ -35,7 +35,7 @@ class InTalentPoolFilter(admin.SimpleListFilter):
 
 
 class OwnerTypeFilter(admin.SimpleListFilter):
-    """Filter for job seekers by owner type (User or ResumePool)."""
+    """Filter for job seekers by owner type (User or CandidatePool)."""
 
     title = "Owner Type"
     parameter_name = "owner_type"
@@ -43,32 +43,32 @@ class OwnerTypeFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         return (
             ("user", "User Account"),
-            ("pool", "Resume Pool"),
+            ("pool", "Candidate Pool"),
         )
 
     def queryset(self, request, queryset):
         if self.value() == "user":
             return queryset.filter(user_owner__isnull=False)
         if self.value() == "pool":
-            return queryset.filter(uploaded_resume_pool__isnull=False)
+            return queryset.filter(candidate_pool__isnull=False)
         return queryset
 
 
-class ResumePoolFilter(admin.SimpleListFilter):
-    """Filter for objects by their associated resume pool."""
+class CandidatePoolFilter(admin.SimpleListFilter):
+    """Filter for objects by their associated candidate pool."""
 
-    title = "Resume Pool"
-    parameter_name = "resume_pool"
+    title = "Candidate Pool"
+    parameter_name = "candidate_pool"
 
     def lookups(self, request, model_admin):
         # Get all pools
-        pools = UploadedResumePool.objects.all().order_by("name")
+        pools = CandidatePool.objects.all().order_by("name")
         return [(pool.pk, pool.name) for pool in pools]
 
     def queryset(self, request, queryset):
         if not self.value():
             return queryset
-        return queryset.filter(job_seeker__uploaded_resume_pool__pk=self.value())
+        return queryset.filter(job_seeker__candidate_pool__pk=self.value())
 
 
 @admin.register(JobSeekerProfile)
@@ -94,8 +94,8 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
         """Get a display representation of the owner."""
         if obj.user_owner:
             return f"User: {obj.user_owner.email}"
-        if obj.uploaded_resume_pool:
-            return f"Pool: {obj.uploaded_resume_pool.name}"
+        if obj.candidate_pool:
+            return f"Pool: {obj.candidate_pool.name}"
         return "Unknown"
 
     get_owner_display.short_description = "Owner"
@@ -106,7 +106,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
         if obj.user_owner:
             return obj.user_owner.name
         # For pool-owned profiles, show the parsed candidate name
-        if obj.uploaded_resume_pool:
+        if obj.candidate_pool:
             return obj.candidate_name or ""
         return ""
 
@@ -166,7 +166,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
     leave_talent_pool.short_description = "Remove selected job seekers from talent pool"
 
     fieldsets = (
-        (None, {"fields": ("user_owner", "uploaded_resume_pool")}),
+        (None, {"fields": ("user_owner", "candidate_pool")}),
         (
             "Profile Information",
             {
@@ -199,15 +199,15 @@ class RoleRecommendationAdmin(admin.ModelAdmin):
     """
 
     list_display = ("job_seeker", "role_title", "get_owner_display", "created_at")
-    list_filter = ("created_at", ResumePoolFilter)
+    list_filter = ("created_at", CandidatePoolFilter)
     search_fields = ("role_title",)
 
     def get_owner_display(self, obj):
         """Get a display representation of the job seeker's owner."""
         if obj.job_seeker.user_owner:
             return f"User: {obj.job_seeker.user_owner.email}"
-        if obj.job_seeker.uploaded_resume_pool:
-            return f"Pool: {obj.job_seeker.uploaded_resume_pool.name}"
+        if obj.job_seeker.candidate_pool:
+            return f"Pool: {obj.job_seeker.candidate_pool.name}"
         return "Unknown"
 
     get_owner_display.short_description = "Owner"
@@ -229,15 +229,15 @@ class TalentSheetAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
-    list_filter = ("is_published", "created_at", "updated_at", ResumePoolFilter)
+    list_filter = ("is_published", "created_at", "updated_at", CandidatePoolFilter)
     search_fields = ("ideal_roles",)
 
     def get_owner_display(self, obj):
         """Get a display representation of the job seeker's owner."""
         if obj.job_seeker.user_owner:
             return f"User: {obj.job_seeker.user_owner.email}"
-        if obj.job_seeker.uploaded_resume_pool:
-            return f"Pool: {obj.job_seeker.uploaded_resume_pool.name}"
+        if obj.job_seeker.candidate_pool:
+            return f"Pool: {obj.job_seeker.candidate_pool.name}"
         return "Unknown"
 
     get_owner_display.short_description = "Owner"
@@ -264,9 +264,9 @@ class TalentSheetAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
 
-@admin.register(UploadedResumePool)
-class UploadedResumePoolAdmin(admin.ModelAdmin):
-    """Admin configuration for UploadedResumePool model."""
+@admin.register(CandidatePool)
+class CandidatePoolAdmin(admin.ModelAdmin):
+    """Admin configuration for CandidatePool model."""
 
     list_display = ("id", "name", "recruiter", "created_at")
     list_filter = ("recruiter",)

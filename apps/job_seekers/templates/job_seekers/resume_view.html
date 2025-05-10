@@ -22,8 +22,8 @@
                 <p class="text-lg text-base-content/70">
                     {% if profile.user_owner %}
                         {{ profile.user_owner.name }}
-                    {% elif profile.uploaded_resume_pool %}
-                        Candidate from {{ profile.uploaded_resume_pool.name }}
+                    {% elif profile.candidate_pool %}
+                        Candidate from {{ profile.candidate_pool.name }}
                     {% else %}
                         Candidate
                     {% endif %}

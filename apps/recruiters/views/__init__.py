@@ -7,9 +7,10 @@ making them available for import directly from apps.recruiters.views.
 
 from apps.recruiters.views.bulk_upload_views import (
     BulkResumeUploadView,
-    ResumePoolDeleteView,
-    ResumePoolDetailView,
-    ResumePoolListView,
+    CandidatePoolDeleteView,
+    CandidatePoolDetailView,
+    CandidatePoolListView,
+    CandidatePoolTalentSheetDetailView,
 )
 from apps.recruiters.views.dashboard_views import DashboardView, SettingsView
 from apps.recruiters.views.job_opening_processing_views import (
@@ -38,7 +39,8 @@ __all__ = [
     "TextProcessJobOpeningView",
     "JobOpeningTaskStatusView",
     "BulkResumeUploadView",
-    "ResumePoolListView",
-    "ResumePoolDetailView",
-    "ResumePoolDeleteView",
+    "CandidatePoolListView",
+    "CandidatePoolDetailView",
+    "CandidatePoolDeleteView",
+    "CandidatePoolTalentSheetDetailView",
 ]

@@ -135,7 +135,7 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         # Remove None values from metadata
         metadata = {k: v for k, v in metadata.items() if v is not None}
         # Add pool_id metadata (0 = global; else, the pool primary key)
-        pool_owner = talent_sheet.job_seeker.uploaded_resume_pool
+        pool_owner = talent_sheet.job_seeker.candidate_pool
         metadata["pool_id"] = pool_owner.id if pool_owner else 0
         upsert_talent_embedding(vector_id, embedding, metadata)
         logger.info(

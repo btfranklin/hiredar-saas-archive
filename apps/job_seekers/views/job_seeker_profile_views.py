@@ -77,8 +77,8 @@ class ResumeView(LoginRequiredMixin, DetailView):
 
         # Allow recruiters to view resumes from pools they own
         if (
-            profile.uploaded_resume_pool
-            and profile.uploaded_resume_pool.recruiter == user
+            profile.candidate_pool
+            and profile.candidate_pool.recruiter == user
         ):
             return super().dispatch(request, *args, **kwargs)
 

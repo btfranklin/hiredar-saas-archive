@@ -5,7 +5,7 @@ from django.db.models import F
 from django_q.models import Task
 
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
+from apps.job_seekers.models import CandidatePool, JobSeekerProfile
 from apps.recruiters.models import BulkResumeUpload
 from apps.resume_processing.utils.pipeline import process_resume
 
@@ -17,24 +17,24 @@ def process_resume_for_pool(
     file_path: str, pool_id: int, bulk_pk: int
 ) -> dict[str, Any]:
     """
-    Process a resume for an UploadedResumePool.
+    Process a resume for a CandidatePool.
 
     Args:
         file_path: Path to the resume file
-        pool_id: ID of the UploadedResumePool
+        pool_id: ID of the CandidatePool
         bulk_pk: Primary key of the BulkResumeUpload
 
     Returns:
         Dictionary with processing results
     """
     try:
-        resume_pool = UploadedResumePool.objects.get(pk=pool_id)
-    except UploadedResumePool.DoesNotExist:
+        candidate_pool = CandidatePool.objects.get(pk=pool_id)
+    except CandidatePool.DoesNotExist:
         return {"success": False, "error": f"Resume pool with ID {pool_id} not found"}
 
     try:
         # Create a temporary profile owned by the resume pool
-        temp_profile = JobSeekerProfile(uploaded_resume_pool=resume_pool)
+        temp_profile = JobSeekerProfile(candidate_pool=candidate_pool)
         # Save immediately so ``process_resume`` can update it atomically
         temp_profile.save()
 

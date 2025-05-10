@@ -334,7 +334,7 @@ class BulkResumeUpload(models.Model):
 
     def __str__(self) -> str:  # noqa: D401 – admin friendly string
         return (
-            f"ResumePool '{self.name}' – {self.recruiter.user.email} "
+            f"CandidatePool '{self.name}' – {self.recruiter.user.email} "
             f"({self.processed_profiles}/{self.total_files})"
         )
 

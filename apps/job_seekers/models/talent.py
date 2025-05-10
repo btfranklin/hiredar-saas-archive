@@ -1,6 +1,6 @@
 from django.db import models
 
-from .profile import UploadedResumePool
+from .profile import CandidatePool
 
 
 class RoleRecommendation(models.Model):
@@ -40,9 +40,9 @@ class RoleRecommendation(models.Model):
         return f"{self.role_title} for {user_name}"
 
     @property
-    def uploaded_resume_pool(self) -> UploadedResumePool | None:
-        """Access the resume pool through the job_seeker relationship."""
-        return self.job_seeker.uploaded_resume_pool if self.job_seeker else None
+    def candidate_pool(self) -> CandidatePool | None:
+        """Access the candidate pool through the job_seeker relationship."""
+        return self.job_seeker.candidate_pool if self.job_seeker else None
 
 
 class TalentSheet(models.Model):
@@ -96,9 +96,9 @@ class TalentSheet(models.Model):
         return f"Talent Sheet: {user_name}"
 
     @property
-    def uploaded_resume_pool(self) -> UploadedResumePool | None:
-        """Access the resume pool through the job_seeker relationship."""
-        return self.job_seeker.uploaded_resume_pool if self.job_seeker else None
+    def candidate_pool(self) -> CandidatePool | None:
+        """Access the candidate pool through the job_seeker relationship."""
+        return self.job_seeker.candidate_pool if self.job_seeker else None
 
     @property
     def ideal_roles_list(self) -> list[str]:

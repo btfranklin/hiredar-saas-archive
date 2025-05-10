@@ -5,6 +5,8 @@ from django.urls.resolvers import URLPattern
 
 from apps.recruiters.views import (
     BulkResumeUploadView,
+    CandidatePoolDetailView,
+    CandidatePoolListView,
     DashboardView,
     JobOpeningCreateView,
     JobOpeningDeleteView,
@@ -13,14 +15,12 @@ from apps.recruiters.views import (
     JobOpeningListView,
     JobOpeningStatusChangeView,
     JobOpeningTaskStatusView,
-    ResumePoolDetailView,
-    ResumePoolListView,
     SettingsView,
     TextProcessJobOpeningView,
 )
 from apps.recruiters.views.bulk_upload_views import (
-    ResumePoolDeleteView,
-    ResumePoolTalentSheetDetailView,
+    CandidatePoolDeleteView,
+    CandidatePoolTalentSheetDetailView,
 )
 from apps.recruiters.views.credit_views import (
     CheckoutSuccessView,
@@ -76,26 +76,26 @@ urlpatterns: list[URLPattern] = [
     # Full resume pool list page
     path(
         "candidate-pools/",
-        ResumePoolListView.as_view(),
-        name="resume_pool_list",
+        CandidatePoolListView.as_view(),
+        name="candidate_pool_list",
     ),
     # Detail view for processed resume pool
     path(
         "candidate-pools/<int:pk>/",
-        ResumePoolDetailView.as_view(),
-        name="resume_pool_detail",
+        CandidatePoolDetailView.as_view(),
+        name="candidate_pool_detail",
     ),
     # Talent sheet detail for a candidate in a resume pool
     path(
         "candidate-pools/<int:pool_pk>/profiles/<int:pk>/talent-sheet/",
-        ResumePoolTalentSheetDetailView.as_view(),
-        name="resume_pool_profile_talent_sheet_detail",
+        CandidatePoolTalentSheetDetailView.as_view(),
+        name="candidate_pool_profile_talent_sheet_detail",
     ),
     # Delete view for processed resume pool
     path(
         "candidate-pools/<int:pk>/delete/",
-        ResumePoolDeleteView.as_view(),
-        name="resume_pool_delete",
+        CandidatePoolDeleteView.as_view(),
+        name="candidate_pool_delete",
     ),
     # Credits / subscription routes
     path("credits/", CreditsView.as_view(), name="credits"),

@@ -63,9 +63,9 @@ def process_resume(
     # Get a profile identifier that works for logging
     if profile.user_owner:
         profile_identifier = f"Profile #{profile.pk} (User: {profile.user_owner.email})"
-    elif profile.uploaded_resume_pool:
+    elif profile.candidate_pool:
         profile_identifier = (
-            f"Profile #{profile.pk} (Pool: {profile.uploaded_resume_pool.name})"
+            f"Profile #{profile.pk} (Pool: {profile.candidate_pool.name})"
         )
     else:
         profile_identifier = f"Profile #{profile.pk} (Orphaned)"

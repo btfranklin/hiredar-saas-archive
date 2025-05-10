@@ -2,6 +2,7 @@
 
 from typing import cast
 
+from allauth.account.models import EmailAddress
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -69,11 +70,15 @@ class AuthenticationViewTests(TestCase):
         """Test user login process."""
         # Create a user first
         user_manager = cast(UserManager, User.objects)
-        user_manager.create_user(
+        user = user_manager.create_user(
             email=self.job_seeker_data["email"],
             password=self.job_seeker_data["password1"],
             name=self.job_seeker_data["name"],
             user_type=self.job_seeker_data["user_type"],
+        )
+        # Mark the user's email as verified to satisfy mandatory email checks
+        EmailAddress.objects.create(
+            user=user, email=user.email, primary=True, verified=True
         )
 
         # Try logging in

@@ -5,7 +5,7 @@ Service for managing job seeker profiles.
 from django.db import transaction
 
 from apps.authentication.models import User
-from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
+from apps.job_seekers.models import CandidatePool, JobSeekerProfile
 
 
 class ProfileManager:
@@ -13,11 +13,11 @@ class ProfileManager:
 
     @staticmethod
     def get_profile(owner):
-        """Get a job seeker profile for an owner (User or UploadedResumePool)."""
+        """Get a job seeker profile for an owner (User or CandidatePool)."""
         if isinstance(owner, User):
             return JobSeekerProfile.objects.filter(user_owner=owner).first()
-        if isinstance(owner, UploadedResumePool):
-            return JobSeekerProfile.objects.filter(uploaded_resume_pool=owner).first()
+        if isinstance(owner, CandidatePool):
+            return JobSeekerProfile.objects.filter(candidate_pool=owner).first()
         return None
 
     @staticmethod
@@ -27,7 +27,7 @@ class ProfileManager:
         Create or update a job seeker profile.
 
         Args:
-            owner: The owner (User or UploadedResumePool) to create/update the profile for
+            owner: The owner (User or CandidatePool) to create/update the profile for
             profile_data: Dictionary of profile data
 
         Returns:
@@ -38,8 +38,8 @@ class ProfileManager:
             # Create new profile with correct foreign key
             if isinstance(owner, User):
                 profile = JobSeekerProfile(user_owner=owner)
-            elif isinstance(owner, UploadedResumePool):
-                profile = JobSeekerProfile(uploaded_resume_pool=owner)
+            elif isinstance(owner, CandidatePool):
+                profile = JobSeekerProfile(candidate_pool=owner)
             else:
                 raise ValueError(f"Unsupported owner type: {type(owner)}")
 
@@ -49,25 +49,25 @@ class ProfileManager:
             if hasattr(profile, field):
                 setattr(profile, field, value)
             # Handle candidate_name specifically for pool-owned profiles
-            elif field == "candidate_name" and isinstance(owner, UploadedResumePool):
+            elif field == "candidate_name" and isinstance(owner, CandidatePool):
                 setattr(profile, "candidate_name", value)
 
         profile.save()
         return profile
 
     @staticmethod
-    def create_or_update_profile_for_resume_pool(resume_pool, profile_data):
+    def create_or_update_profile_for_candidate_pool(candidate_pool, profile_data):
         """
-        Create or update a job seeker profile for a resume pool.
+        Create or update a job seeker profile for a candidate pool.
 
         Args:
-            resume_pool: UploadedResumePool instance
+            candidate_pool: CandidatePool instance
             profile_data: Dictionary of profile data
 
         Returns:
             The created or updated job seeker profile
         """
-        return ProfileManager.create_or_update_profile(resume_pool, profile_data)
+        return ProfileManager.create_or_update_profile(candidate_pool, profile_data)
 
     @staticmethod
     def format_skills(skills_list):

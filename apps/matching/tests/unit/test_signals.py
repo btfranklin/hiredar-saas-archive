@@ -10,12 +10,16 @@ from unittest.mock import call, patch
 from django.apps import apps
 from django.test import TestCase
 
+import apps.matching.signals as signals
 from apps.matching.signals import (
     handle_job_opening_delete,
     handle_job_opening_save,
     handle_talent_sheet_delete,
     handle_talent_sheet_save,
 )
+
+# Monkey-patch transaction.on_commit to execute callbacks immediately in tests
+signals.transaction.on_commit = lambda func: func()
 
 
 class JobOpeningSignalTests(TestCase):

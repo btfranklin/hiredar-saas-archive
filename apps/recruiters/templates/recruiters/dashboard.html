@@ -32,16 +32,16 @@
                 </div>
             </div>
             
-            <!-- Resume Pools -->
+            <!-- Candidate Pools -->
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">Candidate Pools</h2>
-                    <a href="{% url 'recruiters:resume_pool_list' %}" class="text-primary hover:underline">View all</a>
+                    <a href="{% url 'recruiters:candidate_pool_list' %}" class="text-primary hover:underline">View all</a>
                 </div>
                 
-                {% if resume_pools %}
+                {% if candidate_pools %}
                     <div class="space-y-4" hx-on:htmx:afterRequest="document.querySelectorAll('.modal-toggle:checked').forEach(el => el.checked = false); document.documentElement.classList.remove('modal-open')">
-                        {% for pool in resume_pools %}
+                        {% for pool in candidate_pools %}
                             <div id="pool-{{ pool.pk }}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
                                 <div class="card-body p-4 flex justify-between items-start">
                                     <div class="space-y-1 text-left">
@@ -50,7 +50,7 @@
                                         <p class="text-sm">{{ pool.job_seeker_profiles.count }} candidates in pool</p>
                                     </div>
                                     <div class="flex space-x-2">
-                                        <a href="{% url 'recruiters:resume_pool_detail' pool.pk %}" class="btn btn-sm btn-primary">Details</a>
+                                        <a href="{% url 'recruiters:candidate_pool_detail' pool.pk %}" class="btn btn-sm btn-primary">Details</a>
                                     </div>
                                 </div>
                             </div>
@@ -59,7 +59,7 @@
                 {% else %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle mr-2"></i>
-                        <span>No resume pools found.</span>
+                        <span>No candidate pools found.</span>
                         <a href="{% url 'recruiters:bulk_upload_create' %}" class="btn btn-sm btn-primary ml-4">Upload Pool</a>
                     </div>
                 {% endif %}

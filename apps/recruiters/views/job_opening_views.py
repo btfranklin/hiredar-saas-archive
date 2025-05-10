@@ -27,6 +27,7 @@ from django.views.generic import (
 )
 
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models import CandidatePool
 from apps.matching.models import CandidateMatch
 from apps.recruiters.models import JobOpening
 
@@ -189,9 +190,7 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
             # Only show candidate pools and matches to the job owner
             if job_opening.recruiter.user == self.request.user:
                 # Load the recruiter's pools
-                from apps.job_seekers.models import UploadedResumePool
-
-                context["candidate_pools"] = UploadedResumePool.objects.filter(
+                context["candidate_pools"] = CandidatePool.objects.filter(
                     recruiter=self.request.user
                 )
                 # Determine selected pool (from query param or stored value)
@@ -207,7 +206,7 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 if selected_pool_id != 0:
                     matches = CandidateMatch.objects.filter(
                         job_opening=job_opening,
-                        talent_sheet__job_seeker__uploaded_resume_pool_id=selected_pool_id,
+                        talent_sheet__job_seeker__candidate_pool_id=selected_pool_id,
                     )
                 else:
                     matches = CandidateMatch.objects.none()

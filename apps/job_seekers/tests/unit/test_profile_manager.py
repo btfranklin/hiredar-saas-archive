@@ -3,7 +3,7 @@
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.job_seekers.models import JobSeekerProfile, UploadedResumePool
+from apps.job_seekers.models import JobSeekerProfile, CandidatePool
 from apps.job_seekers.services.profile_manager import ProfileManager
 
 
@@ -79,19 +79,19 @@ class ProfileManagerDatabaseTests(TestCase):
 
         self.assertEqual(updated.professional_summary, "Updated summary")
 
-    def test_create_profile_for_resume_pool(self):
+    def test_create_profile_for_candidate_pool(self):
         recruiter = User.objects.create_user(  # type: ignore[attr-defined]
             email="recruit@example.com",
             password="rpw",
             user_type="recruiter",
         )
 
-        pool = UploadedResumePool.objects.create(
+        pool = CandidatePool.objects.create(
             recruiter=recruiter, name="May Uploads"
         )
 
         data = {"skills": "C++, Embedded"}
 
         profile = ProfileManager.create_or_update_profile(pool, data)
-        self.assertEqual(profile.uploaded_resume_pool, pool)
+        self.assertEqual(profile.candidate_pool, pool)
         self.assertEqual(profile.skills, "C++, Embedded")
