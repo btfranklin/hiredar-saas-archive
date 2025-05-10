@@ -8,7 +8,13 @@ including the home page and test endpoints.
 from django.http import HttpRequest, HttpResponse
 from django.urls import path
 
-from apps.core.views import HomeView
+from apps.core.views import (
+    AboutView,
+    ContactView,
+    HomeView,
+    PrivacyPolicyView,
+    TermsOfServiceView,
+)
 
 app_name = "core"
 
@@ -28,5 +34,9 @@ def test_view(request: HttpRequest) -> HttpResponse:
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("about/", AboutView.as_view(), name="about"),
+    path("contact/", ContactView.as_view(), name="contact"),
+    path("privacy/", PrivacyPolicyView.as_view(), name="privacy"),
+    path("terms/", TermsOfServiceView.as_view(), name="terms"),
     path("test/", test_view, name="test"),
 ]

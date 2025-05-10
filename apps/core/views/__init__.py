@@ -1,3 +1,10 @@
-from .index import HomeView
+__all__ = [
+    "HomeView",
+    "AboutView",
+    "ContactView",
+    "PrivacyPolicyView",
+    "TermsOfServiceView",
+]
 
-__all__ = ['HomeView']
+from .index import HomeView
+from .info import AboutView, ContactView, PrivacyPolicyView, TermsOfServiceView

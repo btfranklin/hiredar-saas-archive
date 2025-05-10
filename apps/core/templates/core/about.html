@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}About Us | Hiredar{% endblock %}
+{% block content %}
+<section class="container mx-auto px-4 py-16 max-w-4xl">
+  <h1 class="text-4xl font-bold mb-6 text-center">Who We Are</h1>
+  <p class="mb-4 text-lg">Hiredar is an AI-powered hiring platform headquartered in sunny Phoenix, Arizona. We believe great careers begin with transparent, human-centred matches—not keyword filters or ghost job listings.</p>
+  <h2 class="text-2xl font-semibold mt-8 mb-3">Our Mission</h2>
+  <p class="mb-4">To eliminate the busy-work of recruiting so people can focus on relationships, not résumés. We turn unstructured data into clear, data-backed insights that surface hidden talent and speed up hiring for everyone involved.</p>
+  <h2 class="text-2xl font-semibold mt-8 mb-3">What Makes Us Different</h2>
+  <ul class="list-disc ml-6 space-y-2">
+    <li><strong>No Ghost Jobs:</strong> Every role and candidate is real. Period.</li>
+    <li><strong>Explainable AI:</strong> Our multi-lens matching engine tells you <em>why</em> a candidate appears, not just their rank.</li>
+    <li><strong>Multiple Candidate Views:</strong> See top matches and wildcard candidates to avoid missing hidden gems.</li>
+    <li><strong>Recruiter-First Design:</strong> Built by recruiters, for recruiters—so workflows feel familiar and fast.</li>
+  </ul>
+  <h2 class="text-2xl font-semibold mt-8 mb-3">How It Started</h2>
+  <p class="mb-4">After years of watching talented people get lost in résumé piles, our founders set out to build a smarter system. What began as an internal tool quickly proved invaluable to other recruiters—and Hiredar was born.</p>
+  <h2 class="text-2xl font-semibold mt-8 mb-3">Looking Ahead</h2>
+  <p class="mb-4">Today we serve professional recruiters who need results, fast. Tomorrow we will open the doors to job seekers and hiring managers alike—with the same commitment to clarity, fairness, and speed.</p>
+  <p class="mt-10 text-center">Have questions? <a href="{% url 'core:contact' %}" class="link">Contact our team</a>.</p>
+</section>
+{% endblock %} 
