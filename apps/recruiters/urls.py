@@ -75,25 +75,25 @@ urlpatterns: list[URLPattern] = [
     path("bulk-upload/", BulkResumeUploadView.as_view(), name="bulk_upload_create"),
     # Full resume pool list page
     path(
-        "resume-pools/",
+        "candidate-pools/",
         ResumePoolListView.as_view(),
         name="resume_pool_list",
     ),
     # Detail view for processed resume pool
     path(
-        "resume-pools/<int:pk>/",
+        "candidate-pools/<int:pk>/",
         ResumePoolDetailView.as_view(),
         name="resume_pool_detail",
     ),
     # Talent sheet detail for a candidate in a resume pool
     path(
-        "resume-pools/<int:pool_pk>/profiles/<int:pk>/talent-sheet/",
+        "candidate-pools/<int:pool_pk>/profiles/<int:pk>/talent-sheet/",
         ResumePoolTalentSheetDetailView.as_view(),
         name="resume_pool_profile_talent_sheet_detail",
     ),
     # Delete view for processed resume pool
     path(
-        "resume-pools/<int:pk>/delete/",
+        "candidate-pools/<int:pk>/delete/",
         ResumePoolDeleteView.as_view(),
         name="resume_pool_delete",
     ),
