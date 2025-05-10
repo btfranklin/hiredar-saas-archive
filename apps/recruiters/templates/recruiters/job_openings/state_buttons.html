@@ -1,0 +1,22 @@
+<div hx-target="this" class="flex flex-col items-end">
+    <div class="badge mb-2 {% if job_opening.status == 'active' %}badge-success{% elif job_opening.status == 'draft' %}badge-warning{% else %}badge-neutral{% endif %}">
+        {{ job_opening.get_status_display }}
+    </div>
+    <div class="flex gap-2">
+        {% if job_opening.status == 'draft' %}
+            <button hx-post="{% url 'recruiters:job_openings_status_change' job_opening.id 'activate' %}" hx-swap="outerHTML" class="btn btn-sm btn-success">
+                Activate
+            </button>
+            <button hx-post="{% url 'recruiters:job_openings_status_change' job_opening.id 'close' %}" hx-swap="outerHTML" class="btn btn-sm btn-error">
+                Close
+            </button>
+        {% elif job_opening.status == 'active' %}
+            <button hx-post="{% url 'recruiters:job_openings_status_change' job_opening.id 'to_draft' %}" hx-swap="outerHTML" class="btn btn-sm btn-warning">
+                To Draft
+            </button>
+            <button hx-post="{% url 'recruiters:job_openings_status_change' job_opening.id 'close' %}" hx-swap="outerHTML" class="btn btn-sm btn-error">
+                Close
+            </button>
+        {% endif %}
+    </div>
+</div> 

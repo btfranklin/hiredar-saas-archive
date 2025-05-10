@@ -9,9 +9,15 @@ from typing import Any, ClassVar, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponseBase, HttpResponseRedirect
-from django.shortcuts import redirect
+from django.http import (
+    HttpRequest,
+    HttpResponseBadRequest,
+    HttpResponseBase,
+    HttpResponseRedirect,
+)
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -384,3 +390,30 @@ class JobOpeningDeleteView(LoginRequiredMixin, DeleteView):
             return redirect("core:home")
 
         return super().dispatch(request, *args, **kwargs)
+
+
+class JobOpeningStatusChangeView(LoginRequiredMixin, View):
+    """View to change the status of a job opening via HTMX."""
+
+    def post(self, request: HttpRequest, pk: int, action: str) -> HttpResponseBase:
+        user = cast(AuthenticatedUser, request.user)
+        job_opening = get_object_or_404(
+            JobOpening, pk=pk, recruiter=user.recruiter_profile
+        )
+        if action == "activate":
+            new_status = "active"
+        elif action == "to_draft":
+            new_status = "draft"
+        elif action == "close":
+            new_status = "closed"
+        else:
+            return HttpResponseBadRequest("Invalid action")
+        job_opening.status = new_status
+        job_opening.save(update_fields=["status"])
+        if request.headers.get("HX-Request") == "true":
+            return render(
+                request,
+                "recruiters/job_openings/state_buttons.html",
+                {"job_opening": job_opening},
+            )
+        return redirect("recruiters:job_openings_detail", pk=pk)

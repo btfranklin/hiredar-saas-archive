@@ -26,16 +26,12 @@
                         </div>
                     </div>
                     
-                    <div class="flex flex-col items-end">
-                        {% if request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
-                            <div class="badge mb-2 
-                                {% if job_opening.status == 'active' %}badge-success
-                                {% elif job_opening.status == 'draft' %}badge-warning
-                                {% else %}badge-neutral{% endif %}">
-                                {{ job_opening.get_status_display }}
+                    {% if request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
+                        <div class="flex flex-col items-end">
+                            <div hx-target="this" hx-swap="outerHTML">
+                                {% include 'recruiters/job_openings/state_buttons.html' %}
                             </div>
-                            
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 mt-2">
                                 <a href="{% url 'recruiters:job_openings_edit' job_opening.id %}" class="btn btn-sm btn-outline">
                                     <i class="fas fa-edit mr-1"></i> Edit
                                 </a>
@@ -43,14 +39,16 @@
                                     <i class="fas fa-trash mr-1"></i> Delete
                                 </a>
                             </div>
-                        {% endif %}
-                        
-                        {% if request.user.user_type == 'job_seeker' %}
+                        </div>
+                    {% endif %}
+
+                    {% if request.user.user_type == 'job_seeker' %}
+                        <div class="flex flex-col items-end">
                             <button class="btn btn-primary btn-lg">
                                 <i class="fas fa-paper-plane mr-2"></i> Apply Now
                             </button>
-                        {% endif %}
-                    </div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
             

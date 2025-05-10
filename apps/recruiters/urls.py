@@ -11,6 +11,7 @@ from apps.recruiters.views import (
     JobOpeningDetailView,
     JobOpeningEditView,
     JobOpeningListView,
+    JobOpeningStatusChangeView,
     JobOpeningTaskStatusView,
     ResumePoolDetailView,
     ResumePoolListView,
@@ -63,6 +64,12 @@ urlpatterns: list[URLPattern] = [
         "job-openings/<int:pk>/delete/",
         JobOpeningDeleteView.as_view(),
         name="job_openings_delete",
+    ),
+    # Job opening status change
+    path(
+        "job-openings/<int:pk>/status/<str:action>/",
+        JobOpeningStatusChangeView.as_view(),
+        name="job_openings_status_change",
     ),
     # Bulk resume upload
     path("bulk-upload/", BulkResumeUploadView.as_view(), name="bulk_upload_create"),

@@ -22,6 +22,7 @@ from apps.recruiters.views.job_opening_views import (
     JobOpeningDetailView,
     JobOpeningEditView,
     JobOpeningListView,
+    JobOpeningStatusChangeView,
 )
 
 # For backwards compatibility, expose all views at the module level
@@ -33,6 +34,7 @@ __all__ = [
     "JobOpeningDetailView",
     "JobOpeningEditView",
     "JobOpeningDeleteView",
+    "JobOpeningStatusChangeView",
     "TextProcessJobOpeningView",
     "JobOpeningTaskStatusView",
     "BulkResumeUploadView",
