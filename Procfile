@@ -1,4 +1,2 @@
-web: gunicorn hiredar.wsgi --log-file -
-
-# Optional: ensure collectstatic runs automatically during Sevalla's build phase.
-release: python manage.py collectstatic --noinput 
+web: gunicorn hiredar.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 4
+release: python manage.py migrate && python manage.py collectstatic --noinput
