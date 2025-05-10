@@ -38,16 +38,45 @@ def process_resume_for_pool(
         # Save immediately so ``process_resume`` can update it atomically
         temp_profile.save()
 
-        # Run the unified resume-processing pipeline without progress-tracker integration
-        # to avoid noisy "Progress tracker not found" logs for bulk uploads
+        # Run the resume-processing pipeline
         result = process_resume(file_path, temp_profile, None)
-        if not result.get("success", False):
-            return {"success": False, "error": result.get("message", "Failed to process resume")}  # type: ignore
 
-        resume_data = result.get("profile_data", {})
+        # If the pipeline itself reported failure, clean up and exit early
+        if not result.get("success", False):
+            # Delete the temporary – and still blank – profile so we don't keep junk rows
+            temp_profile.delete()
+            # Mark this file as processed (even though it failed) so we don't hang the bulk record
+            BulkResumeUpload.objects.filter(pk=bulk_pk).update(
+                processed_profiles=F("processed_profiles") + 1
+            )
+            return {
+                "success": False,
+                "error": result.get("message", "Failed to process resume"),  # type: ignore
+            }
+
+        resume_data = result.get("profile_data", {}) or {}
+
+        # Sanity-check the extracted data – avoid keeping junk profiles
+        personal = resume_data.get("personal_details", {}) or {}
+
+        # Heuristic: if we did not extract at least a candidate name **or** any skills,
+        # consider this resume unusable and discard the profile.  This prevents blank
+        # profiles from polluting the candidate pool.
+        has_minimum_data = bool(personal.get("name")) or bool(resume_data.get("skills"))
+
+        if not has_minimum_data:
+            # Nothing meaningful was parsed – clean up
+            temp_profile.delete()
+            # Mark this file as processed (even though it failed) so we don't hang the bulk record
+            BulkResumeUpload.objects.filter(pk=bulk_pk).update(
+                processed_profiles=F("processed_profiles") + 1
+            )
+            return {
+                "success": False,
+                "error": "Insufficient data extracted from resume (no name or skills)",
+            }
 
         # Map parsed_data into profile_data using the correct keys
-        personal = resume_data.get("personal_details", {}) or {}
         profile_data = {
             "skills": resume_data.get("skills", ""),
             "experience": resume_data.get("experience", ""),
@@ -69,12 +98,13 @@ def process_resume_for_pool(
         temp_profile.save()
         profile = temp_profile
 
-        # Schedule LLM-powered TalentSheet generation for this pool profile
-        async_task(
-            "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
-            profile.pk,
-            task_name=f"generate_talent_sheet_{profile.pk}",
-        )
+        # Schedule LLM-powered TalentSheet generation **only** if we have resume XML.
+        if profile.resume_xml:
+            async_task(
+                "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+                profile.pk,
+                task_name=f"generate_talent_sheet_{profile.pk}",
+            )
 
         # Update bulk upload processed_profiles count
         BulkResumeUpload.objects.filter(pk=bulk_pk).update(
