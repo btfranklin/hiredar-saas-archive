@@ -27,7 +27,7 @@
                     </div>
                     
                     {% if request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
-                        <div class="flex flex-col items-end">
+                        <div id="status-actions" class="flex flex-col items-end">
                             <div hx-target="this" hx-swap="outerHTML">
                                 {% include 'recruiters/job_openings/state_buttons.html' %}
                             </div>
@@ -88,5 +88,20 @@
             original.classList.add('hidden');
         }
     }
+</script>
+<script>
+  // After a status-change HTMX request, refresh the candidate tab if active
+  document.body.addEventListener('htmx:afterRequest', function(evt) {
+    const path = evt.detail.requestConfig.path;
+    if (path.includes('/status/')) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'candidates') {
+        const pool = params.get('pool_id') || 0;
+        const section = params.get('section') || 'holistic';
+        const url = `${window.location.pathname}?tab=candidates&pool_id=${pool}&section=${section}`;
+        htmx.ajax('GET', url, {target: '#tab-content', swap: 'innerHTML'});
+      }
+    }
+  });
 </script>
 {% endblock %} 
