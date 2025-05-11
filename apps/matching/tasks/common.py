@@ -6,6 +6,7 @@ This module contains shared functions and utilities used by multiple task module
 
 import logging
 import os
+from functools import lru_cache
 from typing import Any
 
 from django.conf import settings  # Import Django settings
@@ -15,19 +16,41 @@ from pinecone.openapi_support.exceptions import NotFoundException, PineconeExcep
 
 logger = logging.getLogger(__name__)
 
-# Initialize clients (these should be initialized once)
-# API Keys are typically handled directly by client libraries
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-pinecone_client = Pinecone(
-    api_key=os.getenv("PINECONE_API_KEY"),
-    project_name=settings.PINECONE_PROJECT_NAME,  # Use settings
-)
+# -----------------------------------------------------------------------------
+# Lazy client factories
+# -----------------------------------------------------------------------------
 
-# Initialize index reference but don't connect yet
-# Read configuration from Django settings
+
+@lru_cache(maxsize=1)
+def get_openai_client() -> OpenAI | None:
+    """Return a singleton OpenAI client or *None* if the API key is absent."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning(
+            "OPENAI_API_KEY is not set; OpenAI features are disabled during this run"
+        )
+        return None
+
+    return OpenAI(api_key=api_key)
+
+
+@lru_cache(maxsize=1)
+def get_pinecone_client() -> Pinecone | None:
+    """Return a singleton Pinecone client or *None* if the API key is absent."""
+    api_key = os.getenv("PINECONE_API_KEY")
+    if not api_key:
+        logger.warning(
+            "PINECONE_API_KEY is not set; Pinecone features are disabled during this run"
+        )
+        return None
+
+    return Pinecone(api_key=api_key, project_name=settings.PINECONE_PROJECT_NAME)
+
+
+# Configuration from Django settings
 index_name = settings.PINECONE_INDEX_NAME
 index_host = settings.PINECONE_INDEX_HOST
-DIMENSIONS = settings.PINECONE_DIMENSIONS  # Already an int in settings
+DIMENSIONS = settings.PINECONE_DIMENSIONS
 
 
 def get_index() -> Any:
@@ -44,12 +67,14 @@ def get_index() -> Any:
         NotFoundException: If the index doesn't exist when this function is called
     """
     try:
-        # If index host is provided (recommended for production), use it directly
-        if index_host:
-            return pinecone_client.Index(host=index_host)
+        client = get_pinecone_client()
+        if client is None:
+            raise RuntimeError("Pinecone client unavailable; missing API key")
 
-        # Otherwise fall back to index name (adds extra round trip, use in development only)
-        return pinecone_client.Index(index_name)
+        if index_host:
+            return client.Index(host=index_host)
+
+        return client.Index(index_name)
     except NotFoundException:
         logger.warning(
             "Pinecone index '%s' not found. "
@@ -73,10 +98,9 @@ def get_index_host() -> str:
         Exception: If the index doesn't exist or can't be described
     """
     # Use the REST client for admin operations
-    admin_client = Pinecone(
-        api_key=os.getenv("PINECONE_API_KEY"),  # Keep API key direct
-        project_name=settings.PINECONE_PROJECT_NAME,  # Use settings
-    )
+    admin_client = get_pinecone_client()
+    if admin_client is None:
+        raise RuntimeError("Pinecone client unavailable; missing API key")
 
     host = admin_client.describe_index(index_name).host
     logger.info("Pinecone index '%s' host URL: %s", index_name, host)
@@ -141,8 +165,11 @@ def get_embedding(text: str) -> list[float]:
         Exception: If the OpenAI API call fails
     """
     try:
-        # Using the current OpenAI client API
-        response = openai_client.embeddings.create(
+        client = get_openai_client()
+        if client is None:
+            raise RuntimeError("OpenAI client unavailable; missing API key")
+
+        response = client.embeddings.create(
             input=text,
             model=settings.MATCHING_EMBEDDING_MODEL,  # Use settings
         )
