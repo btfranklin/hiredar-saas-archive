@@ -42,6 +42,16 @@ ALLOWED_HOSTS = [
     for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 ]
 
+# Trust the X-Forwarded-Proto header from the load balancer so Django knows it's HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Allow CSRF for our custom domain(s)
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{host}"
+    for host in ALLOWED_HOSTS
+    if host not in ("localhost", "127.0.0.1")
+]
+
 #
 # Storage configuration
 #
