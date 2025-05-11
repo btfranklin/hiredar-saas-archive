@@ -17,7 +17,6 @@ COPY tailwind.config.js ./
 #  are added, so the image size doesn't increase meaningfully.)
 # ------------------------------------------------------------------
 COPY apps ./apps
-COPY static/js ./static/js
 
 COPY assets ./assets
 
