@@ -34,11 +34,10 @@ RUN pip install --upgrade pip pdm
 #    can be leveraged when application code changes but deps remain the same.
 COPY pyproject.toml pdm.lock ./
 
-# 3) Disable PDM virtualenv so dependencies install into container Python env
-RUN pdm config python.use_venv false
-
-# 4) Install production dependencies via PDM
-RUN pdm install --prod
+# 3) Export production dependencies to a requirements file and install them
+RUN pdm export --prod --without-hashes -o /tmp/requirements.txt \
+    && pip install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
 
 # ----------------------------------------------------------------------------
 # Copy application source and pre-built assets
