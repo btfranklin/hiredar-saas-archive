@@ -2,9 +2,9 @@
 FROM node:20-alpine AS assets
 WORKDIR /app
 
-# Install only the packages we need for the CSS build
+# Install all deps (including dev) so Tailwind CLI is present
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Copy Tailwind source and config
 COPY tailwind.config.js ./
