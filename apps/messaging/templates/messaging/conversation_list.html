@@ -25,7 +25,7 @@
                                     <div class="bg-base-100 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                                         <a href="{% url 'messaging:conversation_detail' conversation.id %}" class="block">
                                             <div class="flex items-center gap-4">
-                                                <div class="avatar placeholder">
+                                                <div class="avatar avatar-placeholder">
                                                     <div class="bg-neutral text-neutral-content rounded-full w-12">
                                                         <span>{{ conversation.other_participant.get_initials }}</span>
                                                     </div>
@@ -111,7 +111,7 @@
                                             {% if not notification.is_read %}
                                                 <span class="indicator-item badge badge-primary badge-xs"></span>
                                             {% endif %}
-                                            <div class="avatar placeholder">
+                                            <div class="avatar avatar-placeholder">
                                                 <div class="bg-neutral text-neutral-content rounded-full w-8">
                                                     <span class="text-xs">{{ notification.user.get_initials }}</span>
                                                 </div>

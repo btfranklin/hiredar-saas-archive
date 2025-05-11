@@ -32,7 +32,7 @@
             <div class="space-y-4" id="notifications-container">
                 {% for notification in notifications %}
                     <div class="bg-base-100 p-4 rounded-lg shadow-sm flex items-start gap-4 {% if not notification.is_read %}border-l-4 border-primary{% endif %}">
-                        <div class="avatar placeholder">
+                        <div class="avatar avatar-placeholder">
                             <div class="bg-neutral text-neutral-content rounded-full w-10">
                                 <span class="text-xs">{{ notification.user.get_initials }}</span>
                             </div>

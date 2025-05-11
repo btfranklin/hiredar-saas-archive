@@ -1,7 +1,7 @@
 {% load static %}
 
 <div id="tabs-container">
-  <div role="tablist" class="tabs tabs-boxed mb-6">
+  <div role="tablist" class="tabs tabs-box mb-6">
     <a role="tab"
        class="tab tab-lg {% if tab|default:'details' == 'details' %}tab-active{% endif %}"
        hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=details"

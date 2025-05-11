@@ -1,7 +1,7 @@
 {% load matching_filters %}
 
 {# Tabs for sections #}
-<div class="tabs tabs-boxed mb-6">
+<div class="tabs tabs-box mb-6">
     <a class="tab tab-lg {% if section == 'holistic' %}tab-active{% endif %}" href="{% if is_tab %}?tab=candidates&section=holistic{% else %}?section=holistic{% endif %}">
         <i class="fas fa-star mr-2"></i> Holistic <span class="badge badge-ghost ml-2">{{ holistic_count }}</span>
     </a>

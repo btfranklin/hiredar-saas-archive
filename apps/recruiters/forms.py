@@ -9,3 +9,20 @@ class BulkResumeUploadForm(forms.ModelForm):
     class Meta:
         model = BulkResumeUpload
         fields = ["name", "zip_file"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "input input-bordered w-full",
+                    "placeholder": "e.g. Summer 2024 Candidates",
+                }
+            ),
+            "zip_file": forms.ClearableFileInput(
+                attrs={
+                    "class": "file-input file-input-bordered file-input-primary w-full",
+                }
+            ),
+        }
+        labels = {
+            "name": "Pool Name",
+            "zip_file": "ZIP file of PDF resumes",
+        }

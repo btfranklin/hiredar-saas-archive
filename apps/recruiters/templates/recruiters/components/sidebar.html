@@ -5,7 +5,7 @@
             {% if user.profile_picture %}
                 <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="w-20 h-20 rounded-full object-cover mb-4">
             {% else %}
-                <div class="avatar placeholder mb-4">
+                <div class="avatar avatar-placeholder mb-4">
                     <div class="bg-neutral text-neutral-content rounded-full w-20">
                         <span class="text-xl">{{ user.get_initials }}</span>
                     </div>

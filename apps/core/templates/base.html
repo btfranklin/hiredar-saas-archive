@@ -55,12 +55,6 @@
         })();
     </script>
     
-    <!-- TailwindCSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- DaisyUI -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
-    
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
     
@@ -146,6 +140,9 @@
         }
     </style>
     
+    <!-- Compiled Tailwind + DaisyUI -->
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet" />
+    
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen flex flex-col bg-base-100">
@@ -217,7 +214,7 @@
                                 {% endwith %}
                             </div>
                         </div>
-                        <div tabindex="0" class="dropdown-content card card-compact w-64 p-2 shadow bg-base-100 z-[1]">
+                        <div tabindex="0" class="dropdown-content card card-sm w-64 p-2 shadow bg-base-100 z-[1]">
                             <div class="card-body">
                                 <h3 class="font-bold text-lg">Notifications</h3>
                                 <div class="divider my-0"></div>
@@ -255,7 +252,7 @@
                     
                     <!-- User Menu -->
                     <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar avatar-placeholder">
                             <div class="bg-neutral text-neutral-content rounded-full w-10">
                                 <span>{{ user.get_initials }}</span>
                             </div>

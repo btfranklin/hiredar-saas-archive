@@ -1,0 +1,31 @@
+{
+  "name": "hiredar",
+  "version": "1.0.0",
+  "description": "Our AI-powered job matching platform revolutionizes hiring by eliminating the noise and inefficiencies of traditional job searching. Job seekers create rich, detailed profiles for free, while recruiters pay for access to curated candidate lists tailored to their job postings. Unlike other platforms, our AI engine doesn't just rank candidates—-it explains why they're a great fit, providing recruiters with clear, data-backed insights. We also introduce *multiple candidate views*, including top matches and wildcard selections, ensuring hidden talent isn't overlooked. With *no ghost jobs* and *AI-driven transparency*, we streamline the hiring process for both sides, making recruitment faster, smarter, and fairer.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i ./assets/css/tailwind.css -o ./static/css/tailwind.css --minify",
+    "postinstall": "npx update-browserslist-db@latest --update-db"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/btfranklin/hiredar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/btfranklin/hiredar/issues"
+  },
+  "homepage": "https://github.com/btfranklin/hiredar#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.6",
+    "daisyui": "^5.0.35",
+    "tailwindcss": "^4.1.6"
+  }
+}
