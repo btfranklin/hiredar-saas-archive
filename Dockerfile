@@ -16,9 +16,8 @@ COPY tailwind.config.js ./
 #  copy them _before_ invoking the CLI.  (Only lightweight text files
 #  are added, so the image size doesn't increase meaningfully.)
 # ------------------------------------------------------------------
-COPY apps ./apps               # Django apps – templates under apps/**/templates/
-COPY templates ./templates     # Project-level templates (if any)
-COPY static/js ./static/js     # HTMX/Alpine or other scripts that add classes
+COPY apps ./apps
+COPY static/js ./static/js
 
 COPY assets ./assets
 
