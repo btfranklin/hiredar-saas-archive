@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 from uuid import uuid4
 
 from django.contrib.messages import constants as messages
@@ -181,16 +182,31 @@ WSGI_APPLICATION = "hiredar.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USERNAME") or os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
+# DATABASE configuration: parse full URL if provided, else discrete vars
+db_url = os.getenv("DB_URL") or os.getenv("DATABASE_URL")
+if db_url:
+    parsed = urlparse(db_url)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "HOST": parsed.hostname,
+            "PORT": parsed.port or "",
+            "NAME": parsed.path.lstrip("/"),
+            "USER": parsed.username,
+            "PASSWORD": parsed.password or "",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT"),
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+        }
+    }
 
 
 # Password validation
