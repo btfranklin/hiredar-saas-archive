@@ -67,6 +67,7 @@ class UserManager(BaseUserManager[T]):
 
     def create_superuser(self, email: str, password: str, **extra_fields: Any) -> T:
         """Create and save a superuser."""
+        extra_fields.setdefault("user_type", "admin")
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -208,4 +209,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.is_staff and self.user_type != "admin":
             raise ValidationError(
                 {"is_staff": "Only administrators can have staff privileges."}
+            )
+
+        # Enforce that any user classified as an administrator must also
+        # possess superuser privileges. This prevents the accidental creation
+        # of "limbo" admin accounts that are flagged as administrators in our
+        # business logic but do not actually have the elevated permissions
+        # granted by Django's `is_superuser` flag.
+        if self.user_type == "admin" and not self.is_superuser:
+            raise ValidationError(
+                {
+                    "is_superuser": "Administrator accounts must have superuser privileges (is_superuser=True)."
+                }
             )
