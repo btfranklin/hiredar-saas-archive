@@ -10,6 +10,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -30,7 +31,7 @@ class UserManager(BaseUserManager[T]):
         back‑ends that set their own unusable password afterwards). Allowing
         ``password=None`` would create *active* users that might later be able
         to request a password‑reset token and gain access without any prior
-        credential. To avoid that ambiguity we *require* an explicit password
+        credential. To avoid that ambiguity we *require* an explicit password
         value. Callers that intentionally want a login‑less account should
         instead set an unusable password via
 
@@ -156,6 +157,13 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         verbose_name = _("user")
         verbose_name_plural = _("users")
+        indexes = [
+            GinIndex(
+                name="user_name_trgm",
+                fields=["name"],
+                opclasses=["gin_trgm_ops"],
+            ),
+        ]
 
     def __str__(self) -> str:
         """Return string representation of the user."""

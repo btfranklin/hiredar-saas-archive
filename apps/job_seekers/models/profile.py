@@ -1,3 +1,4 @@
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
 
@@ -116,4 +117,11 @@ class JobSeekerProfile(models.Model):
                 ),
                 name="jobseekerprofile_owner_xor",
             )
+        ]
+        indexes = [
+            GinIndex(
+                name="jobseekerprofile_skills_trgm",
+                fields=["skills"],
+                opclasses=["gin_trgm_ops"],
+            ),
         ]

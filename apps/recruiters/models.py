@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -293,6 +294,20 @@ class JobOpening(models.Model):
             skill.strip()
             for skill in self.required_skills.split(" | ")
             if skill.strip()
+        ]
+
+    class Meta:
+        indexes = [
+            GinIndex(
+                name="jobopening_title_trgm",
+                fields=["title"],
+                opclasses=["gin_trgm_ops"],
+            ),
+            GinIndex(
+                name="jobopening_requiredskills_trgm",
+                fields=["required_skills"],
+                opclasses=["gin_trgm_ops"],
+            ),
         ]
 
 
