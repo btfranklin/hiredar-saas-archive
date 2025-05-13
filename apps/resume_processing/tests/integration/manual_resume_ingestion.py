@@ -187,7 +187,9 @@ class ResumeIngestionTest(ManualTestCase):
             self.assertTrue(
                 ts.promotional_blurb, "Talent sheet is missing promotional blurb"
             )
-            self.assertTrue(ts.skill_overview, "Talent sheet is missing skill overview")
+            self.assertTrue(
+                ts.experience_overview, "Talent sheet is missing experience overview"
+            )
             self.assertTrue(ts.ideal_roles, "Talent sheet is missing ideal roles")
 
     def _create_test_user(self, counter: int) -> tuple[User, JobSeekerProfile]:
@@ -338,8 +340,8 @@ class ResumeIngestionTest(ManualTestCase):
                 </div>
                 
                 <div>
-                    <h4 class="font-semibold text-lg mb-2">Skill Overview</h4>
-                    <p>{ts.skill_overview}</p>
+                    <h4 class="font-semibold text-lg mb-2">Experience Overview</h4>
+                    <p>{ts.experience_overview}</p>
                 </div>
             </div>
             

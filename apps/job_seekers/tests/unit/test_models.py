@@ -145,7 +145,7 @@ class TalentSheetModelTests(TestCase):
         self.talent_sheet = TalentSheet.objects.create(
             job_seeker=self.profile,
             promotional_blurb="Great candidate",
-            skill_overview="Python, Django",
+            experience_overview="Chief Researcher (2015-2017): Led discovery of six biological compounds.",
             ideal_roles="Backend Dev, API Engineer",
             is_published=True,
         )

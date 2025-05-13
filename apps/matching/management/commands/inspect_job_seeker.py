@@ -51,21 +51,26 @@ class Command(BaseCommand):
             )
             self.stdout.write("Please refine your search or select from the list:")
             for i, user in enumerate(users):
-                self.stdout.write(f"{i+1}. {user.name} ({user.email})")
+                self.stdout.write(f"{i+1}. {user.name} ({user.email})")  # type: ignore[attr-defined]
             return
 
-        # Get the user
+        # Get the user (users.exists() verified above)
         user = users.first()
+        if user is None:  # Safety check for static analysis
+            self.stdout.write(
+                self.style.ERROR("Unexpected error: User object was None")
+            )
+            return
         self.stdout.write(
-            self.style.SUCCESS(f"Found job seeker: {user.name} ({user.email})")
+            self.style.SUCCESS(f"Found job seeker: {user.name} ({user.email})")  # type: ignore[attr-defined]
         )
 
         # Check if user has a job seeker profile
         try:
-            profile = user.job_seeker_profile
+            profile = user.job_seeker_profile  # type: ignore[attr-defined]
         except JobSeekerProfile.DoesNotExist:
             self.stdout.write(
-                self.style.ERROR(f"Job seeker {user.name} does not have a profile")
+                self.style.ERROR(f"Job seeker {user.name} does not have a profile")  # type: ignore[attr-defined]
             )
             return
 
@@ -109,8 +114,8 @@ class Command(BaseCommand):
             self.stdout.write("\nPromotional Blurb:")
             self.stdout.write(f"  {talent_sheet.promotional_blurb}")
 
-            self.stdout.write("\nSkill Overview:")
-            self.stdout.write(f"  {talent_sheet.skill_overview}")
+            self.stdout.write("\nExperience Overview:")
+            self.stdout.write(f"  {talent_sheet.experience_overview}")
 
             if talent_sheet.ideal_roles:
                 self.stdout.write("\nIdeal Roles:")
@@ -125,6 +130,6 @@ class Command(BaseCommand):
         except TalentSheet.DoesNotExist:
             self.stdout.write(
                 self.style.WARNING(
-                    f"Job seeker {user.name} does not have a talent sheet"
+                    f"Job seeker {user.name} does not have a talent sheet"  # type: ignore[attr-defined]
                 )
             )

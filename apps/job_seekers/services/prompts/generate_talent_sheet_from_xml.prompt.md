@@ -18,13 +18,21 @@ Output *ONLY* valid, well-formed XML with clear hierarchy. Use this structure:
 ```xml
 <talent_sheet>
   <promotional_blurb>A compelling 3-5 sentence summary highlighting the candidate's unique value proposition, career trajectory, and standout achievements.</promotional_blurb>
-  <skill_overview>A 2-3 paragraph overview focusing on the candidate's technical and soft skills, how they've applied them, and what makes them valuable.</skill_overview>
+  <experience_overview>
+    <!-- One <experience> element per relevant position -->
+    <experience>
+      <position>Chief Researcher</position>
+      <dates>June 2015 - August 2017</dates>
+      <impact>Discovered six new biological compounds. Managed five direct reports.</impact>
+    </experience>
+    <!-- …repeat for other positions as needed (max 5) … -->
+  </experience_overview>
   <ideal_roles>Comma-separated list of roles the candidate would be ideal for, based on their experience and the provided interested roles.</ideal_roles>
 </talent_sheet>
 ```
 
 - The promotional_blurb should be concise but impactful, focusing on what makes this candidate special.
-- The skill_overview should go beyond listing skills to explain how they've been applied and why they matter.
+- Each experience entry should be a single short block sentence or two that surfaces the candidate's quantifiable achievements and leadership highlights.
 - If interested_roles are provided, use them as the basis for ideal_roles. Otherwise, suggest appropriate roles based on their experience.
 </response_format>
 

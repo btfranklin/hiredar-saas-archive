@@ -149,7 +149,7 @@ def parse_talent_sheet_xml(
 
     # Extract required elements
     promotional_blurb_elem = root.find("./promotional_blurb")
-    skill_overview_elem = root.find("./skill_overview")
+    experience_overview_elem = root.find("./experience_overview")
     ideal_roles_elem = root.find("./ideal_roles")
     salary_min_elem = root.find("./salary_min")
 
@@ -157,14 +157,14 @@ def parse_talent_sheet_xml(
     if promotional_blurb_elem is None or not promotional_blurb_elem.text:
         raise ValueError("Missing promotional_blurb element in talent sheet XML")
 
-    if skill_overview_elem is None or not skill_overview_elem.text:
-        raise ValueError("Missing skill_overview element in talent sheet XML")
+    if experience_overview_elem is None or not experience_overview_elem.text:
+        raise ValueError("Missing experience_overview element in talent sheet XML")
 
     # Create TalentSheet instance
     talent_sheet = TalentSheet(
         job_seeker=job_seeker,
         promotional_blurb=promotional_blurb_elem.text.strip(),
-        skill_overview=skill_overview_elem.text.strip(),
+        experience_overview=experience_overview_elem.text.strip(),
         is_published=True,  # Default to published - talent sheets are created and published together
     )
 

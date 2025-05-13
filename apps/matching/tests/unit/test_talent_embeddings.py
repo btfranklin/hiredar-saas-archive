@@ -42,8 +42,13 @@ class TalentSheetEmbeddingTests(TestCase):
         mock_talent_sheet.id = 123
         mock_talent_sheet.is_published = True
         mock_talent_sheet.promotional_blurb = "Experienced developer"
-        mock_talent_sheet.skill_overview = "Python, Django, JavaScript"
+        mock_talent_sheet.experience_overview = (
+            "Chief Researcher (2015-2017): Discovered six new biological compounds "
+            "and managed five direct reports."
+        )
         mock_talent_sheet.ideal_roles = "Backend Developer, Full Stack"
+        mock_talent_sheet.skills = "Python | Django | JavaScript"
+        mock_talent_sheet.qualifications = ""
         # Set up job seeker ID and mock user_owner for naming
         mock_talent_sheet.job_seeker.id = 456
         mock_user_owner = MagicMock()
@@ -62,9 +67,10 @@ class TalentSheetEmbeddingTests(TestCase):
         create_talent_sheet_embeddings(123)
 
         # Assertions
-        # Should be called for all 3 fields in the talent sheet
-        self.assertEqual(mock_get_embedding.call_count, 3)
-        self.assertEqual(mock_upsert.call_count, 3)
+        # Should be called for the 4 populated fields in the talent sheet
+        # (promotional_blurb, skills, experience_overview, ideal_roles)
+        self.assertEqual(mock_get_embedding.call_count, 4)
+        self.assertEqual(mock_upsert.call_count, 4)
 
         # Check one of the calls to verify parameters
         args, kwargs = mock_upsert.call_args_list[0]

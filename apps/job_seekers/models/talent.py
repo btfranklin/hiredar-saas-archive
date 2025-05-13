@@ -59,8 +59,8 @@ class TalentSheet(models.Model):
     promotional_blurb = models.TextField(
         help_text="AI-generated promotional summary highlighting the candidate's unique value proposition"
     )
-    skill_overview = models.TextField(
-        help_text="Concise overview of the candidate's key skills and competencies"
+    experience_overview = models.TextField(
+        help_text="Abbreviated overview of the candidate's recent employment experience and demonstrated impact"
     )
     ideal_roles = models.TextField(
         blank=True,

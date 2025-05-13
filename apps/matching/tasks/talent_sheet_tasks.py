@@ -90,7 +90,7 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
     fields = {
         "Promotional Blurb": talent_sheet.promotional_blurb,
         "Skills": talent_sheet.skills,
-        "Skill Overview": talent_sheet.skill_overview,  # legacy for now
+        "Experience Overview": talent_sheet.experience_overview,
         "Ideal Roles": talent_sheet.ideal_roles,
         "Qualifications": talent_sheet.qualifications,
     }
@@ -179,7 +179,7 @@ def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
         sections = [
             "promotional_blurb",
             "skills",
-            "skill_overview",
+            "experience_overview",
             "ideal_roles",
             "qualifications",
         ]

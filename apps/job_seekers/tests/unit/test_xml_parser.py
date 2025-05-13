@@ -43,7 +43,7 @@ class TalentSheetXMLParserTests(SimpleTestCase):
         xml = (
             "<talent_sheet>"
             "<promotional_blurb>Amazing candidate</promotional_blurb>"
-            "<skill_overview>Python, Django</skill_overview>"
+            "<experience_overview>Chief Researcher (2015-2017): Discovered six new biological compounds and managed five direct reports.</experience_overview>"
             "<ideal_roles>Backend Dev, API Engineer</ideal_roles>"
             "<salary_min>95000</salary_min>"
             "</talent_sheet>"
@@ -52,7 +52,10 @@ class TalentSheetXMLParserTests(SimpleTestCase):
         sheet = parse_talent_sheet_xml(xml)
 
         self.assertEqual(sheet.promotional_blurb, "Amazing candidate")
-        self.assertEqual(sheet.skill_overview, "Python, Django")
+        self.assertEqual(
+            sheet.experience_overview,
+            "Chief Researcher (2015-2017): Discovered six new biological compounds and managed five direct reports.",
+        )
         self.assertEqual(sheet.ideal_roles, "Backend Dev, API Engineer")
         # salary_min is stored as a float by the parser; assert approximate equality
         self.assertAlmostEqual(float(sheet.salary_min), 95000.0)
@@ -61,7 +64,7 @@ class TalentSheetXMLParserTests(SimpleTestCase):
         # No promotional_blurb
         xml = (
             "<talent_sheet>"
-            "<skill_overview>Python</skill_overview>"
+            "<experience_overview>Python</experience_overview>"
             "</talent_sheet>"
         )
         with self.assertRaises(ValueError):

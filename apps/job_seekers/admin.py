@@ -249,7 +249,7 @@ class TalentSheetAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "promotional_blurb",
-                    "skill_overview",
+                    "experience_overview",
                     "ideal_roles",
                     "skills",
                     "qualifications",

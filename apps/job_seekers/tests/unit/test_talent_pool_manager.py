@@ -43,7 +43,7 @@ class TalentPoolToggleTests(TestCase):
         TalentSheet.objects.create(
             job_seeker=self.profile,
             promotional_blurb="Some blurb",
-            skill_overview="Skills...",
+            experience_overview="Chief Researcher (2015-2017): Managed research team.",
             is_published=True,
         )
 
@@ -91,7 +91,7 @@ class RoleInterestToggleTests(TestCase):
         self.sheet = TalentSheet.objects.create(
             job_seeker=self.profile,
             promotional_blurb="Blurb",
-            skill_overview="Skills",
+            experience_overview="Chief Researcher (2015-2017): Managed research team.",
             is_published=True,
         )
 

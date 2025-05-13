@@ -13,9 +13,9 @@ from apps.matching.core.matching import (
     JOB_OVERVIEW,
     JOB_REQUIRED_SKILLS,
     JOB_RESPONSIBILITIES,
+    TALENT_EXPERIENCE_OVERVIEW,
     TALENT_IDEAL_ROLES,
     TALENT_PROMO_BLURB,
-    TALENT_SKILL_OVERVIEW,
     match_job_to_talents,
     match_talent_to_jobs,
 )
@@ -181,7 +181,7 @@ class MatchingFunctionsTests(TestCase):
         # Mock the embedding retrieval for specific sections
         mock_get_talent_embedding.side_effect = lambda talent_id, section: {
             TALENT_PROMO_BLURB: [0.1, 0.2, 0.3],
-            TALENT_SKILL_OVERVIEW: [0.4, 0.5, 0.6],
+            TALENT_EXPERIENCE_OVERVIEW: [0.4, 0.5, 0.6],
             TALENT_IDEAL_ROLES: [0.7, 0.8, 0.9],
         }.get(section)
 
