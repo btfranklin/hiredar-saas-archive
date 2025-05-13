@@ -71,6 +71,16 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
         # Generate talent sheet using LLM
         talent_sheet = generate_talent_sheet(profile, interested_roles)
 
+        # Build qualifications string from education and certifications
+        education = profile.education or ""
+        certifications = profile.certifications or ""
+        qualifications_parts: list[str] = []
+        if education:
+            qualifications_parts.append(education.strip())
+        if certifications:
+            qualifications_parts.append(certifications.strip())
+        qualifications = "\n\n".join(qualifications_parts)
+
         # Create or update the talent sheet with the LLM-generated content
         saved_talent_sheet = TalentPoolManager.create_or_update_talent_sheet(
             profile,
@@ -79,6 +89,7 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
                 "skill_overview": talent_sheet.skill_overview,
                 "ideal_roles": talent_sheet.ideal_roles,
                 "skills": profile.skills or "",
+                "qualifications": qualifications,
                 "personal_tagline": profile.personal_tagline,
                 "is_published": True,  # Publish it now that we have real content
             },

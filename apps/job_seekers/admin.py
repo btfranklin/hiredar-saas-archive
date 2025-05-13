@@ -252,6 +252,7 @@ class TalentSheetAdmin(admin.ModelAdmin):
                     "skill_overview",
                     "ideal_roles",
                     "skills",
+                    "qualifications",
                 )
             },
         ),

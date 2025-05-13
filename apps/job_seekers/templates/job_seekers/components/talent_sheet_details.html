@@ -2,38 +2,54 @@
 <div class="py-2 space-y-5">
     {% if talent_sheet %}
         <!-- Promotional Blurb -->
-        <div class="bg-base-200 p-4 rounded-lg">
-            <h3 class="font-semibold text-md mb-2 text-primary">Professional Overview</h3>
-            <p class="text-sm text-base-content/90 whitespace-pre-line">{{ talent_sheet.promotional_blurb }}</p>
-        </div>
-        
-        <!-- Skills -->
-        <div>
-            <h3 class="font-semibold text-md mb-2 text-primary">Key Skills & Expertise</h3>
-            <div class="bg-base-200 p-4 rounded-lg">
-                <p class="text-sm text-base-content/90 whitespace-pre-line">{{ talent_sheet.skill_overview }}</p>
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Professional Overview</h2>
+                <p class="whitespace-pre-line">{{ talent_sheet.promotional_blurb }}</p>
             </div>
         </div>
         
+        <!-- Skills -->
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Key Skills &amp; Expertise</h2>
+                <p class="whitespace-pre-line">{{ talent_sheet.skill_overview }}</p>
+            </div>
+        </div>
+        
+        {% include 'job_seekers/components/skills_list.html' with skills_list=talent_sheet.job_seeker.skills_list %}
+        
         <!-- Ideal Roles -->
         {% if talent_sheet.ideal_roles %}
-        <div>
-            <h3 class="font-semibold text-md mb-2 text-primary">Ideal Roles</h3>
-            <div class="flex flex-wrap gap-2">
-                {% for role in talent_sheet.ideal_roles_list %}
-                    <span class="badge badge-primary">{{ role }}</span>
-                {% endfor %}
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Ideal Roles</h2>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    {% for role in talent_sheet.ideal_roles_list %}
+                        <span class="badge badge-primary">{{ role }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Qualifications -->
+        {% if talent_sheet.qualifications %}
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Qualifications</h2>
+                <p class="whitespace-pre-line">{{ talent_sheet.qualifications }}</p>
             </div>
         </div>
         {% endif %}
         
         <!-- Minimum Salary -->
         {% if talent_sheet.salary_min %}
-        <div>
-            <h3 class="font-semibold text-md mb-2 text-primary">Salary Expectations</h3>
-            <p class="text-sm bg-base-200 p-3 rounded-lg inline-block">
-                <span class="font-medium">Starting from:</span> ${{ talent_sheet.salary_min|floatformat:0 }}
-            </p>
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Salary Expectations</h2>
+                <p><span class="font-medium">Starting from:</span> ${{ talent_sheet.salary_min|floatformat:0 }}</p>
+            </div>
         </div>
         {% endif %}
         

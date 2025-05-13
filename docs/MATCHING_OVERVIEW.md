@@ -32,6 +32,7 @@ The following _strings_ are pulled from each published `TalentSheet`, prepended 
 | Skills                         | `skills` (pipe-separated)                         | `"Section: Skills | {text}"` |
 | Skill Overview                | `skill_overview`                                  | `"Section: Skill Overview | {text}"` |
 | Ideal Roles (aspirations)     | `ideal_roles` (comma-separated)                   | `"Section: Ideal Roles | {text}"` |
+| Qualifications                 | `qualifications` (concatenated education + certifications) | `"Section: Qualifications | {text}"` |
 
 Vector ID pattern: `talent_{talent_sheet_id}_{section_slug}` where `section_slug` is the lowercase section name with spaces → underscores (e.g. `promotional_blurb`).  Vectors live in the Pinecone namespace **`talent_sheets`** with rich metadata (talent id, pool id, preview snippet, etc.).
 

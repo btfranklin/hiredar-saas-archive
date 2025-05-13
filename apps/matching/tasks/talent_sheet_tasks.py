@@ -92,6 +92,7 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         "Skills": talent_sheet.skills,
         "Skill Overview": talent_sheet.skill_overview,  # legacy for now
         "Ideal Roles": talent_sheet.ideal_roles,
+        "Qualifications": talent_sheet.qualifications,
     }
 
     # Track all vector IDs we create for this talent sheet for potential future deletion
@@ -180,6 +181,7 @@ def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
             "skills",
             "skill_overview",
             "ideal_roles",
+            "qualifications",
         ]
         vector_ids = [f"talent_{talent_sheet_id}_{section}" for section in sections]
 

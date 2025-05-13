@@ -158,18 +158,7 @@
                 {% endif %}
                 
                 <!-- Skills -->
-                {% if profile.skills %}
-                <div class="card bg-base-200 shadow-md">
-                    <div class="card-body">
-                        <h2 class="card-title">Skills</h2>
-                        <div class="flex flex-wrap gap-2 mt-2">
-                            {% for skill in profile.skills_list %}
-                            <span class="badge badge-primary">{{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
+                {% include 'job_seekers/components/skills_list.html' with skills_list=profile.skills_list %}
                 
                 <!-- Experience -->
                 {% if profile.experience %}

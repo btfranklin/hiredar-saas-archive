@@ -109,6 +109,9 @@ classDiagram
         +promotional_blurb: TextField
         +skill_overview: TextField
         +ideal_roles: TextField
+        +skills: TextField
+        +personal_tagline: CharField
+        +qualifications: TextField
         +salary_min: DecimalField
         +is_published: BooleanField
         +created_at: DateTimeField
@@ -307,6 +310,9 @@ This represents a comprehensive, recruiter-friendly presentation of a job seeker
 | `promotional_blurb` | TextField | AI-generated promotional summary highlighting the candidate's unique value proposition |
 | `skill_overview` | TextField | Concise overview of the candidate's key skills and competencies |
 | `ideal_roles` | TextField | Comma-separated list of ideal roles, populated from interested role recommendations |
+| `skills` | TextField | Pipe-separated list of skills copied from JobSeekerProfile |
+| `personal_tagline` | CharField | AI-generated personal identity tagline |
+| `qualifications` | TextField | Education and certifications concatenated from JobSeekerProfile |
 | `salary_min` | DecimalField | Minimum salary expectation |
 | `is_published` | BooleanField | Whether this talent sheet is published and available for matching to job openings |
 | `created_at` | DateTimeField | When the talent sheet was created |

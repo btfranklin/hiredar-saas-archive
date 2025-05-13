@@ -87,6 +87,11 @@ class TalentSheet(models.Model):
         default=False,
         help_text="Whether this talent sheet is published and available for matching to job openings",
     )
+    qualifications = models.TextField(
+        blank=True,
+        default="",
+        help_text="Education and certifications concatenated from JobSeekerProfile for matching purposes",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
