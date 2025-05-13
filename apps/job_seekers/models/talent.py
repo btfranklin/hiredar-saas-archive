@@ -66,6 +66,10 @@ class TalentSheet(models.Model):
         blank=True,
         help_text="Comma-separated list of ideal roles, populated from their interested role recommendations",
     )
+    skills = models.TextField(
+        blank=True,
+        help_text="Pipe-separated list of skills copied from JobSeekerProfile.skills for matching purposes",
+    )
     personal_tagline = models.CharField(
         max_length=150,
         null=True,

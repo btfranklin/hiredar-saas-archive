@@ -89,7 +89,8 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
     # Define the fields to process - note these are already LLM-processed fields
     fields = {
         "Promotional Blurb": talent_sheet.promotional_blurb,
-        "Skill Overview": talent_sheet.skill_overview,
+        "Skills": talent_sheet.skills,
+        "Skill Overview": talent_sheet.skill_overview,  # legacy for now
         "Ideal Roles": talent_sheet.ideal_roles,
     }
 
@@ -176,6 +177,7 @@ def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
         # Talent sheet vector IDs follow a predictable pattern:
         sections = [
             "promotional_blurb",
+            "skills",
             "skill_overview",
             "ideal_roles",
         ]

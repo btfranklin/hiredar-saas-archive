@@ -230,7 +230,7 @@ class TalentSheetAdmin(admin.ModelAdmin):
         "updated_at",
     )
     list_filter = ("is_published", "created_at", "updated_at", CandidatePoolFilter)
-    search_fields = ("ideal_roles",)
+    search_fields = ("ideal_roles", "skills")
 
     def get_owner_display(self, obj):
         """Get a display representation of the job seeker's owner."""
@@ -251,6 +251,7 @@ class TalentSheetAdmin(admin.ModelAdmin):
                     "promotional_blurb",
                     "skill_overview",
                     "ideal_roles",
+                    "skills",
                 )
             },
         ),

@@ -69,7 +69,7 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
             )
 
         # Generate talent sheet using LLM
-        talent_sheet = generate_talent_sheet(profile.resume_xml, interested_roles)
+        talent_sheet = generate_talent_sheet(profile, interested_roles)
 
         # Create or update the talent sheet with the LLM-generated content
         saved_talent_sheet = TalentPoolManager.create_or_update_talent_sheet(
@@ -78,6 +78,7 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
                 "promotional_blurb": talent_sheet.promotional_blurb,
                 "skill_overview": talent_sheet.skill_overview,
                 "ideal_roles": talent_sheet.ideal_roles,
+                "skills": profile.skills,
                 "personal_tagline": profile.personal_tagline,
                 "is_published": True,  # Publish it now that we have real content
             },

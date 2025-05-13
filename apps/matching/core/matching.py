@@ -27,6 +27,7 @@ JOB_SOFT_SKILLS = "Soft Skills"
 TALENT_SKILL_OVERVIEW = "Skill Overview"
 TALENT_PROMO_BLURB = "Promotional Blurb"
 TALENT_IDEAL_ROLES = "Ideal Roles"
+TALENT_SKILLS = "Skills"
 
 
 def match_talent_to_jobs(
@@ -58,9 +59,11 @@ def match_talent_to_jobs(
 
     # Fetch individual embeddings
     try:
-        skills_embedding = get_talent_section_embedding(
-            talent_id, TALENT_SKILL_OVERVIEW
-        )
+        skills_embedding = get_talent_section_embedding(talent_id, TALENT_SKILLS)
+        if skills_embedding is None:
+            skills_embedding = get_talent_section_embedding(
+                talent_id, TALENT_SKILL_OVERVIEW
+            )
         promo_embedding = get_talent_section_embedding(talent_id, TALENT_PROMO_BLURB)
         ideal_roles_embedding = get_talent_section_embedding(
             talent_id, TALENT_IDEAL_ROLES
@@ -259,8 +262,16 @@ def match_job_to_talents(
                 query_vector=skills_embedding,
                 namespace="talent_sheets",
                 top_k=top_k,
-                filter_dict={"section": TALENT_SKILL_OVERVIEW},
+                filter_dict={"section": TALENT_SKILLS},
             )
+            # Fallback to legacy section
+            if not skills_matches:
+                skills_matches = query_pinecone(
+                    query_vector=skills_embedding,
+                    namespace="talent_sheets",
+                    top_k=top_k,
+                    filter_dict={"section": TALENT_SKILL_OVERVIEW},
+                )
             results["skills_matches"] = skills_matches
         else:
             results["skills_matches"] = []

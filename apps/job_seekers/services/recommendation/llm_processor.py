@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from promptdown import StructuredPrompt
 
-from apps.job_seekers.models import RoleRecommendation, TalentSheet
+from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 from apps.job_seekers.services.recommendation.xml_parser import (
     parse_role_recommendations_xml,
     parse_talent_sheet_xml,
@@ -256,7 +256,7 @@ def generate_personal_tagline(resume_xml: str) -> str:
 
 
 def generate_talent_sheet(
-    resume_xml: str,
+    job_seeker_profile: JobSeekerProfile,
     interested_roles: list[str] | None = None,
 ) -> TalentSheet:
     """
@@ -266,7 +266,7 @@ def generate_talent_sheet(
     to an LLM to generate a comprehensive talent sheet for recruiters.
 
     Args:
-        resume_xml: The XML representation of the job seeker's resume
+        job_seeker_profile: The JobSeekerProfile instance to build the talent sheet for (provides resume_xml and skills)
         interested_roles: Optional list of roles the job seeker has expressed interest in
 
     Returns:
@@ -284,6 +284,12 @@ def generate_talent_sheet(
         raise ValueError(error_msg)
 
     client = OpenAI(api_key=api_key)
+
+    # Extract resume XML from the profile (required for LLM prompt)
+    resume_xml = job_seeker_profile.resume_xml or ""
+
+    if not resume_xml:
+        raise ValueError("Cannot generate talent sheet: profile.resume_xml is empty")
 
     try:
         # Load and fill the talent sheet generation prompt
@@ -331,6 +337,9 @@ def generate_talent_sheet(
 
         # Parse the XML response into a TalentSheet object
         talent_sheet = parse_talent_sheet_xml(xml_response)
+
+        # Copy raw skills from the JobSeekerProfile directly
+        talent_sheet.skills = job_seeker_profile.skills or ""
 
         logger.info("Generated talent sheet successfully")
 
