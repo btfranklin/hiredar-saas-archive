@@ -30,7 +30,7 @@ The following _strings_ are pulled from each published `TalentSheet`, prepended 
 | ----------------------------- | ------------------------------------------------- | ---------------------------- |
 | Promotional Blurb             | `promotional_blurb`                               | `"Section: Promotional Blurb | {text}"` |
 | Skills                         | `skills` (pipe-separated)                         | `"Section: Skills | {text}"` |
-| Skill Overview                | `skill_overview`                                  | `"Section: Skill Overview | {text}"` |
+| Experience Overview           | `experience_overview`                             | `"Section: Experience Overview | {text}"` |
 | Ideal Roles (aspirations)     | `ideal_roles` (comma-separated)                   | `"Section: Ideal Roles | {text}"` |
 | Qualifications                 | `qualifications` (concatenated education + certifications) | `"Section: Qualifications | {text}"` |
 
@@ -74,7 +74,7 @@ Below is a real, lightly-truncated extract captured with a one-liner Django shel
 ```text
 TalentSheet 137
   Promotional Blurb : "Alexis Morrison is a proactive and dynamic administrative professional with a proven track record in optimizing office operations and enhancing productivity…"
-  Skill Overview    : "Alexis excels in leveraging her technical expertise in Microsoft Office Suite and Google Workspace to streamline administrative tasks…"
+  Experience Overview: "Position: Administrative Coordinator (2018-2021): Streamlined office operations and improved reporting accuracy by 30%."
   Ideal Roles       : "Office Manager, Administrative Coordinator, Executive Assistant, Project Administrator, Operations Assistant"
 
 JobOpening 1 – Chief Medical Research Scientist

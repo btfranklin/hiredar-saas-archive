@@ -42,7 +42,7 @@ When a talent sheet is saved or updated:
 
 1. **Event Detection**: Django signals detect changes to TalentSheet instances
 2. **Status Check**: Only "PUBLISHED" talent sheets are processed
-3. **Text Extraction**: Key fields (promotional_blurb, skills, skill_overview, ideal_roles, qualifications) are extracted
+3. **Text Extraction**: Key fields (promotional_blurb, skills, experience_overview, ideal_roles, qualifications) are extracted
 4. **Text Enhancement**: Section context is added to each field using templates
 5. **Embedding Generation**: OpenAI's embedding API generates semantic vectors
 6. **Vector Storage**: Vectors are stored in Pinecone with rich metadata
@@ -70,7 +70,7 @@ The system processes these fields from each talent sheet:
 |-------|-------------|------------------|
 | Promotional Blurb | High-level candidate description | talent_{id}_promotional_blurb |
 | Skills | Pipe-separated raw skills from JobSeekerProfile | talent_{id}_skills |
-| Skill Overview | Technical and professional skills summary | talent_{id}_skill_overview |
+| Experience Overview | Abbreviated overview of recent employment history (Position, Dates, Impact) | talent_{id}_experience_overview |
 | Ideal Roles | Desired positions and roles | talent_{id}_ideal_roles |
 | Qualifications | Education and certifications concatenated from JobSeekerProfile | talent_{id}_qualifications |
 

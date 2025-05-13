@@ -107,7 +107,7 @@ classDiagram
     class TalentSheet {
         +job_seeker: OneToOneField(JobSeekerProfile)
         +promotional_blurb: TextField
-        +skill_overview: TextField
+        +experience_overview: TextField
         +ideal_roles: TextField
         +skills: TextField
         +personal_tagline: CharField
@@ -308,7 +308,7 @@ This represents a comprehensive, recruiter-friendly presentation of a job seeker
 |-------|------|-------------|
 | `job_seeker` | OneToOneField | Link to the JobSeekerProfile this talent sheet is for |
 | `promotional_blurb` | TextField | AI-generated promotional summary highlighting the candidate's unique value proposition |
-| `skill_overview` | TextField | Concise overview of the candidate's key skills and competencies |
+| `experience_overview` | TextField | Abbreviated overview of the candidate's recent employment experience and demonstrated impact |
 | `ideal_roles` | TextField | Comma-separated list of ideal roles, populated from interested role recommendations |
 | `skills` | TextField | Pipe-separated list of skills copied from JobSeekerProfile |
 | `personal_tagline` | CharField | AI-generated personal identity tagline |
