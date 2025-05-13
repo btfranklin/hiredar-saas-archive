@@ -12,7 +12,7 @@ from django.apps import apps
 from apps.core.tasks import safe_async_task
 
 # Import shared utilities
-from apps.matching.tasks.common import get_embedding, get_index, logger
+from apps.matching.tasks.common import DIMENSIONS, get_embedding, get_index, logger
 
 async_task = safe_async_task
 
@@ -176,22 +176,27 @@ def remove_job_opening_embeddings(job_opening_id: int) -> None:
             )
             return
 
-        # For Serverless/Starter tiers, we can't use metadata filtering
-        # Instead, we need to delete vectors by their IDs
-        # Job opening vector IDs follow a predictable pattern:
-        sections = [
-            "job_overview",
-            "required_skills",
-            "responsibilities",
-            "qualifications",
-            "soft_skills",
-        ]
-        vector_ids = [f"job_{job_opening_id}_{section}" for section in sections]
-
-        # Delete vectors by IDs - this works on all Pinecone tiers
-        index.delete(ids=vector_ids, namespace="job_openings")
-
-        logger.info("Deleted embeddings for JobOpening %s", job_opening_id)
+        # Sweep delete embeddings by metadata query
+        metadata_filter = {"job_opening_id": {"$eq": job_opening_id}}
+        # Build a dummy vector for querying; we only care about the filter
+        dummy_vector = [0.0] * DIMENSIONS
+        # Query Pinecone for all matching vectors
+        query_response = index.query(
+            namespace="job_openings",
+            vector=dummy_vector,
+            top_k=100,
+            filter=metadata_filter,
+            include_values=False,
+            include_metadata=False,
+        )
+        # Extract matching vector IDs
+        vector_ids = [match.id for match in getattr(query_response, "matches", [])]
+        # Delete all found vectors
+        if vector_ids:
+            index.delete(ids=vector_ids, namespace="job_openings")
+        logger.info(
+            "Deleted %d embeddings for JobOpening %s", len(vector_ids), job_opening_id
+        )
     except Exception as e:
         # Log the error but don't raise it - we don't want to break the recruiter experience
         # if there's an issue with the embedding system
