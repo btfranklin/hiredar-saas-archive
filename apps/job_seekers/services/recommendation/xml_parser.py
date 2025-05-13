@@ -157,14 +157,46 @@ def parse_talent_sheet_xml(
     if promotional_blurb_elem is None or not promotional_blurb_elem.text:
         raise ValueError("Missing promotional_blurb element in talent sheet XML")
 
-    if experience_overview_elem is None or not experience_overview_elem.text:
+    if experience_overview_elem is None:
         raise ValueError("Missing experience_overview element in talent sheet XML")
+
+    # Build a human-readable summary from <experience> children if they exist
+    experience_blocks: list[str] = []
+    for exp in experience_overview_elem.findall("./experience"):
+        position = exp.findtext("position", default="").strip()
+        dates = exp.findtext("dates", default="").strip()
+        impact = exp.findtext("impact", default="").strip()
+
+        # Skip completely empty items
+        if not (position or dates or impact):
+            continue
+
+        block_lines: list[str] = []
+        if position:
+            block_lines.append(f"Position: {position}")
+        if dates:
+            block_lines.append(f"Dates: {dates}")
+        if impact:
+            block_lines.append(f"Impact: {impact}")
+
+        experience_blocks.append("\n".join(block_lines))
+
+    # If children provided, join them with double newlines; otherwise use raw text
+    if experience_blocks:
+        experience_overview_text = "\n\n".join(experience_blocks)
+    else:
+        # Fallback: use any direct text content inside the element
+        raw_text = experience_overview_elem.text or ""
+        experience_overview_text = raw_text.strip()
+
+    if not experience_overview_text:
+        raise ValueError("experience_overview element contained no usable content")
 
     # Create TalentSheet instance
     talent_sheet = TalentSheet(
         job_seeker=job_seeker,
         promotional_blurb=promotional_blurb_elem.text.strip(),
-        experience_overview=experience_overview_elem.text.strip(),
+        experience_overview=experience_overview_text,
         is_published=True,  # Default to published - talent sheets are created and published together
     )
 

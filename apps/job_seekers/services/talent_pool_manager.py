@@ -109,6 +109,7 @@ class TalentPoolManager:
                         "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
                         profile_id,
                         task_name=f"generate_talent_sheet_{profile_id}",
+                        timeout=300,
                     )
                     logger.info("Scheduled talent sheet generation task: %s", task_id)
                 except Exception as e:

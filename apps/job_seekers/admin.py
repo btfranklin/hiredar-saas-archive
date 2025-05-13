@@ -130,6 +130,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
                 "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
                 profile.pk,
                 task_name=f"generate_talent_sheet_{profile.pk}",
+                timeout=300,
             )
             count += 1
 

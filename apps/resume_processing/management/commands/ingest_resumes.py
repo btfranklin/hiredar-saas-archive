@@ -251,6 +251,7 @@ class Command(BaseCommand):
                 "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
                 profile_id,
                 task_name=f"generate_talent_sheet_{profile_id}",
+                timeout=300,
                 # No sync=True here, let it run in the cluster
             )
 
