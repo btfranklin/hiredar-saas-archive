@@ -20,16 +20,13 @@ After reviewing all three documents thoroughly, I have several observations abou
 6. **Batched Processing for Bulk Matching**:
    - When matching against many entities, implement chunked processing to avoid overwhelming the Pinecone API.
 
-7. **Custom Embedding Models**:
-   - Consider fine-tuning an embedding model specifically for recruitment terminology to improve matching precision.
-
-8. **Vector Dimensionality Optimization**:
+7. **Vector Dimensionality Optimization**:
    - Experiment with dimensionality reduction techniques to find optimal vector sizes that balance accuracy and performance.
 
-9. **Asynchronous API Endpoints**:
+8. **Asynchronous API Endpoints**:
    - Convert the API to async endpoints using Django Channels or FastAPI for better performance with many concurrent users.
 
-10. **LLM-Based Explanation Feature**:
+9. **LLM-Based Explanation Feature**:
     - Add an explanation generation feature that uses an LLM to explain why two entities matched well in natural language.
 
 These improvements would enhance the system's precision, performance, and explainability while maintaining the excellent foundation you've built with the current design.
