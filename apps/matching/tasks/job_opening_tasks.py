@@ -89,7 +89,9 @@ def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
     # Define the fields to process. Adjust or add fields as needed.
     fields = {
         "Job Overview": f"{job.title}\n{job.description}",
-        "Required Skills": job.required_skills,
+        "Required Skills": " ".join(
+            filter(None, [job.required_skills, job.soft_skills])
+        ),
         "Responsibilities": " ".join(
             filter(
                 None,
@@ -97,7 +99,6 @@ def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
             )
         ),
         "Qualifications": job.required_qualifications,
-        "Soft Skills": job.soft_skills,
     }
 
     # Track all vector IDs we create for this job opening

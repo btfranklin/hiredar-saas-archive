@@ -67,10 +67,9 @@ The system processes these fields from each job opening:
 | Field | Description | Data Source | Vector ID Format |
 |-------|-------------|-------------|------------------|
 | Job Overview | Title and description | title, description | job_{id}_job_overview |
-| Required Skills | Technical requirements | required_skills | job_{id}_required_skills |
+| Required Skills | Technical and non-technical skills | required_skills, soft_skills | job_{id}_required_skills |
 | Responsibilities | Job duties | responsibilities, daily_tasks, performance_expectations | job_{id}_responsibilities |
 | Qualifications | Required qualifications | required_qualifications | job_{id}_qualifications |
-| Soft Skills | Non-technical skills | soft_skills | job_{id}_soft_skills |
 
 The system intelligently combines related fields (like responsibilities) to create comprehensive section embeddings.
 

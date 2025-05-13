@@ -43,10 +43,9 @@ For every *active* job opening we embed the following:
 | Section            | Raw field(s) concatenated                                     | Enriched text |
 | ------------------ | ------------------------------------------------------------- | ------------- |
 | Job Overview       | `title + "\n" + description`                                | `"Section: Job Overview | {text}"` |
-| Required Skills    | `required_skills` (pipe-delimited)                            | `"Section: Required Skills | {text}"` |
+| Required Skills    | `required_skills + soft_skills`                                | `"Section: Required Skills | {text}"` |
 | Responsibilities   | `responsibilities + daily_tasks + performance_expectations`   | `"Section: Responsibilities | {text}"` |
 | Qualifications     | `required_qualifications`                                     | `"Section: Qualifications | {text}"` |
-| Soft Skills        | `soft_skills`                                                 | `"Section: Soft Skills | {text}"` |
 
 Vector ID pattern: `job_{job_id}_{section_slug}` (namespace **`job_openings`**).
 

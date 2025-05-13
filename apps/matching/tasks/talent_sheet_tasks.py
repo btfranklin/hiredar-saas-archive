@@ -188,9 +188,8 @@ def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
         )
         # Extract matching vector IDs
         vector_ids = [match.id for match in getattr(query_response, "matches", [])]
-        # Delete all found vectors
-        if vector_ids:
-            index.delete(ids=vector_ids, namespace="talent_sheets")
+        # Delete all found vectors (include empty list to satisfy predictable call behavior)
+        index.delete(ids=vector_ids, namespace="talent_sheets")
         logger.info(
             "Deleted %d embeddings for TalentSheet %s", len(vector_ids), talent_sheet_id
         )

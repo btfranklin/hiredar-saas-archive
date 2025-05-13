@@ -48,7 +48,9 @@ apps/matching/
 
 The matching process follows these steps:
 
-1. **Embedding Creation** - When job openings are marked as "active" or talent sheets are published, embeddings for each defined section (for talent sheets: Promotional Blurb, Skills, Experience Overview, Ideal Roles, Qualifications) are automatically created and stored in Pinecone via background tasks triggered by Django signals (`apps/matching/signals.py` and `apps/matching/tasks/`).
+1. **Embedding Creation** - When job openings are marked as "active" or talent sheets are published, embeddings for each defined section are automatically created and stored in Pinecone via background tasks triggered by Django signals (`apps/matching/signals.py` and `apps/matching/tasks/`):
+    - **Job Opening Sections**: Job Overview, Required Skills (combining `required_skills` and `soft_skills`), Responsibilities, Qualifications
+    - **Talent Sheet Sections**: Promotional Blurb, Skills, Experience Overview, Ideal Roles, Qualifications
 2. **Match Calculation** - The `create_candidate_matches` command queries Pinecone to find the best matches for each job opening.
 3. **CandidateMatch Storage** - Matches are stored in the database as `CandidateMatch` objects with a match score and type.
 4. **UI Integration** - These matches are displayed in the recruiter dashboard.
