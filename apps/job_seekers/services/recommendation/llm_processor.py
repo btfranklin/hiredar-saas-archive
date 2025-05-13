@@ -324,9 +324,9 @@ def generate_talent_sheet(
 
         # Call the OpenAI API
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model=settings.JOBSEEKERS_TALENT_SHEET_MODEL,
             messages=cast(Iterable[Any], messages),
-            temperature=0.7,
+            temperature=settings.JOBSEEKERS_TALENT_SHEET_TEMPERATURE,
             timeout=60,
         )
 
