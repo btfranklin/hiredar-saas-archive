@@ -29,6 +29,7 @@ The following _strings_ are pulled from each published `TalentSheet`, prepended 
 | Section                       | Raw field                                         | Enriched text sent to OpenAI |
 | ----------------------------- | ------------------------------------------------- | ---------------------------- |
 | Promotional Blurb             | `promotional_blurb`                               | `"Section: Promotional Blurb | {text}"` |
+| Skills                         | `skills` (pipe-separated)                         | `"Section: Skills | {text}"` |
 | Skill Overview                | `skill_overview`                                  | `"Section: Skill Overview | {text}"` |
 | Ideal Roles (aspirations)     | `ideal_roles` (comma-separated)                   | `"Section: Ideal Roles | {text}"` |
 
@@ -57,7 +58,7 @@ The matcher (`apps/matching/core/matching.py`) queries Pinecone four times per j
 | Perspective  | Query Vector                                   | Filter (namespace/section)      | Stored as `match_type` |
 | ------------ | ---------------------------------------------- | -------------------------------- | ---------------------- |
 | Holistic     | Mean of **all three** talent (or job) vectors  | Entire opposite namespace        | `holistic` |
-| Skills       | Talent **Skill Overview**                      | Job **Required Skills**          | `skills` |
+| Skills       | Talent **Skills**                              | Job **Required Skills**          | `skills` |
 | Experience   | Talent **Promotional Blurb**                   | Job **Responsibilities**         | `experience` |
 | Wildcard     | Talent **Ideal Roles**                         | Job **Job Overview**             | `wildcard` |
 

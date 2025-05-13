@@ -78,7 +78,7 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
                 "promotional_blurb": talent_sheet.promotional_blurb,
                 "skill_overview": talent_sheet.skill_overview,
                 "ideal_roles": talent_sheet.ideal_roles,
-                "skills": profile.skills,
+                "skills": profile.skills or "",
                 "personal_tagline": profile.personal_tagline,
                 "is_published": True,  # Publish it now that we have real content
             },

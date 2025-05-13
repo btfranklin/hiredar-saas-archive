@@ -110,7 +110,8 @@ def match_talent_to_jobs(talent_id: int, top_k: int = 10) -> dict[str, list[dict
    - Provides a well-rounded view of compatibility
 
 2. **Skills Matches**: (`skills_matches`)
-   - Uses the talent's "Skill Overview" embedding to query jobs' "Required Skills"
+   - Uses the talent's "Skills" embedding (pipe-separated raw skills) to query jobs' "Required Skills"
+   - Falls back to the "Skill Overview" embedding if no "Skills" embedding is available
    - Focuses specifically on technical and skill alignment
 
 3. **Experience Matches**: (`experience_matches`)
@@ -225,73 +226,3 @@ The system exposes API endpoints for potential web application integration:
 GET /matching/api/match/talent/<talent_id>/
 GET /matching/api/match/job/<job_id>/
 ```
-
-These endpoints accept the following parameters:
-
-- `top_k`: Number of matches to return per perspective (default: 10)
-
-## Performance Considerations
-
-The matching process can be resource-intensive if there are many job openings and talent sheets. Consider the following optimization strategies:
-
-1. Run the process during off-peak hours
-2. Use the `--limit` option to process batches of job openings
-3. Adjust the frequency of the process based on system load and business needs
-4. Consider running on a dedicated worker if needed
-5. For dashboard views, consider implementing batch processing
-6. Add vector caching to reduce Pinecone API calls
-
-## Error Handling
-
-The system implements robust error handling throughout:
-
-1. **Entity Validation** - Verifies that talent sheets and job openings exist before attempting to match
-2. **Status Checks** - Ensures only published talent sheets and active jobs are fully processed
-3. **Missing Vectors** - Gracefully handles cases where embeddings haven't been generated
-4. **API Errors** - Catches and logs Pinecone API errors without disrupting the application
-
-## Monitoring
-
-To monitor the matching process, check the log output. The command provides detailed information about:
-
-- Number of job openings processed
-- Number of matches created for each job opening
-- Any errors that occurred during the process
-
-## Metadata Utilization
-
-The system leverages rich metadata stored with vectors:
-
-- **Job Openings**: title, company, location, job level, salary range
-- **Talent Sheets**: name, headline, skills, experience level
-
-This metadata enables detailed results without additional database queries.
-
-## Testing
-
-The matching implementation includes comprehensive unit tests:
-
-1. **Vector Operations** - Tests for vector averaging functionality
-2. **API Interaction** - Tests for Pinecone query and fetch operations
-3. **Embedding Retrieval** - Tests for section embedding retrieval
-4. **Matching Functions** - Tests for the main matching algorithms
-
-## Customization
-
-You can customize the matching process by:
-
-1. Adjusting the minimum score threshold
-2. Modifying the `match_job_to_talents` function in `apps/matching/core/matching.py`
-3. Implementing additional match types or filters
-
-## Future Enhancements
-
-1. **Weighted Vectors** - Implement weighted average for more nuanced matching
-2. **Domain-Specific Matching** - Add industry or domain-specific matching perspectives
-3. **LLM Re-ranking** - Add a post-processing step using LLMs to improve match relevance
-4. **Candidate Clustering** - Group similar candidates for easier review by recruiters
-5. **Match Explanations** - Provide natural language explanations of why matches were returned
-
-## Conclusion
-
-The matching system provides a sophisticated, multi-faceted approach to connecting talent with opportunities. Its use of vector embeddings enables semantic understanding beyond simple keyword matching, and the multiple matching perspectives ensure a comprehensive view of compatibility. Embedding generation is handled automatically via signals and background tasks.

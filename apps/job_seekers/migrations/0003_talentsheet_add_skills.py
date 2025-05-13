@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
             name="skills",
             field=models.TextField(
                 blank=True,
+                null=True,
                 help_text="Pipe-separated list of skills copied from JobSeekerProfile.skills for matching purposes",
             ),
         ),
