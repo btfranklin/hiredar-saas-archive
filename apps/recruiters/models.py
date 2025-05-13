@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from apps.authentication.models import User
+from apps.core.upload_validators import DEFAULT_PDF_VALIDATORS, DEFAULT_ZIP_VALIDATORS
 
 
 class RecruiterProfile(models.Model):
@@ -335,6 +336,7 @@ class BulkResumeUpload(models.Model):
     zip_file = models.FileField(
         upload_to="bulk_resumes/zips/",
         help_text="ZIP archive containing PDF resumes",
+        validators=DEFAULT_ZIP_VALIDATORS,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -372,7 +374,10 @@ class ResumeFile(models.Model):
         on_delete=models.CASCADE,
         related_name="resume_files",
     )
-    file = models.FileField(upload_to="bulk_resumes/items/")
+    file = models.FileField(
+        upload_to="bulk_resumes/items/",
+        validators=DEFAULT_PDF_VALIDATORS,
+    )
     original_filename = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 

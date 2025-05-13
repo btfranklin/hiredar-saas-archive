@@ -5,6 +5,7 @@ import uuid
 from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -13,6 +14,7 @@ from django.views.generic import TemplateView, View
 from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
+from apps.core.upload_validators import DEFAULT_PDF_VALIDATORS
 from apps.job_seekers.tasks.hooks import resume_processing_completed
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 from apps.resume_processing.services.resume_processor import ResumeProcessor
@@ -94,13 +96,17 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
                 status=400,
             )
 
-        # Validate file type (PDF only)
+        # Validate uploaded file using shared PDF validators
         filename = getattr(resume_file, "name", "")
-        if not filename.lower().endswith(".pdf"):
+        try:
+            for validator in DEFAULT_PDF_VALIDATORS:
+                validator(resume_file)
+        except ValidationError as ve:
+            # Return user-friendly error if validation fails
             return self.render_htmx_or_json(
                 request,
                 "job_seekers/partials/error.html",
-                {"success": False, "message": "Only PDF files are accepted."},
+                {"success": False, "message": ve.messages[0]},
                 status=400,
             )
 
