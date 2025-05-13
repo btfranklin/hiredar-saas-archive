@@ -1,32 +1,64 @@
 # Technical Improvement Opportunities
 
+## 1. Domain & Data Model
+
+- **Denormalised skill and role fields**
+  - _Current:_ `skills` is a pipe‑separated TextField; `desired_role` is free‑text.
+  - _Next:_ Define a `Skill` model and M2M through table; similarly for roles if filtering/reporting is needed. Migrate existing data via a one‑off script.
+
+## 2. Async & Background Processing
+
+- **OpenAI timeout & backoff**
+  - _Current:_ In LLM clients (e.g. `apps/job_seekers/services/recommendation/llm_processor.py`), calls `OpenAI.chat.completions.create(...)` with no timeout or retry logic.
+  - _Next:_ Wrap remote calls in exponential‑backoff logic (e.g. `tenacity`), set `timeout` on each request, and fail gracefully in workers.
+
+- **Idempotency / duplicate tasks**
+  - _Current:_ `update_or_create` is used in several tasks (e.g. recommendation generators, management commands) without row‑locking.
+  - _Next:_ Add unique constraints to critical tables and wrap create/update in `select_for_update()` or use advisory locks to prevent race conditions.
+
+## 3. Code Organization & Maintainability
+
+- **Consolidate XML/LLM utilities**
+  - _Current:_ `services/…` vs `utils/…` both contain XML and LLM logic (in job_seekers, recruiters, resume_processing).
+  - _Next:_ Centralize under a documented public API module (e.g. `hiredar.llm`), remove copy‑pasted parsers.
+
+- **Management commands hygiene**
+  - _Current:_ ~50 commands, some one‑offs.
+  - _Next:_ Group destructive/maintenance scripts under a `maintenance/` namespace and update help text to warn of irreversible actions.
+
+- **PII in logs**
+  - _Current:_ Some debug messages dump full XML or resume text.
+  - _Next:_ Mask or truncate PII before logging; switch to structured logs with sensitive‑field filters.
+
+## 4. Matching System Improvements
+
 After reviewing all three documents thoroughly, I have several observations about the matching system design.
 
-1. **Dynamic Vector Weighting**:
+1. **Dynamic Vector Weighting**
    - Instead of using fixed averages for composite vectors, implement a dynamic weighting system that adjusts based on job context. For example, technical roles could weight skills higher, while management roles could emphasize experience.
 
-2. **Cache Implementation**:
+2. **Cache Implementation**
    - The matching process could benefit significantly from a Redis-based caching layer for frequently queried entities, especially for dashboard views.
 
-3. **Periodic Embedding Refreshes**:
+3. **Periodic Embedding Refreshes**
    - Add a background task that periodically refreshes embeddings (every 30-60 days) to maintain alignment with the latest model behaviors.
 
-4. **Feedback Loop Integration**:
+4. **Feedback Loop Integration**
    - Create a mechanism to capture recruiter/candidate feedback on match quality to fine-tune the weighting system over time.
 
-5. **Hybrid Search Approach**:
+5. **Hybrid Search Approach**
    - Combine vector similarity with keyword/metadata filtering for more precise matches. For example, filter by required location or salary range before vector matching.
 
-6. **Batched Processing for Bulk Matching**:
+6. **Batched Processing for Bulk Matching**
    - When matching against many entities, implement chunked processing to avoid overwhelming the Pinecone API.
 
-7. **Vector Dimensionality Optimization**:
+7. **Vector Dimensionality Optimization**
    - Experiment with dimensionality reduction techniques to find optimal vector sizes that balance accuracy and performance.
 
-8. **Asynchronous API Endpoints**:
+8. **Asynchronous API Endpoints**
    - Convert the API to async endpoints using Django Channels or FastAPI for better performance with many concurrent users.
 
-9. **LLM-Based Explanation Feature**:
+9. **LLM-Based Explanation Feature**
     - Add an explanation generation feature that uses an LLM to explain why two entities matched well in natural language.
 
 These improvements would enhance the system's precision, performance, and explainability while maintaining the excellent foundation you've built with the current design.
