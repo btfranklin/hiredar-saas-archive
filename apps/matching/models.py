@@ -108,8 +108,14 @@ class CandidateMatch(models.Model):
             "wildcard": "Wildcard Match",
         }.get(self.match_type, self.match_type)
 
-        # Access job seeker through talent sheet
-        job_seeker_name = self.talent_sheet.job_seeker.user.get_full_name()
+        # Access job seeker name through talent sheet and user_owner
+        job_seeker_profile = self.talent_sheet.job_seeker
+        job_owner = job_seeker_profile.user_owner
+        job_seeker_name = (
+            job_owner.get_full_name()
+            if job_owner
+            else f"Profile {job_seeker_profile.pk}"
+        )
         return f"{job_seeker_name} - {self.job_opening} ({self.get_score_for_type():.2f}, {match_type_display})"
 
     @property
