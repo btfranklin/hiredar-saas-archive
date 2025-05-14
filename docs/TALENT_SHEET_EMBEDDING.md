@@ -42,7 +42,7 @@ When a talent sheet is saved or updated:
 
 1. **Event Detection**: Django signals detect changes to TalentSheet instances
 2. **Status Check**: Only "PUBLISHED" talent sheets are processed
-3. **Text Extraction**: Key fields (promotional_blurb, skills, experience_overview, ideal_roles, qualifications) are extracted
+3. **Text Extraction**: Key fields (career_direction, skills, experience_overview, qualifications) are extracted
 4. **Text Enhancement**: Section context is added to each field using templates
 5. **Embedding Generation**: OpenAI's embedding API generates semantic vectors
 6. **Vector Storage**: Vectors are stored in Pinecone with rich metadata
@@ -68,10 +68,9 @@ The system processes these fields from each talent sheet:
 
 | Field | Description | Vector ID Format |
 |-------|-------------|------------------|
-| Promotional Blurb | High-level candidate description | talent_{id}_promotional_blurb |
+| Career Direction | Promotional blurb followed by blank line and "Ideal roles: …" list | talent_{id}_career_direction |
 | Skills | Pipe-separated raw skills from JobSeekerProfile | talent_{id}_skills |
 | Experience Overview | Abbreviated overview of recent employment history (Position, Dates, Impact) | talent_{id}_experience_overview |
-| Ideal Roles | Desired positions and roles | talent_{id}_ideal_roles |
 | Qualifications | Education and certifications concatenated from JobSeekerProfile | talent_{id}_qualifications |
 
 #### 3. Metadata Schema
@@ -167,7 +166,7 @@ Vector IDs follow a structured format to ensure uniqueness:
 talent_{talent_sheet_id}_{section_slug}
 ```
 
-Example: `talent_123_promotional_blurb`
+Example: `talent_123_career_direction`
 
 ## Error Handling
 

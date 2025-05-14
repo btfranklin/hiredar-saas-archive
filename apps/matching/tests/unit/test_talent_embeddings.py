@@ -31,10 +31,10 @@ class TalentSheetEmbeddingTests(TestCase):
         self.assertEqual(result, expected)
 
     @patch("apps.matching.tasks.talent_sheet_tasks.get_embedding")
-    @patch("apps.matching.tasks.talent_sheet_tasks.upsert_talent_embedding")
+    @patch("apps.matching.tasks.talent_sheet_tasks.upsert_talent_embeddings")
     @patch("apps.matching.tasks.talent_sheet_tasks.apps.get_model")
     def test_create_talent_sheet_embeddings(
-        self, mock_get_model, mock_upsert, mock_get_embedding
+        self, mock_get_model, mock_batch_upsert, mock_get_embedding
     ):
         """Test processing a talent sheet."""
         # Mock the TalentSheet model and a sample object
@@ -67,38 +67,29 @@ class TalentSheetEmbeddingTests(TestCase):
         create_talent_sheet_embeddings(123)
 
         # Assertions
-        # Should be called for the 4 populated fields in the talent sheet
-        # (promotional_blurb, skills, experience_overview, ideal_roles)
-        self.assertEqual(mock_get_embedding.call_count, 4)
-        self.assertEqual(mock_upsert.call_count, 4)
+        # Embedding generation still happens per section
+        self.assertEqual(mock_get_embedding.call_count, 3)
 
-        # Check one of the calls to verify parameters
-        args, kwargs = mock_upsert.call_args_list[0]
+        # We now batch-upsert, so the function should be called exactly once
+        mock_batch_upsert.assert_called_once()
+
+        # Inspect the single batch payload tuple list
+        batch_args, _ = mock_batch_upsert.call_args
         self.assertEqual(
-            len(args),
-            3,
-            "Should have vector_id, embedding, and metadata positional args",
+            len(batch_args), 1, "upsert_talent_embeddings expects only vectors arg"
         )
 
-        # The first positional argument should be the vector_id
-        vector_id = args[0]
-        self.assertTrue(
-            vector_id.startswith("talent_123_"),
-            "vector_id should start with talent_123_",
-        )
+        vectors_payload = batch_args[0]
+        # Expect 3 section vectors in the batch
+        self.assertEqual(len(vectors_payload), 3)
 
-        # Second positional argument should be the embedding
-        embedding = args[1]
-        self.assertEqual(
-            embedding, [0.1, 0.2, 0.3], "embedding should match the mocked value"
-        )
-
-        # Third positional argument should be the metadata
-        metadata = args[2]
-        self.assertEqual(metadata["talent_sheet_id"], 123)
-        self.assertEqual(metadata["job_seeker_id"], 456)
-        self.assertEqual(metadata["job_seeker_name"], "John Doe")
-        self.assertTrue("content_preview" in metadata)
+        first_vector_id, first_embedding, first_metadata = vectors_payload[0]
+        self.assertTrue(first_vector_id.startswith("talent_123_"))
+        self.assertEqual(first_embedding, [0.1, 0.2, 0.3])
+        self.assertEqual(first_metadata["talent_sheet_id"], 123)
+        self.assertEqual(first_metadata["job_seeker_id"], 456)
+        self.assertEqual(first_metadata["job_seeker_name"], "John Doe")
+        self.assertIn("content_preview", first_metadata)
 
     @patch("apps.matching.tasks.talent_sheet_tasks.get_index")
     def test_remove_talent_sheet_embeddings(self, mock_get_index):

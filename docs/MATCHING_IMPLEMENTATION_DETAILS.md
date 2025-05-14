@@ -8,8 +8,9 @@ The matching system uses a multi-faceted approach to provide meaningful matches 
 
 1. **Holistic Match** - Combines all aspects of a profile or job to find overall matches
 2. **Skills Match** - Focuses specifically on matching skills to job requirements
-3. **Experience Match** - Matches candidate experience to job responsibilities
-4. **Wildcard Match** - Identifies non-obvious fits by comparing aspirations to job descriptions
+3. **Relevant Experience Match** - Matches candidate experience to job responsibilities
+4. **Wildcard Match** - Identifies non-obvious fits by comparing career direction to job descriptions
+5. **Qualifications Match** - Matches candidate qualifications to job qualifications
 
 This approach ensures that matches are more nuanced than simple keyword matching.
 
@@ -50,7 +51,7 @@ The matching process follows these steps:
 
 1. **Embedding Creation** - When job openings are marked as "active" or talent sheets are published, embeddings for each defined section are automatically created and stored in Pinecone via background tasks triggered by Django signals (`apps/matching/signals.py` and `apps/matching/tasks/`):
     - **Job Opening Sections**: Job Overview, Required Skills (combining `required_skills` and `soft_skills`), Responsibilities, Qualifications
-    - **Talent Sheet Sections**: Promotional Blurb, Skills, Experience Overview, Ideal Roles, Qualifications
+    - **Talent Sheet Sections**: Career Direction, Skills, Experience Overview, Qualifications
 2. **Match Calculation** - The `create_candidate_matches` command queries Pinecone to find the best matches for each job opening.
 3. **CandidateMatch Storage** - Matches are stored in the database as `CandidateMatch` objects with a match score and type.
 4. **UI Integration** - These matches are displayed in the recruiter dashboard.
@@ -101,7 +102,7 @@ The heart of the system is the multi-perspective matching process:
 def match_talent_to_jobs(talent_id: int, top_k: int = 10) -> dict[str, list[dict[str, Any]]]:
     """Matches a talent sheet to job openings from multiple perspectives."""
     # 1. Retrieve the talent's section embeddings
-    # 2. Perform multiple perspective queries (Holistic, Skills, Experience, Wildcard)
+    # 2. Perform multiple perspective queries (Holistic, Skills, Experience, Wildcard, Qualifications)
     # 3. Return structured results with keys like 'holistic_matches', 'skills_matches', etc.
 ```
 
@@ -116,13 +117,17 @@ def match_talent_to_jobs(talent_id: int, top_k: int = 10) -> dict[str, list[dict
    - Falls back to the "Experience Overview" embedding if no "Skills" embedding is available
    - Focuses specifically on technical and skill alignment
 
-3. **Experience Matches**: (`experience_matches`)
-   - Uses the talent's "Promotional Blurb" embedding to query jobs' "Responsibilities"
+3. **Relevant Experience Matches**: (`experience_matches`)
+   - Uses the talent's "Experience Overview" embedding to query jobs' "Responsibilities"
    - Focuses on matching experience to job duties
 
 4. **Wildcard Matches**: (`wildcard_matches`)
-   - Uses the talent's "Ideal Roles" to query jobs' "Job Overview"
+   - Uses the talent's "Career Direction" embedding to query jobs' "Job Overview"
    - Finds non-obvious matches based on career aspirations
+
+5. **Qualifications Matches**: (`qualifications_matches`)
+   - Uses the talent's "Qualifications" embedding to query jobs' "Qualifications"
+   - Focuses on matching candidate qualifications to job qualification requirements
 
 ### Vector Similarity Search
 
@@ -193,12 +198,13 @@ To run the candidate match generation process automatically on a regular schedul
 
 ## Match Types
 
-The system creates four types of matches, each stored as a `CandidateMatch` object with a different `match_type`:
+The system creates five types of matches, each stored as a `CandidateMatch` object with a different `match_type`:
 
 1. **Holistic Match** - Overall matches based on holistic similarity across all dimensions (`holistic`)
 2. **Skills Match** - Matches based on skill alignment (`skills`)
-3. **Experience Match** - Matches based on experience and responsibilities (`experience`)
+3. **Relevant Experience Match** - Matches based on experience and responsibilities (`experience`)
 4. **Wildcard Match** - Alternative matches that might be less obvious but still relevant (`wildcard`)
+5. **Qualifications Match** - Matches based on candidate qualifications vs job qualifications (`qualifications`)
 
 ## Match Score Calculation
 

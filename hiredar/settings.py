@@ -219,6 +219,23 @@ else:
         }
     }
 
+# ---------------------------------------------------------------------------
+# Cache configuration
+# ---------------------------------------------------------------------------
+# We rely on Django's database-cache backend so that the deduplication lock in
+# ``safe_async_task_once`` works across all processes **without** requiring
+# Redis or Memcached in development.  The cache table will be created with:
+#     python manage.py createcachetable django_cache
+# In production you may switch to Redis/Memcached by overriding *CACHES* via
+# environment-specific settings.
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache",  # table name
+        "TIMEOUT": 300,  # default TTL (seconds) – individual calls may vary
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

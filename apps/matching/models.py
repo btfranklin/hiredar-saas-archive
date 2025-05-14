@@ -54,6 +54,12 @@ class CandidateMatch(models.Model):
         default=Decimal("0.0"),
         help_text="Wildcard similarity score (0-1)",
     )
+    qualifications_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        default=Decimal("0.0"),
+        help_text="Qualifications similarity score (0-1)",
+    )
     status = models.CharField(
         max_length=20,
         choices=(
@@ -77,6 +83,7 @@ class CandidateMatch(models.Model):
             ("skills", "Skills Match"),
             ("experience", "Experience Match"),
             ("wildcard", "Wildcard Match"),
+            ("qualifications", "Qualifications Match"),
         ),
         default="holistic",
     )
@@ -106,6 +113,7 @@ class CandidateMatch(models.Model):
             "skills": "Skills Match",
             "experience": "Experience Match",
             "wildcard": "Wildcard Match",
+            "qualifications": "Qualifications Match",
         }.get(self.match_type, self.match_type)
 
         # Access job seeker name through talent sheet and user_owner
@@ -138,6 +146,11 @@ class CandidateMatch(models.Model):
         """Convert wildcard score to a 1-10 integer rating."""
         return self._score_to_rating(self.wildcard_score)
 
+    @property
+    def qualifications_rating(self) -> int:
+        """Convert qualifications score to a 1-10 integer rating."""
+        return self._score_to_rating(self.qualifications_score)
+
     def _score_to_rating(self, score: Decimal) -> int:
         """
         Convert a similarity score (0-1) to a rating (1-10).
@@ -167,6 +180,8 @@ class CandidateMatch(models.Model):
             return self.experience_score
         elif self.match_type == "wildcard":
             return self.wildcard_score
+        elif self.match_type == "qualifications":
+            return self.qualifications_score
         return Decimal("0.0")  # Fallback
 
     def get_rating_for_type(self) -> int:
@@ -179,6 +194,8 @@ class CandidateMatch(models.Model):
             return self.experience_rating
         elif self.match_type == "wildcard":
             return self.wildcard_rating
+        elif self.match_type == "qualifications":
+            return self.qualifications_rating
         return 1  # Fallback
 
     def get_all_match_ratings(self):
@@ -193,4 +210,5 @@ class CandidateMatch(models.Model):
             ("skills", "Skills", self.skills_rating),
             ("experience", "Experience", self.experience_rating),
             ("wildcard", "Wildcard", self.wildcard_rating),
+            ("qualifications", "Qualifications", self.qualifications_rating),
         ]

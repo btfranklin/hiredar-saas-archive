@@ -13,9 +13,9 @@ from apps.matching.core.matching import (
     JOB_OVERVIEW,
     JOB_REQUIRED_SKILLS,
     JOB_RESPONSIBILITIES,
+    TALENT_CAREER_DIRECTION,
     TALENT_EXPERIENCE_OVERVIEW,
-    TALENT_IDEAL_ROLES,
-    TALENT_PROMO_BLURB,
+    TALENT_SKILLS,
     match_job_to_talents,
     match_talent_to_jobs,
 )
@@ -102,7 +102,7 @@ class MatchingEmbeddingRetrievalTests(TestCase):
 
         # Create a mock response with vectors dictionary - use the slug format
         mock_response = MagicMock()
-        mock_response.vectors = {"talent_123_promotional_blurb": mock_vector}
+        mock_response.vectors = {"talent_123_career_direction": mock_vector}
 
         # Set up the mock index to return our response
         mock_index = MagicMock()
@@ -110,7 +110,7 @@ class MatchingEmbeddingRetrievalTests(TestCase):
         mock_get_index.return_value = mock_index
 
         # Call the function
-        embedding = get_talent_section_embedding(123, "Promotional Blurb")
+        embedding = get_talent_section_embedding(123, "Career Direction")
 
         # Verify the result
         self.assertEqual(embedding, [0.1, 0.2, 0.3])
@@ -118,17 +118,17 @@ class MatchingEmbeddingRetrievalTests(TestCase):
         # Verify the fetch was called with correct parameters
         mock_index.fetch.assert_called_once()
         args, kwargs = mock_index.fetch.call_args
-        self.assertEqual(kwargs.get("ids"), ["talent_123_promotional_blurb"])
+        self.assertEqual(kwargs.get("ids"), ["talent_123_career_direction"])
         self.assertEqual(kwargs.get("namespace"), "talent_sheets")
 
         # Test non-existent vector
         mock_response.vectors = {}
-        embedding = get_talent_section_embedding(123, "Promotional Blurb")
+        embedding = get_talent_section_embedding(123, "Career Direction")
         self.assertIsNone(embedding)
 
         # Test error handling
         mock_index.fetch.side_effect = Exception("Test error")
-        embedding = get_talent_section_embedding(123, "Promotional Blurb")
+        embedding = get_talent_section_embedding(123, "Career Direction")
         self.assertIsNone(embedding)
 
     @patch("apps.matching.core.retrieval.get_index")
@@ -180,9 +180,9 @@ class MatchingFunctionsTests(TestCase):
 
         # Mock the embedding retrieval for specific sections
         mock_get_talent_embedding.side_effect = lambda talent_id, section: {
-            TALENT_PROMO_BLURB: [0.1, 0.2, 0.3],
+            TALENT_CAREER_DIRECTION: [0.1, 0.2, 0.3],
             TALENT_EXPERIENCE_OVERVIEW: [0.4, 0.5, 0.6],
-            TALENT_IDEAL_ROLES: [0.7, 0.8, 0.9],
+            TALENT_SKILLS: [0.7, 0.8, 0.9],
         }.get(section)
 
         # Mock the Pinecone query results
@@ -246,7 +246,7 @@ class MatchingFunctionsTests(TestCase):
 
         # Mock the Pinecone query results
         mock_match = MagicMock()
-        mock_match.id = "talent_456_promotional_blurb"
+        mock_match.id = "talent_456_career_direction"
         mock_match.score = 0.92
         mock_match.metadata = {"job_seeker_name": "John Doe"}
 

@@ -154,6 +154,7 @@ class Command(BaseCommand):
                 "skills_matches": "skills",
                 "experience_matches": "experience",
                 "wildcard_matches": "wildcard",
+                "qualifications_matches": "qualifications",
             }
 
             # Process each type of match
@@ -212,6 +213,8 @@ class Command(BaseCommand):
                             match_data["experience_score"] = score
                         elif match_type == "wildcard":
                             match_data["wildcard_score"] = score
+                        elif match_type == "qualifications":
+                            match_data["qualifications_score"] = score
 
                         obj, created = CandidateMatch.objects.update_or_create(
                             job_opening=job,

@@ -33,27 +33,32 @@ def generate_enriched_text_for_talent(section_name: str, raw_text: str) -> str:
     return f"Section: {section_name} | {raw_text.strip()}"
 
 
-def upsert_talent_embedding(
-    vector_id: str, embedding: list[float], metadata: dict[str, Any]
+def upsert_talent_embeddings(
+    vectors: list[tuple[str, list[float], dict[str, Any]]],
 ) -> None:
     """
-    Upsert a talent embedding vector to Pinecone.
+    Batch-upsert multiple talent embeddings to Pinecone in a single request.
 
     Args:
-        vector_id: Unique ID for the vector
-        embedding: The embedding vector
-        metadata: Metadata to store with the vector
+        vectors: List of ``(vector_id, embedding, metadata)`` tuples to upsert.
     """
+    if not vectors:  # Nothing to do
+        return
+
     try:
         index = get_index()
 
-        # Type ignore is needed because the pinecone-client has inconsistent type definitions
+        # One call ⇒ fewer round-trips and cheaper usage.
+        # ``type: ignore`` is required because the Pinecone stubs are not fully
+        # aligned with the runtime SDK.
         index.upsert(
-            vectors=[(vector_id, embedding, metadata)],  # type: ignore
-            namespace="talent_sheets",  # Using namespaces for organization
+            vectors=vectors,  # type: ignore[arg-type]
+            namespace="talent_sheets",
         )
+        logger.info("Batch-upserted %d talent vectors to Pinecone", len(vectors))
     except Exception as e:
-        logger.error("Error upserting talent vector %s to Pinecone: %s", vector_id, e)
+        # Log and re-raise so the task failure is visible to the caller.
+        logger.error("Error batch-upserting %d talent vectors: %s", len(vectors), e)
         raise
 
 
@@ -86,17 +91,26 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         )
         return
 
-    # Define the fields to process - note these are already LLM-processed fields
+    # Build the Career Direction text by combining promotional blurb and ideal roles
+    career_direction_text = None
+    if talent_sheet.promotional_blurb or talent_sheet.ideal_roles:
+        # Combine with a blank line for natural separation
+        promo_text = talent_sheet.promotional_blurb or ""
+        ideal_roles_text = talent_sheet.ideal_roles or ""
+        career_direction_text = (
+            f"{promo_text.strip()}\n\nIdeal roles: {ideal_roles_text.strip()}".strip()
+        )
+
+    # Define the fields to process – these are already LLM-processed fields
     fields = {
-        "Promotional Blurb": talent_sheet.promotional_blurb,
+        "Career Direction": career_direction_text,
         "Skills": talent_sheet.skills,
         "Experience Overview": talent_sheet.experience_overview,
-        "Ideal Roles": talent_sheet.ideal_roles,
         "Qualifications": talent_sheet.qualifications,
     }
 
-    # Track all vector IDs we create for this talent sheet for potential future deletion
-    vector_ids = []
+    # Collect all vector tuples so we can upsert them in a single call.
+    batch_vectors: list[tuple[str, list[float], dict[str, Any]]] = []
 
     # Process each field, ignoring empty ones
     for section, raw_text in fields.items():
@@ -109,7 +123,6 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         # Create a unique vector ID for each section
         section_slug = section.lower().replace(" ", "_")
         vector_id = f"talent_{talent_sheet.id}_{section_slug}"
-        vector_ids.append(vector_id)
 
         # Determine candidate name from stored resume XML or fallback to profile's user owner name
         xml_content = talent_sheet.job_seeker.resume_xml or ""
@@ -139,15 +152,25 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         # Add pool_id metadata (0 = global; else, the pool primary key)
         pool_owner = talent_sheet.job_seeker.candidate_pool
         metadata["pool_id"] = pool_owner.id if pool_owner else 0
-        upsert_talent_embedding(vector_id, embedding, metadata)
-        logger.info(
-            "Upserted embedding for TalentSheet %s section '%s' (ID: %s)",
+
+        # Append to batch – we will upsert once after the loop.
+        batch_vectors.append((vector_id, embedding, metadata))
+
+        logger.debug(
+            "Prepared embedding for TalentSheet %s section '%s' (vector_id=%s)",
             talent_sheet.id,
             section,
             vector_id,
         )
 
-    logger.info("Completed processing embeddings for TalentSheet %s", talent_sheet.id)
+    # --- Push to Pinecone once ------------------------------------------------
+    upsert_talent_embeddings(batch_vectors)
+
+    logger.info(
+        "Completed processing embeddings for TalentSheet %s (sections=%d)",
+        talent_sheet.id,
+        len(batch_vectors),
+    )
 
 
 def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:

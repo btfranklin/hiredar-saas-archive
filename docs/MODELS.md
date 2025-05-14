@@ -17,7 +17,6 @@ classDiagram
     User <|-- Message : one-to-many (sender)
     Conversation <|-- Message : one-to-many
     User <|-- Notification : one-to-many
-    User <|-- UploadedResumePool : one-to-many
     UploadedResumePool <|-- JobSeekerProfile : one-to-many
 
     class User {
@@ -87,6 +86,7 @@ classDiagram
         +skills_score: DecimalField
         +experience_score: DecimalField
         +wildcard_score: DecimalField
+        +qualifications_score: DecimalField
         +status: CharField
         +is_analyzed: BooleanField
         +match_type: CharField
@@ -396,9 +396,10 @@ Model for matching talent sheets to job openings.
 | `skills_score` | DecimalField | Skills-based match score between 0.0 and 1.0 |
 | `experience_score` | DecimalField | Experience-based match score between 0.0 and 1.0 |
 | `wildcard_score` | DecimalField | Wildcard match score between 0.0 and 1.0 |
+| `qualifications_score` | DecimalField | Qualifications-based match score between 0.0 and 1.0 |
 | `status` | CharField | Status of the match (identified/open/contacted/candidate_interested/candidate_declined/recruiter_rejected) |
 | `is_analyzed` | BooleanField | Whether this match has been analyzed by AI |
-| `match_type` | CharField | Primary type of match (holistic/skills/experience/wildcard) |
+| `match_type` | CharField | Primary type of match (holistic/skills/experience/wildcard/qualifications) |
 | `match_summary` | CharField | A headline summarizing why this is a good match |
 | `match_analysis` | TextField | Detailed analysis of why this job and candidate match |
 | `created_at` | DateTimeField | When the match was created |
@@ -414,6 +415,7 @@ Model for matching talent sheets to job openings.
 | `skills_rating` | Property that returns the skills score as a 1-10 rating |
 | `experience_rating` | Property that returns the experience score as a 1-10 rating |
 | `wildcard_rating` | Property that returns the wildcard score as a 1-10 rating |
+| `qualifications_rating` | Property that returns the qualifications score as a 1-10 rating |
 | `get_all_match_ratings` | Returns ratings for all match types for this talent sheet and job |
 
 **Business Rules:**

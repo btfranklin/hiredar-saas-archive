@@ -12,6 +12,7 @@ from django.dispatch import receiver
 
 # Route through the central helper for resiliency & future portability
 from apps.core.tasks import safe_async_task
+from apps.core.tasks.common import safe_async_task_once
 
 async_task = safe_async_task
 
@@ -33,8 +34,10 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
     if instance.status == "active":
         # Create embeddings (which will trigger matching when completed)
         transaction.on_commit(
-            lambda: async_task(
-                "apps.matching.tasks.create_job_opening_embeddings", instance.id
+            lambda: safe_async_task_once(
+                "apps.matching.tasks.create_job_opening_embeddings",
+                instance.id,
+                task_name=f"embed_job_opening_{instance.id}",
             )
         )
     else:
@@ -73,16 +76,9 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
         instance: The actual instance being saved
         created: A boolean; True if a new record was created
     """
-    # Only process published talent sheets
-    if instance.is_published:
-        # Create embeddings (which will trigger matching when completed)
-        transaction.on_commit(
-            lambda: async_task(
-                "apps.matching.tasks.create_talent_sheet_embeddings", instance.id
-            )
-        )
-    else:
-        # If a talent sheet is unpublished, remove the embeddings and matches
+    # Handle unpublish -> clean up
+    if not instance.is_published:
+
         def _cleanup_unpublished():
             async_task(
                 "apps.matching.tasks.remove_talent_sheet_embeddings", instance.id
@@ -90,6 +86,15 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
             async_task("apps.matching.tasks.remove_talent_sheet_matches", instance.id)
 
         transaction.on_commit(_cleanup_unpublished)
+    # Handle publish or re-publish -> enqueue embedding task (deduplicated)
+    else:
+        transaction.on_commit(
+            lambda: safe_async_task_once(
+                "apps.matching.tasks.create_talent_sheet_embeddings",
+                instance.id,
+                task_name=f"embed_talent_sheet_{instance.id}",
+            )
+        )
 
 
 @receiver(post_delete, sender="job_seekers.TalentSheet")

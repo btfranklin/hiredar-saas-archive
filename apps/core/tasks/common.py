@@ -30,6 +30,9 @@ from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
+# Django cache for cross-process locking
+from django.core.cache import cache
+
 
 def safe_async_task(
     func_path: str | Callable[..., Any],
@@ -73,3 +76,78 @@ def safe_async_task(
                 if raise_on_failure:
                     raise
                 return None
+
+
+# -----------------------------------------------------------------------------
+# Deduplicated task scheduling helper
+# -----------------------------------------------------------------------------
+
+
+# NOTE: The function signature remains backwards-compatible; new optional
+# ``dedup_ttl`` lets callers tune the lock window without adjusting every call.
+
+
+def safe_async_task_once(
+    func_path: str | Callable[..., Any],
+    *args: Any,
+    task_name: str,
+    retries: int = 2,
+    raise_on_failure: bool = False,
+    dedup_ttl: int = 300,
+    **kwargs: Any,
+) -> str | None:
+    """Enqueue *func_path* only if there is no unfinished task with *task_name*.
+
+    Parameters
+    ----------
+    func_path:
+        Dotted path to the callable.
+    task_name:
+        Deterministic identifier to check for duplicates in ``django_q_task``.
+    *args, **kwargs:
+        Forwarded to :func:`safe_async_task` when a new task is needed.
+
+    Returns
+    -------
+    str | None
+        The task id if a new task was queued, *None* if an identical task is
+        already pending.
+    """
+
+    # ---------------------------------------------------------------------
+    # Fast cross-process lock via the configured Django cache.
+    # ``cache.add`` is atomic: returns *False* when the key already exists.
+    # ---------------------------------------------------------------------
+    lock_key = f"task-lock:{task_name}"
+    got_lock = cache.add(lock_key, True, dedup_ttl)
+    if not got_lock:
+        logger.debug("Task '%s' already enqueued recently – skipping", task_name)
+        return None
+
+    try:
+        from django_q.models import Task  # Imported lazily to avoid ORM issues
+
+        # Secondary DB check – avoids queueing a second copy when a task is
+        # currently RUNNING but the cache expired or was flushed.
+        if Task.objects.filter(name=task_name, success__isnull=True).exists():
+            logger.debug("Task '%s' already in progress – skipping enqueue", task_name)
+            return None
+
+    except Exception:
+        # If we cannot query the Task table (e.g. migrations), fall back to normal
+        logger.exception("Could not check duplicates for task '%s'", task_name)
+
+    # No pending duplicate – schedule a new one
+    try:
+        return safe_async_task(
+            func_path,
+            *args,
+            task_name=task_name,
+            retries=retries,
+            raise_on_failure=raise_on_failure,
+            **kwargs,
+        )
+    except Exception:
+        # Ensure the lock is cleared so we can retry later.
+        cache.delete(lock_key)
+        raise

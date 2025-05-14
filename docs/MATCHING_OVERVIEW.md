@@ -28,13 +28,12 @@ The following _strings_ are pulled from each published `TalentSheet`, prepended 
 
 | Section                       | Raw field                                         | Enriched text sent to OpenAI |
 | ----------------------------- | ------------------------------------------------- | ---------------------------- |
-| Promotional Blurb             | `promotional_blurb`                               | `"Section: Promotional Blurb | {text}"` |
+| Career Direction              | Combined string: promotional_blurb + blank line + "Ideal roles: {ideal_roles}" | `"Section: Career Direction | {text}"` |
 | Skills                         | `skills` (pipe-separated)                         | `"Section: Skills | {text}"` |
 | Experience Overview           | `experience_overview`                             | `"Section: Experience Overview | {text}"` |
-| Ideal Roles (aspirations)     | `ideal_roles` (comma-separated)                   | `"Section: Ideal Roles | {text}"` |
 | Qualifications                 | `qualifications` (concatenated education + certifications) | `"Section: Qualifications | {text}"` |
 
-Vector ID pattern: `talent_{talent_sheet_id}_{section_slug}` where `section_slug` is the lowercase section name with spaces → underscores (e.g. `promotional_blurb`).  Vectors live in the Pinecone namespace **`talent_sheets`** with rich metadata (talent id, pool id, preview snippet, etc.).
+Vector ID pattern: `talent_{talent_sheet_id}_{section_slug}` where `section_slug` is the lowercase section name with spaces → underscores (e.g. `career_direction`).  Vectors live in the Pinecone namespace **`talent_sheets`** with rich metadata (talent id, pool id, preview snippet, etc.).
 
 ### 2.2 Job Opening Sections
 
@@ -53,16 +52,17 @@ Vector ID pattern: `job_{job_id}_{section_slug}` (namespace **`job_openings`**).
 
 ## 3. Matching Perspectives
 
-The matcher (`apps/matching/core/matching.py`) queries Pinecone four times per job⇄talent pair:
+The matcher (`apps/matching/core/matching.py`) queries Pinecone five times per job⇄talent pair:
 
-| Perspective  | Query Vector                                   | Filter (namespace/section)      | Stored as `match_type` |
-| ------------ | ---------------------------------------------- | -------------------------------- | ---------------------- |
-| Holistic     | Mean of **all three** talent (or job) vectors  | Entire opposite namespace        | `holistic` |
-| Skills       | Talent **Skills**                              | Job **Required Skills**          | `skills` |
-| Experience   | Talent **Promotional Blurb**                   | Job **Responsibilities**         | `experience` |
-| Wildcard     | Talent **Ideal Roles**                         | Job **Job Overview**             | `wildcard` |
+| Perspective           | Query Vector                                        | Filter (namespace / section) | Stored as `match_type` |
+| --------------------- | --------------------------------------------------- | ----------------------------- | ---------------------- |
+| Holistic              | Mean of **Skills + Experience Overview + Career Direction + Qualifications** vectors | Entire opposite namespace | `holistic` |
+| Skills                | Talent **Skills**                                  | Job **Required Skills**      | `skills` |
+| Relevant Experience   | Talent **Experience Overview**                     | Job **Responsibilities**     | `experience` |
+| Wildcard              | Talent **Career Direction**                        | Job **Job Overview**         | `wildcard` |
+| Qualifications        | Talent **Qualifications**                           | Job **Qualifications**       | `qualifications` |
 
-Matches returned by Pinecone include a cosine-similarity **score 0-1**.  For each perspective the background task writes/updates one `CandidateMatch` row and copies all four raw scores into the model.  UI methods convert scores to a 1-10 rating.
+Matches returned by Pinecone include a cosine-similarity **score 0-1**.  For each perspective the background task writes/updates one `CandidateMatch` row and copies all five raw scores into the model.  UI methods convert scores to a 1-10 rating.
 
 ---
 
@@ -72,15 +72,15 @@ Below is a real, lightly-truncated extract captured with a one-liner Django shel
 
 ```text
 TalentSheet 137
-  Promotional Blurb : "Alexis Morrison is a proactive and dynamic administrative professional with a proven track record in optimizing office operations and enhancing productivity…"
+  Career Direction : "Alexis Morrison is a proactive and dynamic administrative professional with a proven track record in optimizing office operations and enhancing productivity…"
   Experience Overview: "Position: Administrative Coordinator (2018-2021): Streamlined office operations and improved reporting accuracy by 30%."
-  Ideal Roles       : "Office Manager, Administrative Coordinator, Executive Assistant, Project Administrator, Operations Assistant"
+  Skills            : "Office Manager, Administrative Coordinator, Executive Assistant, Project Administrator, Operations Assistant"
 
 JobOpening 1 – Chief Medical Research Scientist
   Required Skills   : "Strategic leadership | Team management | Mentoring | Scientific research project planning and execution | Grant writing…"
 ```
 
-During matching, four similarity searches are issued.  Suppose Pinecone returns a holistic score of `0.83` for this pair; the stored row would be:
+During matching, five similarity searches are issued.  Suppose Pinecone returns a holistic score of `0.83` for this pair; the stored row would be:
 
 ```text
 CandidateMatch(job_opening_id=1, talent_sheet_id=137,
@@ -88,7 +88,8 @@ CandidateMatch(job_opening_id=1, talent_sheet_id=137,
                holistic_score=0.83,
                skills_score=0.76,
                experience_score=0.68,
-               wildcard_score=0.54)
+               wildcard_score=0.54,
+               qualifications_score=0.72)
 ```
 
 The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
@@ -127,7 +128,7 @@ The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
 | **Embedding** | Dense vector representation of text created by OpenAI | 
 | **Pinecone Namespace** | Logical bucket inside the index (`job_openings`, `talent_sheets`) |
 | **Vector ID** | Predictable identifier (`job_12_job_overview`) that lets us fetch/delete embeddings quickly |
-| **Perspective** | One of Holistic, Skills, Experience, Wildcard |
+| **Perspective** | One of Holistic, Skills, Relevant Experience, Wildcard, Qualifications |
 
 ---
 

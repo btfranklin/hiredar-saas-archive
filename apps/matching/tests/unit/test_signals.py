@@ -44,8 +44,9 @@ class JobOpeningSignalTests(TestCase):
         # The RecruiterProfile should have been created automatically via signal
         self.test_recruiter = self.RecruiterProfile.objects.get(user=self.test_user)
 
+    @patch("apps.matching.signals.safe_async_task_once")
     @patch("apps.matching.signals.async_task")
-    def test_job_opening_save_handler(self, mock_async_task):
+    def test_job_opening_save_handler(self, mock_async_task, mock_task_once):
         """Test the job opening save handler processes status transitions correctly."""
         # Test with an active job
         job_active = self.JobOpening(
@@ -61,13 +62,16 @@ class JobOpeningSignalTests(TestCase):
             sender=self.JobOpening, instance=job_active, created=True
         )
 
-        # Verify that create_job_opening_embeddings was called for active job
-        mock_async_task.assert_called_with(
-            "apps.matching.tasks.create_job_opening_embeddings", job_active.id
+        # Verify that create_job_opening_embeddings was scheduled via deduplicated helper
+        mock_task_once.assert_called_with(
+            "apps.matching.tasks.create_job_opening_embeddings",
+            job_active.id,
+            task_name=f"embed_job_opening_{job_active.id}",
         )
 
-        # Reset mock
+        # Reset mocks
         mock_async_task.reset_mock()
+        mock_task_once.reset_mock()
 
         # Test with a draft job
         job_draft = self.JobOpening(
@@ -83,15 +87,16 @@ class JobOpeningSignalTests(TestCase):
             sender=self.JobOpening, instance=job_draft, created=True
         )
 
-        # Verify both task calls for non-active job
+        # Verify both task calls for non-active job (uses async_task)
         expected_calls = [
             call("apps.matching.tasks.remove_job_opening_embeddings", job_draft.id),
             call("apps.matching.tasks.remove_job_opening_matches", job_draft.id),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
-        # Reset mock
+        # Reset mocks
         mock_async_task.reset_mock()
+        mock_task_once.reset_mock()
 
         # Test with a closed job
         job_closed = self.JobOpening(
@@ -107,12 +112,16 @@ class JobOpeningSignalTests(TestCase):
             sender=self.JobOpening, instance=job_closed, created=True
         )
 
-        # Verify both task calls for non-active job
+        # Verify both task calls for non-active job (uses async_task)
         expected_calls = [
             call("apps.matching.tasks.remove_job_opening_embeddings", job_closed.id),
             call("apps.matching.tasks.remove_job_opening_matches", job_closed.id),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
+
+        # Reset mocks
+        mock_async_task.reset_mock()
+        mock_task_once.reset_mock()
 
     @patch("apps.matching.signals.async_task")
     def test_job_opening_delete_handler(self, mock_async_task):
@@ -161,8 +170,9 @@ class TalentSheetSignalTests(TestCase):
             user_owner=self.test_user
         )
 
+    @patch("apps.matching.signals.safe_async_task_once")
     @patch("apps.matching.signals.async_task")
-    def test_talent_sheet_save_handler(self, mock_async_task):
+    def test_talent_sheet_save_handler(self, mock_async_task, mock_task_once):
         """Test the talent sheet save handler handles publish status correctly."""
         # Test with a published talent sheet
         talent_published = self.TalentSheet(
@@ -177,13 +187,16 @@ class TalentSheetSignalTests(TestCase):
             sender=self.TalentSheet, instance=talent_published, created=True
         )
 
-        # Verify that create_talent_sheet_embeddings was called for published talent sheet
-        mock_async_task.assert_called_with(
-            "apps.matching.tasks.create_talent_sheet_embeddings", talent_published.id
+        # Verify that create_talent_sheet_embeddings was scheduled via deduplicated helper
+        mock_task_once.assert_called_with(
+            "apps.matching.tasks.create_talent_sheet_embeddings",
+            talent_published.id,
+            task_name=f"embed_talent_sheet_{talent_published.id}",
         )
 
-        # Reset mock
+        # Reset mocks
         mock_async_task.reset_mock()
+        mock_task_once.reset_mock()
 
         # Test with an unpublished talent sheet
         talent_unpublished = self.TalentSheet(
@@ -209,6 +222,10 @@ class TalentSheetSignalTests(TestCase):
             ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
+
+        # Reset mocks
+        mock_async_task.reset_mock()
+        mock_task_once.reset_mock()
 
     @patch("apps.matching.signals.async_task")
     def test_talent_sheet_delete_handler(self, mock_async_task):
