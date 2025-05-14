@@ -1,0 +1,39 @@
+<fieldset class='fieldset space-y-4 mb-4'>
+  <legend class='fieldset-legend'>{{ label }}</legend>
+
+  {% comment %}
+    "options" is expected to be an iterable where each element is either:
+      - a 2-tuple: (value, label)
+      - a 3-tuple: (value, label, description)
+    "widget_class" can override the class set on each <input>.
+  {% endcomment %}
+
+  <div class="space-y-4">
+    {% for option in options %}
+      {% if option|length == 3 %}
+        {% with opt_value=option.0 opt_label=option.1 opt_desc=option.2 %}
+          <label class="label cursor-pointer flex items-start gap-4">
+            <input type="radio" name="{{ name }}" class="{{ widget_class|default:'radio radio-primary mt-1' }}" value="{{ opt_value }}"{% if value == opt_value %} checked{% endif %}>
+            <div class="flex-1">
+              <div class="font-semibold">{{ opt_label }}</div>
+              <div class="text-sm text-base-content/70">{{ opt_desc }}</div>
+            </div>
+          </label>
+        {% endwith %}
+      {% else %}
+        {% with opt_value=option.0 opt_label=option.1 opt_desc='' %}
+          <label class="label cursor-pointer flex items-start gap-4">
+            <input type="radio" name="{{ name }}" class="{{ widget_class|default:'radio radio-primary mt-1' }}" value="{{ opt_value }}"{% if value == opt_value %} checked{% endif %}>
+            <div class="flex-1">
+              <div class="font-semibold">{{ opt_label }}</div>
+            </div>
+          </label>
+        {% endwith %}
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if help_text %}
+  <div class='label text-sm text-base-content/70'>{{ help_text }}</div>
+  {% endif %}
+</fieldset> 

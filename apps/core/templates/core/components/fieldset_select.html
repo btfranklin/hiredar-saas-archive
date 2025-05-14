@@ -1,0 +1,18 @@
+<fieldset class='fieldset space-y-2 mb-4'>
+  <legend class='fieldset-legend'>{{ label }}</legend>
+
+  <select id="{{ id }}" name="{{ name }}" class="{{ widget_class|default:'select select-bordered w-full' }}" {% if required %}required{% endif %}>
+    {% if placeholder %}
+    <option value="" {% if not value %}selected{% endif %}>{{ placeholder }}</option>
+    {% endif %}
+
+    {% comment %} "options" is expected to be an iterable of 2-item tuples: (value, display_label) {% endcomment %}
+    {% for option_value, option_label in options %}
+      <option value="{{ option_value }}" {% if option_value == value %}selected{% endif %}>{{ option_label }}</option>
+    {% endfor %}
+  </select>
+
+  {% if help_text %}
+  <div class='label text-sm text-base-content/70'>{{ help_text }}</div>
+  {% endif %}
+</fieldset> 

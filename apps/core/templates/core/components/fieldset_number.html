@@ -1,0 +1,38 @@
+<fieldset class='fieldset space-y-2 mb-4'>
+  <legend class='fieldset-legend'>{{ label }}</legend>
+
+  {# Optional prefix/suffix such as currency symbols. If either is provided, we wrap the input in a join group so everything stays aligned. #}
+  {% if prefix or suffix %}
+  <div class="join w-full">
+      {% if prefix %}
+      <span class="join-item px-3 bg-base-300 flex items-center">{{ prefix }}</span>
+      {% endif %}
+
+      <input id="{{ id }}" name="{{ name }}" type="number"
+             class="{{ widget_class|default:'input input-bordered join-item w-full' }}"
+             {% if placeholder %} placeholder="{{ placeholder }}"{% endif %}
+             {% if value is not none %} value="{{ value }}"{% endif %}
+             {% if min %} min="{{ min }}"{% endif %}
+             {% if max %} max="{{ max }}"{% endif %}
+             {% if step %} step="{{ step }}"{% endif %}
+             {% if required %} required{% endif %} />
+
+      {% if suffix %}
+      <span class="join-item px-3 bg-base-300 flex items-center">{{ suffix }}</span>
+      {% endif %}
+  </div>
+  {% else %}
+  <input id="{{ id }}" name="{{ name }}" type="number"
+         class="{{ widget_class|default:'input input-bordered w-full' }}"
+         {% if placeholder %} placeholder="{{ placeholder }}"{% endif %}
+         {% if value is not none %} value="{{ value }}"{% endif %}
+         {% if min %} min="{{ min }}"{% endif %}
+         {% if max %} max="{{ max }}"{% endif %}
+         {% if step %} step="{{ step }}"{% endif %}
+         {% if required %} required{% endif %} />
+  {% endif %}
+
+  {% if help_text %}
+  <div class='label text-sm text-base-content/70'>{{ help_text }}</div>
+  {% endif %}
+</fieldset> 

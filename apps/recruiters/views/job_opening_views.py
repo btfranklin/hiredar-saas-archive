@@ -344,6 +344,40 @@ class JobOpeningEditView(LoginRequiredMixin, UpdateView):
 
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Get context data for rendering the template.
+
+        Pass choice lists so the template can render select and radio helpers
+        Include verbose, user-friendly labels + descriptions for each status option
+        """
+        context = super().get_context_data(**kwargs)
+
+        # Pass choice lists so the template can render select and radio helpers
+        context["JOB_LEVEL_CHOICES"] = JobOpening.JOB_LEVEL_CHOICES
+        context["EMPLOYMENT_TYPE_CHOICES"] = JobOpening.EMPLOYMENT_TYPE_CHOICES
+
+        # Include verbose, user-friendly labels + descriptions for each status option
+        context["STATUS_CHOICES"] = (
+            (
+                "draft",
+                "Draft",
+                "The job is saved but not publicly visible yet.",
+            ),
+            (
+                "active",
+                "Active",
+                "The job opening is publicly visible and can receive applications.",
+            ),
+            (
+                "closed",
+                "Closed",
+                "The job opening is no longer accepting applications.",
+            ),
+        )
+
+        return context
+
 
 class JobOpeningDeleteView(LoginRequiredMixin, DeleteView):
     """
