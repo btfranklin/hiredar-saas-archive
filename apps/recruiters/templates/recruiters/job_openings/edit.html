@@ -75,33 +75,13 @@
                     <div id="processed-fields">
                         <fieldset class="fieldset space-y-4">
                             <legend class="sr-only">Basic Information</legend>
-                            <div class="form-control">
-                                <label class="label" for="id_title">
-                                    <span class="label-text font-medium">Job Title*</span>
-                                </label>
-                                <input type="text" id="id_title" name="title" class="input input-bordered w-full" value="{{ job_opening.title }}" required>
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label="Job Title*" id="id_title" name="title" widget_class="input input-bordered w-full" value=job_opening.title required=True %}
                             
-                            <div class="form-control">
-                                <label class="label" for="id_company">
-                                    <span class="label-text font-medium">Company</span>
-                                </label>
-                                <input type="text" id="id_company" name="company" class="input input-bordered w-full" value="{{ job_opening.company }}">
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Company' id='id_company' name='company' widget_class='input input-bordered w-full' value=job_opening.company %}
                             
-                            <div class="form-control">
-                                <label class="label" for="id_location">
-                                    <span class="label-text font-medium">Location</span>
-                                </label>
-                                <input type="text" id="id_location" name="location" class="input input-bordered w-full" value="{{ job_opening.location }}">
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Location' id='id_location' name='location' widget_class='input input-bordered w-full' value=job_opening.location %}
                             
-                            <div class="form-control">
-                                <label class="label" for="id_description">
-                                    <span class="label-text font-medium">Job Description*</span>
-                                </label>
-                                <textarea id="id_description" name="description" class="textarea textarea-bordered h-32" required>{{ job_opening.description }}</textarea>
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Job Description*' id='id_description' name='description' widget_type='textarea' widget_class='textarea textarea-bordered h-32 w-full' value=job_opening.description required=True %}
                         </fieldset>
                         
                         {% if job_opening.candidate_matches.exists %}
@@ -115,41 +95,32 @@
                         {% endif %}
                         
                         <div class="divider">Job Classification</div>
-                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <fieldset class="fieldset">
-                            <legend class="sr-only">Job Classification</legend>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="form-control">
-                                    <label class="label" for="id_job_level">
-                                        <span class="label-text font-medium">Job Level</span>
-                                    </label>
-                                    <select id="id_job_level" name="job_level" class="select select-bordered w-full">
-                                        <option value="" {% if not job_opening.job_level %}selected{% endif %}>-- Select Level --</option>
-                                        <option value="entry" {% if job_opening.job_level == 'entry' %}selected{% endif %}>Entry Level</option>
-                                        <option value="mid" {% if job_opening.job_level == 'mid' %}selected{% endif %}>Mid Level</option>
-                                        <option value="senior" {% if job_opening.job_level == 'senior' %}selected{% endif %}>Senior Level</option>
-                                        <option value="lead" {% if job_opening.job_level == 'lead' %}selected{% endif %}>Lead</option>
-                                        <option value="manager" {% if job_opening.job_level == 'manager' %}selected{% endif %}>Manager</option>
-                                        <option value="director" {% if job_opening.job_level == 'director' %}selected{% endif %}>Director</option>
-                                        <option value="executive" {% if job_opening.job_level == 'executive' %}selected{% endif %}>Executive</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-control">
-                                    <label class="label" for="id_employment_type">
-                                        <span class="label-text font-medium">Employment Type</span>
-                                    </label>
-                                    <select id="id_employment_type" name="employment_type" class="select select-bordered w-full">
-                                        <option value="" {% if not job_opening.employment_type %}selected{% endif %}>-- Select Type --</option>
-                                        <option value="full_time" {% if job_opening.employment_type == 'full_time' %}selected{% endif %}>Full-time</option>
-                                        <option value="part_time" {% if job_opening.employment_type == 'part_time' %}selected{% endif %}>Part-time</option>
-                                        <option value="contract" {% if job_opening.employment_type == 'contract' %}selected{% endif %}>Contract</option>
-                                        <option value="temporary" {% if job_opening.employment_type == 'temporary' %}selected{% endif %}>Temporary</option>
-                                        <option value="internship" {% if job_opening.employment_type == 'internship' %}selected{% endif %}>Internship</option>
-                                    </select>
-                                </div>
-                            </div>
+                            <legend class="fieldset-legend">Job Level</legend>
+                            <select id="id_job_level" name="job_level" class="select select-bordered w-full">
+                                <option value="" {% if not job_opening.job_level %}selected{% endif %}>-- Select Level --</option>
+                                <option value="entry" {% if job_opening.job_level == 'entry' %}selected{% endif %}>Entry Level</option>
+                                <option value="mid" {% if job_opening.job_level == 'mid' %}selected{% endif %}>Mid Level</option>
+                                <option value="senior" {% if job_opening.job_level == 'senior' %}selected{% endif %}>Senior Level</option>
+                                <option value="lead" {% if job_opening.job_level == 'lead' %}selected{% endif %}>Lead</option>
+                                <option value="manager" {% if job_opening.job_level == 'manager' %}selected{% endif %}>Manager</option>
+                                <option value="director" {% if job_opening.job_level == 'director' %}selected{% endif %}>Director</option>
+                                <option value="executive" {% if job_opening.job_level == 'executive' %}selected{% endif %}>Executive</option>
+                            </select>
                         </fieldset>
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend">Employment Type</legend>
+                            <select id="id_employment_type" name="employment_type" class="select select-bordered w-full">
+                                <option value="" {% if not job_opening.employment_type %}selected{% endif %}>-- Select Type --</option>
+                                <option value="full_time" {% if job_opening.employment_type == 'full_time' %}selected{% endif %}>Full-time</option>
+                                <option value="part_time" {% if job_opening.employment_type == 'part_time' %}selected{% endif %}>Part-time</option>
+                                <option value="contract" {% if job_opening.employment_type == 'contract' %}selected{% endif %}>Contract</option>
+                                <option value="temporary" {% if job_opening.employment_type == 'temporary' %}selected{% endif %}>Temporary</option>
+                                <option value="internship" {% if job_opening.employment_type == 'internship' %}selected{% endif %}>Internship</option>
+                            </select>
+                        </fieldset>
+                        </div>
                         
                         <div class="divider">Compensation & Benefits</div>
                         
@@ -189,107 +160,39 @@
                                 </div>
                             </div>
                             
-                            <div class="form-control mt-4">
-                                <label class="label" for="id_benefits">
-                                    <span class="label-text font-medium">Benefits</span>
-                                </label>
-                                <textarea id="id_benefits" name="benefits" class="textarea textarea-bordered h-24" placeholder="Health insurance, retirement plans, etc.">{{ job_opening.benefits }}</textarea>
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Benefits' id='id_benefits' name='benefits' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder='Health insurance, retirement plans, etc.' value=job_opening.benefits %}
                             
-                            <div class="form-control">
-                                <label class="label" for="id_additional_perks">
-                                    <span class="label-text font-medium">Additional Perks</span>
-                                </label>
-                                <textarea id="id_additional_perks" name="additional_perks" class="textarea textarea-bordered h-24" placeholder="Gym membership, free lunch, flexible schedule, etc.">{{ job_opening.additional_perks }}</textarea>
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Additional Perks' id='id_additional_perks' name='additional_perks' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder='Gym membership, free lunch, flexible schedule, etc.' value=job_opening.additional_perks %}
                         </fieldset>
                         
                         <div class="divider">Qualifications & Skills</div>
                         
-                        <div class="form-control">
-                            <label class="label" for="id_required_skills">
-                                <span class="label-text font-medium">Required Skills</span>
-                            </label>
-                            <textarea id="id_required_skills" name="required_skills" class="textarea textarea-bordered h-24" placeholder="Python (3+ years), React (2+ years), Agile (familiar)">{{ job_opening.required_skills }}</textarea>
-                            <div class="text-sm text-base-content/70 mt-1">
-                                List required skills with experience levels for better candidate matching.
-                            </div>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label="Required Skills" id="id_required_skills" name="required_skills" widget_type="textarea" widget_class="textarea textarea-bordered h-24 w-full" placeholder="Python (3+ years), React (2+ years), Agile (familiar)" value=job_opening.required_skills help_text="List required skills with experience levels for better candidate matching." %}
                         
-                        <div class="form-control">
-                            <label class="label" for="id_required_qualifications">
-                                <span class="label-text font-medium">Required Qualifications</span>
-                            </label>
-                            <textarea id="id_required_qualifications" name="required_qualifications" class="textarea textarea-bordered h-24" placeholder="Bachelor's degree in Computer Science, AWS Certification, etc.">{{ job_opening.required_qualifications }}</textarea>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label='Required Qualifications' id='id_required_qualifications' name='required_qualifications' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder="Bachelor's degree in Computer Science, AWS Certification, etc." value=job_opening.required_qualifications %}
                         
-                        <div class="form-control">
-                            <label class="label" for="id_experience_required">
-                                <span class="label-text font-medium">Experience Required</span>
-                            </label>
-                            <textarea id="id_experience_required" name="experience_required" class="textarea textarea-bordered h-24" placeholder="e.g., 3+ years in web development, 2+ years managing teams">{{ job_opening.experience_required }}</textarea>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label='Experience Required' id='id_experience_required' name='experience_required' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder='e.g., 3+ years in web development, 2+ years managing teams' value=job_opening.experience_required %}
                         
-                        <div class="form-control">
-                            <label class="label" for="id_soft_skills">
-                                <span class="label-text font-medium">Soft Skills</span>
-                            </label>
-                            <textarea id="id_soft_skills" name="soft_skills" class="textarea textarea-bordered h-24" placeholder="Communication, leadership, teamwork, etc.">{{ job_opening.soft_skills }}</textarea>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label='Soft Skills' id='id_soft_skills' name='soft_skills' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder='Communication, leadership, teamwork, etc.' value=job_opening.soft_skills %}
                         
                         <div class="divider">Job Details</div>
                         
-                        <div class="form-control">
-                            <label class="label" for="id_responsibilities">
-                                <span class="label-text font-medium">Responsibilities</span>
-                            </label>
-                            <textarea id="id_responsibilities" name="responsibilities" class="textarea textarea-bordered h-24" placeholder="Comprehensive list of job responsibilities">{{ job_opening.responsibilities }}</textarea>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label='Responsibilities' id='id_responsibilities' name='responsibilities' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder='Comprehensive list of job responsibilities' value=job_opening.responsibilities %}
                         
-                        <div class="form-control">
-                            <label class="label" for="id_daily_tasks">
-                                <span class="label-text font-medium">Daily Tasks</span>
-                            </label>
-                            <textarea id="id_daily_tasks" name="daily_tasks" class="textarea textarea-bordered h-24" placeholder="Typical daily, weekly, or monthly tasks for this role">{{ job_opening.daily_tasks }}</textarea>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label='Daily Tasks' id='id_daily_tasks' name='daily_tasks' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder='Typical daily, weekly, or monthly tasks for this role' value=job_opening.daily_tasks %}
                         
-                        <div class="form-control">
-                            <label class="label" for="id_performance_expectations">
-                                <span class="label-text font-medium">Performance Expectations</span>
-                            </label>
-                            <textarea id="id_performance_expectations" name="performance_expectations" class="textarea textarea-bordered h-24" placeholder="Performance targets, quality standards, or deadlines">{{ job_opening.performance_expectations }}</textarea>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label='Performance Expectations' id='id_performance_expectations' name='performance_expectations' widget_type='textarea' widget_class='textarea textarea-bordered h-24 w-full' placeholder='Performance targets, quality standards, or deadlines' value=job_opening.performance_expectations %}
                         
                         <div class="divider">Working Conditions</div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label" for="id_working_hours">
-                                    <span class="label-text font-medium">Working Hours</span>
-                                </label>
-                                <input type="text" id="id_working_hours" name="working_hours" class="input input-bordered w-full" placeholder="e.g., 9-5, M-F" value="{{ job_opening.working_hours }}">
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Working Hours' id='id_working_hours' name='working_hours' widget_class='input input-bordered w-full' placeholder='e.g., 9-5, M-F' value=job_opening.working_hours %}
                             
-                            <div class="form-control">
-                                <label class="label" for="id_work_environment">
-                                    <span class="label-text font-medium">Work Environment</span>
-                                </label>
-                                <input type="text" id="id_work_environment" name="work_environment" class="input input-bordered w-full" placeholder="Office, Remote, Hybrid, etc." value="{{ job_opening.work_environment }}">
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Work Environment' id='id_work_environment' name='work_environment' widget_class='input input-bordered w-full' placeholder='Office, Remote, Hybrid, etc.' value=job_opening.work_environment %}
                             
-                            <div class="form-control">
-                                <label class="label" for="id_reporting_to">
-                                    <span class="label-text font-medium">Reports To</span>
-                                </label>
-                                <input type="text" id="id_reporting_to" name="reporting_to" class="input input-bordered w-full" placeholder="Position or title this role reports to" value="{{ job_opening.reporting_to }}">
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Reports To' id='id_reporting_to' name='reporting_to' widget_class='input input-bordered w-full' placeholder='Position or title this role reports to' value=job_opening.reporting_to %}
                             
-                            <div class="form-control">
-                                <label class="label" for="id_travel_requirements">
-                                    <span class="label-text font-medium">Travel Requirements</span>
-                                </label>
-                                <input type="text" id="id_travel_requirements" name="travel_requirements" class="input input-bordered w-full" placeholder="e.g., 25% travel or occasional travel required" value="{{ job_opening.travel_requirements }}">
-                            </div>
+                            {% include 'core/components/fieldset_field.html' with label='Travel Requirements' id='id_travel_requirements' name='travel_requirements' widget_class='input input-bordered w-full' placeholder='e.g., 25% travel or occasional travel required' value=job_opening.travel_requirements %}
                         </div>
                     </div>
                     

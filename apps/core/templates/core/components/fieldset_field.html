@@ -1,0 +1,11 @@
+<fieldset class='fieldset space-y-2 mb-4'>
+  <legend class='fieldset-legend'>{{ label }}</legend>
+  {% if widget_type == 'textarea' %}
+  <textarea id="{{ id }}" name="{{ name }}" class="{{ widget_class }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if required %} required{% endif %}>{{ value }}</textarea>
+  {% else %}
+  <input id="{{ id }}" name="{{ name }}" type="text" class="{{ widget_class }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if value %} value="{{ value }}"{% endif %}{% if required %} required{% endif %} />
+  {% endif %}
+  {% if help_text %}
+  <div class='label text-sm text-base-content/70'>{{ help_text }}</div>
+  {% endif %}
+</fieldset> 
