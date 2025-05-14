@@ -6,3 +6,15 @@
 .avatar-placeholder > div {
   @apply flex items-center justify-center;
 }
+
+/* Restore DaisyUI v4 form-control layout: stack label and input vertically */
+.form-control {
+  @apply flex flex-col;
+}
+
+.form-control > .textarea,
+.form-control > textarea,
+.form-control > .input,
+.form-control > input {
+  @apply w-full;
+}
