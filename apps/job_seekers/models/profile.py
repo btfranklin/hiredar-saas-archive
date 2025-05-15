@@ -1,5 +1,8 @@
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
+
+from apps.core.models import TaskMeta
 
 
 class CandidatePool(models.Model):
@@ -18,6 +21,50 @@ class CandidatePool(models.Model):
         max_length=255, help_text='Label for this pool (e.g. "March 2024 Upload")'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Generic relation to associated background tasks (e.g. resume processing)
+    tasks = GenericRelation(TaskMeta, related_query_name="candidate_pools")
+
+    # ------------------------------------------------------------------
+    # Convenience helpers for templates (avoid complex ORM calls there)
+    # ------------------------------------------------------------------
+
+    @property
+    def active_tasks(self) -> list[TaskMeta]:
+        """Return unfinished TaskMeta rows related to this pool."""
+
+        return list(
+            self.tasks.filter(
+                state__in=(TaskMeta.State.PENDING, TaskMeta.State.RUNNING)
+            ).order_by("created_at")
+        )
+
+    @property
+    def has_active_tasks(self) -> bool:
+        """Return *True* when any unfinished tasks exist for this pool."""
+
+        return bool(
+            self.tasks.filter(
+                state__in=(TaskMeta.State.PENDING, TaskMeta.State.RUNNING)
+            ).exists()
+        )
+
+    @property
+    def active_task_summary(
+        self,
+    ) -> list[dict[str, object]]:  # noqa: D401 – simple summary
+        """Return a list of {name, count} dictionaries for unfinished tasks.
+
+        The front-end shows **one** spinner per *name* and appends "s" when
+        ``count > 1`` to keep the card compact ("Processing resumes" instead of
+        dozens of duplicates).
+        """
+
+        counts: dict[str, int] = {}
+        for task in self.active_tasks:
+            counts[task.name] = counts.get(task.name, 0) + 1
+
+        return [{"name": name, "count": cnt} for name, cnt in counts.items()]
 
     def __str__(self) -> str:
         return f"Candidate Pool: {self.name} ({self.recruiter.email})"

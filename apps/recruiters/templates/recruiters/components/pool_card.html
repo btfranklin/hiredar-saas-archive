@@ -1,0 +1,13 @@
+{% comment %}
+Wrapper element for a Candidate Pool card with HTMX self-polling.
+{% endcomment %}
+
+<div
+  id="pool-card-{{ pool.pk }}"
+  class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"
+  hx-get="{% url 'recruiters:candidate_pool_status' pool.pk %}"
+  hx-trigger="load{% if pool.has_active_tasks %}, every 4s{% endif %}"
+  hx-swap="innerHTML"
+>
+  {% include 'recruiters/components/pool_card_body.html' with pool=pool %}
+</div> 

@@ -1,0 +1,41 @@
+{% comment %}
+Reusable inner-markup for a single Candidate-Pool card.
+
+Expected context variables:
+- **pool** – the ``CandidatePool`` instance.
+
+The template queries the ``tasks`` GenericRelation so it remains usable for
+both initial page render and subsequent HTMX fragment updates.
+{% endcomment %}
+
+<div class="card-body p-4 flex justify-between items-start">
+  <div class="space-y-1 text-left">
+    <h3 class="font-bold text-lg">{{ pool.name }}</h3>
+    <p class="text-sm text-base-content/70">
+      Created: {{ pool.created_at|date:"M j, Y H:i" }}
+    </p>
+    <p class="text-sm">
+      {{ pool.job_seeker_profiles.count }} candidate{{ pool.job_seeker_profiles.count|pluralize }} in pool
+    </p>
+
+    {% with summaries=pool.active_task_summary %}
+      {% if summaries %}
+        <div class="my-2 space-y-1">
+          {% for item in summaries %}
+            <div class="flex items-center gap-2">
+              <span class="loading loading-spinner loading-xs text-primary"></span>
+              <span class="text-xs">
+                {{ item.name }}{% if item.count > 1 %}s{% endif %}
+                {% if item.count > 1 %} ({{ item.count }}){% endif %}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <div class="flex space-x-2">
+    <a href="{% url 'recruiters:candidate_pool_detail' pool.pk %}" class="btn btn-sm btn-primary">Details</a>
+  </div>
+</div> 

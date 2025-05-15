@@ -4,6 +4,7 @@ from typing import Any
 from django.db.models import F
 from django_q.models import Task
 
+from apps.core.models import TaskMeta
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import CandidatePool, JobSeekerProfile
 from apps.recruiters.models import BulkResumeUpload
@@ -14,7 +15,7 @@ async_task = safe_async_task
 
 
 def process_resume_for_pool(
-    file_path: str, pool_id: int, bulk_pk: int
+    file_path: str, pool_id: int, bulk_pk: int, meta_pk: str | None = None
 ) -> dict[str, Any]:
     """
     Process a resume for a CandidatePool.
@@ -23,6 +24,7 @@ def process_resume_for_pool(
         file_path: Path to the resume file
         pool_id: ID of the CandidatePool
         bulk_pk: Primary key of the BulkResumeUpload
+        meta_pk: Primary key of the TaskMeta
 
     Returns:
         Dictionary with processing results
@@ -115,6 +117,22 @@ def process_resume_for_pool(
             pk=bulk_pk, processed_profiles__gte=F("total_files")
         ).delete()
 
+        # Prepare TaskMeta reference (may be omitted for historical calls)
+        meta: TaskMeta | None = None
+        if meta_pk:
+            try:
+                meta = TaskMeta.objects.get(pk=meta_pk)
+                meta.state = TaskMeta.State.RUNNING
+                meta.save(update_fields=["state"])
+            except TaskMeta.DoesNotExist:
+                meta = None
+
+        # Mark task as SUCCESS
+        if meta:
+            meta.state = TaskMeta.State.SUCCESS
+            meta.progress = 100
+            meta.save(update_fields=["state", "progress"])
+
         return {
             "success": True,
             "profile_id": profile.pk,
@@ -122,8 +140,11 @@ def process_resume_for_pool(
             "file_path": file_path,
         }
 
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    except Exception as exc:
+        if meta:
+            meta.state = TaskMeta.State.FAILURE
+            meta.save(update_fields=["state"])
+        return {"success": False, "error": str(exc)}
 
 
 def cleanup_temp_resume_file(task: Task) -> None:

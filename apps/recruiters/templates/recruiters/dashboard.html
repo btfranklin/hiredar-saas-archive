@@ -40,20 +40,9 @@
                 </div>
                 
                 {% if candidate_pools %}
-                    <div class="space-y-4" hx-on:htmx:afterRequest="document.querySelectorAll('.modal-toggle:checked').forEach(el => el.checked = false); document.documentElement.classList.remove('modal-open')">
+                    <div class="space-y-4">
                         {% for pool in candidate_pools %}
-                            <div id="pool-{{ pool.pk }}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="card-body p-4 flex justify-between items-start">
-                                    <div class="space-y-1 text-left">
-                                        <h3 class="font-bold text-lg">{{ pool.name }}</h3>
-                                        <p class="text-sm text-base-content/70">Created: {{ pool.created_at|date:"M j, Y H:i" }}</p>
-                                        <p class="text-sm">{{ pool.job_seeker_profiles.count }} candidates in pool</p>
-                                    </div>
-                                    <div class="flex space-x-2">
-                                        <a href="{% url 'recruiters:candidate_pool_detail' pool.pk %}" class="btn btn-sm btn-primary">Details</a>
-                                    </div>
-                                </div>
-                            </div>
+                            {% include 'recruiters/components/pool_card.html' with pool=pool %}
                         {% endfor %}
                     </div>
                 {% else %}

@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, cast
 from zipfile import ZipFile
 
@@ -87,10 +88,37 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         recruiter_profile.credits_available = credits_available - pdf_count
         recruiter_profile.save(update_fields=["credits_available"])
 
-        # Save bulk upload and schedule processing
+        # Save bulk upload first
         bulk.save()
         self.object = bulk
-        async_task(unpack_and_process_zip, bulk.pk)
+
+        # ----------------------------------------------------------
+        # 1. Create an empty CandidatePool so the dashboard can show
+        #    a card immediately.
+        # 2. Insert a placeholder TaskMeta so the card displays a
+        #    spinner while the ZIP is being unpacked.
+        # ----------------------------------------------------------
+
+        candidate_pool = CandidatePool.objects.create(
+            recruiter=bulk.recruiter.user,  # ``CandidatePool`` expects a User instance
+            name=bulk.name,
+        )
+
+        from apps.core.models import TaskMeta  # local import to avoid circular deps
+
+        placeholder_meta = TaskMeta.objects.create(
+            queue_id=f"import-{bulk.pk}",
+            name="Importing resumes",
+            owner=bulk.recruiter.user,
+            content_object=candidate_pool,
+            state=TaskMeta.State.PENDING,
+        )
+
+        # Schedule asynchronous unpacking, passing the pool id and placeholder meta pk
+        async_task(
+            unpack_and_process_zip, bulk.pk, candidate_pool.pk, str(placeholder_meta.pk)
+        )
+
         # Notify recruiter that bulk upload succeeded and is processing
         messages.success(self.request, "Bulk upload succeeded and is processing.")
         # If this is an HTMX request, instruct client to redirect to list view
