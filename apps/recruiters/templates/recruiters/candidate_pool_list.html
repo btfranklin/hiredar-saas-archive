@@ -12,33 +12,7 @@
     {% if candidate_pools %}
     <div class="space-y-4">
         {% for pool in candidate_pools %}
-            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                <div class="card-body p-4 flex justify-between items-start">
-                    <div class="space-y-1 text-left">
-                        <h3 class="font-bold text-lg">{{ pool.name }}</h3>
-                        <p class="text-sm text-base-content/70">Created: {{ pool.created_at|date:"M j, Y H:i" }}</p>
-                        <p class="text-sm">{{ pool.job_seeker_profiles.count }} candidates in pool</p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <a href="{% url 'recruiters:candidate_pool_detail' pool.pk %}" class="btn btn-sm btn-primary">Details</a>
-                        <label for="delete-pool-{{ pool.pk }}" class="btn btn-sm btn-error">Delete</label>
-                    </div>
-                </div>
-                <input type="checkbox" id="delete-pool-{{ pool.pk }}" class="modal-toggle" />
-                <div class="modal">
-                    <div class="modal-box">
-                        <h3 class="font-bold text-lg">Confirm Deletion</h3>
-                        <p class="py-4">Are you sure you want to delete the candidate pool &quot;{{ pool.name }}&quot;? All associated resumes will be removed.</p>
-                        <div class="modal-action">
-                            <label for="delete-pool-{{ pool.pk }}" class="btn">Cancel</label>
-                            <form method="post" action="{% url 'recruiters:candidate_pool_delete' pool.pk %}" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-error">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% include 'recruiters/components/pool_card.html' with pool=pool %}
         {% endfor %}
     </div>
     {% else %}
