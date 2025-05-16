@@ -30,3 +30,18 @@ class CandidatePoolStatusView(LoginRequiredMixin, TemplateView):
         )
         context["pool"] = pool
         return context
+
+
+class CandidatePoolDetailStatusView(LoginRequiredMixin, TemplateView):
+    """Return the inner HTML for a candidate-pool detail view (summary + rows) for HTMX polling."""
+
+    template_name = "recruiters/components/candidate_pool_detail_body.html"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        pool_id = self.kwargs["pool_id"]
+        pool = get_object_or_404(
+            CandidatePool, pk=pool_id, recruiter=self.request.user  # type: ignore[arg-type]
+        )
+        context["pool"] = pool
+        return context

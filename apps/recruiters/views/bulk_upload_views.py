@@ -171,6 +171,37 @@ class CandidatePoolDetailView(LoginRequiredMixin, DetailView):
             recruiter=user  # type: ignore[attr-defined]
         )
 
+    # ------------------------------------------------------------------
+    # Inline rename support (HTMX or full-form POST)
+    # ------------------------------------------------------------------
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:  # type: ignore[override]
+        """Handle inline rename submissions.
+
+        Expected POST payload: ``name`` – the new pool name.
+
+        Behaviour:
+        * Update the object and return either an HTMX fragment (just the <h1>)
+          or redirect back to GET depending on request headers.
+        """
+
+        self.object = self.get_object()  # type: ignore[assignment]
+        new_name = request.POST.get("name", "").strip()
+        if new_name:
+            self.object.name = new_name
+            self.object.save(update_fields=["name"])
+
+        # HTMX: return only the heading so the client can swap it in place
+        if request.headers.get("HX-Request"):
+            return HttpResponse(
+                f'<h1 id="pool-name-{self.object.pk}" class="text-2xl font-bold flex items-center gap-2">'
+                f"{self.object.name}</h1>",
+                content_type="text/html",
+            )
+
+        # Fallback full-page redirect
+        return redirect("recruiters:candidate_pool_detail", pk=self.object.pk)
+
 
 class CandidatePoolDeleteView(LoginRequiredMixin, View):
     """Handle deletion of a processed candidate pool via POST."""

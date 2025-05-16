@@ -27,7 +27,10 @@ from apps.recruiters.views.credit_views import (
     CreditsView,
     create_checkout_session,
 )
-from apps.recruiters.views.pool_status_views import CandidatePoolStatusView
+from apps.recruiters.views.pool_status_views import (
+    CandidatePoolDetailStatusView,
+    CandidatePoolStatusView,
+)
 
 app_name = "recruiters"
 
@@ -111,5 +114,11 @@ urlpatterns: list[URLPattern] = [
         "candidate-pools/<int:pool_id>/status/",
         CandidatePoolStatusView.as_view(),
         name="candidate_pool_status",
+    ),
+    # Candidate pool detail status (HTMX polling)
+    path(
+        "candidate-pools/<int:pool_id>/detail-status/",
+        CandidatePoolDetailStatusView.as_view(),
+        name="candidate_pool_detail_status",
     ),
 ]

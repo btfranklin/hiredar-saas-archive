@@ -1,0 +1,72 @@
+{% comment %}
+HTMX fragment for candidate pool detail summary and candidates list. Polls and updates both the summary card and individual rows.
+Expected context:
+- pool: CandidatePool instance
+{% endcomment %}
+
+<div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <p class="text-sm text-base-content/70">Created on: {{ pool.created_at|date:"M j, Y H:i" }}</p>
+      <p class="text-sm">Total Candidates: {{ pool.job_seeker_profiles.count }}</p>
+    </div>
+  </div>
+</div>
+
+<h2 class="text-xl font-semibold mb-4">Candidates in this Pool</h2>
+{% if pool.job_seeker_profiles.all %}
+  <div class="overflow-x-auto">
+    <table class="table w-full">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Tagline</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for profile in pool.job_seeker_profiles.all %}
+          <tr>
+            <td>
+              {% if profile.candidate_name %}
+                {{ profile.candidate_name }}
+              {% else %}
+                <div class="flex items-center gap-2">
+                  <span class="loading loading-spinner loading-xs text-primary"></span>
+                  <span class="text-xs">Processing name...</span>
+                </div>
+              {% endif %}
+            </td>
+            <td>
+              {% if profile.personal_tagline %}
+                {{ profile.personal_tagline }}
+              {% else %}
+                <div class="flex items-center gap-2">
+                  <span class="loading loading-spinner loading-xs text-primary"></span>
+                  <span class="text-xs">Generating tagline...</span>
+                </div>
+              {% endif %}
+            </td>
+            <td>
+              {% if profile.candidate_name and profile.personal_tagline %}
+                <div class="flex gap-2">
+                  <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary">View Resume</a>
+                  <a href="{% url 'recruiters:candidate_pool_profile_talent_sheet_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary">View Talent Sheet</a>
+                </div>
+              {% else %}
+                <div class="flex items-center gap-2">
+                  <span class="loading loading-spinner loading-xs text-primary"></span>
+                  <span class="text-xs">Processing...</span>
+                </div>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">
+    <span>No candidates have been processed for this pool yet.</span>
+  </div>
+{% endif %} 
