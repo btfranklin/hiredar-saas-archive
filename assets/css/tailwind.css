@@ -18,3 +18,18 @@
 .form-control > input {
   @apply w-full;
 }
+
+/* Matching lens color utilities */
+@layer utilities {
+  .radial-progress[data-lens="holistic"] { --tw-text-opacity: 1; color: #0ea5e9; }
+  .radial-progress[data-lens="skills"] { --tw-text-opacity: 1; color: #22c55e; }
+  .radial-progress[data-lens="experience"] { --tw-text-opacity: 1; color: #f97316; }
+  .radial-progress[data-lens="qualifications"] { --tw-text-opacity: 1; color: #a855f7; }
+  .radial-progress[data-lens="wildcard"] { --tw-text-opacity: 1; color: #f43f5e; }
+
+  .badge[data-lens="holistic"] { --tw-bg-opacity: 1; background-color: #0ea5e9; color: #fff; }
+  .badge[data-lens="skills"] { --tw-bg-opacity: 1; background-color: #22c55e; color: #fff; }
+  .badge[data-lens="experience"] { --tw-bg-opacity: 1; background-color: #f97316; color: #fff; }
+  .badge[data-lens="qualifications"] { --tw-bg-opacity: 1; background-color: #a855f7; color: #fff; }
+  .badge[data-lens="wildcard"] { --tw-bg-opacity: 1; background-color: #f43f5e; color: #fff; }
+}

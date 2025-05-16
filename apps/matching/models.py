@@ -209,6 +209,6 @@ class CandidateMatch(models.Model):
             ("holistic", "Holistic", self.holistic_rating),
             ("skills", "Skills", self.skills_rating),
             ("experience", "Experience", self.experience_rating),
-            ("wildcard", "Wildcard", self.wildcard_rating),
             ("qualifications", "Qualifications", self.qualifications_rating),
+            ("wildcard", "Wildcard", self.wildcard_rating),
         ]

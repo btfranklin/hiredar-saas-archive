@@ -225,6 +225,10 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                         context["candidate_matches"] = matches.filter(
                             match_type="experience"
                         ).order_by("-experience_score")
+                    elif section == "qualifications":
+                        context["candidate_matches"] = matches.filter(
+                            match_type="qualifications"
+                        ).order_by("-qualifications_score")
                     else:
                         context["candidate_matches"] = matches.filter(
                             match_type="holistic"
@@ -241,6 +245,9 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 ).count()
                 context["wildcard_count"] = matches.filter(
                     match_type="wildcard"
+                ).count()
+                context["qualifications_count"] = matches.filter(
+                    match_type="qualifications"
                 ).count()
 
         return context

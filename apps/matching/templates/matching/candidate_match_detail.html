@@ -95,22 +95,12 @@
                 <div class="space-y-4">
                     <div>
                         <h3 class="font-semibold">Match Ratings</h3>
-                        <div class="flex flex-wrap gap-3 mt-3">
+                        <!-- Make the meters lay out in a neat grid on all screen sizes -->
+                        <div class="grid gap-6 mt-3" style="grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));">
                             {% for match_type, match_label, rating in candidate_match.get_all_match_ratings %}
                                 <div class="flex flex-col items-center">
-                                    {% if match_type == 'holistic' %}
-                                        <div class="radial-progress text-primary" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
-                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
-                                    {% elif match_type == 'skills' %}
-                                        <div class="radial-progress text-success" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
-                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
-                                    {% elif match_type == 'experience' %}
-                                        <div class="radial-progress text-accent" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
-                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
-                                    {% else %}
-                                        <div class="radial-progress text-secondary" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
-                                        <div class="text-sm text-base-content/70 mt-1">{{ match_label }}</div>
-                                    {% endif %}
+                                    <div class="radial-progress" data-lens="{{ match_type }}" style="--value:{{ rating|mul:10 }}; --size:5rem;">{{ rating }}/10</div>
+                                    <div class="text-sm text-base-content/70 mt-1 text-center">{{ match_label }}</div>
                                 </div>
                             {% endfor %}
                         </div>

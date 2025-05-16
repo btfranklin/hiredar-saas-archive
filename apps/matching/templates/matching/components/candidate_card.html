@@ -11,7 +11,7 @@
                         {{ match.talent_sheet.job_seeker.candidate_name }}
                     {% endif %}
                 </h3>
-                <div class="badge {% if match.match_type == 'holistic' %}badge-primary{% elif match.match_type == 'skills' %}badge-secondary{% elif match.match_type == 'experience' %}badge-accent{% else %}badge-ghost{% endif %}">{{ match.get_rating_for_type }}/10</div>
+                <div class="badge" data-lens="{{ match.match_type }}">{{ match.get_rating_for_type }}/10</div>
             </div>
 
             <div class="my-2">

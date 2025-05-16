@@ -11,6 +11,9 @@
     <a class="tab tab-lg {% if section == 'experience' %}tab-active{% endif %}" href="{% if is_tab %}?tab=candidates&section=experience{% else %}?section=experience{% endif %}">
         <i class="fas fa-briefcase mr-2"></i> Experience <span class="badge badge-ghost ml-2">{{ experience_count }}</span>
     </a>
+    <a class="tab tab-lg {% if section == 'qualifications' %}tab-active{% endif %}" href="{% if is_tab %}?tab=candidates&section=qualifications{% else %}?section=qualifications{% endif %}">
+        <i class="fas fa-award mr-2"></i> Qualifications <span class="badge badge-ghost ml-2">{{ qualifications_count }}</span>
+    </a>
     <a class="tab tab-lg {% if section == 'wildcard' %}tab-active{% endif %}" href="{% if is_tab %}?tab=candidates&section=wildcard{% else %}?section=wildcard{% endif %}">
         <i class="fas fa-lightbulb mr-2"></i> Wildcard <span class="badge badge-ghost ml-2">{{ wildcard_count }}</span>
     </a>
@@ -31,6 +34,8 @@
                     No candidates currently match the required skills. Consider broadening the skill requirements or check back later.
                 {% elif section == 'experience' %}
                     No candidates match the experience requirements. You might want to adjust the experience level or check back later.
+                {% elif section == 'qualifications' %}
+                    No candidates match the qualifications requirements. Consider reviewing the requirements or check back later.
                 {% else %}
                     No wildcard matches found. Consider adjusting the job requirements to find more potential candidates.
                 {% endif %}
@@ -45,6 +50,8 @@
             <p class="text-base-content/70 mb-4">These candidates show a strong alignment based primarily on their skills.</p>
             {% elif section == 'experience' %}
             <p class="text-base-content/70 mb-4">These candidates show a strong alignment based primarily on their work experience.</p>
+            {% elif section == 'qualifications' %}
+            <p class="text-base-content/70 mb-4">These candidates show a strong alignment based primarily on their formal qualifications.</p>
             {% else %} {# Holistic #}
             <p class="text-base-content/70 mb-4">These candidates show a strong overall alignment based on skills, experience, and other profile factors.</p>
             {% endif %}
