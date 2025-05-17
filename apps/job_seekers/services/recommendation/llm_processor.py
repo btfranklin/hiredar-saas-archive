@@ -88,7 +88,6 @@ def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
 
         # Get messages for the API call
         messages = structured_prompt.to_chat_completion_messages()
-        logger.debug("Number of messages to send: %d", len(messages))
 
     except Exception as e:
         logger.error("Error preparing prompt: %s", str(e))
@@ -198,7 +197,6 @@ def generate_personal_tagline(resume_xml: str) -> str:
 
         # Get messages for the API call
         messages = structured_prompt.to_chat_completion_messages()
-        logger.debug("Number of messages to send: %d", len(messages))
 
     except Exception as e:
         logger.error("Error preparing prompt: %s", str(e))
@@ -320,7 +318,6 @@ def generate_talent_sheet(
 
         # Get messages for the API call
         messages = structured_prompt.to_chat_completion_messages()
-        logger.debug("Number of messages to send: %d", len(messages))
 
         # Call the OpenAI API
         response = client.chat.completions.create(
