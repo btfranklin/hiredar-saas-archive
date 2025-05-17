@@ -44,6 +44,7 @@ def create_candidate_matches(job_id: int, **kwargs) -> None:
                 "skills_matches": "skills",
                 "experience_matches": "experience",
                 "wildcard_matches": "wildcard",
+                "qualifications_matches": "qualifications",
             }
 
             # Store all matches by talent sheet ID for quick lookup later
@@ -86,6 +87,7 @@ def create_candidate_matches(job_id: int, **kwargs) -> None:
                     skills_score = talent_scores.get("skills", 0)
                     experience_score = talent_scores.get("experience", 0)
                     wildcard_score = talent_scores.get("wildcard", 0)
+                    qualifications_score = talent_scores.get("qualifications", 0)
 
                     try:
                         # Get the talent sheet
@@ -103,6 +105,7 @@ def create_candidate_matches(job_id: int, **kwargs) -> None:
                                     "skills_score": skills_score,
                                     "experience_score": experience_score,
                                     "wildcard_score": wildcard_score,
+                                    "qualifications_score": qualifications_score,
                                     "is_analyzed": False,  # Reset analysis flag on update
                                 },
                             )
@@ -183,6 +186,7 @@ def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
                         "skills_matches": "skills",
                         "experience_matches": "experience",
                         "wildcard_matches": "wildcard",
+                        "qualifications_matches": "qualifications",
                     }
 
                     # Store all matches for this talent by match type
@@ -227,6 +231,9 @@ def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
                             skills_score = talent_scores.get("skills", 0)
                             experience_score = talent_scores.get("experience", 0)
                             wildcard_score = talent_scores.get("wildcard", 0)
+                            qualifications_score = talent_scores.get(
+                                "qualifications", 0
+                            )
 
                             try:
                                 # Create or update the match
@@ -240,6 +247,7 @@ def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
                                             "skills_score": skills_score,
                                             "experience_score": experience_score,
                                             "wildcard_score": wildcard_score,
+                                            "qualifications_score": qualifications_score,
                                             "is_analyzed": False,  # Reset analysis flag on update
                                         },
                                     )
