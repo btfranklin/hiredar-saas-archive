@@ -4,23 +4,29 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">All Candidate Pools</h1>
-        <a href="{% url 'recruiters:dashboard' %}" class="btn btn-sm btn-ghost">Back to Dashboard</a>
-    </div>
+    <div class="flex flex-col lg:flex-row gap-8">
+        {% include 'recruiters/components/sidebar.html' with active_page='candidate_pools' %}
 
-    {% if candidate_pools %}
-    <div class="space-y-4">
-        {% for pool in candidate_pools %}
-            {% include 'recruiters/components/pool_card.html' with pool=pool %}
-        {% endfor %}
+        <div class="w-full lg:w-3/4">
+            <div class="bg-base-200 rounded-box p-6 shadow-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold">All Candidate Pools</h1>
+                </div>
+                {% if candidate_pools %}
+                    <div class="space-y-4">
+                        {% for pool in candidate_pools %}
+                            {% include 'recruiters/components/pool_card.html' with pool=pool %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span>No candidate pools found.</span>
+                        <a href="{% url 'recruiters:bulk_upload_create' %}" class="btn btn-sm btn-primary ml-4">Upload Pool</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-    {% else %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle mr-2"></i>
-        <span>No candidate pools found.</span>
-        <a href="{% url 'recruiters:bulk_upload_create' %}" class="btn btn-sm btn-primary ml-4">Upload Pool</a>
-    </div>
-    {% endif %}
 </div>
 {% endblock %} 

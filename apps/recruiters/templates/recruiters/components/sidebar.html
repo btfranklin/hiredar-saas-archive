@@ -31,6 +31,9 @@
             <li><a href="{% url 'recruiters:dashboard' %}" class="{% if active_page == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-home mr-2"></i> Dashboard
             </a></li>
+            <li><a href="{% url 'recruiters:candidate_pool_list' %}" class="{% if active_page == 'candidate_pools' %}active{% endif %}">
+                <i class="fas fa-layer-group mr-2"></i> My Candidate Pools
+            </a></li>
             <li><a href="{% url 'recruiters:job_openings_list' %}" class="{% if active_page == 'jobs' %}active{% endif %}">
                 <i class="fas fa-briefcase mr-2"></i> My Job Openings
             </a></li>
