@@ -5,8 +5,7 @@ Background tasks for generating talent sheets for job seekers.
 import logging
 from typing import Any
 
-from apps.core.tasks.common import safe_async_task_once  # Deduplicated scheduling
-from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
+from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 from apps.job_seekers.services.recommendation.llm_processor import generate_talent_sheet
 from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 
@@ -39,6 +38,22 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
             "success": False,
             "message": error_msg,
         }
+
+    # Fail-fast: skip if a talent sheet already exists for this profile
+    try:
+        existing_sheet = TalentSheet.objects.get(job_seeker=profile)
+        logger.info(
+            "Talent sheet already exists for profile %s – skipping generation",
+            job_seeker_profile_id,
+        )
+        return {
+            "success": True,
+            "message": "Talent sheet already exists",
+            "talent_sheet_id": existing_sheet.pk,
+            "profile_id": job_seeker_profile_id,
+        }
+    except TalentSheet.DoesNotExist:
+        pass
 
     # Check if we have resume data
     if not profile.resume_xml:
@@ -99,28 +114,6 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
         logger.info(
             "Created/updated talent sheet with LLM-generated content for %s", user_email
         )
-
-        # ------------------------------------------------------------------
-        # Schedule deterministic embedding task **once** for this talent sheet
-        # ------------------------------------------------------------------
-        try:
-            safe_async_task_once(
-                "apps.matching.tasks.create_talent_sheet_embeddings",
-                saved_talent_sheet.pk,
-                task_name=f"embed_talent_sheet_{saved_talent_sheet.pk}",
-            )
-            logger.info(
-                "Scheduled embedding task for TalentSheet %s (task name: %s)",
-                saved_talent_sheet.pk,
-                f"embed_talent_sheet_{saved_talent_sheet.pk}",
-            )
-        except Exception as embed_err:
-            # Log but do not fail the whole generation task – embeddings can be retried
-            logger.error(
-                "Failed to enqueue embedding task for TalentSheet %s: %s",
-                saved_talent_sheet.pk,
-                embed_err,
-            )
 
         return {
             "success": True,
