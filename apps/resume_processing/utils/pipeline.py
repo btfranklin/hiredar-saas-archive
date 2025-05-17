@@ -15,7 +15,7 @@ from django.core.files.storage import default_storage
 
 from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.resume_processing.models import ResumeProcessingTaskProgress
-from apps.resume_processing.utils.extraction import extract_text_from_pdf
+from apps.resume_processing.utils.extraction import extract_text
 from apps.resume_processing.utils.llm_processor import convert_text_to_xml
 from apps.resume_processing.utils.profile_updater import (
     generate_and_save_personal_tagline,
@@ -115,11 +115,11 @@ def process_resume(
         if progress_tracker:
             progress_tracker.mark_step_complete("file_path_resolved")
 
-        # Step 2: Extract text from PDF
-        logger.info("Extracting text from PDF: %s", file_path)
-        resume_text = extract_text_from_pdf(abs_file_path)
+        # Step 2: Extract text from resume (any supported format)
+        logger.info("Extracting text from file: %s", file_path)
+        resume_text = extract_text(abs_file_path)
         if not resume_text:
-            error_msg = "Failed to extract any text from PDF"
+            error_msg = "Failed to extract any text from resume"
             if progress_tracker:
                 progress_tracker.status = "failed"
                 progress_tracker.message = error_msg

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import logging
+import os
 import tempfile
 import zipfile
 from typing import Any
@@ -27,6 +28,9 @@ from apps.core.tasks import safe_async_task
 from apps.job_seekers.models.profile import CandidatePool
 from apps.job_seekers.tasks import cleanup_temp_resume_file, process_resume_for_pool
 from apps.recruiters.models import BulkResumeUpload, ResumeFile
+from apps.resume_processing.utils.extraction import (
+    SUPPORTED_RESUME_EXTENSIONS,  # local import to avoid cycles
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,23 +78,34 @@ def unpack_and_process_zip(
         # Read zip into memory – in production consider streaming or tmp file for large archives
         data: bytes = bulk.zip_file.read()
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
-            # Only keep real PDF files – skip macOS metadata like __MACOSX/ and dot-underscore files
+            # Keep only real resume files – skip macOS metadata like __MACOSX/ and dot-underscore files
             names: list[str] = []
             for member in zf.namelist():
                 member_lower = member.lower()
-                if not member_lower.endswith(".pdf"):
-                    continue  # not a PDF
-                # Skip macOS resource-fork entries (.___ and __MACOSX directories)
+
+                # Skip directories and macOS resource-fork entries early
+                if member_lower.endswith("/"):
+                    continue  # directory entry
                 if member_lower.startswith("__macosx/") or "/__macosx/" in member_lower:
                     continue
                 if member_lower.startswith("._") or "/._" in member_lower:
                     continue
+
+                # Check extension against supported list
+                ext = (
+                    ("." + member_lower.rsplit(".", 1)[-1])
+                    if "." in member_lower
+                    else ""
+                )
+                if ext not in SUPPORTED_RESUME_EXTENSIONS:
+                    continue
+
                 names.append(member)
             bulk.total_files = len(names)
             bulk.save(update_fields=["total_files"])
 
             for name in names:
-                pdf_bytes = zf.read(name)
+                file_bytes = zf.read(name)
                 # Use only the base filename – strip any path components
                 clean_name = name.rsplit("/", 1)[-1]
                 resume = ResumeFile.objects.create(
@@ -98,14 +113,15 @@ def unpack_and_process_zip(
                     recruiter=bulk.recruiter,
                     original_filename=clean_name,
                 )
-                resume.file.save(clean_name, ContentFile(pdf_bytes))
+                resume.file.save(clean_name, ContentFile(file_bytes))
                 resume.save()
 
-                # Write PDF to a local temp file for processing (storage backend may not support .path)
+                # Preserve extension so downstream validators / libraries have context
+                suffix = os.path.splitext(clean_name)[1] or ".tmp"
                 with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".pdf"
+                    delete=False, suffix=suffix
                 ) as tmp_file:
-                    tmp_file.write(pdf_bytes)
+                    tmp_file.write(file_bytes)
                     tmp_file.flush()
                 local_path = tmp_file.name
 

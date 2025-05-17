@@ -31,7 +31,9 @@ WORKDIR /app
 
 # System packages required by psycopg and Pillow
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential libpq-dev \
+    && apt-get install -y --no-install-recommends \
+        build-essential libpq-dev \
+        poppler-utils libreoffice tesseract-ocr pandoc \
     && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------------------------------------------------------

@@ -14,7 +14,7 @@ from django.views.generic import TemplateView, View
 from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
-from apps.core.upload_validators import DEFAULT_PDF_VALIDATORS
+from apps.core.upload_validators import DEFAULT_RESUME_VALIDATORS
 from apps.job_seekers.tasks.hooks import resume_processing_completed
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 from apps.resume_processing.services.resume_processor import ResumeProcessor
@@ -99,7 +99,7 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
         # Validate uploaded file using shared PDF validators
         filename = getattr(resume_file, "name", "")
         try:
-            for validator in DEFAULT_PDF_VALIDATORS:
+            for validator in DEFAULT_RESUME_VALIDATORS:
                 validator(resume_file)
         except ValidationError as ve:
             # Return user-friendly error if validation fails

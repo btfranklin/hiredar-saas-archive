@@ -51,6 +51,11 @@ def update_profile_fields(
     try:
         # Update fields directly on the provided profile instance
         _update_profile_fields(profile, parsed_data)
+        # Ensure location not null/empty – handle None safely
+        current_location = (getattr(profile, "location", None) or "").strip()
+        if not current_location:
+            profile.location = "Not provided"
+
         # Truncate any string fields to their max_length to avoid DB errors
         _truncate_string_fields(profile)
         profile.save()
@@ -84,7 +89,12 @@ def generate_and_save_personal_tagline(
             else:
                 profile.personal_tagline = "Job Seeker"
             logger.info("Fallback personal tagline: %s", profile.personal_tagline)
-        # Truncate any string fields before saving to avoid DB errors
+        # Ensure location not null/empty – handle None safely
+        current_location = (getattr(profile, "location", None) or "").strip()
+        if not current_location:
+            profile.location = "Not provided"
+
+        # Truncate any string fields to their max_length to avoid DB errors
         _truncate_string_fields(profile)
         profile.save()
         return True

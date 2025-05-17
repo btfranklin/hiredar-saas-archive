@@ -62,29 +62,51 @@ def _get_mime(
 
 
 # ---------------------------------------------------------------------------
-# Validators
+# Validators – generic resume support
 # ---------------------------------------------------------------------------
 
+# Keep the full list in sync with *unstructured* integration layer
+from apps.resume_processing.utils.extraction import SUPPORTED_RESUME_EXTENSIONS
 
-def validate_file_extension(file_obj) -> None:  # noqa: D401 – Django validator
-    """Ensure the file has a *.pdf* extension."""
+_EXT_TO_ALLOWED_MIME: dict[str, set[str]] = {
+    ".pdf": {"application/pdf"},
+    ".docx": {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    },
+    ".doc": {"application/msword"},
+    ".rtf": {"application/rtf", "text/rtf"},
+    ".odt": {"application/vnd.oasis.opendocument.text"},
+    ".txt": {"text/plain"},
+}
+
+
+def validate_resume_file_extension(file_obj) -> None:  # noqa: D401 – Django validator
+    """Ensure the file has an allowed *resume* extension."""
 
     ext = os.path.splitext(file_obj.name)[1].lower()
-    if ext != ".pdf":
-        raise ValidationError(_("Unsupported file extension – only PDF allowed."))
+    if ext not in SUPPORTED_RESUME_EXTENSIONS:
+        allowed = ", ".join(sorted(SUPPORTED_RESUME_EXTENSIONS))
+        raise ValidationError(_(f"Unsupported file extension – allowed: {allowed}"))
 
 
-def validate_file_mime(file_obj) -> None:  # noqa: D401 – Django validator
-    """Ensure the file's MIME type is *application/pdf*."""
+def validate_resume_file_mime(file_obj) -> None:  # noqa: D401 – Django validator
+    """Ensure the file's MIME type roughly matches the extension."""
 
-    # ``content_type`` is provided by ``UploadedFile`` in request lifecycle
+    ext = os.path.splitext(file_obj.name)[1].lower()
+
+    # Skip strict MIME matching if we don't recognise the extension (handled above).
+    allowed_mimes = _EXT_TO_ALLOWED_MIME.get(ext)
+    if not allowed_mimes:
+        return
+
+    # ``content_type`` is set by Django's ``UploadedFile``; may be empty.
     mime = getattr(file_obj, "content_type", None)
 
     if not mime and hasattr(file_obj, "temporary_file_path"):
         mime = _get_mime(file_obj.temporary_file_path())
 
-    if mime != "application/pdf":
-        raise ValidationError(_("Invalid MIME type – only PDF documents are accepted."))
+    if mime and mime not in allowed_mimes:
+        raise ValidationError(_("Invalid MIME type for the uploaded document."))
 
 
 def validate_file_size(file_obj) -> None:  # noqa: D401 – Django validator
@@ -97,12 +119,15 @@ def validate_file_size(file_obj) -> None:  # noqa: D401 – Django validator
         )
 
 
-# Bundle as convenience list
-DEFAULT_PDF_VALIDATORS: list[Callable] = [
-    validate_file_extension,
-    validate_file_mime,
+# Bundle as convenience list (public API)
+DEFAULT_RESUME_VALIDATORS: list[Callable] = [
+    validate_resume_file_extension,
+    validate_resume_file_mime,
     validate_file_size,
 ]
+
+# Backwards-compat alias – remove once all imports are migrated
+DEFAULT_PDF_VALIDATORS = DEFAULT_RESUME_VALIDATORS  # type: ignore
 
 # ---------------------------------------------------------------------------
 # ZIP upload validators (for bulk resume archives)

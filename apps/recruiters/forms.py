@@ -24,5 +24,5 @@ class BulkResumeUploadForm(forms.ModelForm):
         }
         labels = {
             "name": "Pool Name",
-            "zip_file": "ZIP file of PDF resumes",
+            "zip_file": "ZIP file of resumes (PDF, DOCX, RTF, ODT, TXT)",
         }
