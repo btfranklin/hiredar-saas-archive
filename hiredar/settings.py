@@ -435,11 +435,14 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "format": "{asctime} [{name}] {levelname} {process:d} {thread:d} {message}",
+            "datefmt": "%H:%M:%S",
             "style": "{",
         },
+        # Unified simple formatter: timestamp, module name, level, message
         "simple": {
-            "format": "{levelname} {message}",
+            "format": "{asctime} [{module}] {levelname} {message}",
+            "datefmt": "%H:%M:%S",
             "style": "{",
         },
     },
@@ -447,13 +450,18 @@ LOGGING = {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            "formatter": "simple",
         },
         "file": {
             "level": "INFO",
             "class": "logging.FileHandler",
             "filename": os.path.join(BASE_DIR, "logs", "hiredar.log"),
-            "formatter": "verbose",
+            "formatter": "simple",
+        },
+        "console_simple": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
         },
     },
     "loggers": {
@@ -471,6 +479,11 @@ LOGGING = {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": True,
+        },
+        "apps.job_seekers.services.recommendation.llm_processor": {
+            "handlers": ["console_simple"],
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
 }
