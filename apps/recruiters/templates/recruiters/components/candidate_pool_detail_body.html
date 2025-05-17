@@ -48,17 +48,27 @@ Expected context:
               {% endif %}
             </td>
             <td>
-              {% if profile.candidate_name and profile.personal_tagline %}
-                <div class="flex gap-2">
-                  <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary">View Resume</a>
-                  <a href="{% url 'recruiters:candidate_pool_profile_talent_sheet_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary">View Talent Sheet</a>
-                </div>
-              {% else %}
-                <div class="flex items-center gap-2">
-                  <span class="loading loading-spinner loading-xs text-primary"></span>
-                  <span class="text-xs">Processing...</span>
-                </div>
-              {% endif %}
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                {# ---------------- Resume button / spinner ---------------- #}
+                {% if profile.resume_xml %}
+                  <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary whitespace-nowrap">View Resume</a>
+                {% else %}
+                  <div class="flex items-center gap-1">
+                    <span class="loading loading-spinner loading-xs text-primary"></span>
+                    <span class="text-xs">Processing resume&hellip;</span>
+                  </div>
+                {% endif %}
+
+                {# ---------------- Talent-sheet button / spinner ---------------- #}
+                {% if profile.talent_sheet %}
+                  <a href="{% url 'recruiters:candidate_pool_profile_talent_sheet_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary whitespace-nowrap">View Talent Sheet</a>
+                {% else %}
+                  <div class="flex items-center gap-1">
+                    <span class="loading loading-spinner loading-xs text-primary"></span>
+                    <span class="text-xs">Generating talent sheet&hellip;</span>
+                  </div>
+                {% endif %}
+              </div>
             </td>
           </tr>
         {% endfor %}
