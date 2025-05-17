@@ -320,6 +320,8 @@ else:
     EMAIL_VERIFICATION_OVERRIDE_ADDRESS = None
 
 DEFAULT_FROM_EMAIL = "Hiredar <noreply@hiredar.com>"
+# Remove default email subject prefix to avoid '[example.com]' on outgoing emails
+EMAIL_SUBJECT_PREFIX = ""
 
 # SMTP2GO HTTP API settings
 SMTP2GO_API_KEY = os.getenv("SMTP2GO_API_KEY")  # must be set in .env
