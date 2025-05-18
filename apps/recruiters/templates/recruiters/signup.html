@@ -5,112 +5,76 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-12">
-    <div class="max-w-md mx-auto bg-base-200 rounded-lg shadow-xl p-6">
-        <h1 class="text-2xl font-bold mb-6 text-center">Sign Up as Recruiter</h1>
-        
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            <input type="hidden" name="user_type" value="recruiter">
-            
-            {% if form.non_field_errors %}
-                <div class="alert alert-error">
-                    {% for error in form.non_field_errors %}
-                        <span>{{ error }}</span>
-                    {% endfor %}
+    <div class="hero bg-base-200 rounded-lg shadow-xl p-0 lg:p-6">
+        <div class="hero-content flex-col lg:flex-row w-full gap-8">
+            <!-- Signup Form -->
+            <div class="card card-xl bg-base-200 w-full max-w-md">
+                <div class="card-body space-y-4">
+                    <h1 class="card-title text-3xl justify-center mb-2">Sign Up as Recruiter</h1>
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-error">
+                            {% for error in form.non_field_errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <form id="signup-form" method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_type" value="recruiter">
+
+                        {# Name Field #}
+                        {% include 'core/components/fieldset_field.html' with label='Your Name' id=form.name.id_for_label name=form.name.name widget_class='input input-bordered w-full' placeholder='Enter your full name' value=form.name.value required=True %}
+                        {% if form.name.errors %}<div class="text-error text-sm">{{ form.name.errors.0 }}</div>{% endif %}
+
+                        {% url 'authentication:verify_email' as verify_email_url %}
+
+                        {# Email Field with HTMX verification #}
+                        {% with "type='email' hx-get='"|add:verify_email_url|add:"' hx-trigger='blur' hx-target='#email-verification' hx-include='[name=email]'" as email_extra_attrs %}
+                            {% include 'core/components/fieldset_field.html' with label='Email' id=form.email.id_for_label name=form.email.name widget_class='input input-bordered w-full' placeholder='youremail@example.com' value=form.email.value required=True extra_attrs=email_extra_attrs %}
+                        {% endwith %}
+                        <div id="email-verification"></div>
+                        {% if form.email.errors %}<div class="text-error text-sm">{{ form.email.errors.0 }}</div>{% endif %}
+
+                        {# Password Field #}
+                        {% include 'core/components/fieldset_field.html' with label='Password' id=form.password1.id_for_label name=form.password1.name widget_class='input input-bordered w-full' required=True extra_attrs='type="password"' %}
+                        {% if form.password1.errors %}<div class="text-error text-sm">{{ form.password1.errors.0 }}</div>{% endif %}
+
+                        {# Confirm Password Field #}
+                        {% include 'core/components/fieldset_field.html' with label='Confirm Password' id=form.password2.id_for_label name=form.password2.name widget_class='input input-bordered w-full' required=True extra_attrs='type="password"' %}
+                        {% if form.password2.errors %}<div class="text-error text-sm">{{ form.password2.errors.0 }}</div>{% endif %}
+
+                        {# US Certification Checkbox #}
+                        <fieldset class="fieldset mb-2">
+                            <legend class="fieldset-legend">US-only Certification</legend>
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
+                                <span class="label-text">
+                                    I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based recruiting activities.
+                                </span>
+                            </label>
+                            {% if form.us_only_certification.errors %}
+                                <div class="text-error text-sm mt-1">{{ form.us_only_certification.errors.0 }}</div>
+                            {% endif %}
+                        </fieldset>
+
+                        <button type="submit" class="btn btn-primary btn-xl w-full">Sign Up</button>
+                    </form>
+                    <div class="text-center">
+                        <p>Already have an account? <a href="{% url 'authentication:login' %}" class="link link-primary">Log in</a></p>
+                    </div>
                 </div>
-            {% endif %}
-            
-            <div>
-                <label class="label" for="{{ form.name.id_for_label }}">
-                    <span class="label-text">Your Name</span>
-                </label>
-                <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
-                       class="input input-bordered w-full {% if form.name.errors %}input-error{% endif %}" 
-                       value="{{ form.name.value|default:'' }}" placeholder="Enter your full name" required>
-                {% if form.name.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.name.errors.0 }}</div>
-                {% endif %}
             </div>
-            
-            <div>
-                <label class="label" for="{{ form.email.id_for_label }}">
-                    <span class="label-text">Email</span>
-                </label>
-                <input
-                    type="email"
-                    name="{{ form.email.name }}"
-                    id="{{ form.email.id_for_label }}"
-                    class="input input-bordered w-full {% if form.email.errors %}input-error{% endif %}"
-                    value="{{ form.email.value|default:'' }}"
-                    hx-get="{% url 'authentication:verify_email' %}"
-                    hx-trigger="blur"
-                    hx-target="#email-verification"
-                    hx-include="[name='email']"
-                />
-                <div id="email-verification"></div>
-                {% if form.email.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.email.errors.0 }}</div>
-                {% endif %}
+            <!-- Encouragement Panel -->
+            <div class="hidden lg:flex w-full max-w-md">
+                <div class="card card-xl bg-gradient-to-br from-primary via-secondary to-accent shadow-2xl text-primary-content w-full">
+                    <div class="card-body items-center text-center p-8 space-y-4">
+                        <h2 class="card-title text-4xl font-extrabold tracking-tight">100&nbsp;FREE&nbsp;Credits</h2>
+                        <p class="text-lg leading-relaxed">Upload up to 100 resumes on us—no subscription, no hidden fees.</p>
+                        <p class="leading-relaxed">After you use your free credits, simply buy more whenever you need them. Pay-as-you-go, zero commitments.</p>
+                        <p class="mt-6 text-xl font-bold text-base-content">Claim your free credits by signing up now!</p>
+                    </div>
+                </div>
             </div>
-            
-            <div>
-                <label class="label" for="{{ form.password1.id_for_label }}">
-                    <span class="label-text">Password</span>
-                </label>
-                <input type="password" name="{{ form.password1.name }}" id="{{ form.password1.id_for_label }}" class="input input-bordered w-full {% if form.password1.errors %}input-error{% endif %}">
-                {% if form.password1.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.password1.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div>
-                <label class="label" for="{{ form.password2.id_for_label }}">
-                    <span class="label-text">Confirm Password</span>
-                </label>
-                <input type="password" name="{{ form.password2.name }}" id="{{ form.password2.id_for_label }}" class="input input-bordered w-full {% if form.password2.errors %}input-error{% endif %}">
-                {% if form.password2.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.password2.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div>
-                <label class="flex items-start gap-2 cursor-pointer">
-                    <input type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
-                    <span class="label-text">
-                        I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based recruiting activities.
-                    </span>
-                </label>
-                {% if form.us_only_certification.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.us_only_certification.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="pt-2">
-                <button type="submit" class="btn btn-primary w-full">Sign Up</button>
-            </div>
-        </form>
-        
-        {% comment %}
-        <div class="divider">or</div>
-        
-        <div class="space-y-3">
-            {% get_providers as socialaccount_providers %}
-            {% for provider in socialaccount_providers %}
-                {% if provider.id == "google" %}
-                <a href="{% provider_login_url provider.id process='login' %}?user_type=recruiter" class="btn btn-outline w-full">
-                    <i class="fab fa-google mr-2"></i> Sign Up with Google
-                </a>
-                {% elif provider.id == "linkedin_oauth2" %}
-                <a href="{% provider_login_url provider.id process='login' %}?user_type=recruiter" class="btn btn-outline w-full">
-                    <i class="fab fa-linkedin mr-2"></i> Sign Up with LinkedIn
-                </a>
-                {% endif %}
-            {% endfor %}
-        </div>
-        {% endcomment %}
-        
-        <div class="text-center mt-6">
-            <p>Already have an account? <a href="{% url 'authentication:login' %}" class="text-primary hover:underline">Log in</a></p>
         </div>
     </div>
 </div>
