@@ -25,14 +25,16 @@ class CustomUserAdmin(UserAdmin):
         "user_type",
         "is_staff",
         "is_active",
+        "is_us_certified",
     )
-    list_filter = ("user_type", "is_staff", "is_active")
+    list_filter = ("user_type", "is_staff", "is_active", "is_us_certified")
     readonly_fields = ("username",)
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("name",)}),
         ("System info", {"fields": ("username",)}),
         ("User type", {"fields": ("user_type",)}),
+        ("Certification", {"fields": ("is_us_certified",)}),
         (
             "Permissions",
             {
@@ -55,6 +57,7 @@ class CustomUserAdmin(UserAdmin):
                     "email",
                     "name",
                     "user_type",
+                    "is_us_certified",
                     "password1",
                     "password2",
                     "is_staff",
