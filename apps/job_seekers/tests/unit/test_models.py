@@ -34,7 +34,7 @@ class JobSeekerProfileModelTests(TestCase):
 
         # Populate some skills so we can test skills_list
         self.profile.skills = (
-            "Python |  Django |React | "  # note extra spaces & trailing pipe
+            "Python\n  Django \nReact \n"  # note extra spaces & trailing newline
         )
         self.profile.save(update_fields=["skills"])
 

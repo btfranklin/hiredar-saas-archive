@@ -381,12 +381,12 @@ class Command(BaseCommand):
             elif "qualifications" in section_title and "preferred" in section_title:
                 # Add to required skills if it's a preferred qualification
                 if "required_skills" in job_data:
-                    job_data["required_skills"] += " | " + section_content
+                    job_data["required_skills"] += "\n" + section_content
                 else:
                     job_data["required_skills"] = section_content
             elif "skills" in section_title and "soft" not in section_title:
                 if "required_skills" in job_data:
-                    job_data["required_skills"] += " | " + section_content
+                    job_data["required_skills"] += "\n" + section_content
                 else:
                     job_data["required_skills"] = section_content
             elif "soft skills" in section_title:

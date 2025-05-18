@@ -129,7 +129,7 @@ class ResumeProcessor:  # noqa: D401 – Service class, not data‑class
             if not value:
                 continue
             if resume_field == "skills" and isinstance(value, list):
-                value = " | ".join(skill.strip() for skill in value if skill.strip())
+                value = "\n".join(skill.strip() for skill in value if skill.strip())
             setattr(profile, profile_field, value)
 
         profile.save()

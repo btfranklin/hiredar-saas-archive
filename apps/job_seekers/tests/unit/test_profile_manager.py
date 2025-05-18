@@ -3,7 +3,7 @@
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.job_seekers.models import JobSeekerProfile, CandidatePool
+from apps.job_seekers.models import CandidatePool, JobSeekerProfile
 from apps.job_seekers.services.profile_manager import ProfileManager
 
 
@@ -14,8 +14,8 @@ class ProfileManagerUtilityTests(TestCase):
         skills_input = ["Python", "  Django  ", "React"]
 
         formatted = ProfileManager.format_skills(skills_input)
-        # Expected joined with single pipes and trimmed values
-        self.assertEqual(formatted, "Python | Django | React")
+        # Expected joined with newlines and trimmed values
+        self.assertEqual(formatted, "Python\nDjango\nReact")
 
         parsed = ProfileManager.parse_skills(formatted)
         self.assertEqual(parsed, ["Python", "Django", "React"])
@@ -86,9 +86,7 @@ class ProfileManagerDatabaseTests(TestCase):
             user_type="recruiter",
         )
 
-        pool = CandidatePool.objects.create(
-            recruiter=recruiter, name="May Uploads"
-        )
+        pool = CandidatePool.objects.create(recruiter=recruiter, name="May Uploads")
 
         data = {"skills": "C++, Embedded"}
 

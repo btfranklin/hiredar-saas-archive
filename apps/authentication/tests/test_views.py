@@ -21,6 +21,7 @@ class AuthenticationViewTests(TestCase):
             "password2": "testpass123",
             "name": "Job Seeker",
             "user_type": "job_seeker",
+            "us_only_certification": True,
         }
         self.recruiter_data = {
             "email": "recruiter@example.com",
@@ -29,6 +30,7 @@ class AuthenticationViewTests(TestCase):
             "name": "Recruiter User",
             "user_type": "recruiter",
             "company_name": "Test Company",
+            "us_only_certification": True,
         }
 
     def test_job_seeker_signup(self) -> None:

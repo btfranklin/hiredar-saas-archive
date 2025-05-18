@@ -47,7 +47,7 @@ class TalentSheetEmbeddingTests(TestCase):
             "and managed five direct reports."
         )
         mock_talent_sheet.ideal_roles = "Backend Developer, Full Stack"
-        mock_talent_sheet.skills = "Python | Django | JavaScript"
+        mock_talent_sheet.skills = "Python\nDjango\nJavaScript"
         mock_talent_sheet.qualifications = ""
         # Set up job seeker ID and mock user_owner for naming
         mock_talent_sheet.job_seeker.id = 456
