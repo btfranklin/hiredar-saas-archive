@@ -146,6 +146,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     date_joined = models.DateTimeField(_("date joined"), auto_now_add=True)
 
+    # Field to record if the user has certified they are located in the US and will
+    # only use Hiredar for US-based recruiting and employment activity. This helps us
+    # limit our user base geographically for GDPR and other non-US regulatory
+    # considerations.
+    is_us_certified = models.BooleanField(
+        _("US certified"),
+        default=False,
+        help_text=_(
+            "Indicates that the user has confirmed they are physically located in the "
+            "United States and will use the platform solely for US-based hiring "
+            "activities."
+        ),
+    )
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"

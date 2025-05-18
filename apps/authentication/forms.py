@@ -117,6 +117,14 @@ class JobSeekerSignupForm(AllAuthSignupForm):
     This form extends allauth's SignupForm to support job seeker-specific behavior.
     """
 
+    us_only_certification = forms.BooleanField(
+        required=True,
+        label=(
+            "I confirm that I am physically located in the United States and will "
+            "use Hiredar exclusively for US-based employment purposes."
+        ),
+    )
+
     def save(self, request: HttpRequest) -> User:
         """Save the user with job seeker user type."""
         # First save the user using allauth's parent method
@@ -126,6 +134,9 @@ class JobSeekerSignupForm(AllAuthSignupForm):
         # Set job seeker specific fields
         user.user_type = "job_seeker"
         user.name = "New User"  # Default name until resume is parsed
+
+        # Mark the user as having certified US-only usage
+        user.is_us_certified = True
         user.save()
 
         return user
@@ -147,6 +158,14 @@ class RecruiterSignupForm(AllAuthSignupForm):
         widget=forms.TextInput(attrs={"placeholder": "Your name"}),
     )
 
+    us_only_certification = forms.BooleanField(
+        required=True,
+        label=(
+            "I confirm that I am physically located in the United States and will "
+            "use Hiredar exclusively for US-based recruiting activities."
+        ),
+    )
+
     def clean_name(self):
         """Validate that name is provided."""
         name = self.cleaned_data.get("name", "").strip()
@@ -163,6 +182,9 @@ class RecruiterSignupForm(AllAuthSignupForm):
         # Set recruiter specific fields
         user.user_type = "recruiter"
         user.name = self.cleaned_data.get("name")
+
+        # Mark the user as having certified US-only usage
+        user.is_us_certified = True
         user.save()
 
         return user
@@ -191,6 +213,14 @@ class SocialAccountSignupForm(SocialSignupForm):
         initial="job_seeker",
     )
 
+    us_only_certification = forms.BooleanField(
+        required=True,
+        label=(
+            "I confirm that I am physically located in the United States and will "
+            "use Hiredar exclusively for US-based employment or recruiting purposes."
+        ),
+    )
+
     def save(self, request):
         """Save the user with the appropriate user type and other details."""
         user = super().save(request)
@@ -202,6 +232,9 @@ class SocialAccountSignupForm(SocialSignupForm):
         # Set name if provided
         if self.cleaned_data.get("name"):
             user.name = self.cleaned_data["name"]
+
+        # Mark the user as having certified US-only usage
+        user.is_us_certified = True
 
         # Save user
         user.save()

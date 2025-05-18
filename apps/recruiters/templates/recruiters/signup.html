@@ -73,6 +73,18 @@
                 {% endif %}
             </div>
             
+            <div>
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
+                    <span class="label-text">
+                        I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based recruiting activities.
+                    </span>
+                </label>
+                {% if form.us_only_certification.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.us_only_certification.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
             <div class="pt-2">
                 <button type="submit" class="btn btn-primary w-full">Sign Up</button>
             </div>
