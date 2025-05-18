@@ -6,6 +6,7 @@ and creating JobOpening models from that structured data.
 """
 
 import logging
+import re
 import xml.etree.ElementTree as ET
 
 from apps.recruiters.models import JobOpening, RecruiterProfile
@@ -79,7 +80,7 @@ def create_job_opening_from_xml(
                     if skill_elem.text and skill_elem.text.strip():
                         skills.append(skill_elem.text.strip())
 
-        required_skills = " | ".join(skills)
+        required_skills = "\n".join(skills)
 
         # Extract qualifications
         qualifications = []
@@ -132,12 +133,33 @@ def create_job_opening_from_xml(
             else ""
         )
 
-        # Extract soft skills (may be missing in some XML formats)
-        soft_skills = ""
+        # Extract soft skills – expect a <soft_skills> section that may contain
+        # either nested <skill> elements (preferred) or plain text fallback.
+        soft_skills_list: list[str] = []
         if requirements is not None:
             soft_skills_elem = requirements.find("soft_skills")
-            if soft_skills_elem is not None and soft_skills_elem.text:
-                soft_skills = soft_skills_elem.text.strip()
+            if soft_skills_elem is not None:
+                # First, check for nested <skill> elements (preferred format)
+                for skill_elem in soft_skills_elem.findall("skill"):
+                    if skill_elem.text and skill_elem.text.strip():
+                        soft_skills_list.append(skill_elem.text.strip())
+
+                # Fallback: if there were no nested <skill> elements but there is
+                # text content directly under <soft_skills>, capture it.
+                if (
+                    not soft_skills_list
+                    and soft_skills_elem.text
+                    and soft_skills_elem.text.strip()
+                ):
+                    # Split on common separators to produce a list – pipe, comma, semicolon
+                    raw_text = soft_skills_elem.text.strip()
+                    for token in re.split(r"[|,;]", raw_text):
+                        token = token.strip()
+                        if token:
+                            soft_skills_list.append(token)
+
+        # Join the list using the same delimiter pattern used for technical skills
+        soft_skills = "\n".join(soft_skills_list)
 
         # Extract performance expectations (may be missing in some XML formats)
         performance_expectations = ""

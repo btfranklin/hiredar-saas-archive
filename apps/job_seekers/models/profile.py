@@ -88,7 +88,7 @@ class JobSeekerProfile(models.Model):
         related_name="job_seeker_profiles",
     )
 
-    skills = models.TextField(blank=True, help_text="Pipe-separated list of skills")
+    skills = models.TextField(blank=True, help_text="Line-separated list of skills")
     experience = models.TextField(null=True, blank=True)
     education = models.TextField(null=True, blank=True)
     certifications = models.TextField(null=True, blank=True)
@@ -136,7 +136,7 @@ class JobSeekerProfile(models.Model):
     def skills_list(self) -> list[str]:
         if not self.skills:
             return []
-        return [skill.strip() for skill in self.skills.split("|") if skill.strip()]
+        return [skill.strip() for skill in self.skills.splitlines() if skill.strip()]
 
     @property
     def in_talent_pool(self) -> bool:

@@ -104,7 +104,7 @@ def extract_skills(xml_content: str) -> str | None:
         xml_content: XML string representation of a resume
 
     Returns:
-        Pipe-separated string of skills or None if no skills found
+        Line-separated string of skills or None if no skills found
 
     Raises:
         ET.ParseError: If the XML is not well-formed
@@ -122,8 +122,8 @@ def extract_skills(xml_content: str) -> str | None:
     if not skills:
         return None
 
-    # Convert the list of skills to a pipe-separated string
-    return " | ".join(skills)  # Added spaces around pipe for better readability
+    # Convert the list of skills to a line-separated string
+    return "\n".join(skills)
 
 
 def extract_most_recent_title(xml_content: str) -> str | None:

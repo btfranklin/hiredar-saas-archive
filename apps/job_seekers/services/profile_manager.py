@@ -78,26 +78,26 @@ class ProfileManager:
             skills_list: List of skill names
 
         Returns:
-            Pipe-separated string of skills
+            Line-separated string of skills
         """
         if not skills_list:
             return ""
-        return " | ".join(skill.strip() for skill in skills_list if skill.strip())
+        return "\n".join(skill.strip() for skill in skills_list if skill.strip())
 
     @staticmethod
     def parse_skills(skills_string):
         """
-        Parse a pipe-separated string of skills into a list.
+        Parse a line-separated string of skills into a list.
 
         Args:
-            skills_string: Pipe-separated string of skills
+            skills_string: Line-separated string of skills
 
         Returns:
             List of skill names
         """
         if not skills_string:
             return []
-        return [skill.strip() for skill in skills_string.split(" | ") if skill.strip()]
+        return [skill.strip() for skill in skills_string.splitlines() if skill.strip()]
 
     @staticmethod
     def is_profile_complete(profile):

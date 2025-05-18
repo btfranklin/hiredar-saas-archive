@@ -15,9 +15,10 @@ Follow these guidelines:
 2. Extract required skills, both technical and soft skills
 3. Identify qualifications, education requirements, and experience levels
 4. Extract salary information, benefits, and perks
-5. Capture all job responsibilities and duties
-6. Include working conditions, hours, and environment details
-7. Omit any information that isn't explicitly provided. Never make anything up.
+5. Capture all job responsibilities, duties, and daily tasks
+6. Capture performance expectations and metrics
+7. Include working conditions, hours, and environment details
+8. Omit any information that isn't explicitly provided. Never make anything up.
 </task>
 
 <response_format>
@@ -34,6 +35,10 @@ Output *ONLY* valid, well-formed XML with clear hierarchy. Use this structure:
       <skill></skill>
       <!-- Repeat for each skill -->
     </skills>
+    <soft_skills>
+      <skill></skill>
+      <!-- Repeat for each soft skill -->
+    </soft_skills>
     <qualifications>
       <qualification></qualification>
       <!-- Repeat for each qualification -->
@@ -47,6 +52,8 @@ Output *ONLY* valid, well-formed XML with clear hierarchy. Use this structure:
     <salary_max></salary_max>
     <benefits></benefits>
     <perks></perks>
+    <daily_tasks></daily_tasks>
+    <performance_expectations></performance_expectations>
   </details>
   <responsibilities>
     <responsibility></responsibility>

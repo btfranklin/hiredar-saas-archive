@@ -68,7 +68,7 @@ class TalentSheet(models.Model):
     )
     skills = models.TextField(
         blank=True,
-        help_text="Pipe-separated list of skills copied from JobSeekerProfile.skills for matching purposes",
+        help_text="Line-separated list of skills copied from JobSeekerProfile.skills for matching purposes",
     )
     personal_tagline = models.CharField(
         max_length=150,
