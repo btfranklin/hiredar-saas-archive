@@ -64,60 +64,39 @@ def create_candidate_matches(job_id: int, **kwargs) -> None:
 
                     all_matches_by_talent[talent_sheet_id][match_type] = score
 
-            # Process each type of match
-            for result_key, match_type in match_type_mapping.items():
-                if not match_results.get(result_key):
+            # --- NEW IMPLEMENTATION: create one CandidateMatch per talent sheet ---
+
+            TalentSheet = apps.get_model("job_seekers", "TalentSheet")
+
+            for talent_sheet_id, talent_scores in all_matches_by_talent.items():
+                # Skip if no lens meets the minimum threshold (0.5)
+                if all(score < 0.5 for score in talent_scores.values()):
                     continue
 
-                for match in match_results[result_key]:
-                    # Use raw score (0-1 range) directly from Pinecone
-                    score = match["score"]
+                try:
+                    talent_sheet = TalentSheet.objects.get(id=talent_sheet_id)
 
-                    # Skip if below minimum score (0.5)
-                    if score < 0.5:
-                        continue
+                    CandidateMatch.objects.update_or_create(
+                        job_opening=job,
+                        talent_sheet=talent_sheet,
+                        defaults={
+                            "holistic_score": talent_scores.get("holistic", 0),
+                            "skills_score": talent_scores.get("skills", 0),
+                            "experience_score": talent_scores.get("experience", 0),
+                            "wildcard_score": talent_scores.get("wildcard", 0),
+                            "qualifications_score": talent_scores.get(
+                                "qualifications", 0
+                            ),
+                            "is_analyzed": False,
+                        },
+                    )
 
-                    talent_sheet_id = match["metadata"]["talent_sheet_id"]
-
-                    # Get all match scores for this talent
-                    talent_scores = all_matches_by_talent.get(talent_sheet_id, {})
-
-                    # Get the scores for different match types, default to 0
-                    holistic_score = talent_scores.get("holistic", 0)
-                    skills_score = talent_scores.get("skills", 0)
-                    experience_score = talent_scores.get("experience", 0)
-                    wildcard_score = talent_scores.get("wildcard", 0)
-                    qualifications_score = talent_scores.get("qualifications", 0)
-
-                    try:
-                        # Get the talent sheet
-                        TalentSheet = apps.get_model("job_seekers", "TalentSheet")
-                        talent_sheet = TalentSheet.objects.get(id=talent_sheet_id)
-
-                        # Create or update the match
-                        candidate_match, created = (
-                            CandidateMatch.objects.update_or_create(
-                                job_opening=job,
-                                talent_sheet=talent_sheet,
-                                match_type=match_type,
-                                defaults={
-                                    "holistic_score": holistic_score,
-                                    "skills_score": skills_score,
-                                    "experience_score": experience_score,
-                                    "wildcard_score": wildcard_score,
-                                    "qualifications_score": qualifications_score,
-                                    "is_analyzed": False,  # Reset analysis flag on update
-                                },
-                            )
-                        )
-
-                    except Exception as e:
-                        logger.error(
-                            "Error creating %s match for talent sheet %s: %s",
-                            match_type,
-                            talent_sheet_id,
-                            e,
-                        )
+                except Exception as e:
+                    logger.error(
+                        "Error creating consolidated match for talent sheet %s: %s",
+                        talent_sheet_id,
+                        e,
+                    )
 
         logger.info("Created/updated matches for job opening %s", job_id)
     except Exception as e:
@@ -207,59 +186,34 @@ def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
                             score = match["score"]
                             talent_scores[match_type] = score
 
-                    # Process each type of match
-                    for result_key, match_type in match_type_mapping.items():
-                        if not match_results.get(result_key):
-                            continue
+                    # --- NEW IMPLEMENTATION: create a single match per job opening ---
 
-                        for match in match_results[result_key]:
-                            # Skip if not matching our talent sheet
-                            if str(match["metadata"]["talent_sheet_id"]) != str(
-                                talent_id
-                            ):
-                                continue
+                    # Skip if no lens meets the minimum threshold (0.5)
+                    if all(score < 0.5 for score in talent_scores.values()):
+                        continue
 
-                            # Use raw score (0-1 range) directly from Pinecone
-                            score = match["score"]
+                    try:
+                        CandidateMatch.objects.update_or_create(
+                            job_opening=job,
+                            talent_sheet=talent,
+                            defaults={
+                                "holistic_score": talent_scores.get("holistic", 0),
+                                "skills_score": talent_scores.get("skills", 0),
+                                "experience_score": talent_scores.get("experience", 0),
+                                "wildcard_score": talent_scores.get("wildcard", 0),
+                                "qualifications_score": talent_scores.get(
+                                    "qualifications", 0
+                                ),
+                                "is_analyzed": False,
+                            },
+                        )
 
-                            # Skip if below minimum score (0.5)
-                            if score < 0.5:
-                                continue
-
-                            # Get the scores for all match types, default to 0
-                            holistic_score = talent_scores.get("holistic", 0)
-                            skills_score = talent_scores.get("skills", 0)
-                            experience_score = talent_scores.get("experience", 0)
-                            wildcard_score = talent_scores.get("wildcard", 0)
-                            qualifications_score = talent_scores.get(
-                                "qualifications", 0
-                            )
-
-                            try:
-                                # Create or update the match
-                                candidate_match, created = (
-                                    CandidateMatch.objects.update_or_create(
-                                        job_opening=job,
-                                        talent_sheet=talent,
-                                        match_type=match_type,
-                                        defaults={
-                                            "holistic_score": holistic_score,
-                                            "skills_score": skills_score,
-                                            "experience_score": experience_score,
-                                            "wildcard_score": wildcard_score,
-                                            "qualifications_score": qualifications_score,
-                                            "is_analyzed": False,  # Reset analysis flag on update
-                                        },
-                                    )
-                                )
-
-                            except Exception as e:
-                                logger.error(
-                                    "Error creating %s match for job opening %s: %s",
-                                    match_type,
-                                    job.id,
-                                    e,
-                                )
+                    except Exception as e:
+                        logger.error(
+                            "Error creating consolidated match for job opening %s: %s",
+                            job.id,
+                            e,
+                        )
 
             except Exception as e:
                 logger.error("Error processing job opening %s: %s", job.id, e)

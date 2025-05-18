@@ -76,17 +76,6 @@ class CandidateMatch(models.Model):
         default=False,
         help_text="Whether this match has been analyzed by AI",
     )
-    match_type = models.CharField(
-        max_length=20,
-        choices=(
-            ("holistic", "Holistic Match"),
-            ("skills", "Skills Match"),
-            ("experience", "Experience Match"),
-            ("wildcard", "Wildcard Match"),
-            ("qualifications", "Qualifications Match"),
-        ),
-        default="holistic",
-    )
     match_summary = models.CharField(
         max_length=255,
         blank=True,
@@ -103,18 +92,20 @@ class CandidateMatch(models.Model):
 
     class Meta:
         app_label = "matching"
-        # Ensure we don't have duplicate matches for the same job opening, talent sheet, and match type
-        unique_together = ["job_opening", "talent_sheet", "match_type"]
+        # Ensure we don't have duplicate matches for the same job opening and talent sheet
+        unique_together = ["job_opening", "talent_sheet"]
 
     def __str__(self) -> str:
-        # Simple approach to avoid linter errors
+        # Dynamically determine the active lens for display purposes
+        current_type = getattr(self, "match_type", "holistic")
+
         match_type_display = {
             "holistic": "Holistic Match",
             "skills": "Skills Match",
             "experience": "Experience Match",
             "wildcard": "Wildcard Match",
             "qualifications": "Qualifications Match",
-        }.get(self.match_type, self.match_type)
+        }.get(current_type, current_type)
 
         # Access job seeker name through talent sheet and user_owner
         job_seeker_profile = self.talent_sheet.job_seeker
@@ -124,7 +115,10 @@ class CandidateMatch(models.Model):
             if job_owner
             else f"Profile {job_seeker_profile.pk}"
         )
-        return f"{job_seeker_name} - {self.job_opening} ({self.get_score_for_type():.2f}, {match_type_display})"
+        return (
+            f"{job_seeker_name} - {self.job_opening} "
+            f"({self.get_score_for_type():.2f}, {match_type_display})"
+        )
 
     @property
     def holistic_rating(self) -> int:
@@ -172,29 +166,35 @@ class CandidateMatch(models.Model):
 
     def get_score_for_type(self) -> Decimal:
         """Get the score for the current match type."""
-        if self.match_type == "holistic":
+        # Dynamically determine the active lens for display purposes
+        current_type = getattr(self, "match_type", "holistic")
+
+        if current_type == "holistic":
             return self.holistic_score
-        elif self.match_type == "skills":
+        elif current_type == "skills":
             return self.skills_score
-        elif self.match_type == "experience":
+        elif current_type == "experience":
             return self.experience_score
-        elif self.match_type == "wildcard":
+        elif current_type == "wildcard":
             return self.wildcard_score
-        elif self.match_type == "qualifications":
+        elif current_type == "qualifications":
             return self.qualifications_score
         return Decimal("0.0")  # Fallback
 
     def get_rating_for_type(self) -> int:
         """Get the rating for the current match type."""
-        if self.match_type == "holistic":
+        # Dynamically determine the active lens for display purposes
+        current_type = getattr(self, "match_type", "holistic")
+
+        if current_type == "holistic":
             return self.holistic_rating
-        elif self.match_type == "skills":
+        elif current_type == "skills":
             return self.skills_rating
-        elif self.match_type == "experience":
+        elif current_type == "experience":
             return self.experience_rating
-        elif self.match_type == "wildcard":
+        elif current_type == "wildcard":
             return self.wildcard_rating
-        elif self.match_type == "qualifications":
+        elif current_type == "qualifications":
             return self.qualifications_rating
         return 1  # Fallback
 

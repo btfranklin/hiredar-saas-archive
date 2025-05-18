@@ -21,7 +21,7 @@ from apps.messaging.models import Conversation
 from apps.recruiters.models import JobOpening
 
 
-@method_decorator(login_required, name="dispatch")
+@method_decorator(login_required, name="dispatch")  # type: ignore
 class CandidateDetailView(LoginRequiredMixin, DetailView):
     """
     View for detailed information about a candidate match.
@@ -79,7 +79,6 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
             CandidateMatch,
             job_opening=self.job_opening,
             talent_sheet__job_seeker__id=self.kwargs["candidate_id"],
-            match_type="holistic",  # Default to holistic match for detail view
         )
 
     def get_context_data(self, **kwargs):

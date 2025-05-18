@@ -227,8 +227,7 @@ class Command(BaseCommand):
 
             for i, match in enumerate(matches):
                 self.stdout.write(f"\nMatch {i+1}:")
-                self.stdout.write(f"Type: {match.match_type}")
-                self.stdout.write(f"Score: {match.holistic_score}")
+                self.stdout.write(f"Holistic Score: {match.holistic_score}")
                 self.stdout.write(f"Status: {match.status}")
                 self.stdout.write(
                     f"Is Analyzed: {'Yes' if match.is_analyzed else 'No'}"

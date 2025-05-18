@@ -8,7 +8,7 @@ providing the core functionality for job opening management in the application.
 from typing import Any, ClassVar, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import QuerySet
+from django.db.models import CharField, QuerySet, Value
 from django.http import (
     HttpRequest,
     HttpResponseBadRequest,
@@ -212,42 +212,61 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                     matches = CandidateMatch.objects.none()
                 # Determine matches for requested section
                 section = context["section"]
+
                 if selected_pool_id != 0:
                     if section == "wildcard":
-                        context["candidate_matches"] = matches.filter(
-                            match_type="wildcard"
-                        ).order_by("-wildcard_score")
+                        context["candidate_matches"] = (
+                            matches.filter(wildcard_score__gt=0)
+                            .annotate(
+                                match_type=Value("wildcard", output_field=CharField())
+                            )
+                            .order_by("-wildcard_score")
+                        )
                     elif section == "skills":
-                        context["candidate_matches"] = matches.filter(
-                            match_type="skills"
-                        ).order_by("-skills_score")
+                        context["candidate_matches"] = (
+                            matches.filter(skills_score__gt=0)
+                            .annotate(
+                                match_type=Value("skills", output_field=CharField())
+                            )
+                            .order_by("-skills_score")
+                        )
                     elif section == "experience":
-                        context["candidate_matches"] = matches.filter(
-                            match_type="experience"
-                        ).order_by("-experience_score")
+                        context["candidate_matches"] = (
+                            matches.filter(experience_score__gt=0)
+                            .annotate(
+                                match_type=Value("experience", output_field=CharField())
+                            )
+                            .order_by("-experience_score")
+                        )
                     elif section == "qualifications":
-                        context["candidate_matches"] = matches.filter(
-                            match_type="qualifications"
-                        ).order_by("-qualifications_score")
+                        context["candidate_matches"] = (
+                            matches.filter(qualifications_score__gt=0)
+                            .annotate(
+                                match_type=Value(
+                                    "qualifications", output_field=CharField()
+                                )
+                            )
+                            .order_by("-qualifications_score")
+                        )
                     else:
-                        context["candidate_matches"] = matches.filter(
-                            match_type="holistic"
-                        ).order_by("-holistic_score")
+                        context["candidate_matches"] = (
+                            matches.filter(holistic_score__gt=0)
+                            .annotate(
+                                match_type=Value("holistic", output_field=CharField())
+                            )
+                            .order_by("-holistic_score")
+                        )
                 else:
                     context["candidate_matches"] = []
                 # Compute counts (for tabs)
-                context["holistic_count"] = matches.filter(
-                    match_type="holistic"
-                ).count()
-                context["skills_count"] = matches.filter(match_type="skills").count()
+                context["holistic_count"] = matches.filter(holistic_score__gt=0).count()
+                context["skills_count"] = matches.filter(skills_score__gt=0).count()
                 context["experience_count"] = matches.filter(
-                    match_type="experience"
+                    experience_score__gt=0
                 ).count()
-                context["wildcard_count"] = matches.filter(
-                    match_type="wildcard"
-                ).count()
+                context["wildcard_count"] = matches.filter(wildcard_score__gt=0).count()
                 context["qualifications_count"] = matches.filter(
-                    match_type="qualifications"
+                    qualifications_score__gt=0
                 ).count()
 
         return context

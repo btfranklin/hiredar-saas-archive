@@ -25,13 +25,11 @@ class CandidateMatchAdmin(admin.ModelAdmin):
         "talent_sheet",
         "get_score_for_type",
         "status",
-        "match_type",
         "is_analyzed",
         "created_at",
     )
     list_filter = (
         "status",
-        "match_type",
         "is_analyzed",
         "created_at",
     )
@@ -43,8 +41,8 @@ class CandidateMatchAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
     def get_score_for_type(self, obj):
-        """Get the appropriate score based on match type."""
-        return f"{float(obj.get_score_for_type()):.4f}"
+        """Display holistic score by default when browsing in admin."""
+        return f"{float(obj.holistic_score):.4f}"
 
-    get_score_for_type.short_description = "Score"
-    get_score_for_type.admin_order_field = "holistic_score"  # Default sort field
+    get_score_for_type.short_description = "Holistic Score"
+    get_score_for_type.admin_order_field = "holistic_score"

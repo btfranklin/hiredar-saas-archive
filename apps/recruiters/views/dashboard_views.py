@@ -7,6 +7,7 @@ This module contains views for the recruiter dashboard and settings.
 from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import CharField, Value
 from django.http import HttpRequest, HttpResponseBase
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
@@ -63,10 +64,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         ).order_by("-created_at")[:5]
 
         # Get recent candidate matches
-        context["recent_candidates"] = CandidateMatch.objects.filter(
-            job_opening__recruiter=user.recruiter_profile,
-            match_type="holistic",
-        ).order_by("-holistic_score")[:5]
+        context["recent_candidates"] = (
+            CandidateMatch.objects.filter(
+                job_opening__recruiter=user.recruiter_profile,
+                holistic_score__gt=0,
+            )
+            .annotate(match_type=Value("holistic", output_field=CharField()))
+            .order_by("-holistic_score")[:5]
+        )
 
         # Get unread notifications
         context["notifications"] = Notification.objects.filter(
