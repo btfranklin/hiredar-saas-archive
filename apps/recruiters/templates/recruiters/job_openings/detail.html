@@ -128,4 +128,51 @@
     htmx.ajax('GET', url, { target: '#tabs-container', swap: 'outerHTML' });
   });
 </script>
+<script>
+  // --- Candidate-matching polling guard ------------------------------------
+  // When the Candidates tab shows the spinner, it polls the server every 5 s.
+  // To avoid an infinite spinner when no matches will ever exist, we count the
+  // number of polling cycles.  After ~1 minute (12 attempts) we assume no
+  // matches were found, stop polling and fall back to a static message.
+
+  (function () {
+    const MAX_ATTEMPTS = 12;     // 12 × 5 s = 60 s total
+    let attempts = 0;
+
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+      // Only care about swaps that update the tab-content container
+      if (!evt.detail.target || evt.detail.target.id !== 'tab-content') {
+        return;
+      }
+
+      const loader = document.getElementById('matches-loading');
+
+      // If the loading spinner is still present we are still polling
+      if (loader) {
+        attempts += 1;
+
+        if (attempts >= MAX_ATTEMPTS) {
+          // Stop further polling by removing htmx attributes
+          loader.removeAttribute('hx-get');
+          loader.removeAttribute('hx-trigger');
+
+          // Replace spinner with the static "no matches" message
+          loader.innerHTML = `
+            <div class="flex flex-col items-center text-center py-8">
+              <div class="text-4xl mb-4">
+                <i class="fas fa-search text-base-content/30"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">No Matches Found</h3>
+              <p class="text-base-content/70 max-w-md">
+                We couldn't find any candidates in this pool that meet the current criteria.
+              </p>
+            </div>`;
+        }
+      } else {
+        // Spinner gone ⇒ matches have been rendered, reset the counter
+        attempts = 0;
+      }
+    });
+  })();
+</script>
 {% endblock %} 

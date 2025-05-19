@@ -22,24 +22,20 @@
 <div class="card bg-base-200 shadow-md mb-6">
   <div class="card-body p-4">
     {% if not candidate_matches %}
-        <div class="flex flex-col items-center text-center py-8">
-            <div class="text-4xl mb-4">
-                <i class="fas fa-search text-base-content/30"></i>
+        {# Automatically poll for new matches every 5 seconds while matching is in progress #}
+        <div id="matches-loading"
+             hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=candidates&pool_id={{ candidate_pool_id }}&section={{ section }}"
+             hx-trigger="every 5s"
+             hx-target="#tab-content"
+             hx-swap="innerHTML">
+            <div class="flex flex-col items-center text-center py-8">
+                <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
+                <h3 class="text-xl font-semibold mb-2">Generating Matches…</h3>
+                <p class="text-base-content/70 max-w-md">
+                    We're currently matching candidates from this pool to your job opening. This usually takes a minute or two.
+                    The list will update automatically when matches are found.
+                </p>
             </div>
-            <h3 class="text-xl font-semibold mb-2">No Matches Found</h3>
-            <p class="text-base-content/70 max-w-md">
-                {% if section == 'holistic' %}
-                    We haven't found any candidates that match all the requirements yet. Try adjusting the job requirements or check back later.
-                {% elif section == 'skills' %}
-                    No candidates currently match the required skills. Consider broadening the skill requirements or check back later.
-                {% elif section == 'experience' %}
-                    No candidates match the experience requirements. You might want to adjust the experience level or check back later.
-                {% elif section == 'qualifications' %}
-                    No candidates match the qualifications requirements. Consider reviewing the requirements or check back later.
-                {% else %}
-                    No wildcard matches found. Consider adjusting the job requirements to find more potential candidates.
-                {% endif %}
-            </p>
         </div>
     {% else %}
         <div class="mb-10 px-4">
