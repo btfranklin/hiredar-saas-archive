@@ -11,12 +11,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import JobSeekerProfile as JobSeeker
-from apps.matching.models import CandidateMatch
+from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.messaging.models import Conversation
 from apps.recruiters.models import JobOpening
 
@@ -96,6 +97,11 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         context["talent_sheet"] = self.object.talent_sheet
         context["job_seeker"] = self.object.talent_sheet.job_seeker
 
+        # Check if this candidate is already shortlisted for this job opening
+        context["is_shortlisted"] = ShortlistedMatch.objects.filter(
+            job_opening=self.job_opening, candidate_match=self.object
+        ).exists()
+
         # Get existing conversation between the recruiter and job seeker for this job opening
         try:
             # Use filter with multiple conditions instead of repeating parameters
@@ -126,7 +132,8 @@ def withdraw_interest(request, job_id, candidate_id):
     job_opening = get_object_or_404(JobOpening, id=job_id)
 
     # Check if the current user has access to this job opening
-    if job_opening.recruiter.user.id != request.user.id:
+    user = cast(AuthenticatedUser, request.user)
+    if job_opening.recruiter.user.pk != user.pk:
         return JsonResponse(
             {"status": "error", "message": "Permission denied"}, status=403
         )
@@ -138,9 +145,7 @@ def withdraw_interest(request, job_id, candidate_id):
     try:
         # Use filter with multiple conditions instead of repeating parameters
         conversation = (
-            Conversation.objects.filter(
-                job_opening=job_opening, participants=request.user
-            )
+            Conversation.objects.filter(job_opening=job_opening, participants=user)
             .filter(
                 participants=job_seeker.user_owner,
                 status="interest_requested",  # Only delete if status is interest_requested
@@ -180,3 +185,95 @@ def withdraw_interest(request, job_id, candidate_id):
                 {"status": "error", "message": "No active interest request found"},
                 status=404,
             )
+
+
+def add_to_shortlist(request: HttpRequest, job_id: int, candidate_id: int):
+    """Add a candidate match to the recruiter's shortlist for this job opening."""
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Method not allowed"}, status=405
+        )
+
+    # Ensure the job opening exists and belongs to the current recruiter
+    job_opening = get_object_or_404(JobOpening, id=job_id)
+    user = cast(AuthenticatedUser, request.user)
+    if job_opening.recruiter.user.pk != user.pk:
+        return JsonResponse(
+            {"status": "error", "message": "Permission denied"}, status=403
+        )
+
+    # Get the candidate match
+    candidate_match = get_object_or_404(
+        CandidateMatch,
+        job_opening=job_opening,
+        talent_sheet__job_seeker__id=candidate_id,
+    )
+
+    # Toggle shortlist entry
+    existing = ShortlistedMatch.objects.filter(
+        job_opening=job_opening, candidate_match=candidate_match
+    ).first()
+
+    if existing:
+        existing.delete()
+        is_shortlisted = False
+    else:
+        ShortlistedMatch.objects.create(
+            job_opening=job_opening, candidate_match=candidate_match
+        )
+        is_shortlisted = True
+
+    if request.headers.get("HX-Request") == "true":
+        # Build CSRF input and target URL
+        csrf_token_value = request.META.get("CSRF_COOKIE", "")
+        csrf_input = f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token_value}">'  # noqa: E501
+        toggle_url = reverse(
+            "matching:add_to_shortlist", args=[job_opening.pk, candidate_id]
+        )
+
+        if is_shortlisted:
+            button_html = (
+                f'<form hx-post="{toggle_url}" hx-target="this" hx-swap="outerHTML">'
+                f"{csrf_input}"
+                '<button type="submit" class="btn btn-success btn-sm">'
+                '<i class="fas fa-check mr-1"></i> In Shortlist'
+                "</button></form>"
+            )
+        else:
+            button_html = (
+                f'<form hx-post="{toggle_url}" hx-target="this" hx-swap="outerHTML">'
+                f"{csrf_input}"
+                '<button type="submit" class="btn btn-outline btn-sm">'
+                '<i class="fas fa-plus mr-1"></i> Add to Shortlist'
+                "</button></form>"
+            )
+
+        return HttpResponse(button_html)
+
+    return JsonResponse({"status": "success", "is_shortlisted": is_shortlisted})
+
+
+def remove_from_shortlist(request: HttpRequest, job_id: int, shortlist_id: int):
+    """Remove a shortlisted match via POST."""
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Method not allowed"}, status=405
+        )
+
+    shortlist_obj = get_object_or_404(ShortlistedMatch, id=shortlist_id)
+
+    user = cast(AuthenticatedUser, request.user)
+    # Only the recruiter who owns the job can remove
+    if shortlist_obj.job_opening.recruiter.user.pk != user.pk:
+        return JsonResponse(
+            {"status": "error", "message": "Permission denied"}, status=403
+        )
+
+    shortlist_obj.delete()
+
+    if request.headers.get("HX-Request") == "true":
+        return HttpResponse("")  # Caller will decide swap action (e.g., remove row)
+
+    return JsonResponse({"status": "success"})

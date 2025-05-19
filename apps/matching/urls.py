@@ -6,7 +6,12 @@ This module defines the URL routes for candidate matching functionality.
 
 from django.urls import path
 
-from apps.matching.views.candidate_views import CandidateDetailView, withdraw_interest
+from apps.matching.views.candidate_views import (
+    CandidateDetailView,
+    add_to_shortlist,
+    remove_from_shortlist,
+    withdraw_interest,
+)
 from apps.matching.views.matching_views import match_job_api, match_talent_api
 
 app_name = "matching"
@@ -22,6 +27,16 @@ urlpatterns = [
         "<int:job_id>/candidates/<int:candidate_id>/withdraw-interest/",
         withdraw_interest,
         name="withdraw_interest",
+    ),
+    path(
+        "<int:job_id>/candidates/<int:candidate_id>/shortlist/",
+        add_to_shortlist,
+        name="add_to_shortlist",
+    ),
+    path(
+        "<int:job_id>/shortlist/<int:shortlist_id>/remove/",
+        remove_from_shortlist,
+        name="remove_from_shortlist",
     ),
     # Matching API endpoints
     path(

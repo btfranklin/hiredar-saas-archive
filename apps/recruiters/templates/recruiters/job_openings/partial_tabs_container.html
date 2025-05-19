@@ -18,6 +18,16 @@
        hx-push-url="true">
       <i class="fas fa-users mr-2"></i> Candidate Matches
     </a>
+    {% if shortlist_count|default:0 > 0 %}
+    <a role="tab"
+       class="tab tab-lg {% if tab == 'shortlist' %}tab-active{% endif %}"
+       hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=shortlist"
+       hx-target="#tabs-container"
+       hx-swap="outerHTML"
+       hx-push-url="true">
+      <i class="fas fa-bookmark mr-2"></i> Shortlist <span class="badge badge-ghost ml-2">{{ shortlist_count }}</span>
+    </a>
+    {% endif %}
   </div>
 
   <div id="tab-content" class="bg-base-200 rounded-box shadow-md">

@@ -212,3 +212,38 @@ class CandidateMatch(models.Model):
             ("qualifications", "Qualifications", self.qualifications_rating),
             ("wildcard", "Wildcard", self.wildcard_rating),
         ]
+
+
+class ShortlistedMatch(models.Model):
+    """A candidate match that a recruiter has added to their shortlist for a job opening."""
+
+    job_opening = models.ForeignKey(
+        "recruiters.JobOpening",
+        on_delete=models.CASCADE,
+        related_name="shortlisted_matches",
+    )
+    candidate_match = models.ForeignKey(
+        "matching.CandidateMatch",
+        on_delete=models.CASCADE,
+        related_name="shortlists",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "matching"
+        # Only allow each candidate match to be shortlisted once per job opening
+        unique_together = ["job_opening", "candidate_match"]
+
+    def __str__(self) -> str:  # noqa: D401 – admin friendly string
+        job_title = self.job_opening.title
+        seeker_name = (
+            self.candidate_match.talent_sheet.job_seeker.user_owner.get_full_name()
+            if self.candidate_match.talent_sheet.job_seeker.user_owner
+            else f"Profile {self.candidate_match.talent_sheet.job_seeker.pk}"
+        )
+        return f"Shortlist • {seeker_name} for {job_title}"
+
+    @property
+    def holistic_rating(self) -> int:
+        """Expose the holistic rating directly on the shortlist object for convenience."""
+        return self.candidate_match.holistic_rating

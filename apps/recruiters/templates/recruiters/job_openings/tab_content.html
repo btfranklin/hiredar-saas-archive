@@ -1,4 +1,54 @@
-{% if tab == 'candidates' and request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
+{% load matching_filters %}
+{% if tab == 'shortlist' and request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
+    <div class="p-6">
+        {% if not shortlist %}
+            <div class="flex flex-col items-center text-center py-8">
+                <div class="text-4xl mb-4">
+                    <i class="fas fa-bookmark text-base-content/30"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">No Shortlisted Candidates</h3>
+                <p class="text-base-content/70 max-w-md">Add promising candidates to your shortlist to review them here.</p>
+            </div>
+        {% else %}
+            <h2 class="text-2xl font-bold mb-6">Shortlisted Candidates ({{ shortlist_count }})</h2>
+            <div class="divide-y divide-base-content/10">
+                {% for item in shortlist %}
+                    <div id="shortlist-row-{{ item.id }}" class="flex justify-between items-center py-4">
+                        <a href="{% url 'matching:candidate_match_detail' job_opening.id item.candidate_match.talent_sheet.job_seeker.id %}"
+                           class="flex items-center gap-4 flex-1 hover:bg-base-200 p-2 rounded">
+                            <div class="flex gap-2">
+                                {% for lens, label, rating in item.candidate_match.get_all_match_ratings %}
+                                    <div class="radial-progress" data-lens="{{ lens }}" style="--value:{{ rating|mul:10 }}; --size:2.5rem; --thickness:2px;">
+                                        {{ rating }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div>
+                                {% with seeker=item.candidate_match.talent_sheet.job_seeker %}
+                                    <div class="font-semibold">
+                                        {% if seeker.user_owner %}
+                                            {{ seeker.user_owner.get_full_name }}
+                                        {% else %}
+                                            {{ seeker.candidate_name }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-base-content/70 text-sm">{{ seeker.personal_tagline }}</div>
+                                {% endwith %}
+                            </div>
+                        </a>
+                        <form hx-post="{% url 'matching:remove_from_shortlist' job_opening.id item.id %}"
+                              hx-target="#shortlist-row-{{ item.id }}" hx-swap="delete">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-error btn-outline">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% elif tab == 'candidates' and request.user.user_type == 'recruiter' and job_opening.recruiter.user == request.user %}
     {% if job_opening.status == 'active' %}
         <!-- Candidate Pool Selector -->
         <div class="p-4">

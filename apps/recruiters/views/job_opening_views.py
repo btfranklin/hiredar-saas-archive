@@ -269,6 +269,19 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                     qualifications_score__gt=0
                 ).count()
 
+                # --- Shortlist -----------------------------------------------------------------
+                shortlist_qs = job_opening.shortlisted_matches.select_related(
+                    "candidate_match",
+                    "candidate_match__talent_sheet",
+                    "candidate_match__talent_sheet__job_seeker",
+                    "candidate_match__talent_sheet__job_seeker__user_owner",
+                ).order_by("-created_at")
+
+                context["shortlist"] = shortlist_qs
+                context["shortlist_count"] = shortlist_qs.count()
+
+                # If current tab is shortlist, ensure candidate_pool_id persists for UI reloads
+
         return context
 
     def get_template_names(self) -> list[str]:

@@ -16,13 +16,32 @@
   }
 </style>
 <div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-        <div class="flex items-center gap-2 mb-1">
-            <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=candidates" class="link link-hover text-base-content/70">
-                <i class="fas fa-chevron-left text-xs"></i> Back to Candidates
-            </a>
+    <div class="mb-6 flex justify-between items-start">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=candidates" class="link link-hover text-base-content/70">
+                    <i class="fas fa-chevron-left text-xs"></i> Back to Candidates
+                </a>
+            </div>
+            <h1 class="text-2xl font-bold mt-2">Match Details</h1>
         </div>
-        <h1 class="text-2xl font-bold mb-4">Match Details</h1>
+        {% if request.user.user_type == 'recruiter' %}
+            {% if is_shortlisted %}
+                <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker.id %}" hx-target="this" hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check mr-2"></i> In Shortlist
+                    </button>
+                </form>
+            {% else %}
+                <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker.id %}" hx-target="this" hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline">
+                        <i class="fas fa-plus mr-2"></i> Add to Shortlist
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
     </div>
 
     <div class="flex flex-col lg:flex-row gap-8">
@@ -41,9 +60,6 @@
                         </h1>
                         <p class="text-lg text-base-content/80 mt-1 italic">{{ job_seeker.personal_tagline }}</p>
                     </div>
-                    {% comment %} Removed messaging UI block for MVP
-                    <div class="flex gap-2">
-                    {% endcomment %}
                 </div>
             </div>
 
