@@ -120,4 +120,12 @@
     }
   });
 </script>
+<script>
+  // Refresh the shortlist tab and counts when an item is removed
+  document.body.addEventListener('shortlistUpdated', function() {
+    // Reload the entire tabs container (tabs + content) with updated counts
+    const url = `{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=shortlist`;
+    htmx.ajax('GET', url, { target: '#tabs-container', swap: 'outerHTML' });
+  });
+</script>
 {% endblock %} 

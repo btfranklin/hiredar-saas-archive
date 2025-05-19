@@ -274,6 +274,12 @@ def remove_from_shortlist(request: HttpRequest, job_id: int, shortlist_id: int):
     shortlist_obj.delete()
 
     if request.headers.get("HX-Request") == "true":
-        return HttpResponse("")  # Caller will decide swap action (e.g., remove row)
+        # Inform front-end to refresh shortlist tab and counts
+        import json
+
+        response = HttpResponse("")  # row deletion already handled via hx-swap
+        # Trigger a custom event so the tabs can be reloaded with updated counts
+        response["HX-Trigger"] = json.dumps({"shortlistUpdated": {}})
+        return response
 
     return JsonResponse({"status": "success"})
