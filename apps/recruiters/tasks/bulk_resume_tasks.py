@@ -104,6 +104,17 @@ def unpack_and_process_zip(
             bulk.total_files = len(names)
             bulk.save(update_fields=["total_files"])
 
+            if not names:
+                logger.info(
+                    "No valid resumes found in ZIP %s; deleting bulk upload", bulk_pk
+                )
+                bulk.delete()
+                if placeholder_meta:
+                    placeholder_meta.state = TaskMeta.State.SUCCESS
+                    placeholder_meta.progress = 100
+                    placeholder_meta.save(update_fields=["state", "progress"])
+                return {"status": "empty", "processed_profiles": 0}
+
             for name in names:
                 file_bytes = zf.read(name)
                 # Use only the base filename – strip any path components
