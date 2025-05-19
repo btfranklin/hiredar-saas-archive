@@ -9,7 +9,7 @@
   <div class="container mx-auto py-20 px-4 flex flex-col md:flex-row items-center gap-12">
     <div class="flex-1">
       <h1 class="text-5xl font-bold mb-4">Stop Sifting. Start Matching.</h1>
-      <p class="text-xl mb-8">Hiredar turns piles of resumes into ranked, explained matches—so you can find top candidates in seconds, not hours.</p>
+      <p class="text-xl mb-8">Built for independent recruiters and small teams, Hiredar turns resume piles into ranked, explained matches—so you can find the right candidates in seconds, not hours.</p>
       <div class="flex flex-col sm:flex-row gap-4">
         <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Try It Free</a>
         <a href="#how-it-works" class="btn btn-outline btn-lg">See How It Works</a>
@@ -29,21 +29,21 @@
         <div class="card-body items-center">
           <span class="text-4xl text-primary mb-2"><i class="fas fa-file-archive"></i></span>
           <h3 class="font-bold text-lg mb-2">Drowning in PDFs?</h3>
-          <p>Upload a ZIP file—we'll extract skills, experience, and summarize each candidate.</p>
+          <p>Bulk upload PDFs—no formatting needed.</p>
         </div>
       </div>
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body items-center">
           <span class="text-4xl text-primary mb-2"><i class="fas fa-filter-circle-xmark"></i></span>
           <h3 class="font-bold text-lg mb-2">Too Many Unqualified Applicants?</h3>
-          <p>Our AI ranks by skill match, experience level, and fit for your job.</p>
+          <p>Our AI understands skills, not just keywords—qualified candidates rise to the top.</p>
         </div>
       </div>
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body items-center">
           <span class="text-4xl text-primary mb-2"><i class="fas fa-pen-nib"></i></span>
           <h3 class="font-bold text-lg mb-2">Still Writing Notes Manually?</h3>
-          <p>We generate a one-line candidate hook you can use in outreach or client reports.</p>
+          <p>AI writes one-line hooks for every candidate—instantly.</p>
         </div>
       </div>
     </div>
@@ -54,7 +54,7 @@
 <section class="py-10" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #fff;">
   <div class="container mx-auto px-4 text-center">
     <h2 class="text-3xl md:text-4xl font-extrabold mb-2">Stop wasting hours sorting resumes.</h2>
-    <p class="text-xl md:text-2xl font-semibold">Just upload your pile, and get a ranked, explained shortlist—ready for outreach, in minutes.</p>
+    <p class="text-xl md:text-2xl font-semibold">Ranked shortlist and recruiter-ready taglines delivered in minutes.</p>
   </div>
 </section>
 
@@ -98,7 +98,7 @@
         <div class="card-body items-center text-center">
           <span class="text-5xl text-primary mb-2"><i class="fas fa-upload"></i></span>
           <h3 class="card-title text-2xl">1. Upload Resumes</h3>
-          <p>Drop in your existing résumé files (PDF, DOCX, TXT, and more). No formatting needed.</p>
+          <p>Drop in your résumé files—PDFs, DOCX, anything.</p>
         </div>
       </div>
       <span class="hidden md:inline-block text-3xl text-base-content">→</span>
@@ -106,7 +106,7 @@
         <div class="card-body items-center text-center">
           <span class="text-5xl mb-2"><i class="fas fa-robot"></i></span>
           <h3 class="card-title text-2xl">2. Let the AI Work</h3>
-          <p>We extract structured data, generate summaries, and run multi-lens matching against your job opening.</p>
+          <p>We parse and match every resume—automatically.</p>
         </div>
       </div>
       <span class="hidden md:inline-block text-3xl text-base-content">→</span>
@@ -114,7 +114,7 @@
         <div class="card-body items-center text-center">
           <span class="text-5xl text-primary mb-2"><i class="fas fa-list-check"></i></span>
           <h3 class="card-title text-2xl">3. Get Smart Results</h3>
-          <p>Ranked candidates, AI-written taglines, and export-ready reports—all in minutes.</p>
+          <p>Ranked shortlist and recruiter-ready taglines in minutes.</p>
         </div>
       </div>
     </div>
@@ -173,11 +173,24 @@
   </div>
 </section>
 
+{% comment %}
+<!-- Social Proof -->
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4 text-center">
+    <h2 class="text-3xl font-bold mb-8">Trusted by Recruiters Like You</h2>
+    <div class="max-w-3xl mx-auto">
+      <blockquote class="italic text-lg">"Hiredar cut my screening time from days to minutes. It's like having an assistant who never sleeps!"</blockquote>
+      <p class="mt-4 font-bold">— Alex R., Independent Recruiter</p>
+    </div>
+  </div>
+</section>
+{% endcomment %}
+
 <!-- Call to Action Footer -->
 <section class="py-20 bg-base-100">
   <div class="container mx-auto px-4 text-center">
-    <h2 class="text-4xl font-bold mb-8">Your best candidates are buried in your resume pile.<br>Let Hiredar find them for you.</h2>
-    <p class="text-xl mb-8 max-w-3xl mx-auto">Try Hiredar Free. No credit card. No commitment.</p>
+    <h2 class="text-4xl font-bold mb-8">Your best candidates are waiting. Find them now.</h2>
+    <p class="text-xl mb-8 max-w-3xl mx-auto">Start your free trial today—no credit card, no commitment.</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
       <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Try Hiredar Free</a>
     </div>
