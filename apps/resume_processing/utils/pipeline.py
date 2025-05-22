@@ -133,7 +133,7 @@ def process_resume(
             }
 
         text_preview = resume_text[:100] + "..."
-        logger.info("Extracted text (preview): %s", text_preview)
+        logger.debug("Extracted text (preview): %s", text_preview)
         pipeline_steps.append("text_extracted")
 
         # Update progress
