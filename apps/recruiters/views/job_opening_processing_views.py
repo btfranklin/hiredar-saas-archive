@@ -86,14 +86,15 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
                 progress_percent=0,
             )
 
-            # Queue the async task to process the job description
+            # Queue the async task to process the job description in high-priority queue
             async_task(
                 "apps.recruiters.tasks.handle_job_description_task",
-                task.task_id,  # Use task object reference
+                task.task_id,
                 task.job_title,
                 task.original_text,
                 recruiter_profile.pk,
                 hook="apps.recruiters.tasks.hooks.job_processing_done",
+                queue="high",
             )
 
             # Handle AJAX/HTMX requests

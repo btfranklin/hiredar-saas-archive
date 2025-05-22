@@ -12,6 +12,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 
+from celery import shared_task
 from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.resume_processing.utils.pipeline import process_resume
 
@@ -39,6 +40,7 @@ def save_resume_file(resume_file: UploadedFile, filename: str) -> str:
     return path
 
 
+@shared_task(name="apps.resume_processing.tasks.resume_processing_tasks.handle_resume_upload_task")
 def handle_resume_upload_task(
     uploaded_file_path: str,
     job_seeker_profile_id: int,

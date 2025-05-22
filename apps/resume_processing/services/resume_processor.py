@@ -10,7 +10,8 @@ from __future__ import annotations
 from typing import Any
 
 from django.db import transaction
-from django_q.tasks import result
+# Celery result backend
+from celery.result import AsyncResult
 
 from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
@@ -77,12 +78,41 @@ class ResumeProcessor:  # noqa: D401 – Service class, not data‑class
             pass
 
         # Fallback → Django‑Q result (may be expired though)
-        task_result = result(task_id)
-        return (
-            _DummyTaskProgress(task_id, task_result)
-            if task_result is not None
-            else None
-        )
+        # Fallback → Celery result (if DB record not found)
+        async_result = AsyncResult(task_id)
+        # Map Celery statuses to our simplified status values
+        if async_result.successful():
+            status = "completed"
+        elif async_result.failed():
+            status = "failed"
+        elif async_result.status == "STARTED":
+            status = "running"
+        else:
+            status = "pending"
+        # Capture failure message if any
+        message = None
+        if async_result.status == "FAILURE":
+            message = str(async_result.result)
+
+        # Synthetic progress object for Celery tasks
+        class _CeleryTaskProgress:
+            def __init__(self, task_id: str, status: str, message: str | None):
+                self.task_id = task_id
+                self.status = status
+                self.message = message or ""
+
+            def to_dict(self) -> dict[str, Any]:
+                return {
+                    "task_id": self.task_id,
+                    "status": self.status,
+                    "message": self.message,
+                    "progress_percent": 100 if self.status == "completed" else 0,
+                    "current_step": self.status,
+                    "current_step_name": "Complete" if self.status == "completed" else self.status.capitalize(),
+                    "steps": [],
+                }
+
+        return _CeleryTaskProgress(task_id, status, message)
 
     @staticmethod
     def update_task_progress(task_id: str, step_id: str, message: str | None = None):

@@ -2,8 +2,14 @@ import os
 from typing import Any
 
 from django.db.models import F
-from django_q.models import Task
 
+
+# Celery compatibility – a lightweight stand-in for Django-Q’s ``Task`` class.
+# Hook functions accept an instance but only use ``args``, ``result`` and
+# ``success`` attributes which are provided by the wrapper in *hiredar.celery*.
+Task = Any  # type: ignore[var-annotated]
+
+from celery import shared_task
 from apps.core.models import TaskMeta
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import CandidatePool, JobSeekerProfile
@@ -14,6 +20,7 @@ from apps.resume_processing.utils.pipeline import process_resume
 async_task = safe_async_task
 
 
+@shared_task(name="apps.job_seekers.tasks.pool_tasks.process_resume_for_pool")
 def process_resume_for_pool(
     file_path: str, pool_id: int, bulk_pk: int, meta_pk: str | None = None
 ) -> dict[str, Any]:

@@ -6,7 +6,8 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django_q.tasks import fetch
+# Celery replacement for synchronous result polling
+from celery.result import AsyncResult
 
 from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
@@ -262,25 +263,23 @@ class Command(BaseCommand):
 
             # Wait for the task to complete
             start_time = time.time()
-            task = None
+            result_obj: AsyncResult | None = None
             while time.time() - start_time < TASK_WAIT_TIMEOUT:
-                task = fetch(task_id)
-                if task:
-                    # Check if the task has finished (success is True or False)
-                    if task.success is not None:
-                        if verbosity >= 1:
-                            self.stdout.write(f"  - Task {task_id} completed.")
-                        break  # Exit the loop, task is done
-                else:
-                    # Task might not be visible immediately, wait briefly
-                    if verbosity >= 2:
+                result_obj = AsyncResult(task_id)
+                if result_obj.state in {"SUCCESS", "FAILURE"}:
+                    if verbosity >= 1:
                         self.stdout.write(
-                            f"  - Task {task_id} not fetched yet, retrying..."
+                            f"  - Task {task_id} completed with state {result_obj.state}."
                         )
+                    break
+
+                if verbosity >= 2:
+                    self.stdout.write(
+                        f"  - Task {task_id} state {result_obj.state}, waiting..."
+                    )
 
                 time.sleep(TASK_POLL_INTERVAL)
             else:
-                # Timeout reached
                 self.stdout.write(
                     self.style.ERROR(
                         f"  - Timeout: Task {task_id} did not complete within {TASK_WAIT_TIMEOUT}s"
@@ -288,8 +287,8 @@ class Command(BaseCommand):
                 )
                 return False
 
-            # Check the result from the completed task object
-            if task and task.success:
+            # Evaluate task outcome
+            if result_obj and result_obj.successful():
                 if verbosity >= 1:
                     email = (
                         profile.user_owner.email

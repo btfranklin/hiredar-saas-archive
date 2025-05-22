@@ -8,7 +8,10 @@ related to job seeker processing.
 import logging
 
 from django.core.cache import cache
-from django_q.models import Schedule
+# Schedule model was used only to *delete* periodic tasks from the Django-Q
+# table.  With Celery + Beat the record lives elsewhere, so we simply ignore
+# the old cleanup.  Importing the model would now fail – delete all related
+# code.
 
 from apps.resume_processing.models import ResumeProcessingTaskProgress
 
@@ -33,16 +36,10 @@ def initialize_cleanup_once() -> None:
 
     try:
         # Always remove any existing schedules for this task so it does NOT run periodically
-        removed = Schedule.objects.filter(
-            name="cleanup_resume_processing_progress",
-            func="apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
-        ).delete()[0]
-
-        if removed:
-            logger.info(
-                "Removed %s existing periodic cleanup_schedule entries to disable cron",
-                removed,
-            )
+        # No Django-Q *Schedule* table to clean up anymore – Celery Beat uses a
+        # different storage mechanism configured via settings.  If we ever add
+        # a periodic cleanup job there it should be declared in
+        # ``CELERY_BEAT_SCHEDULE`` instead.
 
         # Perform an immediate cleanup run to ensure any stale records are removed
         cleanup_resume_processing_progress()

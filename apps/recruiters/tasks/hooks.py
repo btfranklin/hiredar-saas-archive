@@ -7,7 +7,10 @@ to create task chains and manage next steps in asynchronous processing.
 
 import logging
 
-from django_q.tasks import Task
+# Celery compat – see notes in ``job_seekers.tasks.hooks``
+from typing import Any
+
+Task = Any  # type: ignore
 
 # Setup logging
 logger = logging.getLogger(__name__)

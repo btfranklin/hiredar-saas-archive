@@ -198,6 +198,9 @@ def remove_job_opening_embeddings(job_opening_id: int) -> None:
         logger.info(
             "Deleted %d embeddings for JobOpening %s", len(vector_ids), job_opening_id
         )
+
+        # No further action required – any subsequent change to Active will
+        # enqueue embeddings immediately now that the stale vectors are gone.
     except Exception as e:
         # Log the error but don't raise it - we don't want to break the recruiter experience
         # if there's an issue with the embedding system

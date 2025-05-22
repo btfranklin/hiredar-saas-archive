@@ -11,16 +11,7 @@ from typing import Any
 
 from django.core.files.base import ContentFile
 
-# graceful import for runtime, fallback no-op decorator for type-checkers
-try:
-    from django_q2 import task  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover – during linting or docs build
-
-    def task(*_args, **_kwargs):  # type: ignore
-        def decorator(func):  # type: ignore
-            return func
-
-        return decorator
+from celery import shared_task
 
 
 from apps.core.models import TaskMeta
@@ -38,7 +29,7 @@ logger = logging.getLogger(__name__)
 async_task = safe_async_task
 
 
-@task()
+@shared_task(name="apps.recruiters.tasks.bulk_resume_tasks.unpack_and_process_zip")
 def unpack_and_process_zip(
     bulk_pk: int, pool_id: int | None = None, meta_pk: str | None = None
 ) -> dict[str, Any]:
@@ -151,6 +142,7 @@ def unpack_and_process_zip(
                     state=TaskMeta.State.PENDING,
                 )
 
+                # Schedule per-resume processing on default queue with cleanup hook
                 task_queue_id = async_task(
                     process_resume_for_pool,
                     local_path,
@@ -159,6 +151,7 @@ def unpack_and_process_zip(
                     str(meta.pk),
                     task_name=f"candidate_pool_process_{task_id}",
                     hook=cleanup_temp_resume_file,
+                    queue="default",
                 )
 
                 # Back-link the TaskMeta row to the actual queue id

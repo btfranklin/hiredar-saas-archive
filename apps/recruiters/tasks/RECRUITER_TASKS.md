@@ -31,9 +31,9 @@ The task architecture follows a pattern aligned with the job seekers app:
 Tasks are typically queued using Django Q's `async_task` function:
 
 ```python
-from django_q.tasks import async_task
+from apps.core.tasks import safe_async_task as async_task
 
-# Queue a task to process a job description
+# Queue a task to process a job description with high priority
 async_task(
     "apps.recruiters.tasks.handle_job_description_task",
     task_id,
@@ -41,8 +41,9 @@ async_task(
     job_description,
     recruiter_profile_id,
     hook="apps.recruiters.tasks.hooks.job_processing_done",
+    queue="high",
 )
-```
+``` 
 
 ## Task Functions
 
@@ -73,3 +74,18 @@ The job processing follows these steps:
 3. Processing of text into structured data
 4. Creation of a job opening
 5. Execution of hook function with processing results
+
+## Bulk Upload Pipeline
+
+The bulk upload pipeline manages processing of ZIP archives containing multiple resumes.
+
+### `unpack_and_process_zip`
+
+1. Marks the placeholder TaskMeta as RUNNING
+2. Unpacks the ZIP, filters valid resume files, and creates `ResumeFile` records
+3. For each resume file:
+   - Creates a `TaskMeta` entry for per-resume progress
+   - Schedules `process_resume_for_pool` on the default queue with a cleanup hook
+4. Marks the placeholder TaskMeta as SUCCESS and the bulk upload as processed
+
+The helper `cleanup_temp_resume_file` is used as a hook to delete temporary files after processing.

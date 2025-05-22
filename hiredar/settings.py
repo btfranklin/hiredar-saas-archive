@@ -136,7 +136,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.linkedin_oauth2",
     "django_htmx",
-    "django_q",  # Django Q2 for background tasks
+    "django_celery_results",
     "storages",  # django-storages for S3 support
     # Project apps
     "apps.authentication.apps.AuthenticationConfig",
@@ -148,6 +148,40 @@ INSTALLED_APPS = [
     # Resume processing subsystem
     "apps.resume_processing.apps.ResumeProcessingConfig",
 ]
+
+# ---------------------------------------------------------------------------
+#  Celery
+# ---------------------------------------------------------------------------
+
+# Use an in-memory broker by default so the test-suite runs without external
+# services.  Production deployments are expected to override these settings
+# (e.g. ``BROKER_URL=redis://...``) via environment variables.
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "memory://")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "django-db")
+
+# Ensure tasks execute locally and synchronously when the broker is the in-
+# memory variant.  This keeps behaviour predictable inside unit tests.
+
+CELERY_TASK_ALWAYS_EAGER = CELERY_BROKER_URL == "memory://"
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# Default queue / priorities.  Additional queues can be declared through
+# environment variables or the Django settings override mechanism.
+
+CELERY_TASK_QUEUES = {
+    "default": {
+        "exchange": "default",
+        "routing_key": "default",
+    },
+    "high": {
+        "exchange": "high",
+        "routing_key": "high",
+    },
+}
+
+CELERY_TASK_DEFAULT_QUEUE = "default"
+
 
 # Enable Django to find tests in the proper directories
 # Add the apps directory to the Python path

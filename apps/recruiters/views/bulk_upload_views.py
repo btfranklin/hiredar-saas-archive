@@ -114,13 +114,14 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
             state=TaskMeta.State.PENDING,
         )
 
-        # Schedule asynchronous unpacking, passing the pool id and placeholder meta pk
+        # Schedule asynchronous unpacking on default queue, passing pool id and placeholder meta pk
         async_task(
             unpack_and_process_zip,
             bulk.pk,
             candidate_pool.pk,
             str(placeholder_meta.pk),
             task_name=f"unpack_and_process_zip_{bulk.pk}",
+            queue="default",
         )
 
         # Notify recruiter that bulk upload succeeded and is processing

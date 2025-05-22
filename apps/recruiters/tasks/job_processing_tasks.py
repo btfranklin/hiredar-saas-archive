@@ -9,6 +9,7 @@ are in the hooks.py module.
 import logging
 from typing import Any
 
+from celery import shared_task
 from apps.recruiters.models import RecruiterProfile
 from apps.recruiters.utils.job_processing.pipeline import process_job_description
 
@@ -16,6 +17,7 @@ from apps.recruiters.utils.job_processing.pipeline import process_job_descriptio
 logger = logging.getLogger(__name__)
 
 
+@shared_task(name="apps.recruiters.tasks.job_processing_tasks.handle_job_description_task")
 def handle_job_description_task(
     task_id: str, job_title: str, job_description: str, recruiter_profile_id: int
 ) -> dict[str, Any]:
