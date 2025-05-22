@@ -136,7 +136,6 @@ For recruiter-initiated bulk uploads, credits are validated and deducted up-fron
 |------------------|---------|
 |`OPENAI_API_KEY`|LLM calls|
 |`MEDIA_ROOT`|Where PDFs & temp files are stored|
-|`Q_CLUSTER`|Django Q2 cluster config (workers, retry, timeouts)|
 |`LOGGING`|Verbose pipeline logs go to `logs/`|
 
 ---

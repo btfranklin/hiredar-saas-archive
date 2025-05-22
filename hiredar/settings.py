@@ -446,22 +446,6 @@ CSRF_USE_SESSIONS = False  # Use cookies for better compatibility with HTMX
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to access the CSRF cookie
 SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
-# Django Q2 configuration
-Q_CLUSTER = {
-    "name": "hiredar",
-    "recycle": 500,
-    "timeout": int(os.getenv("DJANGO_Q_TIMEOUT", "60")),
-    "retry": int(os.getenv("DJANGO_Q_RETRY", "60")),
-    "compress": True,
-    "save_limit": int(os.getenv("DJANGO_Q_SAVE_LIMIT", "250")),
-    "queue_limit": 500,
-    "cpu_affinity": 1,
-    "label": "Django Q2",
-    "orm": "default",  # Use Django ORM as broker (no Redis needed)
-    "orm_batch": int(os.getenv("DJANGO_Q_ORM_BATCH", "50")),
-    "poll": float(os.getenv("DJANGO_Q_POLL", "0.5")),
-}
-
 # Logging configuration
 LOGGING = {
     "version": 1,

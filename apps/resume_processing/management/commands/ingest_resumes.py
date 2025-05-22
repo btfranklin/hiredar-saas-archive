@@ -4,10 +4,10 @@ import traceback
 import uuid
 from pathlib import Path
 
-from django.conf import settings
-from django.core.management.base import BaseCommand
 # Celery replacement for synchronous result polling
 from celery.result import AsyncResult
+from django.conf import settings
+from django.core.management.base import BaseCommand
 
 from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
@@ -253,7 +253,6 @@ class Command(BaseCommand):
                 profile_id,
                 task_name=f"generate_talent_sheet_{profile_id}",
                 timeout=300,
-                # No sync=True here, let it run in the cluster
             )
 
             if verbosity >= 1:
