@@ -80,7 +80,7 @@ If you encounter issues with tasks running too frequently or not at all:
 3. For debugging task execution, check the logs:
 
    ```bash
-   tail -f logs/django-q.log
+   tail -f logs/celery.log
    ```
 
 ## Adding New Scheduled Tasks

@@ -113,18 +113,18 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
     # Only process embeddings for published talent sheets
     if instance.is_published:
         transaction.on_commit(
-            lambda: async_task(
+            lambda: safe_async_task(
                 "apps.matching.tasks.create_talent_sheet_embeddings",
                 instance.id,
             )
         )
     else:
         def _cleanup_unpublished():
-            async_task(
+            safe_async_task(
                 "apps.matching.tasks.remove_talent_sheet_embeddings",
                 instance.id,
             )
-            async_task(
+            safe_async_task(
                 "apps.matching.tasks.remove_talent_sheet_matches",
                 instance.id,
             )
@@ -137,11 +137,11 @@ def handle_talent_sheet_delete(sender, instance, **kwargs):
 
     Remove embeddings and matches when a talent sheet is deleted.
     """
-    async_task(
+    safe_async_task(
         "apps.matching.tasks.remove_talent_sheet_embeddings",
         instance.id,
     )
-    async_task(
+    safe_async_task(
         "apps.matching.tasks.remove_talent_sheet_matches",
         instance.id,
     )

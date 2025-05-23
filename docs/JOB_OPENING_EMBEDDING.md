@@ -115,11 +115,11 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
     """
     # Only process embeddings for active jobs
     if instance.status == "active":
-        async_task("apps.matching.tasks.create_job_opening_embeddings", instance.id)
+        safe_async_task("apps.matching.tasks.create_job_opening_embeddings", instance.id)
     else:
         # If a job is inactive, remove embeddings and matches
-        async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
-        async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
+        safe_async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
+        safe_async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
 
 @receiver(post_delete, sender="recruiters.JobOpening")
 def handle_job_opening_delete(sender, instance, **kwargs):
@@ -128,8 +128,8 @@ def handle_job_opening_delete(sender, instance, **kwargs):
 
     Remove embeddings and matches when a job opening is deleted.
     """
-    async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
-    async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
+    safe_async_task("apps.matching.tasks.remove_job_opening_embeddings", instance.id)
+    safe_async_task("apps.matching.tasks.remove_job_opening_matches", instance.id)
 ```
 
 This signal-based approach ensures that embedding operations are performed automatically in response to job opening changes.
@@ -146,7 +146,7 @@ def remove_job_opening_embeddings(job_opening_id: int) -> None:
     # Implementation code...
 ```
 
-The task functions are designed to be run asynchronously via django-q, allowing the user interface to remain responsive during potentially lengthy embedding operations.
+The task functions are designed to be run asynchronously via Celery, allowing the user interface to remain responsive during potentially lengthy embedding operations.
 
 ## Pinecone Vector Storage Details
 

@@ -1,49 +1,42 @@
 # Recruiter Tasks
 
-This directory contains asynchronous task functions for the recruiters app, designed to work with Django Q.
+This directory contains asynchronous task functions for the recruiters app, designed to work with Celery.
 
 ## Overview
 
-These tasks handle various asynchronous operations related to recruiters, such as:
+The recruiter tasks handle background processing for recruiter-specific operations, including:
 
-- Processing job descriptions and creating job openings
-- Handling task completion callbacks
-- Managing processing status updates
+- Job description processing and XML conversion
+- Bulk resume upload and processing
+- Credit management and billing operations
+- Candidate matching and analysis
 
-## Task Structure
+## Task Organization
 
-Tasks are organized by functionality:
+Tasks are organized by functional area:
 
-- `job_processing_tasks.py`: Tasks related to processing job descriptions and creating job openings
-- `hooks.py`: Hook functions that are executed after tasks complete (for task chaining)
+- `job_processing_tasks.py`: Tasks for processing job descriptions
+- `bulk_resume_tasks.py`: Tasks for handling bulk resume uploads
+- `credit_tasks.py`: Tasks for credit management and billing
 
-## Architecture
+## Usage Patterns
 
-The task architecture follows a pattern aligned with the job seekers app:
+1. **Task Entry Points**: Functions in this directory serve as entry points for Celery
+   workers and should handle all necessary error checking and logging.
 
-1. **Task Entry Points**: Functions in this directory serve as entry points for Django Q
-2. **Implementation Logic**: The actual implementation logic resides in the `utils` directory
-3. **Hook Functions**: Callbacks in `hooks.py` handle task completion and chaining
-4. **Clear Responsibility Separation**: Tasks handle basic validation and call implementations
+2. **Database Operations**: Tasks should use appropriate database transactions
+   and handle potential race conditions when updating shared resources.
 
-## Usage
+3. **Error Handling**: All tasks should include comprehensive error handling
+   and logging to facilitate debugging and monitoring.
 
-Tasks are typically queued using Django Q's `async_task` function:
+Tasks are typically queued using Celery's task decorators:
 
 ```python
-from apps.core.tasks import safe_async_task as async_task
+from apps.core.tasks import safe_async_task
 
-# Queue a task to process a job description with high priority
-async_task(
-    "apps.recruiters.tasks.handle_job_description_task",
-    task_id,
-    job_title,
-    job_description,
-    recruiter_profile_id,
-    hook="apps.recruiters.tasks.hooks.job_processing_done",
-    queue="high",
-)
-``` 
+safe_async_task(process_job_description, job_id, user_id)
+```
 
 ## Task Functions
 

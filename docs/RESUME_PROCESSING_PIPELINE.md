@@ -66,7 +66,7 @@ flowchart TD
     F --> G
 ```
 
-`process_resume` is *fully synchronous* – once the Django Q worker starts it runs step-by-step, updating the `ResumeProcessingTaskProgress` row (if supplied) via `mark_step_complete()`.
+`process_resume` is *fully synchronous* – once the Celery worker starts it runs step-by-step, updating the `ResumeProcessingTaskProgress` row (if supplied) via `mark_step_complete()`.
 
 Return payload example:
 ```python
@@ -153,7 +153,7 @@ python manage.py ingest_resumes sample_data/resumes/
 ```
 
 ### Manual flow test
-1. Run `./manage.py runserver` & a Django Q2 cluster.
+1. Run `./manage.py runserver` & a Celery worker.
 2. Log in as a job-seeker, upload a resume, watch the progress bar.
 3. Log in as a recruiter, upload a ZIP, then visit "Resume Pools".
 

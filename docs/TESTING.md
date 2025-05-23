@@ -50,7 +50,11 @@ apps/
 │   │   ├── __init__.py
 │   │   ├── test_xml_sanitization.py
 │   │   └── test_xml_error_reporting.py
-├── jobs/
+├── recruiters/
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_models.py
+├── matching/
 │   ├── tests/
 │   │   ├── __init__.py
 │   │   └── test_models.py
@@ -62,7 +66,7 @@ apps/
 │   ├── tests/
 │   │   ├── __init__.py
 │   │   └── test_views.py
-└── recruiters/
+└── resume_processing/
     ├── tests/
         ├── __init__.py
         └── test_models.py

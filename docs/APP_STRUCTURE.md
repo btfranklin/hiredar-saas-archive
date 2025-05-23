@@ -13,14 +13,14 @@ Hiredar is a job matching platform that connects job seekers with recruiters usi
 - **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, `messaging`, **new** `resume_processing` (background parsing of resumes).
 - **Primary user types**: *job seeker* and *recruiter* (custom `User.user_type`).
 - **Key models**: `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
-- **Async engine**: Django-Q; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
+- **Async engine**: Celery; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
 - **Front-end stack**: Tailwind + DaisyUI, HTMX for interactivity.
 - **Python 3.12 typing conventions**: built-ins (`list`, `dict`) and `| None` instead of `Optional`.
 - **Recruiter monetization**: Recruiters use a credit-based system. Credits are purchased in bundles via Stripe and are required for premium actions (e.g., resume processing). No subscriptions or tiers exist.
 
 ## Application Architecture
 
-The application is built using Django 5.1.7 and follows a modular approach with the following key components:
+The application is built using Django 5.2+ and follows a modular approach with the following key components:
 
 - **Django project**: The main `hiredar` project configuration
 - **Apps**: Separate Django apps for different functional areas
@@ -386,9 +386,9 @@ The project uses custom linter rules to enforce consistent type annotations:
 
 ## Background Tasks
 
-The application uses Django Q for background tasks:
+The application uses Celery for background tasks:
 
-- **Resume Processing**: Asynchronous processing of uploaded resumes via the `process_resume` pipeline in `apps/job_seekers/utils/resume_processing/pipeline.py`
+- **Resume Processing**: Asynchronous processing of uploaded resumes via the `process_resume` pipeline in `apps/resume_processing/utils/pipeline.py`
 - **Talent Sheet Generation**: Asynchronous enhancement of talent sheets using LLM via `generate_talent_sheet_task`
 - **AI Analysis**: Background AI analysis for matching and recommendations
 - **Email Notifications**: Sending emails in the background
@@ -470,7 +470,7 @@ The project's main configuration is in the `hiredar/settings.py` file. Key setti
 - Custom user model: `AUTH_USER_MODEL = "authentication.User"`
 - Authentication backends for django-allauth
 - Media and static file configuration
-- Django Q cluster configuration for background tasks
+- Celery configuration for background tasks
 
 ## Deployment and Environment Configuration
 
