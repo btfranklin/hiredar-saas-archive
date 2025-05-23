@@ -45,16 +45,36 @@ apps/matching/
     └── manual/ # Scripts for manual testing
 ```
 
-## Matching Flow
+## Embedding & Matching Entry Points
 
-The matching process follows these steps:
+### Job Opening Embedding & Matching (Signal-Driven)
+- **Trigger (post_save)**: `apps/matching/signals.py::handle_job_opening_save`
+  - On commit, if the job opening is active, uses `safe_async_task_once` to enqueue:
+    - `apps.matching.tasks.job_opening_tasks.create_job_opening_embeddings(job_opening_id)`
+  - If inactive, enqueues `remove_job_opening_embeddings` and `remove_job_opening_matches`.
+- **Deletion (post_delete)**: `apps/matching/signals.py::handle_job_opening_delete`
+  - Enqueues `remove_job_opening_embeddings` and `remove_job_opening_matches`.
+- **Task**: `apps/matching/tasks/job_opening_tasks.py::create_job_opening_embeddings`
+  - Extracts defined sections and upserts vectors to Pinecone; on completion, invokes:
+    - `apps.matching.tasks.matching_tasks.create_candidate_matches(job_opening_id)`
 
-1. **Embedding Creation** - When job openings are marked as "active" or talent sheets are published, embeddings for each defined section are automatically created and stored in Pinecone via background tasks triggered by Django signals (`apps/matching/signals.py` and `apps/matching/tasks/`):
-    - **Job Opening Sections**: Job Overview, Required Skills (combining `required_skills` and `soft_skills`), Responsibilities, Qualifications
-    - **Talent Sheet Sections**: Career Direction, Skills, Experience Overview, Qualifications
-2. **Match Calculation** - The `create_candidate_matches` command queries Pinecone to find the best matches for each job opening.
-3. **CandidateMatch Storage** - Matches are stored in the database as `CandidateMatch` objects with a match score and type.
-4. **UI Integration** - These matches are displayed in the recruiter dashboard.
+### Talent Sheet Embedding & Matching (Signal-Driven)
+- **Trigger (post_save)**: `apps/matching/signals.py::handle_talent_sheet_save`
+  - On `is_published=True`, uses `safe_async_task_once` to enqueue:
+    - `apps.matching.tasks.talent_sheet_tasks.create_talent_sheet_embeddings(talent_sheet_id)`
+  - On `is_published=False`, enqueues `remove_talent_sheet_embeddings` and `remove_talent_sheet_matches`.
+- **Deletion (post_delete)**: `apps/matching/signals.py::handle_talent_sheet_delete`
+  - Enqueues `remove_talent_sheet_embeddings` and `remove_talent_sheet_matches`.
+- **Task**: `apps/matching/tasks/talent_sheet_tasks.py::create_talent_sheet_embeddings`
+  - Generates embeddings for each talent sheet section and stores vectors in Pinecone.
+
+### Candidate Matching Tasks
+- **Task**: `apps/matching/tasks/matching_tasks.py::create_candidate_matches`
+  - Given a job opening ID, queries Pinecone and writes `CandidateMatch` entries.
+- **Task**: `apps/matching/tasks/matching_tasks.py::match_talent_to_active_jobs`
+  - For a given talent sheet ID, loops through active jobs and computes match scores.
+- **Tasks**: `apps/matching/tasks/matching_tasks.py::remove_job_opening_matches` / `remove_talent_sheet_matches`
+  - Removes existing match records for the specified job opening or talent sheet.
 
 ## Technical Implementation
 

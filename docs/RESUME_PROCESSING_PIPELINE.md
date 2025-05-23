@@ -30,7 +30,7 @@ flowchart LR
 ### 2.1  Single upload (job-seeker)
 | Step | Code | Notes |
 |------|------|-------|
-|HTTP POST|`apps/job_seekers/views/resume_processing_views.py::ResumeUploadView.post`|– Validates file<br>– Calls `save_resume_file()` to write into `MEDIA_ROOT/resumes/`<br>– Creates a **`ResumeProcessingTaskProgress`** row for live progress bars<br>– Queues…|
+|HTTP POST|`apps/job_seekers/views/resume_processing_views.py::ResumeUploadView.post`|– Validates file<br>– Calls `save_resume_file()` to write into `MEDIA_ROOT/resumes/`<br>– Creates a **`ResumeProcessingTaskProgress`** row for live progress bars<br>– Queues `apps.resume_processing.tasks.resume_processing_tasks.handle_resume_upload_task` (hook=`resume_processing_completed`)|
 |Task|`apps/resume_processing/tasks/resume_processing_tasks.py::handle_resume_upload_task`|– Fetches the existing `JobSeekerProfile` (owned by the user)<br>– Invokes `process_resume(file_path, profile, task_id)`|
 |Hook|`apps/job_seekers/tasks/hooks.py::resume_processing_completed`|– Creates a **`ResumeProcessingJob`** (used by credit/quota logic)<br>– Asynchronously schedules role-recommendations & other notifications|
 

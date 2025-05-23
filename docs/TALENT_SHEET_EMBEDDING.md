@@ -1,6 +1,16 @@
-# Talent Sheet Embedding Implementation
+# Talent Sheet Generation & Embedding Implementation
 
-This document describes the current implementation of the talent sheet embedding system within the matching app, detailing the modular architecture, workflow, and technical details.
+This document describes how talent sheets are generated for job seekers and how those sheets are embedded for matching, detailing the task entry points, workflow, and technical details.
+
+## Talent Sheet Generation (LLM-Driven)
+
+| Stage          | Code                                                                            | Notes                                                                                           |
+|----------------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| Task           | `apps/job_seekers/tasks/talent_sheet_tasks.py::generate_talent_sheet_task`      | Calls LLM to generate or update `TalentSheet` from a `JobSeekerProfile`, returns generation metadata. |
+| Admin Action   | `apps/job_seekers/admin.py::TalentSheetAdmin.enter_talent_pool`                 | Bulk admin action that enqueues the generation task via `async_task(generate_talent_sheet_task, profile_id)`. |
+| Service Toggle | `apps/job_seekers/services/talent_pool_manager.py::TalentPoolManager.toggle_talent_pool` | Enqueues `generate_talent_sheet_task` when a profile joins or leaves the talent pool.           |
+
+---
 
 ## Architecture Overview
 

@@ -88,7 +88,7 @@ If you encounter issues with tasks running too frequently or not at all:
 To add a new scheduled task:
 
 1. Define the task function in an appropriate app module
-2. Create a scheduling function similar to `ensure_cleanup_scheduled` in the relevant app
+2. Create a scheduling function similar to `initialize_cleanup_once` in the relevant app
 3. Connect the scheduling function to an appropriate trigger (app startup, signal, etc.)
 4. Add documentation for the new task in this file
 
@@ -97,23 +97,25 @@ To add a new scheduled task:
 The scheduling system uses a combination of Django's app configuration, middleware, and cache to ensure tasks are properly scheduled:
 
 ```python
-# Example from apps/job_seekers/tasks/cleanup_tasks.py
-def ensure_cleanup_scheduled() -> None:
+# From apps/resume_processing/tasks/cleanup_tasks.py
+def initialize_cleanup_once() -> None:
     """
-    Ensure the cleanup task is scheduled.
+    Disable legacy schedules and perform a one-time cleanup.
+
+    This function removes any existing periodic cleanup tasks and performs an immediate cleanup.
+    It uses a cache lock and flag to prevent duplicate execution in the same process.
     """
-    # Use cache to prevent multiple processes from scheduling simultaneously
     cache_key = "job_seekers_cleanup_task_scheduled"
     if cache.get(cache_key):
         return
-        
+
     try:
-        # Check for existing valid schedules
-        # Create if needed
-        # Set cache flag to prevent repeats
-        cache.set(cache_key, True, 60 * 60)  # Cache for an hour
+        # Perform immediate cleanup of stale records
+        cleanup_resume_processing_progress()
+        # Prevent repeated initialization
+        cache.set(cache_key, True, 60 * 60)
     except Exception as e:
-        logger.error("Failed to schedule cleanup task: %s", e)
+        logger.error("Error while disabling cleanup schedule: %s", e)
 ```
 
 This approach ensures that even in a multi-process environment, tasks are only scheduled once.
