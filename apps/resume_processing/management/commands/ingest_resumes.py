@@ -4,7 +4,6 @@ import traceback
 import uuid
 from pathlib import Path
 
-# Celery replacement for synchronous result polling
 from celery.result import AsyncResult
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -12,6 +11,7 @@ from django.core.management.base import BaseCommand
 from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile
+from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 from apps.resume_processing.utils.pipeline import process_resume
 
 # Define a timeout for waiting for the task (e.g., 5 minutes)
@@ -249,7 +249,7 @@ class Command(BaseCommand):
             # Schedule the talent sheet generation task to run asynchronously
             profile_id = getattr(profile, "id")
             task_id = safe_async_task(
-                "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+                generate_talent_sheet_task,
                 profile_id,
                 task_name=f"generate_talent_sheet_{profile_id}",
                 timeout=300,

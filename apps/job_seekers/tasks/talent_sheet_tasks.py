@@ -5,6 +5,8 @@ Background tasks for generating talent sheets for job seekers.
 import logging
 from typing import Any
 
+from celery import shared_task
+
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 from apps.job_seekers.services.recommendation.llm_processor import generate_talent_sheet
 from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
@@ -13,6 +15,9 @@ from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 logger = logging.getLogger(__name__)
 
 
+@shared_task(
+    name="apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task"
+)
 def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
     """
     Generate a talent sheet for a job seeker.

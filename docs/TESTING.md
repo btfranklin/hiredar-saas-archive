@@ -106,24 +106,6 @@ They are particularly useful for:
 - Demonstrating the system to stakeholders
 - Testing complex workflows that would be difficult to automate
 
-## Scheduled Tasks
-
-The project uses Django Q for scheduling periodic tasks:
-
-- **Resume Processing Cleanup**: Scheduled to run every 15 minutes
-  - Cleans up completed resume processing progress records
-  - Managed through the cleanup task system
-
-You can manage the scheduled tasks with these commands:
-
-```bash
-# Fix or diagnose issues with cleanup schedules
-python manage.py fix_cleanup_schedule
-
-# Reset cleanup schedule if needed
-python manage.py reset_cleanup_schedule
-```
-
 ## Best Practices
 
 When writing tests for the Hiredar project:

@@ -6,12 +6,12 @@ This module contains tasks for embedding talent sheets in vector space.
 
 from typing import Any
 
+from celery import shared_task
+
 # Use get_model to handle importing from another app without circular imports
 from django.apps import apps
 
 from apps.core.tasks import safe_async_task
-
-# Import shared utilities and alias safe_async_task
 from apps.matching.tasks.common import DIMENSIONS, get_embedding, get_index, logger
 from apps.resume_processing.utils.xml_parser import extract_personal_details
 
@@ -62,6 +62,7 @@ def upsert_talent_embeddings(
         raise
 
 
+@shared_task(name="apps.matching.tasks.create_talent_sheet_embeddings")
 def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
     """
     Create and store embeddings for a TalentSheet in Pinecone.
@@ -173,6 +174,7 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
     )
 
 
+@shared_task(name="apps.matching.tasks.remove_talent_sheet_embeddings")
 def remove_talent_sheet_embeddings(talent_sheet_id: int) -> None:
     """
     Remove all embeddings associated with a TalentSheet from Pinecone.

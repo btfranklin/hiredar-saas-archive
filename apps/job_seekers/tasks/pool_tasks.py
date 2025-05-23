@@ -1,23 +1,21 @@
 import os
 from typing import Any
 
+from celery import shared_task
 from django.db.models import F
 
+from apps.core.models import TaskMeta
+from apps.core.tasks import safe_async_task
+from apps.job_seekers.models import CandidatePool, JobSeekerProfile
+from apps.recruiters.models import BulkResumeUpload
+
+# Alias for decoupled task queue
+async_task = safe_async_task
 
 # Celery compatibility – a lightweight stand-in for Django-Q’s ``Task`` class.
 # Hook functions accept an instance but only use ``args``, ``result`` and
 # ``success`` attributes which are provided by the wrapper in *hiredar.celery*.
 Task = Any  # type: ignore[var-annotated]
-
-from celery import shared_task
-from apps.core.models import TaskMeta
-from apps.core.tasks import safe_async_task
-from apps.job_seekers.models import CandidatePool, JobSeekerProfile
-from apps.recruiters.models import BulkResumeUpload
-from apps.resume_processing.utils.pipeline import process_resume
-
-# Alias for decoupled task queue
-async_task = safe_async_task
 
 
 @shared_task(name="apps.job_seekers.tasks.pool_tasks.process_resume_for_pool")
@@ -48,6 +46,9 @@ def process_resume_for_pool(
         temp_profile.save()
 
         # Run the resume-processing pipeline
+        # Deferred import to avoid circular import
+        from apps.resume_processing.utils.pipeline import process_resume
+
         result = process_resume(file_path, temp_profile, None)
 
         # If the pipeline itself reported failure, clean up and exit early
@@ -109,8 +110,10 @@ def process_resume_for_pool(
 
         # Schedule LLM-powered TalentSheet generation **only** if we have resume XML.
         if profile.resume_xml:
+            from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
+
             async_task(
-                "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+                generate_talent_sheet_task,
                 profile.pk,
                 task_name=f"generate_talent_sheet_{profile.pk}",
             )

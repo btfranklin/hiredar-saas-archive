@@ -2,20 +2,9 @@
 
 This module exposes two public helpers:
 
-1. **safe_async_task** – primary entry-point used throughout the code-base for
-   scheduling background work.  It now targets *Celery* instead of Django-Q but
-   transparently falls back to Django-Q when Celery is unavailable (e.g. during
-   the migration period or in test environments).
+1. **safe_async_task** – primary entry-point for scheduling background work via Celery.
 2. **safe_async_task_once** – wrapper that prevents duplicate queueing within a
-   short window using a cache-based lock.  Its implementation is unchanged
-   except that it ultimately delegates to *safe_async_task*.
-
-Why the indirection?
---------------------
-Having **exactly one place** that interacts with the task queue means we can
-swap implementations – as we just did – without touching call-sites scattered
-across the repository.  It also lets us add cross-cutting concerns (logging,
-metrics, de-duplication, retries) in a single location.
+   short window using a cache-based lock.
 """
 
 from __future__ import annotations
@@ -36,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 _CELERY_RESERVED: Final[set[str]] = {"queue", "priority"}
 
-# Legacy Django-Q options that callers may still pass.  We keep them for source
-# compatibility but ignore the ones Celery doesn’t understand.
+# Legacy options that callers may still pass; ignored if unrecognized by Celery.
 _LEGACY_RESERVED: Final[set[str]] = {
     "hook",
     "group",
@@ -82,21 +70,19 @@ def safe_async_task(
     raise_on_failure: bool = False,
     **kwargs: Any,
 ) -> str | None:
-    """Schedule *path_or_callable* for background execution.
+    """Schedule *path_or_callable* for background execution via Celery.
 
-    The helper attempts Celery first and retries *retries* times on broker
-    errors before giving up.  If Celery cannot be imported or is mis-
-    configured we fall back to the previous Django-Q implementation so the
-    system keeps running while the migration is rolled out.
+    Retries on broker errors up to *retries* times before raising.
     """
 
     # ---------------------------------------------------------------------
     #  Prepare parameters
     # ---------------------------------------------------------------------
 
-    # Build dotted path when a callable is supplied.
     if callable(path_or_callable):
-        task_name = f"{path_or_callable.__module__}.{path_or_callable.__name__}"
+        task_name = getattr(path_or_callable, "name", None) or (
+            f"{path_or_callable.__module__}.{path_or_callable.__name__}"
+        )
     else:
         task_name = path_or_callable
 
@@ -174,7 +160,7 @@ def safe_async_task_once(
     #
     # As a consequence *safe_async_task_once* silently refused to enqueue new
     # jobs that legitimately needed to run – most notably the
-    # ``create_job_opening_embeddings`` task reported in issue #742.  Recruiters
+    # ``create_job_opening_embeddings`` task.  Recruiters
     # were able to close or draft a job (triggering *removal* tasks) but the
     # matching embeddings were never (re-)created because the stale Django-Q
     # entry made us believe a run was already in progress.

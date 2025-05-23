@@ -8,6 +8,8 @@ for job seekers.
 import logging
 from typing import Any
 
+from celery import shared_task
+
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
 from apps.job_seekers.services.recommendation.llm_processor import (
     generate_role_recommendations as generate_role_recommendations_from_xml,
@@ -17,6 +19,9 @@ from apps.job_seekers.services.recommendation.llm_processor import (
 logger = logging.getLogger(__name__)
 
 
+@shared_task(
+    name="apps.job_seekers.tasks.recommendation_tasks.generate_role_recommendations"
+)
 def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
     """
     Generate role recommendations for a job seeker based on their profile.

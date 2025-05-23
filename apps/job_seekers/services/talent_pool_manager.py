@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Alias safe_async_task as async_task
 async_task = safe_async_task
+# No top-level import of tasks to avoid circular dependencies; import inside methods when needed
 
 
 class TalentPoolManager:
@@ -104,9 +105,11 @@ class TalentPoolManager:
                 # The job seeker is joining the talent pool
                 # Schedule the talent sheet generation task
                 try:
-                    # Use a string reference to the task to avoid circular imports
+                    # Schedule talent sheet generation
+                    # Deferred import to avoid circular dependencies
+                    from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
                     task_id = async_task(
-                        "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+                        generate_talent_sheet_task,
                         profile_id,
                         task_name=f"generate_talent_sheet_{profile_id}",
                         timeout=300,

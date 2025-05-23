@@ -15,8 +15,10 @@ from apps.matching.models import CandidateMatch
 
 # Import shared utilities
 from apps.matching.tasks.common import logger
+from celery import shared_task
 
 
+@shared_task(name="apps.matching.tasks.create_candidate_matches")
 def create_candidate_matches(job_id: int, **kwargs) -> None:
     """
     Create candidate matches for a job opening.
@@ -104,6 +106,7 @@ def create_candidate_matches(job_id: int, **kwargs) -> None:
         raise
 
 
+@shared_task(name="apps.matching.tasks.remove_job_opening_matches")
 def remove_job_opening_matches(job_id: int, **kwargs) -> None:
     """
     Remove all matches for a job opening.
@@ -121,6 +124,7 @@ def remove_job_opening_matches(job_id: int, **kwargs) -> None:
         raise
 
 
+@shared_task(name="apps.matching.tasks.match_talent_to_active_jobs")
 def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
     """
     Match a talent sheet against all active job openings.
@@ -224,6 +228,7 @@ def match_talent_to_active_jobs(talent_id: int, **kwargs) -> None:
         raise
 
 
+@shared_task(name="apps.matching.tasks.remove_talent_sheet_matches")
 def remove_talent_sheet_matches(talent_id: int, **kwargs) -> None:
     """
     Remove all matches for a talent sheet.

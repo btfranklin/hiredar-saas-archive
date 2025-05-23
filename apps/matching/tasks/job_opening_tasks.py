@@ -6,13 +6,14 @@ This module contains tasks for embedding job openings in vector space.
 
 from typing import Any
 
+from celery import shared_task
+
 # Use get_model to handle importing from another app without circular imports
 from django.apps import apps
 
 from apps.core.tasks import safe_async_task
-
-# Import shared utilities
 from apps.matching.tasks.common import DIMENSIONS, get_embedding, get_index, logger
+from apps.matching.tasks.matching_tasks import create_candidate_matches
 
 async_task = safe_async_task
 
@@ -61,6 +62,7 @@ def upsert_job_embedding(
         raise
 
 
+@shared_task(name="apps.matching.tasks.create_job_opening_embeddings")
 def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
     """
     Create and store embeddings for a JobOpening in Pinecone.
@@ -151,9 +153,10 @@ def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
 
     # Trigger matching task after successfully creating embeddings
     logger.info("Triggering candidate matching for JobOpening %s", job.id)
-    async_task("apps.matching.tasks.create_candidate_matches", job.id)
+    async_task(create_candidate_matches, job.id)
 
 
+@shared_task(name="apps.matching.tasks.remove_job_opening_embeddings")
 def remove_job_opening_embeddings(job_opening_id: int) -> None:
     """
     Remove all embeddings associated with a JobOpening from Pinecone.

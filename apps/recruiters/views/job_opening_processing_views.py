@@ -17,6 +17,8 @@ from django.views.generic import View
 
 from apps.core.tasks import safe_async_task
 from apps.recruiters.models import JobOpeningProcessingTask, RecruiterProfile
+from apps.recruiters.tasks.hooks import job_processing_done
+from apps.recruiters.tasks.job_processing_tasks import handle_job_description_task
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -88,12 +90,12 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
 
             # Queue the async task to process the job description in high-priority queue
             async_task(
-                "apps.recruiters.tasks.handle_job_description_task",
+                handle_job_description_task,
                 task.task_id,
                 task.job_title,
                 task.original_text,
                 recruiter_profile.pk,
-                hook="apps.recruiters.tasks.hooks.job_processing_done",
+                hook=job_processing_done,
                 queue="high",
             )
 

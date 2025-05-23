@@ -4,7 +4,7 @@ This document describes the scheduled tasks in the Hiredar application and how t
 
 ## Overview
 
-Hiredar uses Django Q for scheduling and running background tasks. These tasks handle processes that should run periodically without user intervention, such as cleanup operations, data refreshes, or other maintenance tasks.
+Hiredar uses Celery for scheduling and running background tasks. These tasks handle processes that should run periodically without user intervention, such as cleanup operations, data refreshes, or other maintenance tasks.
 
 ## Task Types and Schedules
 
@@ -18,9 +18,9 @@ The following scheduled tasks are configured in the system:
 
 ### Viewing Scheduled Tasks
 
-To view all scheduled tasks in the system, use the Django admin interface:
+To view all scheduled tasks in the system, inspect the `CELERY_BEAT_SCHEDULE` setting or, if using `django-celery-beat`, use the Django admin interface:
 
-1. Navigate to `/admin/django_q/schedule/`
+1. Navigate to `/admin/django_celery_beat/periodictask/`
 2. Review the list of scheduled tasks
 
 ### Command Line Management
@@ -33,9 +33,6 @@ python manage.py fix_cleanup_schedule
 
 # Reset cleanup schedule to run exactly every 15 minutes
 python manage.py reset_cleanup_schedule
-
-# View task status
-python manage.py qmonitor
 ```
 
 ### Task Scheduling Mechanics

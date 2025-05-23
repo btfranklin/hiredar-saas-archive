@@ -8,6 +8,7 @@ from apps.job_seekers.models import (
     RoleRecommendation,
     TalentSheet,
 )
+from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 async_task = safe_async_task
 
@@ -127,7 +128,8 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
 
             # Queue the talent sheet generation task
             async_task(
-                "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task",
+                generate_talent_sheet_task,
+                # Previously used string path: "apps.job_seekers.tasks.talent_sheet_tasks.generate_talent_sheet_task"
                 profile.pk,
                 task_name=f"generate_talent_sheet_{profile.pk}",
                 timeout=300,

@@ -14,7 +14,7 @@ from django.core.files.uploadedfile import UploadedFile
 
 from celery import shared_task
 from apps.job_seekers.models.profile import JobSeekerProfile
-from apps.resume_processing.utils.pipeline import process_resume
+# Removed top-level import to avoid circular dependency; import in function to defer loading
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -70,6 +70,8 @@ def handle_resume_upload_task(
             }
 
         # Process the resume with progress tracking
+        # Deferred import to avoid circular import
+        from apps.resume_processing.utils.pipeline import process_resume
         result = process_resume(uploaded_file_path, profile, task_id=task_id)
 
         return {

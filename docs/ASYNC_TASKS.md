@@ -1,6 +1,6 @@
 # Asynchronous Task Polling – How-to
 
-This project shows live progress for long-running background jobs (Django-Q)
+This project shows live progress for long-running background jobs (Celery)
 without page reloads.  The pattern relies on three reusable building blocks:
 
 1. `TaskMeta` model (apps/core/models.py) – one row per async job.
@@ -157,7 +157,7 @@ The fragment automatically stops polling once `has_active_tasks` is False.
 * Use semantic `queue_id`s (e.g. `resume-1234`, `match-5678`) when creating
   `TaskMeta` rows **before** enqueueing the job.
 * After you receive the real queue id from `safe_async_task` feel free to
-  overwrite `meta.queue_id` so staff can cross-reference with Django-Q's admin.
+  overwrite `meta.queue_id` so staff can cross-reference with Celery's monitoring tools.
 
 ---
 
@@ -168,6 +168,10 @@ The fragment automatically stops polling once `has_active_tasks` is False.
    `TaskMeta.state` to SUCCESS or FAILURE.
 3. **Duplicate key error on `queue_id`** – guarantee uniqueness (semantic id +
    primary-key is easiest).
+4. **Worker crashes with SIGSEGV** – often caused by native libraries initializing
+   threads or loading C extensions before Celery forks worker processes (common on macOS
+   and some Linux setups).  For local development try running the worker with the solo
+   pool (`celery -A hiredar worker -l INFO --pool=solo`) or use the `forkserver` pool.
 
 ---
 

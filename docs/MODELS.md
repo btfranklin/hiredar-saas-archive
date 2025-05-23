@@ -248,7 +248,7 @@ Model for tracking progress of resume processing tasks.
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `task_id` | CharField | Django Q2 task ID (primary key) |
+| `task_id` | CharField | Celery task ID (primary key) |
 | `user` | ForeignKey | Link to User who uploaded the resume |
 | `task_type` | CharField | Type of task being processed (default: "resume_processing") |
 | `current_step` | CharField | Current step being processed |

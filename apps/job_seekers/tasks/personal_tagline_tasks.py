@@ -8,6 +8,8 @@ for job seekers based on their profile data.
 import logging
 from typing import Any
 
+from celery import shared_task
+
 from apps.job_seekers.models import JobSeekerProfile
 from apps.job_seekers.services.recommendation.llm_processor import (
     generate_personal_tagline as generate_tagline_from_xml,
@@ -17,6 +19,9 @@ from apps.job_seekers.services.recommendation.llm_processor import (
 logger = logging.getLogger(__name__)
 
 
+@shared_task(
+    name="apps.job_seekers.tasks.personal_tagline_tasks.generate_personal_tagline"
+)
 def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
     """
     Generate a personal tagline for a job seeker based on their profile.

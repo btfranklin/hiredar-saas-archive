@@ -9,12 +9,12 @@ This document explains **how PDF resumes flow through Hiredar – from the momen
 ```mermaid
 flowchart LR
     Browser -- "Upload PDF or ZIP" --> View["Django view<br/>save file / create progress row"]
-    View --> Task["Django Q2 task<br/>IO-bound / async"]
+    View --> Task["Celery task<br/>IO-bound / async"]
     Task --> Pipeline["Unified pipeline<br/>CPU/IO/LLM work"]
 ```
 
 1. A **PDF** is uploaded (either a single file by a job-seeker or a ZIP archive by a recruiter).
-2. The file is saved to disk (or a temp file) and a **Django Q2** background task is queued.
+2. The file is saved to disk (or a temp file) and a **Celery** background task is queued via `safe_async_task`.
 3. The background task calls the **unified `process_resume` pipeline** which:
    1. Extracts plain text from the PDF.
    2. Sends the text to an LLM which returns an **XML** payload.
@@ -101,9 +101,9 @@ Return payload example:
 
 ---
 
-## 5. Background task queue (Django Q 2)
+## 5. Background task queue (Celery)
 
-The project aliases `django_q.tasks.async_task` through `apps.core.tasks.safe_async_task` to allow easy swapping in tests.  All tasks are *fire-and-forget*.  Hooks (`hook=` kwarg) are used instead of task chains to keep the DAG explicit in code.
+This project uses Celery for background tasks, wrapping calls through `apps.core.tasks.safe_async_task`.  All tasks are *fire-and-forget*.  Hooks (`hook=` kwarg) are used instead of task chains to keep the DAG explicit in code.
 
 ---
 
