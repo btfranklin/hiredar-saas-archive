@@ -10,9 +10,9 @@ from apps.job_seekers.tasks.recommendation_tasks import generate_role_recommenda
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 # Import cleanup helpers from canonical resume_processing app
+# Note: cleanup_resume_processing_progress is now scheduled via Celery Beat
 from apps.resume_processing.tasks.cleanup_tasks import (
     cleanup_resume_processing_progress,
-    initialize_cleanup_once,
 )
 from apps.resume_processing.tasks.resume_processing_tasks import (
     handle_resume_upload_task,
@@ -26,9 +26,8 @@ __all__ = [
     # Resume processing tasks
     "save_resume_file",
     "handle_resume_upload_task",
-    # Cleanup tasks
+    # Cleanup tasks (cleanup_resume_processing_progress now runs via Celery Beat)
     "cleanup_resume_processing_progress",
-    "initialize_cleanup_once",
     # Completion tasks
     "resume_processing_completed",
     # Recommendation tasks

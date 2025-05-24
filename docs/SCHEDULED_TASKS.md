@@ -1,12 +1,16 @@
 # Hiredar Scheduled Tasks
 
-This document describes the scheduled tasks in the Hiredar application and how they are managed.
+This document describes the scheduled tasks in the Hiredar application and how they are managed using Celery Beat.
 
 ## Overview
 
-Hiredar uses Celery for scheduling and running background tasks. These tasks handle processes that should run periodically without user intervention, such as cleanup operations, data refreshes, or other maintenance tasks.
+Hiredar uses Celery Beat for scheduling and running periodic background tasks. These tasks handle processes that should run automatically at regular intervals, such as cleanup operations, data refreshes, or other maintenance tasks.
 
-## Task Types and Schedules
+## Task Configuration
+
+Scheduled tasks are configured in the Django settings file using the `CELERY_BEAT_SCHEDULE` setting. This provides a clean, centralized way to manage all periodic tasks.
+
+## Current Scheduled Tasks
 
 The following scheduled tasks are configured in the system:
 
@@ -18,31 +22,32 @@ The following scheduled tasks are configured in the system:
 
 ### Viewing Scheduled Tasks
 
-To view all scheduled tasks in the system, inspect the `CELERY_BEAT_SCHEDULE` setting or, if using `django-celery-beat`, use the Django admin interface:
+To view all scheduled tasks in the system:
 
-1. Navigate to `/admin/django_celery_beat/periodictask/`
-2. Review the list of scheduled tasks
+1. **Settings Configuration**: Check the `CELERY_BEAT_SCHEDULE` setting in `hiredar/settings.py`
+2. **Django Admin**: If using `django-celery-beat`, navigate to `/admin/django_celery_beat/periodictask/`
+3. **Command Line**: Use Celery inspection commands to view active schedules
+
+### Running Celery Beat
+
+To start the Celery Beat scheduler:
+
+```bash
+# In development
+celery -A hiredar beat --loglevel=info
+
+# In production (typically run as a service)
+celery -A hiredar beat --loglevel=info --detach
+```
 
 ### Command Line Management
 
-The system includes command-line tools for managing scheduled tasks:
+Manual cleanup can still be performed using the task directly:
 
 ```bash
-# Check and fix cleanup schedule issues
-python manage.py fix_cleanup_schedule
-
-# Reset cleanup schedule to run exactly every 15 minutes
-python manage.py reset_cleanup_schedule
+# Run cleanup manually
+python manage.py shell -c "from apps.resume_processing.tasks.cleanup_tasks import cleanup_resume_processing_progress; cleanup_resume_processing_progress()"
 ```
-
-### Task Scheduling Mechanics
-
-Task scheduling is handled through several components:
-
-1. **App Config**: Tasks are registered during application startup in `apps.py`
-2. **Middleware**: A middleware component ensures tasks are only scheduled once
-3. **Cache System**: A cache-based coordination system prevents multiple processes from creating duplicate schedules
-4. **Maintenance Commands**: Command-line tools allow for manual intervention
 
 ## Resume Processing Cleanup Details
 
@@ -50,9 +55,10 @@ The resume processing cleanup task handles temporary records created during the 
 
 ### Schedule Details
 
-- **Frequency**: Runs every 15 minutes
-- **Function**: `apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress`
-- **Cache Key**: `job_seekers_cleanup_task_scheduled`
+- **Frequency**: Runs every 15 minutes (900 seconds)
+- **Function**: `cleanup_resume_processing_progress`
+- **Queue**: `default`
+- **Task Name**: `apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress`
 
 ### Cleanup Policies
 
@@ -61,61 +67,46 @@ The task applies the following cleanup policies:
 1. **Completed Records**: Any completed or failed resume processing records older than 5 minutes are deleted
 2. **Old Records**: All resume processing records older than 7 days are deleted regardless of status
 
-### Troubleshooting Issues
+### Task Return Values
 
-If you encounter issues with tasks running too frequently or not at all:
+The cleanup task returns structured data:
 
-1. Check for multiple schedule entries with the same name:
-
-   ```bash
-   python manage.py fix_cleanup_schedule
-   ```
-
-2. If issues persist, reset the schedule:
-
-   ```bash
-   python manage.py reset_cleanup_schedule
-   ```
-
-3. For debugging task execution, check the logs:
-
-   ```bash
-   tail -f logs/celery.log
-   ```
+```python
+{
+    "status": "success|error",
+    "message": "Cleanup summary",
+    "completed_records": 5,  # Number of completed records cleaned
+    "old_records": 2,        # Number of old records cleaned
+}
+```
 
 ## Adding New Scheduled Tasks
 
 To add a new scheduled task:
 
-1. Define the task function in an appropriate app module
-2. Create a scheduling function similar to `initialize_cleanup_once` in the relevant app
-3. Connect the scheduling function to an appropriate trigger (app startup, signal, etc.)
-4. Add documentation for the new task in this file
+1. **Create the task function** with `@shared_task` decorator:
 
-## Technical Implementation
+   ```python
+   from celery import shared_task
 
-The scheduling system uses a combination of Django's app configuration, middleware, and cache to ensure tasks are properly scheduled:
+   @shared_task(name="apps.myapp.tasks.my_scheduled_task")
+   def my_scheduled_task() -> dict[str, Any]:
+       # Task implementation
+       return {"status": "success", "message": "Task completed"}
+   ```
 
-```python
-# From apps/resume_processing/tasks/cleanup_tasks.py
-def initialize_cleanup_once() -> None:
-    """
-    Disable legacy schedules and perform a one-time cleanup.
+2. **Add to CELERY_BEAT_SCHEDULE** in `hiredar/settings.py`:
 
-    This function removes any existing periodic cleanup tasks and performs an immediate cleanup.
-    It uses a cache lock and flag to prevent duplicate execution in the same process.
-    """
-    cache_key = "job_seekers_cleanup_task_scheduled"
-    if cache.get(cache_key):
-        return
+   ```python
+   CELERY_BEAT_SCHEDULE = {
+       "my-scheduled-task": {
+           "task": "apps.myapp.tasks.my_scheduled_task",
+           "schedule": 3600.0,  # Every hour
+           "options": {
+               "queue": "default",
+           },
+       },
+   }
+   ```
 
-    try:
-        # Perform immediate cleanup of stale records
-        cleanup_resume_processing_progress()
-        # Prevent repeated initialization
-        cache.set(cache_key, True, 60 * 60)
-    except Exception as e:
-        logger.error("Error while disabling cleanup schedule: %s", e)
-```
-
-This approach ensures that even in a multi-process environment, tasks are only scheduled once.
+3. **Update documentation** in this file

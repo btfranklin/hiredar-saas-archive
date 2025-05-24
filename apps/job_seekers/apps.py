@@ -21,14 +21,4 @@ class JobSeekersConfig(AppConfig):
         This imports the signals module to ensure signal handlers are registered.
         """
         # pylint: disable=import-outside-toplevel,unused-import
-        # Only register the middleware in non-testing environments
-        from django.conf import settings
-
         import apps.job_seekers.signals  # noqa
-
-        if hasattr(settings, "MIDDLEWARE") and not getattr(settings, "TESTING", False):
-            # Register our middleware by adding it to settings.MIDDLEWARE if not already there
-            middleware_path = "apps.job_seekers.middleware.CleanupSchedulerMiddleware"
-            if middleware_path not in settings.MIDDLEWARE:
-                # Add to the beginning of middleware list to run early
-                settings.MIDDLEWARE = [middleware_path] + list(settings.MIDDLEWARE)

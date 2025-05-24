@@ -1,8 +1,8 @@
 """Resume-processing task package.
 
-Celery’s Django integration will automatically import ``apps.resume_processing.tasks``
+Celery's Django integration will automatically import ``apps.resume_processing.tasks``
 for task discovery.  When this directory lacked an ``__init__`` module the import
-worked thanks to Python’s *namespace-package* semantics, but none of the actual
+worked thanks to Python's *namespace-package* semantics, but none of the actual
 task functions living in the sibling modules were brought into memory – which
 meant the Celery worker never registered them.
 
@@ -15,9 +15,8 @@ adding new task modules.
 #  Public sub-modules
 # ---------------------------------------------------------------------------
 
-from apps.resume_processing.tasks.cleanup_tasks import (  # noqa: F401 – re-export
-    cleanup_resume_processing_progress,
-    initialize_cleanup_once,
+from apps.resume_processing.tasks.cleanup_tasks import (
+    cleanup_resume_processing_progress,  # noqa: F401 – re-export
 )
 from apps.resume_processing.tasks.resume_processing_tasks import (  # noqa: F401 – re-export
     handle_resume_upload_task,
@@ -34,5 +33,4 @@ __all__ = [
     "handle_resume_upload_task",
     # Cleanup helpers
     "cleanup_resume_processing_progress",
-    "initialize_cleanup_once",
 ]

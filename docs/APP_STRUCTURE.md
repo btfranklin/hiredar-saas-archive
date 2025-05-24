@@ -103,7 +103,7 @@ Manages job seeker–specific functionality:
     - `personal_tagline_tasks.py`: Tasks for generating personal taglines
     - `recommendation_tasks.py`: Tasks for generating role recommendations
     - `talent_sheet_tasks.py`: Tasks for generating talent sheets
-    - Imports from `apps.resume_processing.tasks`: `cleanup_resume_processing_progress`, `initialize_cleanup_once`, `save_resume_file`, `handle_resume_upload_task`
+    - Imports from `apps.resume_processing.tasks`: `cleanup_resume_processing_progress` (now scheduled via Celery Beat), `save_resume_file`, `handle_resume_upload_task`
 - **Templates**:
   - Job seeker–specific templates for signup, profiles, dashboards, and HTMX partials
 - **Signals**:
