@@ -1,6 +1,7 @@
 """Resume processing views for job seekers."""
 
 import logging
+import time
 import uuid
 from typing import Any, cast
 
@@ -131,8 +132,9 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
 
             profile_id = job_seeker_profile.pk
 
-            # Generate a unique ID for the task
-            task_id = str(uuid.uuid4())
+            # Generate a semantic task ID based on profile and timestamp
+            timestamp = int(time.time())
+            task_id = f"resume_processing_{profile_id}_{timestamp}"
             logger.info("Created task ID: %s", task_id)
 
             # Create a tracking record for this task using our service
@@ -144,7 +146,7 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
                 file_path,
                 profile_id,
                 task_id=task_progress.task_id,
-                task_name=f"resume_processing_{task_progress.task_id}",
+                task_name=f"resume_processing_{profile_id}_{timestamp}",
                 hook=resume_processing_completed,
             )
 

@@ -42,7 +42,23 @@ All tasks must return dictionaries with consistent structure:
 }
 ```
 
-### 3. Chain Patterns
+### 3. Semantic Task Naming (CRITICAL)
+
+**Always use semantic task names instead of UUIDs.** This is essential for:
+- **Debugging**: Understand what tasks are doing from logs
+- **Monitoring**: Identify problematic task patterns
+- **Operations**: Track task performance over time
+
+```python
+# ❌ BAD: UUID task names (default behavior)
+async_task(my_task, arg1, arg2)  # Results in random UUID like "a4b8c2e3-..."
+
+# ✅ GOOD: Semantic task names
+async_task(my_task, arg1, arg2, task_name=f"process_resume_{user_id}")
+chain(...).apply_async(task_id=f"embed_and_match_job_{job_id}")
+```
+
+### 4. Chain Patterns
 
 **Sequential Processing:**
 ```python
@@ -156,7 +172,7 @@ def process_data(data_id: int) -> dict[str, Any]:
         }
 ```
 
-### Step 4: Replace Hook Calls with Chains
+### Step 4: Replace Hook Calls with Chains AND Add Semantic Names
 
 **Before (Hook-based):**
 ```python
@@ -168,10 +184,10 @@ async_task(
     bulk_pk,
     hook=cleanup_temp_file,
     queue="default"
-)
+)  # ❌ No task_name = UUID generated
 ```
 
-**After (Chain-based):**
+**After (Chain-based with semantic naming):**
 ```python
 # In main task
 from celery import chain
@@ -181,7 +197,21 @@ cleanup_task = cleanup_temp_file.s()
 
 task_chain = chain(process_task, cleanup_task)
 async_result = task_chain.apply_async(
-    task_id=f"process_and_cleanup_{unique_id}"
+    task_id=f"process_and_cleanup_resume_{pool_id}_{bulk_pk}"  # ✅ Semantic name
+)
+```
+
+**CRITICAL: Also update non-chained tasks:**
+```python
+# ❌ BEFORE: UUID will be generated
+async_task(single_task, arg1, arg2)
+
+# ✅ AFTER: Semantic name provided
+async_task(
+    single_task, 
+    arg1, 
+    arg2,
+    task_name=f"single_task_{arg1}_{arg2}"
 )
 ```
 
@@ -349,19 +379,49 @@ def robust_task(input_data: Any) -> dict[str, Any]:
         }
 ```
 
-### 2. Semantic Task IDs
+### 2. Semantic Task Naming (MANDATORY)
 
-Use meaningful task IDs for better monitoring:
+**Every task MUST have a semantic name.** Never rely on Celery's auto-generated UUIDs.
 
 ```python
-# Good: Semantic task IDs
-task_id = f"process_resume_{resume.pk}"
-task_id = f"embed_and_match_job_{job.id}"
-task_id = f"generate_report_{user.id}_{date}"
+# ✅ EXCELLENT: Include relevant IDs and context
+task_name = f"process_resume_{profile_id}_{timestamp}"
+task_name = f"embed_and_match_job_{job.id}"
+task_name = f"cleanup_temp_file_{bulk.pk}_{resume.id}"
+task_name = f"generate_talent_sheet_{profile.pk}"
+task_name = f"remove_job_embeddings_{job.id}"
 
-# Avoid: Generic or random IDs
-task_id = str(uuid.uuid4())
-task_id = "task_123"
+# ✅ GOOD: Basic semantic naming
+task_name = f"process_user_data_{user.id}"
+task_name = f"send_email_{recipient.id}"
+
+# ❌ NEVER: Let Celery generate UUIDs
+async_task(my_task, args)  # Results in "a4b8c2e3-f1d2-..."
+chain(...).apply_async()   # Results in random UUID
+
+# ❌ AVOID: Generic or meaningless names
+task_name = "task_123"
+task_name = "background_job"
+```
+
+**Implementation patterns:**
+```python
+# For single tasks
+async_task(
+    process_data,
+    data_id,
+    task_name=f"process_data_{data_id}"
+)
+
+# For chains
+chain(first_task.si(id), second_task.s()).apply_async(
+    task_id=f"complete_workflow_{id}"
+)
+
+# With timestamps for uniqueness
+import time
+timestamp = int(time.time())
+task_name = f"bulk_import_{batch_id}_{timestamp}"
 ```
 
 ### 3. Progress Tracking Integration
@@ -526,11 +586,14 @@ After conversion, verify:
 - [ ] Chain signatures use `.si()` and `.s()` correctly
 - [ ] Tasks handle different input types gracefully
 - [ ] Error handling returns consistent error structures
-- [ ] Task IDs are semantic and meaningful
+- [ ] **ALL TASKS HAVE SEMANTIC NAMES (NO UUIDs)**
+- [ ] Task names include relevant IDs and context
 - [ ] Tests cover both individual tasks and chains
 - [ ] Backward compatibility maintained where needed
 - [ ] No remaining `async_task(..., hook=...)` patterns
 - [ ] Import statements cleaned up
+- [ ] Celery admin shows readable task names
+- [ ] Monitoring dashboards display meaningful task identifiers
 
 ## Migration Strategy
 

@@ -73,8 +73,8 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages.error(request, error_msg)
                 return redirect("recruiters:job_openings_create")
 
-            # Create a unique task ID
-            task_id = str(uuid.uuid4())
+            # Create a semantic task ID based on recruiter and timestamp
+            task_id = f"process_job_{recruiter_profile.pk}_{int(request.POST.get('timestamp', 0)) or uuid.uuid4().hex[:8]}"
 
             # Create a new processing task
             task = JobOpeningProcessingTask.objects.create(
@@ -94,6 +94,7 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
                 task.job_title,
                 task.original_text,
                 recruiter_profile.pk,
+                task_name=f"job_description_processing_{task.task_id}",
                 queue="high",
             )
 

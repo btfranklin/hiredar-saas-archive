@@ -52,14 +52,22 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
         # Create embeddings and then create candidate matches using Celery chain
         transaction.on_commit(
             lambda: chain(
-                create_job_embeddings_task.si(instance.id), create_matches_task.s()
+                create_job_embeddings_task.si(instance.id), create_matches_task.s()  # type: ignore[misc]
             ).apply_async(task_id=f"embed_and_match_job_{instance.id}")
         )
     else:
         # Remove embeddings and matches for inactive jobs
         def _cleanup_inactive():
-            async_task(remove_job_opening_embeddings, instance.id)
-            async_task(remove_job_opening_matches, instance.id)
+            async_task(
+                remove_job_opening_embeddings,
+                instance.id,
+                task_name=f"remove_job_embeddings_{instance.id}",
+            )
+            async_task(
+                remove_job_opening_matches,
+                instance.id,
+                task_name=f"remove_job_matches_{instance.id}",
+            )
 
         transaction.on_commit(_cleanup_inactive)
 
@@ -75,8 +83,16 @@ def handle_job_opening_delete(sender, instance, **kwargs):
         sender: The model class
         instance: The actual instance being deleted
     """
-    async_task(remove_job_opening_embeddings, instance.id)
-    async_task(remove_job_opening_matches, instance.id)
+    async_task(
+        remove_job_opening_embeddings,
+        instance.id,
+        task_name=f"cleanup_job_embeddings_{instance.id}",
+    )
+    async_task(
+        remove_job_opening_matches,
+        instance.id,
+        task_name=f"cleanup_job_matches_{instance.id}",
+    )
 
 
 @receiver(post_save, sender="job_seekers.TalentSheet")
@@ -95,8 +111,16 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
     if not instance.is_published:
 
         def _cleanup_unpublished():
-            async_task(remove_talent_sheet_embeddings, instance.id)
-            async_task(remove_talent_sheet_matches, instance.id)
+            async_task(
+                remove_talent_sheet_embeddings,
+                instance.id,
+                task_name=f"remove_talent_embeddings_{instance.id}",
+            )
+            async_task(
+                remove_talent_sheet_matches,
+                instance.id,
+                task_name=f"remove_talent_matches_{instance.id}",
+            )
 
         transaction.on_commit(_cleanup_unpublished)
     # Handle publish or re-publish -> enqueue embedding task and matching
@@ -104,7 +128,7 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
         # Create embeddings and then match to active jobs using Celery chain
         transaction.on_commit(
             lambda: chain(
-                create_talent_embeddings_task.si(instance.id), match_talent_task.s()
+                create_talent_embeddings_task.si(instance.id), match_talent_task.s()  # type: ignore[misc]
             ).apply_async(task_id=f"embed_and_match_talent_{instance.id}")
         )
 
@@ -121,5 +145,13 @@ def handle_talent_sheet_delete(sender, instance, **kwargs):
         instance: The actual instance being deleted
     """
     # On deletion, trigger removal of talent sheet embeddings
-    async_task(remove_talent_sheet_embeddings, instance.id)
-    async_task(remove_talent_sheet_matches, instance.id)
+    async_task(
+        remove_talent_sheet_embeddings,
+        instance.id,
+        task_name=f"cleanup_talent_embeddings_{instance.id}",
+    )
+    async_task(
+        remove_talent_sheet_matches,
+        instance.id,
+        task_name=f"cleanup_talent_matches_{instance.id}",
+    )
