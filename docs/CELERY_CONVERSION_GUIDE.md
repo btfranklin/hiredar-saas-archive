@@ -95,6 +95,23 @@ map_reduce = chord(
 result = map_reduce.apply_async()
 ```
 
+## Clean Conversion Strategy
+
+**IMPORTANT: Do NOT implement backwards compatibility during conversion.** 
+
+The goal is a clean, modern implementation using pure Celery patterns. Backwards compatibility:
+- Increases complexity and technical debt
+- Creates confusion about which patterns to use
+- Slows down the migration process
+- Maintains problematic legacy code paths
+
+**Instead:**
+- Convert all hook usage to chains in one go
+- Update all calling code simultaneously  
+- Remove legacy hook functions entirely
+- Focus on clean, modern Celery patterns only
+- Test thoroughly but don't maintain dual code paths
+
 ## Step-by-Step Conversion Process
 
 ### Step 1: Identify Hook Usage Patterns
@@ -249,13 +266,13 @@ Tasks in chains need to handle different input types:
 ```python
 @shared_task
 def flexible_task(result: dict[str, Any] | int | None = None) -> dict[str, Any]:
-    # Handle different input types for backward compatibility
+    # Handle different input types for chain compatibility
     if isinstance(result, dict):
         item_id = result.get("item_id")
         status = result.get("status", "unknown")
     elif isinstance(result, int):
         item_id = result
-        status = "legacy_call"
+        status = "direct_call"
     elif result is None:
         return {"status": "error", "message": "No input provided"}
     else:
@@ -499,17 +516,17 @@ def test_task_chain():
     assert len(result.parent.result) > 0
 ```
 
-### Backward Compatibility Testing
+### Input Type Testing
 
 ```python
-def test_backward_compatibility():
-    # Test both old and new calling patterns
+def test_input_types():
+    # Test different input types for chain compatibility
     
-    # Legacy integer input
+    # Direct integer input
     result1 = flexible_task(123)
     assert result1["status"] == "success"
     
-    # New dictionary input
+    # Dictionary input from previous task
     result2 = flexible_task({"item_id": 123, "extra": "data"})
     assert result2["status"] == "success"
     
@@ -555,13 +572,19 @@ def task_with_return(data):
 
 ### 3. Hook Function Removal
 
-**Problem:** Removing hook functions too early breaks existing tasks
+**Problem:** Removing hook functions breaks existing tasks
 
-**Solution:** Keep hook functions temporarily with deprecation warnings
+**Solution:** Convert all hook usage to chains simultaneously and remove hook functions
 ```python
-def deprecated_hook_function(task: Task) -> None:
-    logger.warning("Hook function deprecated, use Celery chains instead")
-    # Temporary implementation for compatibility
+# ❌ DON'T keep deprecated functions
+# def deprecated_hook_function(task: Task) -> None:
+#     logger.warning("Hook function deprecated, use Celery chains instead")
+
+# ✅ DO convert to proper task and update all callers
+@shared_task
+def proper_celery_task(result: dict[str, Any] | None = None) -> dict[str, Any]:
+    # Clean implementation without legacy support
+    return {"status": "success", "data": processed_data}
 ```
 
 ### 4. Import Cycles
@@ -589,7 +612,6 @@ After conversion, verify:
 - [ ] **ALL TASKS HAVE SEMANTIC NAMES (NO UUIDs)**
 - [ ] Task names include relevant IDs and context
 - [ ] Tests cover both individual tasks and chains
-- [ ] Backward compatibility maintained where needed
 - [ ] No remaining `async_task(..., hook=...)` patterns
 - [ ] Import statements cleaned up
 - [ ] Celery admin shows readable task names
@@ -616,7 +638,6 @@ After conversion, verify:
 1. Remove unused hook functions
 2. Clean up imports
 3. Update documentation
-4. Remove deprecation warnings
 
 ### Phase 5: Verification
 1. Run full test suite

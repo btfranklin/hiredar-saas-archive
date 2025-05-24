@@ -96,8 +96,16 @@ class JobOpeningSignalTests(TestCase):
 
         # Verify both task calls for non-active job (uses async_task)
         expected_calls = [
-            call(signals.remove_job_opening_embeddings, job_draft.id),
-            call(signals.remove_job_opening_matches, job_draft.id),
+            call(
+                signals.remove_job_opening_embeddings,
+                job_draft.id,
+                task_name=f"remove_job_embeddings_{job_draft.id}",
+            ),
+            call(
+                signals.remove_job_opening_matches,
+                job_draft.id,
+                task_name=f"remove_job_matches_{job_draft.id}",
+            ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
@@ -121,8 +129,16 @@ class JobOpeningSignalTests(TestCase):
 
         # Verify both task calls for non-active job (uses async_task)
         expected_calls = [
-            call(signals.remove_job_opening_embeddings, job_closed.id),
-            call(signals.remove_job_opening_matches, job_closed.id),
+            call(
+                signals.remove_job_opening_embeddings,
+                job_closed.id,
+                task_name=f"remove_job_embeddings_{job_closed.id}",
+            ),
+            call(
+                signals.remove_job_opening_matches,
+                job_closed.id,
+                task_name=f"remove_job_matches_{job_closed.id}",
+            ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
@@ -147,8 +163,16 @@ class JobOpeningSignalTests(TestCase):
 
         # Verify both task calls for delete handler
         expected_calls = [
-            call(signals.remove_job_opening_embeddings, job.id),
-            call(signals.remove_job_opening_matches, job.id),
+            call(
+                signals.remove_job_opening_embeddings,
+                job.id,
+                task_name=f"cleanup_job_embeddings_{job.id}",
+            ),
+            call(
+                signals.remove_job_opening_matches,
+                job.id,
+                task_name=f"cleanup_job_matches_{job.id}",
+            ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
@@ -227,8 +251,16 @@ class TalentSheetSignalTests(TestCase):
 
         # Verify both task calls for unpublished talent sheet
         expected_calls = [
-            call(signals.remove_talent_sheet_embeddings, talent_unpublished.id),
-            call(signals.remove_talent_sheet_matches, talent_unpublished.id),
+            call(
+                signals.remove_talent_sheet_embeddings,
+                talent_unpublished.id,
+                task_name=f"remove_talent_embeddings_{talent_unpublished.id}",
+            ),
+            call(
+                signals.remove_talent_sheet_matches,
+                talent_unpublished.id,
+                task_name=f"remove_talent_matches_{talent_unpublished.id}",
+            ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
@@ -252,7 +284,15 @@ class TalentSheetSignalTests(TestCase):
 
         # Verify both task calls for delete handler
         expected_calls = [
-            call(signals.remove_talent_sheet_embeddings, talent.id),
-            call(signals.remove_talent_sheet_matches, talent.id),
+            call(
+                signals.remove_talent_sheet_embeddings,
+                talent.id,
+                task_name=f"cleanup_talent_embeddings_{talent.id}",
+            ),
+            call(
+                signals.remove_talent_sheet_matches,
+                talent.id,
+                task_name=f"cleanup_talent_matches_{talent.id}",
+            ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)

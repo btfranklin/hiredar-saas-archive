@@ -8,12 +8,13 @@ resume uploads and parsing.
 import logging
 from typing import Any
 
+from celery import shared_task
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 
-from celery import shared_task
 from apps.job_seekers.models.profile import JobSeekerProfile
+
 # Removed top-level import to avoid circular dependency; import in function to defer loading
 
 # Setup logging
@@ -40,7 +41,9 @@ def save_resume_file(resume_file: UploadedFile, filename: str) -> str:
     return path
 
 
-@shared_task(name="apps.resume_processing.tasks.resume_processing_tasks.handle_resume_upload_task")
+@shared_task(
+    name="apps.resume_processing.tasks.resume_processing_tasks.handle_resume_upload_task"
+)
 def handle_resume_upload_task(
     uploaded_file_path: str,
     job_seeker_profile_id: int,
@@ -55,7 +58,7 @@ def handle_resume_upload_task(
         task_id: The ID of the task for progress tracking.
 
     Returns:
-        dict: Result of the processing operation.
+        dict: Result of the processing operation with structured data for chaining.
     """
     try:
         # Process the resume using the unified pipeline
@@ -67,17 +70,23 @@ def handle_resume_upload_task(
             return {
                 "status": "error",
                 "message": error_msg,
+                "profile_id": job_seeker_profile_id,
             }
 
         # Process the resume with progress tracking
         # Deferred import to avoid circular import
         from apps.resume_processing.utils.pipeline import process_resume
+
         result = process_resume(uploaded_file_path, profile, task_id=task_id)
 
         return {
             "status": "success" if result.get("success", False) else "error",
             "message": result.get("message", ""),
             "profile_data": result.get("profile_data", {}),
+            "profile_id": job_seeker_profile_id,
+            "file_path": uploaded_file_path,
+            "processing_time": result.get("processing_time"),
+            "pipeline_steps": result.get("pipeline_steps", []),
         }
 
     except Exception as e:
@@ -86,4 +95,6 @@ def handle_resume_upload_task(
         return {
             "status": "error",
             "message": f"Error processing resume: {str(e)}",
+            "profile_id": job_seeker_profile_id,
+            "file_path": uploaded_file_path,
         }

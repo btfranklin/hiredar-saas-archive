@@ -5,6 +5,7 @@ import time
 import uuid
 from typing import Any, cast
 
+from celery import chain
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
@@ -140,15 +141,19 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
             # Create a tracking record for this task using our service
             task_progress = ResumeProcessor.create_processing_task(user_model, task_id)
 
-            # Queue the resume processing task with a completion hook
-            async_task(
-                handle_resume_upload_task,
-                file_path,
-                profile_id,
-                task_id=task_progress.task_id,
-                task_name=f"resume_processing_{profile_id}_{timestamp}",
-                hook=resume_processing_completed,
+            # Create Celery chain for resume processing and completion
+            task_chain = chain(
+                handle_resume_upload_task.si(  # type: ignore[misc]
+                    file_path,
+                    profile_id,
+                    task_id=task_progress.task_id,
+                ),
+                resume_processing_completed.s(),  # type: ignore[misc]
             )
+
+            # Execute the chain with semantic naming
+            chain_task_id = f"resume_processing_chain_{profile_id}_{timestamp}"
+            async_result = task_chain.apply_async(task_id=chain_task_id)  # type: ignore[misc]
 
             # Update the task to mark the first step as complete
             ResumeProcessor.update_task_progress(

@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 @shared_task(
     name="apps.job_seekers.tasks.recommendation_tasks.generate_role_recommendations"
 )
-def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
+def generate_role_recommendations(
+    input_data: dict[str, Any] | int | None = None,
+) -> dict[str, Any]:
     """
     Generate role recommendations for a job seeker based on their profile.
 
@@ -32,16 +34,36 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
     Idempotency & concurrency:
         The task deletes existing recommendations and creates a fresh set each
         time it runs.  It is therefore *idempotent* but **not** concurrency‑
-        safe – parallel executions will race against one another.  Up‑stream
+        safe – parallel executions will race against one another.  Up‑stream
         scheduling logic must ensure at most one active run per profile.
 
     Args:
-        job_seeker_profile_id: ID of the JobSeekerProfile to generate recommendations for
+        input_data: Can be a dict (from chain), an int (profile_id), or None
 
     Returns:
-        dict: Result of the recommendation operation
+        dict: Result of the recommendation operation with structured data
     """
     try:
+        # Handle different input types for backward compatibility
+        if isinstance(input_data, dict):
+            job_seeker_profile_id = input_data.get("profile_id")
+            if job_seeker_profile_id is None:
+                return {
+                    "status": "error",
+                    "message": "No profile_id found in input data",
+                    "input_data": input_data,
+                }
+        elif isinstance(input_data, int):
+            job_seeker_profile_id = input_data
+        elif input_data is None:
+            return {"status": "error", "message": "No input provided"}
+        else:
+            return {
+                "status": "error",
+                "message": f"Unexpected input type: {type(input_data)}",
+                "input_data": input_data,
+            }
+
         # Get the job seeker profile
         try:
             profile = JobSeekerProfile.objects.get(id=job_seeker_profile_id)
@@ -49,8 +71,9 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
             error_msg = f"Profile not found: id={job_seeker_profile_id}"
             logger.error(error_msg)
             return {
-                "success": False,
+                "status": "error",
                 "message": error_msg,
+                "profile_id": job_seeker_profile_id,
             }
 
         # Log the start of processing
@@ -65,8 +88,9 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
                 "No resume XML data available for profile ID %s", job_seeker_profile_id
             )
             return {
-                "success": False,
+                "status": "error",
                 "message": "Cannot generate role recommendations: No resume data available",
+                "profile_id": job_seeker_profile_id,
             }
 
         # Validate XML content
@@ -88,8 +112,9 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
                     job_seeker_profile_id,
                 )
                 return {
-                    "success": False,
+                    "status": "error",
                     "message": "No suitable role recommendations could be generated",
+                    "profile_id": job_seeker_profile_id,
                 }
 
             # Save the recommendations to the database
@@ -112,7 +137,7 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
 
             # Return success response with recommendations
             return {
-                "success": True,
+                "status": "success",
                 "message": "Role recommendations generated successfully",
                 "profile_id": job_seeker_profile_id,
                 "recommendations_count": len(created_recommendations),
@@ -133,14 +158,16 @@ def generate_role_recommendations(job_seeker_profile_id: int) -> dict[str, Any]:
                 exc_info=True,
             )
             return {
-                "success": False,
+                "status": "error",
                 "message": f"Error generating role recommendations: {str(e)}",
+                "profile_id": job_seeker_profile_id,
             }
 
     except Exception as e:
         # Log the error
         logger.error("Error generating role recommendations: %s", str(e), exc_info=True)
         return {
-            "success": False,
+            "status": "error",
             "message": f"Error generating role recommendations: {str(e)}",
+            "profile_id": getattr(locals(), "job_seeker_profile_id", None),
         }

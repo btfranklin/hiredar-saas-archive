@@ -8,13 +8,21 @@
 
 ## 2. Async & Background Processing
 
-- **OpenAI timeout & backoff**
-  - _Current:_ In LLM clients (e.g. `apps/job_seekers/services/recommendation/llm_processor.py`), calls `OpenAI.chat.completions.create(...)` with no timeout or retry logic.
-  - _Next:_ Wrap remote calls in exponential‑backoff logic (e.g. `tenacity`), set `timeout` on each request, and fail gracefully in workers.
+**OpenAI timeouts & retry/backoff**
+  - _Current:_ LLM client calls in several modules (e.g. `apps/job_seekers/services/recommendation/llm_processor.py`,
+    `apps/recruiters/utils/job_processing/llm_processor.py`,
+    `apps/resume_processing/utils/llm_processor.py`) now include a `timeout` parameter but still lack centralized retry or backoff handling.
+  - _Next:_ Consolidate all LLM invocations into a shared wrapper that enforces request timeouts,
+    implements exponential backoff/retries (e.g. via `tenacity`), and surfaces failures cleanly in workers or APIs.
 
-- **Idempotency / duplicate tasks**
-  - _Current:_ `update_or_create` is used in several tasks (e.g. recommendation generators, management commands) without row‑locking.
-  - _Next:_ Add unique constraints to critical tables and wrap create/update in `select_for_update()` or use advisory locks to prevent race conditions.
+**Idempotency & race conditions on upserts**
+  - _Current:_ Tasks and services (e.g. `apps.matching.tasks.create_candidate_matches`,
+    `apps.matching.tasks.match_talent_to_active_jobs`,
+    `apps.job_seekers.services.talent_pool_manager`) still rely on `update_or_create()` without explicit locking.
+    The `CandidateMatch` model now has a `unique_together` constraint on `(job_opening, talent_sheet)`,
+    but concurrent executions can still raise IntegrityErrors or produce conflicting updates.
+  - _Next:_ Combine unique constraints with row‑level locks (`select_for_update()`) or advisory locks around upserts.
+    Consider idempotent task design (e.g. fixed Celery `task_id`s) to prevent overlapping runs and ensure safe retries.
 
 ## 3. Code Organization & Maintainability
 
@@ -58,4 +66,14 @@ After reviewing all three documents thoroughly, I have several observations abou
 8. **LLM-Based Explanation Feature**
     - Add an explanation generation feature that uses an LLM to explain why two entities matched well in natural language.
 
-These improvements would enhance the system's precision, performance, and explainability while maintaining the excellent foundation you've built with the current design.
+## 5. Observability & Monitoring
+
+- **Metrics & tracing for embedding & matching pipelines**
+  - _Current:_ Pipelines rely on ad-hoc logging; lack structured metrics or distributed tracing for embedding tasks, Pinecone queries, and match tasks.
+  - _Next:_ Integrate Prometheus metrics (e.g. via `django-prometheus` or Celery exporters) and OpenTelemetry tracing to capture task durations, success/failure rates, and external API latencies.
+
+- **Alerting on pipeline failures**
+  - _Current:_ Celery task failures and critical errors are logged but may go unnoticed.
+  - _Next:_ Configure Sentry (or equivalent) for Celery and application error reporting, and set up on-call alerting for anomalous error rates or task crashes.
+
+These improvements would enhance the system's precision, performance, explainability, and reliability while building on the strong foundation you've built with the current design.
