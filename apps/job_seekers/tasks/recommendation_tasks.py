@@ -1,7 +1,7 @@
 """
 Recommendation tasks for job seekers.
 
-This module contains Django Q2 tasks for generating role recommendations
+This module contains Celery tasks for generating role recommendations
 for job seekers.
 """
 

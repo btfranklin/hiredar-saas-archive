@@ -12,11 +12,6 @@ from apps.recruiters.models import BulkResumeUpload
 # Alias for decoupled task queue
 async_task = safe_async_task
 
-# Celery compatibility – a lightweight stand-in for Django-Q's ``Task`` class.
-# Hook functions accept an instance but only use ``args``, ``result`` and
-# ``success`` attributes which are provided by the wrapper in *hiredar.celery*.
-Task = Any  # type: ignore[var-annotated]
-
 
 @shared_task(name="apps.job_seekers.tasks.pool_tasks.process_resume_for_pool")
 def process_resume_for_pool(
@@ -39,8 +34,7 @@ def process_resume_for_pool(
     except CandidatePool.DoesNotExist:
         return {
             "status": "error",
-            "success": False,
-            "error": f"Resume pool with ID {pool_id} not found",
+            "message": f"Resume pool with ID {pool_id} not found",
             "file_path": file_path,
         }
 
@@ -66,8 +60,7 @@ def process_resume_for_pool(
             )
             return {
                 "status": "error",
-                "success": False,
-                "error": result.get("message", "Failed to process resume"),
+                "message": result.get("message", "Failed to process resume"),
                 "file_path": file_path,
             }
 
@@ -90,8 +83,7 @@ def process_resume_for_pool(
             )
             return {
                 "status": "error",
-                "success": False,
-                "error": "Insufficient data extracted from resume (no name or skills)",
+                "message": "Insufficient data extracted from resume (no name or skills)",
                 "file_path": file_path,
             }
 
@@ -156,7 +148,6 @@ def process_resume_for_pool(
 
         return {
             "status": "success",
-            "success": True,
             "profile_id": profile.pk,
             "file_processed": os.path.basename(file_path),
             "file_path": file_path,
@@ -172,8 +163,7 @@ def process_resume_for_pool(
                 pass
         return {
             "status": "error",
-            "success": False,
-            "error": str(exc),
+            "message": str(exc),
             "file_path": file_path,
         }
 

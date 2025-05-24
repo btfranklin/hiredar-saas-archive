@@ -40,8 +40,9 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
         error_msg = f"Profile not found: id={job_seeker_profile_id}"
         logger.error(error_msg)
         return {
-            "success": False,
+            "status": "error",
             "message": error_msg,
+            "profile_id": job_seeker_profile_id,
         }
 
     # Fail-fast: skip if a talent sheet already exists for this profile
@@ -52,7 +53,7 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
             job_seeker_profile_id,
         )
         return {
-            "success": True,
+            "status": "success",
             "message": "Talent sheet already exists",
             "talent_sheet_id": existing_sheet.pk,
             "profile_id": job_seeker_profile_id,
@@ -66,8 +67,9 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
             "No resume XML data available for profile ID %s", job_seeker_profile_id
         )
         return {
-            "success": False,
+            "status": "error",
             "message": "No resume data available for talent sheet generation",
+            "profile_id": job_seeker_profile_id,
         }
 
     # Get the user's email for logging
@@ -121,7 +123,7 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
         )
 
         return {
-            "success": True,
+            "status": "success",
             "message": "Generated talent sheet successfully",
             "talent_sheet_id": saved_talent_sheet.pk,
             "profile_id": job_seeker_profile_id,
@@ -131,6 +133,7 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
         error_msg = f"Error generating talent sheet: {str(e)}"
         logger.error(error_msg)
         return {
-            "success": False,
+            "status": "error",
             "message": error_msg,
+            "profile_id": job_seeker_profile_id,
         }

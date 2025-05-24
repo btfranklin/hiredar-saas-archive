@@ -1,7 +1,7 @@
 """
 Task definitions for asynchronous processing in the job_seekers app.
 
-This package contains Django Q2 tasks organized by functional area.
+This package contains Celery tasks organized by functional area.
 """
 
 from apps.job_seekers.tasks.hooks import resume_processing_completed
@@ -29,7 +29,7 @@ __all__ = [
     # Cleanup tasks
     "cleanup_resume_processing_progress",
     "initialize_cleanup_once",
-    # Hook functions
+    # Completion tasks
     "resume_processing_completed",
     # Recommendation tasks
     "generate_role_recommendations",

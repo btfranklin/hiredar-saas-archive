@@ -1,7 +1,7 @@
 """
 Personal tagline tasks for job seekers.
 
-This module contains Django Q2 tasks for generating personal taglines
+This module contains Celery tasks for generating personal taglines
 for job seekers based on their profile data.
 """
 
@@ -32,7 +32,7 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
     Idempotency & concurrency:
         The generated value *overwrites* the existing ``personal_tagline``
         field, therefore the task is idempotent.  Concurrent runs are safe –
-        the last write wins – but they do waste tokens; upstream callers
+        the last write wins – but they do waste tokens; upstream callers
         should still de‑duplicate schedule requests.
 
     Args:
@@ -49,8 +49,9 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
             error_msg = f"Profile not found: id={job_seeker_profile_id}"
             logger.error(error_msg)
             return {
-                "success": False,
+                "status": "error",
                 "message": error_msg,
+                "profile_id": job_seeker_profile_id,
             }
 
         # Log the start of processing
@@ -65,8 +66,9 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
                 "No resume XML data available for profile ID %s", job_seeker_profile_id
             )
             return {
-                "success": False,
+                "status": "error",
                 "message": "Cannot generate tagline: No resume data available",
+                "profile_id": job_seeker_profile_id,
             }
 
         # Validate XML content
@@ -91,7 +93,7 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
             )
 
             return {
-                "success": True,
+                "status": "success",
                 "message": "Personal tagline generated successfully",
                 "profile_id": job_seeker_profile_id,
                 "tagline": tagline,
@@ -100,14 +102,16 @@ def generate_personal_tagline(job_seeker_profile_id: int) -> dict[str, Any]:
         except Exception as e:
             logger.error("Error in LLM tagline generation: %s", str(e), exc_info=True)
             return {
-                "success": False,
+                "status": "error",
                 "message": f"Error generating tagline: {str(e)}",
+                "profile_id": job_seeker_profile_id,
             }
 
     except Exception as e:
         # Log the error
         logger.error("Error generating personal tagline: %s", str(e), exc_info=True)
         return {
-            "success": False,
+            "status": "error",
             "message": f"Error generating personal tagline: {str(e)}",
+            "profile_id": job_seeker_profile_id,
         }
