@@ -7,7 +7,6 @@ This module exposes the main helper:
 
 from __future__ import annotations
 
-import importlib
 import logging
 from typing import Any, Callable, Final
 
@@ -42,14 +41,6 @@ def _split_kwargs(kwargs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any
         if key in _RESERVED_KEYS:
             scheduler_kwargs[key] = kwargs.pop(key)
     return kwargs, scheduler_kwargs
-
-
-def _import_callable(dotted_path: str) -> Callable[..., Any]:
-    """Import a callable given its dotted path (``package.module:function``)."""
-
-    module_path, func_name = dotted_path.rsplit(".", 1)
-    module = importlib.import_module(module_path)
-    return getattr(module, func_name)
 
 
 # ---------------------------------------------------------------------------
