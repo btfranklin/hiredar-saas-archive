@@ -6,9 +6,11 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-from apps.matching.tasks.talent_sheet_tasks import (
+from apps.matching.tasks.create_talent_sheet_embeddings import (
     create_talent_sheet_embeddings,
     generate_enriched_text_for_talent,
+)
+from apps.matching.tasks.remove_talent_sheet_embeddings import (
     remove_talent_sheet_embeddings,
 )
 
@@ -30,9 +32,11 @@ class TalentSheetEmbeddingTests(TestCase):
         result = generate_enriched_text_for_talent(section, raw_text_with_spaces)
         self.assertEqual(result, expected)
 
-    @patch("apps.matching.tasks.talent_sheet_tasks.get_embedding")
-    @patch("apps.matching.tasks.talent_sheet_tasks.upsert_talent_embeddings")
-    @patch("apps.matching.tasks.talent_sheet_tasks.apps.get_model")
+    @patch("apps.matching.tasks.create_talent_sheet_embeddings.get_embedding")
+    @patch(
+        "apps.matching.tasks.create_talent_sheet_embeddings.upsert_talent_embeddings"
+    )
+    @patch("apps.matching.tasks.create_talent_sheet_embeddings.apps.get_model")
     def test_create_talent_sheet_embeddings(
         self, mock_get_model, mock_batch_upsert, mock_get_embedding
     ):
@@ -91,7 +95,7 @@ class TalentSheetEmbeddingTests(TestCase):
         self.assertEqual(first_metadata["job_seeker_name"], "John Doe")
         self.assertIn("content_preview", first_metadata)
 
-    @patch("apps.matching.tasks.talent_sheet_tasks.get_index")
+    @patch("apps.matching.tasks.remove_talent_sheet_embeddings.get_index")
     def test_remove_talent_sheet_embeddings(self, mock_get_index):
         """Test removing talent sheet embeddings."""
         # Setup the mock

@@ -9,12 +9,14 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from apps.core.tasks import safe_async_task, safe_async_task_once
-from apps.matching.tasks.job_opening_tasks import remove_job_opening_embeddings
-from apps.matching.tasks.matching_tasks import (
-    remove_job_opening_matches,
-    remove_talent_sheet_matches,
+from apps.matching.tasks.remove_job_opening_embeddings import (
+    remove_job_opening_embeddings,
 )
-from apps.matching.tasks.talent_sheet_tasks import remove_talent_sheet_embeddings
+from apps.matching.tasks.remove_job_opening_matches import remove_job_opening_matches
+from apps.matching.tasks.remove_talent_sheet_embeddings import (
+    remove_talent_sheet_embeddings,
+)
+from apps.matching.tasks.remove_talent_sheet_matches import remove_talent_sheet_matches
 
 async_task = safe_async_task
 
