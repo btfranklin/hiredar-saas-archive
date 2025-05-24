@@ -12,7 +12,7 @@ from apps.recruiters.models import BulkResumeUpload
 # Alias for decoupled task queue
 async_task = safe_async_task
 
-# Celery compatibility – a lightweight stand-in for Django-Q’s ``Task`` class.
+# Celery compatibility – a lightweight stand-in for Django-Q's ``Task`` class.
 # Hook functions accept an instance but only use ``args``, ``result`` and
 # ``success`` attributes which are provided by the wrapper in *hiredar.celery*.
 Task = Any  # type: ignore[var-annotated]
@@ -32,12 +32,17 @@ def process_resume_for_pool(
         meta_pk: Primary key of the TaskMeta
 
     Returns:
-        Dictionary with processing results
+        Dictionary with processing results including file_path for cleanup
     """
     try:
         candidate_pool = CandidatePool.objects.get(pk=pool_id)
     except CandidatePool.DoesNotExist:
-        return {"success": False, "error": f"Resume pool with ID {pool_id} not found"}
+        return {
+            "status": "error",
+            "success": False,
+            "error": f"Resume pool with ID {pool_id} not found",
+            "file_path": file_path,
+        }
 
     try:
         # Create a temporary profile owned by the resume pool
@@ -60,8 +65,10 @@ def process_resume_for_pool(
                 processed_profiles=F("processed_profiles") + 1
             )
             return {
+                "status": "error",
                 "success": False,
-                "error": result.get("message", "Failed to process resume"),  # type: ignore
+                "error": result.get("message", "Failed to process resume"),
+                "file_path": file_path,
             }
 
         resume_data = result.get("profile_data", {}) or {}
@@ -82,8 +89,10 @@ def process_resume_for_pool(
                 processed_profiles=F("processed_profiles") + 1
             )
             return {
+                "status": "error",
                 "success": False,
                 "error": "Insufficient data extracted from resume (no name or skills)",
+                "file_path": file_path,
             }
 
         # Map parsed_data into profile_data using the correct keys
@@ -110,7 +119,9 @@ def process_resume_for_pool(
 
         # Schedule LLM-powered TalentSheet generation **only** if we have resume XML.
         if profile.resume_xml:
-            from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
+            from apps.job_seekers.tasks.talent_sheet_tasks import (
+                generate_talent_sheet_task,
+            )
 
             async_task(
                 generate_talent_sheet_task,
@@ -144,6 +155,7 @@ def process_resume_for_pool(
             meta.save(update_fields=["state", "progress"])
 
         return {
+            "status": "success",
             "success": True,
             "profile_id": profile.pk,
             "file_processed": os.path.basename(file_path),
@@ -151,24 +163,56 @@ def process_resume_for_pool(
         }
 
     except Exception as exc:
-        if meta:
-            meta.state = TaskMeta.State.FAILURE
-            meta.save(update_fields=["state"])
-        return {"success": False, "error": str(exc)}
+        if meta_pk:
+            try:
+                meta = TaskMeta.objects.get(pk=meta_pk)
+                meta.state = TaskMeta.State.FAILURE
+                meta.save(update_fields=["state"])
+            except TaskMeta.DoesNotExist:
+                pass
+        return {
+            "status": "error",
+            "success": False,
+            "error": str(exc),
+            "file_path": file_path,
+        }
 
 
-def cleanup_temp_resume_file(task: Task) -> None:
+@shared_task(name="apps.job_seekers.tasks.pool_tasks.cleanup_temp_resume_file")
+def cleanup_temp_resume_file(result: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Clean up temporary resume file after processing.
 
     Args:
-        task: Task model instance containing the result dict from resume processing
+        result: Result dictionary from the previous task containing file_path
+
+    Returns:
+        Dictionary with cleanup status
     """
-    # Extract the file_path from the Task result payload
-    result_data = task.result or {}
-    file_path = result_data.get("file_path") if isinstance(result_data, dict) else None
-    if file_path and os.path.exists(file_path):
+    if not result or not isinstance(result, dict):
+        return {"status": "error", "message": "No result provided for cleanup"}
+
+    file_path = result.get("file_path")
+    if not file_path:
+        return {"status": "error", "message": "No file_path in result for cleanup"}
+
+    if os.path.exists(file_path):
         try:
             os.unlink(file_path)
-        except Exception:
-            pass
+            return {
+                "status": "success",
+                "message": f"Successfully cleaned up {file_path}",
+                "file_path": file_path,
+            }
+        except Exception as exc:
+            return {
+                "status": "error",
+                "message": f"Failed to cleanup {file_path}: {str(exc)}",
+                "file_path": file_path,
+            }
+    else:
+        return {
+            "status": "skipped",
+            "message": f"File {file_path} does not exist (already cleaned up?)",
+            "file_path": file_path,
+        }

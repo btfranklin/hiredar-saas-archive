@@ -17,7 +17,6 @@ from django.views.generic import View
 
 from apps.core.tasks import safe_async_task
 from apps.recruiters.models import JobOpeningProcessingTask, RecruiterProfile
-from apps.recruiters.tasks.hooks import job_processing_done
 from apps.recruiters.tasks.job_processing_tasks import handle_job_description_task
 
 # Setup logging
@@ -95,7 +94,6 @@ class TextProcessJobOpeningView(LoginRequiredMixin, UserPassesTestMixin, View):
                 task.job_title,
                 task.original_text,
                 recruiter_profile.pk,
-                hook=job_processing_done,
                 queue="high",
             )
 

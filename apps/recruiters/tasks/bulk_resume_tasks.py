@@ -9,15 +9,16 @@ import tempfile
 import zipfile
 from typing import Any
 
+from celery import chain, shared_task
 from django.core.files.base import ContentFile
-
-from celery import shared_task
-
 
 from apps.core.models import TaskMeta
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models.profile import CandidatePool
-from apps.job_seekers.tasks import cleanup_temp_resume_file, process_resume_for_pool
+from apps.job_seekers.tasks.pool_tasks import (
+    cleanup_temp_resume_file,
+    process_resume_for_pool,
+)
 from apps.recruiters.models import BulkResumeUpload, ResumeFile
 from apps.resume_processing.utils.extraction import (
     SUPPORTED_RESUME_EXTENSIONS,  # local import to avoid cycles
@@ -142,21 +143,24 @@ def unpack_and_process_zip(
                     state=TaskMeta.State.PENDING,
                 )
 
-                # Schedule per-resume processing on default queue with cleanup hook
-                task_queue_id = async_task(
-                    process_resume_for_pool,
+                # Schedule per-resume processing using Celery chain for cleanup
+                process_task = process_resume_for_pool.si(  # type: ignore[misc]
                     local_path,
                     candidate_pool.pk,
                     bulk.pk,
                     str(meta.pk),
-                    task_name=f"candidate_pool_process_{task_id}",
-                    hook=cleanup_temp_resume_file,
-                    queue="default",
+                )
+                cleanup_task = cleanup_temp_resume_file.s()  # type: ignore[misc]
+
+                # Create and execute the chain
+                task_chain = chain(process_task, cleanup_task)
+                async_result = task_chain.apply_async(
+                    task_id=f"candidate_pool_process_{task_id}"
                 )
 
                 # Back-link the TaskMeta row to the actual queue id
-                if task_queue_id:
-                    meta.queue_id = task_queue_id
+                if async_result and async_result.id:
+                    meta.queue_id = async_result.id
                     meta.save(update_fields=["queue_id"])
 
         bulk.processed = True
