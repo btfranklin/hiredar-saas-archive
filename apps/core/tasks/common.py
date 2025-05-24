@@ -1,10 +1,8 @@
 """Central helpers for background task execution.
 
-This module exposes two public helpers:
+This module exposes the main helper:
 
-1. **safe_async_task** – primary entry-point for scheduling background work via Celery.
-2. **safe_async_task_once** – wrapper that prevents duplicate queueing within a
-   short window using a cache-based lock.
+**safe_async_task** – primary entry-point for scheduling background work via Celery.
 """
 
 from __future__ import annotations
@@ -12,8 +10,6 @@ from __future__ import annotations
 import importlib
 import logging
 from typing import Any, Callable, Final
-
-from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -121,66 +117,3 @@ def safe_async_task(
         queue=queue,
         priority=priority,
     )
-
-
-# ---------------------------------------------------------------------------
-#  Duplicate-protection helper – unchanged except for delegation target
-# ---------------------------------------------------------------------------
-
-
-def safe_async_task_once(
-    path_or_callable: str | Callable[..., Any],
-    *args: Any,
-    task_name: str,
-    retries: int = 2,
-    raise_on_failure: bool = False,
-    dedup_ttl: int = 300,
-    **kwargs: Any,
-) -> str | None:
-    """Enqueue only if an identical *task_name* is not already running.
-
-    We first acquire a cache-based lock for *task_name*.  When the lock exists
-    we silently abort to avoid duplicate work.  A second guard checks the
-    Django-Q *Task* table – left intact for now because some live deployments
-    still rely on it during the transition period.
-    """
-
-    lock_key = f"task-lock:{task_name}"
-    got_lock = cache.add(lock_key, True, dedup_ttl)
-    if not got_lock:
-        logger.debug("Task '%s' already enqueued recently – skipping", task_name)
-        return None
-
-    # NOTE:
-    # -----
-    # Historically we consulted Django-Q's *Task* table as a second guard
-    # against duplicate execution.  Now that the project has migrated to
-    # Celery this database table is no longer updated which means it can
-    # contain **stale rows** forever marked as *in-flight* (``success IS NULL``).
-    #
-    # As a consequence *safe_async_task_once* silently refused to enqueue new
-    # jobs that legitimately needed to run – most notably the
-    # ``create_job_opening_embeddings`` task.  Recruiters
-    # were able to close or draft a job (triggering *removal* tasks) but the
-    # matching embeddings were never (re-)created because the stale Django-Q
-    # entry made us believe a run was already in progress.
-    #
-    # The in-memory cache lock implemented above is sufficient for the brief
-    # de-duplication window we require.  Therefore the database query has been
-    # removed.  Once the legacy Django-Q dependency is dropped completely this
-    # section would have been deleted anyway – we are just doing it a little
-    # earlier to fix the bug.
-    # --------------------------------------------------------------------
-
-    try:
-        return safe_async_task(
-            path_or_callable,
-            *args,
-            task_name=task_name,
-            retries=retries,
-            raise_on_failure=raise_on_failure,
-            **kwargs,
-        )
-    except Exception:
-        cache.delete(lock_key)
-        raise

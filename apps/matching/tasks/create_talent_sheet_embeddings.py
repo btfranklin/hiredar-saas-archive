@@ -7,15 +7,16 @@ from typing import Any
 from celery import shared_task
 from django.apps import apps
 
-from apps.matching.tasks.common import get_embedding, logger
 from apps.matching.services.talent_sheet_embeddings import (
     generate_enriched_text_for_talent,
     upsert_talent_embeddings,
 )
+from apps.matching.tasks.common import get_embedding, logger
 from apps.resume_processing.utils.xml_parser import extract_personal_details
 
+
 @shared_task(name="apps.matching.tasks.create_talent_sheet_embeddings")
-def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
+def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> dict[str, Any]:
     """
     Create and store embeddings for a TalentSheet in Pinecone.
 
@@ -25,6 +26,9 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
     Args:
         talent_sheet_id: ID of the TalentSheet to process
         **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        dict: Result containing status and talent_sheet_id
     """
     TalentSheet = apps.get_model("job_seekers", "TalentSheet")
 
@@ -32,7 +36,10 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         talent_sheet = TalentSheet.objects.get(id=talent_sheet_id)
     except TalentSheet.DoesNotExist:
         logger.error("TalentSheet with id %s does not exist.", talent_sheet_id)
-        return
+        return {
+            "status": "error",
+            "message": f"TalentSheet with id {talent_sheet_id} does not exist",
+        }
 
     if not talent_sheet.is_published:
         logger.info(
@@ -40,7 +47,10 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
             talent_sheet_id,
             talent_sheet.is_published,
         )
-        return
+        return {
+            "status": "skipped",
+            "message": f"TalentSheet {talent_sheet_id} is not published",
+        }
 
     career_direction_text: str | None = None
     if talent_sheet.promotional_blurb or talent_sheet.ideal_roles:
@@ -111,3 +121,10 @@ def create_talent_sheet_embeddings(talent_sheet_id: int, **kwargs) -> None:
         talent_sheet.id,
         len(batch_vectors),
     )
+
+    # Return the talent_sheet_id for potential chaining
+    return {
+        "status": "success",
+        "talent_sheet_id": talent_sheet.id,
+        "sections_processed": len(batch_vectors),
+    }

@@ -1,16 +1,16 @@
 """
-Tests for the signal handlers in the matching app.
+Unit tests for matching app signal handlers.
 
-This module tests the handling of signals for job openings and talent sheets,
-particularly focusing on embedding management during status transitions.
+This module tests the signal handlers that trigger task execution
+for embedding and matching operations in response to model changes.
 """
 
-from unittest.mock import call, patch
+from unittest.mock import Mock, call, patch
 
 from django.apps import apps
 from django.test import TestCase
 
-import apps.matching.signals as signals
+from apps.matching import signals
 from apps.matching.signals import (
     handle_job_opening_delete,
     handle_job_opening_save,
@@ -32,10 +32,10 @@ class JobOpeningSignalTests(TestCase):
         self.User = apps.get_model("authentication", "User")
         self.RecruiterProfile = apps.get_model("recruiters", "RecruiterProfile")
 
-        # Create a test user and recruiter
+        # Create a test user with recruiter type
         self.test_user = self.User.objects.create_user(
             username="test_recruiter",
-            email="test@example.com",
+            email="recruiter@example.com",
             password="password123",
             user_type="recruiter",
             name="Test Recruiter",
@@ -44,10 +44,14 @@ class JobOpeningSignalTests(TestCase):
         # The RecruiterProfile should have been created automatically via signal
         self.test_recruiter = self.RecruiterProfile.objects.get(user=self.test_user)
 
-    @patch("apps.matching.signals.safe_async_task_once")
+    @patch("apps.matching.signals.chain")
     @patch("apps.matching.signals.async_task")
-    def test_job_opening_save_handler(self, mock_async_task, mock_task_once):
+    def test_job_opening_save_handler(self, mock_async_task, mock_chain):
         """Test the job opening save handler processes status transitions correctly."""
+        # Set up chain mock
+        mock_chain_instance = Mock()
+        mock_chain.return_value = mock_chain_instance
+
         # Test with an active job
         job_active = self.JobOpening(
             id=1,  # Use a fixed ID for testing
@@ -62,16 +66,19 @@ class JobOpeningSignalTests(TestCase):
             sender=self.JobOpening, instance=job_active, created=True
         )
 
-        # Verify that create_job_opening_embeddings was scheduled via deduplicated helper
-        mock_task_once.assert_called_with(
-            "apps.matching.tasks.create_job_opening_embeddings",
-            job_active.id,
-            task_name=f"embed_job_opening_{job_active.id}",
+        # Verify that chain was called with proper tasks
+        mock_chain.assert_called_once()
+        args = mock_chain.call_args[0]
+        self.assertEqual(len(args), 2)  # Should have 2 tasks in chain
+
+        # Verify apply_async was called
+        mock_chain_instance.apply_async.assert_called_once_with(
+            task_id=f"embed_and_match_job_{job_active.id}"
         )
 
         # Reset mocks
         mock_async_task.reset_mock()
-        mock_task_once.reset_mock()
+        mock_chain.reset_mock()
 
         # Test with a draft job
         job_draft = self.JobOpening(
@@ -96,7 +103,7 @@ class JobOpeningSignalTests(TestCase):
 
         # Reset mocks
         mock_async_task.reset_mock()
-        mock_task_once.reset_mock()
+        mock_chain.reset_mock()
 
         # Test with a closed job
         job_closed = self.JobOpening(
@@ -121,7 +128,7 @@ class JobOpeningSignalTests(TestCase):
 
         # Reset mocks
         mock_async_task.reset_mock()
-        mock_task_once.reset_mock()
+        mock_chain.reset_mock()
 
     @patch("apps.matching.signals.async_task")
     def test_job_opening_delete_handler(self, mock_async_task):
@@ -170,10 +177,14 @@ class TalentSheetSignalTests(TestCase):
             user_owner=self.test_user
         )
 
-    @patch("apps.matching.signals.safe_async_task_once")
+    @patch("apps.matching.signals.chain")
     @patch("apps.matching.signals.async_task")
-    def test_talent_sheet_save_handler(self, mock_async_task, mock_task_once):
+    def test_talent_sheet_save_handler(self, mock_async_task, mock_chain):
         """Test the talent sheet save handler handles publish status correctly."""
+        # Set up chain mock
+        mock_chain_instance = Mock()
+        mock_chain.return_value = mock_chain_instance
+
         # Test with a published talent sheet
         talent_published = self.TalentSheet(
             id=1,  # Use a fixed ID for testing
@@ -187,16 +198,19 @@ class TalentSheetSignalTests(TestCase):
             sender=self.TalentSheet, instance=talent_published, created=True
         )
 
-        # Verify that create_talent_sheet_embeddings was scheduled via deduplicated helper
-        mock_task_once.assert_called_with(
-            "apps.matching.tasks.create_talent_sheet_embeddings",
-            talent_published.id,
-            task_name=f"embed_talent_sheet_{talent_published.id}",
+        # Verify that chain was called with proper tasks
+        mock_chain.assert_called_once()
+        args = mock_chain.call_args[0]
+        self.assertEqual(len(args), 2)  # Should have 2 tasks in chain
+
+        # Verify apply_async was called
+        mock_chain_instance.apply_async.assert_called_once_with(
+            task_id=f"embed_and_match_talent_{talent_published.id}"
         )
 
         # Reset mocks
         mock_async_task.reset_mock()
-        mock_task_once.reset_mock()
+        mock_chain.reset_mock()
 
         # Test with an unpublished talent sheet
         talent_unpublished = self.TalentSheet(
@@ -220,7 +234,7 @@ class TalentSheetSignalTests(TestCase):
 
         # Reset mocks
         mock_async_task.reset_mock()
-        mock_task_once.reset_mock()
+        mock_chain.reset_mock()
 
     @patch("apps.matching.signals.async_task")
     def test_talent_sheet_delete_handler(self, mock_async_task):

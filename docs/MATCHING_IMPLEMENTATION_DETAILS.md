@@ -55,32 +55,40 @@ apps/matching/
 
 ### Job Opening Embedding & Matching (Signal-Driven)
 - **Trigger (post_save)**: `apps/matching/signals.py::handle_job_opening_save`
-  - On commit, if the job opening is active, uses `safe_async_task_once` to enqueue:
+  - On commit, if the JobOpening status is **active**, enqueues a Celery chain to run both embedding and matching:
     - `apps.matching.tasks.create_job_opening_embeddings.create_job_opening_embeddings(job_opening_id)`
-  - If inactive, enqueues `remove_job_opening_embeddings` and `remove_job_opening_matches`.
+    - `apps.matching.tasks.create_candidate_matches.create_candidate_matches`
+    using `celery.chain(...).apply_async(...)` with `task_id="embed_and_match_job_{job_id}"`
+  - If the JobOpening is **inactive** or archived, enqueues removal tasks on commit:
+    - `apps.matching.tasks.remove_job_opening_embeddings.remove_job_opening_embeddings(job_opening_id)`
+    - `apps.matching.tasks.remove_job_opening_matches.remove_job_opening_matches(job_opening_id)`
 - **Deletion (post_delete)**: `apps/matching/signals.py::handle_job_opening_delete`
-  - Enqueues `remove_job_opening_embeddings` and `remove_job_opening_matches`.
-- **Task**: `apps/matching/tasks/create_job_opening_embeddings.py::create_job_opening_embeddings`
-  - Extracts defined sections and upserts vectors to Pinecone; on completion, invokes:
-    - `apps.matching.tasks.create_candidate_matches.create_candidate_matches(job_opening_id)`
+  - Removes embeddings and matches:
+    - `remove_job_opening_embeddings(job_opening_id)`
+    - `remove_job_opening_matches(job_opening_id)`
 
 ### Talent Sheet Embedding & Matching (Signal-Driven)
 - **Trigger (post_save)**: `apps/matching/signals.py::handle_talent_sheet_save`
-  - On `is_published=True`, uses `safe_async_task_once` to enqueue:
-    - `apps.matching.tasks.create_talent_sheet_embeddings.create_talent_sheet_embeddings(talent_sheet_id)`
-  - On `is_published=False`, enqueues `remove_talent_sheet_embeddings` and `remove_talent_sheet_matches`.
+  - On commit after save:
+    - If `TalentSheet.is_published` is **True**, enqueues a Celery chain to run both embedding and matching:
+      - `apps.matching.tasks.create_talent_sheet_embeddings.create_talent_sheet_embeddings(talent_sheet_id)`
+      - `apps.matching.tasks.match_talent_to_active_jobs.match_talent_to_active_jobs`
+      using `celery.chain(...).apply_async(...)` with `task_id="embed_and_match_talent_{talent_id}"`
+    - If `is_published` is **False**, enqueues removal tasks:
+      - `apps.matching.tasks.remove_talent_sheet_embeddings.remove_talent_sheet_embeddings(talent_sheet_id)`
+      - `apps.matching.tasks.remove_talent_sheet_matches.remove_talent_sheet_matches(talent_sheet_id)`
 - **Deletion (post_delete)**: `apps/matching/signals.py::handle_talent_sheet_delete`
-  - Enqueues `remove_talent_sheet_embeddings` and `remove_talent_sheet_matches`.
-- **Task**: `apps/matching/tasks/create_talent_sheet_embeddings.py::create_talent_sheet_embeddings`
-  - Generates embeddings for each talent sheet section and stores vectors in Pinecone.
+  - Removes embeddings and matches:
+    - `remove_talent_sheet_embeddings(talent_sheet_id)`
+    - `remove_talent_sheet_matches(talent_sheet_id)`
 
 ### Candidate Matching Tasks
 - **Task**: `apps/matching/tasks/create_candidate_matches.py::create_candidate_matches`
-  - Given a job opening ID, queries Pinecone and writes `CandidateMatch` entries.
+  - Accepts the result dict from `create_job_opening_embeddings` (containing `job_opening_id`) or a job ID directly, runs `match_job_to_talents`, and writes `CandidateMatch` records.
 - **Task**: `apps/matching/tasks/match_talent_to_active_jobs.py::match_talent_to_active_jobs`
-  - For a given talent sheet ID, loops through active jobs and computes match scores.
+  - Accepts the result dict from `create_talent_sheet_embeddings` (containing `talent_sheet_id`) or a talent ID directly, iterates through active jobs, runs `match_job_to_talents`, and writes `CandidateMatch` records.
 - **Tasks**: `apps/matching/tasks/remove_job_opening_matches.py::remove_job_opening_matches` / `apps/matching/tasks/remove_talent_sheet_matches.py::remove_talent_sheet_matches`
-  - Removes existing match records for the specified job opening or talent sheet.
+  - Delete existing match records for a specific job opening or talent sheet.
 
 ## Technical Implementation
 

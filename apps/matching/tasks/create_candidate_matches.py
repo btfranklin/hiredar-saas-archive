@@ -2,6 +2,8 @@
 Task for creating candidate matches for a job opening.
 """
 
+from typing import Any
+
 from celery import shared_task
 from django.apps import apps
 from django.db import transaction
@@ -10,22 +12,42 @@ from apps.matching.core.matching import match_job_to_talents
 from apps.matching.models import CandidateMatch
 from apps.matching.tasks.common import logger
 
+
 @shared_task(name="apps.matching.tasks.create_candidate_matches")
-def create_candidate_matches(job_id: int, **kwargs) -> None:
+def create_candidate_matches(
+    result: dict[str, Any] | int | None = None, **kwargs
+) -> dict[str, Any]:
     """
     Create candidate matches for a job opening.
 
     Args:
-        job_id: ID of the job opening to process
+        result: Either a dict with job_opening_id from previous task, or the job_id directly
         **kwargs: Additional arguments (ignored)
+
+    Returns:
+        dict: Result containing status and job_opening_id
     """
+    # Handle different input types
+    if isinstance(result, dict):
+        job_id = result.get("job_opening_id")
+        if not job_id:
+            logger.error("No job_opening_id found in result dict: %s", result)
+            return {"status": "error", "message": "No job_opening_id in result"}
+    elif isinstance(result, int):
+        job_id = result
+    else:
+        logger.error(
+            "Invalid input type for create_candidate_matches: %s", type(result)
+        )
+        return {"status": "error", "message": f"Invalid input type: {type(result)}"}
+
     try:
         JobOpening = apps.get_model("recruiters", "JobOpening")
         job = JobOpening.objects.get(id=job_id)
 
         if job.status != "active":
             logger.warning("Job opening %s is not active, skipping matching", job_id)
-            return
+            return {"status": "skipped", "message": f"Job {job_id} is not active"}
 
         match_results = match_job_to_talents(job_id, top_k=20)
 
@@ -84,6 +106,11 @@ def create_candidate_matches(job_id: int, **kwargs) -> None:
                     )
 
         logger.info("Created/updated matches for job opening %s", job_id)
+        return {
+            "status": "success",
+            "job_opening_id": job_id,
+            "matches_created": len(all_matches_by_talent),
+        }
     except Exception as e:
         logger.error("Error creating matches for job opening %s: %s", job_id, e)
         raise

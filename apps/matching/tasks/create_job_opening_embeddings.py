@@ -7,18 +7,15 @@ from typing import Any
 from celery import shared_task
 from django.apps import apps
 
-from apps.core.tasks import safe_async_task
-from apps.matching.tasks.common import get_embedding, logger
 from apps.matching.services.job_opening_embeddings import (
     generate_enriched_text_for_job,
     upsert_job_embedding,
 )
-from apps.matching.tasks.create_candidate_matches import create_candidate_matches
+from apps.matching.tasks.common import get_embedding, logger
 
-async_task = safe_async_task
 
 @shared_task(name="apps.matching.tasks.create_job_opening_embeddings")
-def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
+def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> dict[str, Any]:
     """
     Create and store embeddings for a JobOpening in Pinecone.
 
@@ -28,6 +25,9 @@ def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
     Args:
         job_opening_id: ID of the JobOpening to process
         **kwargs: Additional keyword arguments (ignored)
+
+    Returns:
+        dict: Result containing status and job_opening_id
     """
     JobOpening = apps.get_model("recruiters", "JobOpening")
 
@@ -35,11 +35,14 @@ def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
         job = JobOpening.objects.get(id=job_opening_id)
     except JobOpening.DoesNotExist:
         logger.error("JobOpening with id %s does not exist.", job_opening_id)
-        return
+        return {
+            "status": "error",
+            "message": f"JobOpening with id {job_opening_id} does not exist",
+        }
 
     if job.status != "active":
         logger.info("Skipping inactive job %s", job.id)
-        return
+        return {"status": "skipped", "message": f"Job {job.id} is not active"}
 
     fields: dict[str, str] = {
         "Job Overview": f"{job.title}\n{job.description}",
@@ -97,5 +100,5 @@ def create_job_opening_embeddings(job_opening_id: int, **kwargs) -> None:
 
     logger.info("Completed processing embeddings for JobOpening %s", job.id)
 
-    logger.info("Triggering candidate matching for JobOpening %s", job.id)
-    async_task(create_candidate_matches, job.id)
+    # Return the job_opening_id for the next task in the chain
+    return {"status": "success", "job_opening_id": job.id}
