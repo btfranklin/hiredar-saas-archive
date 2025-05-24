@@ -166,6 +166,9 @@ CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "django-db")
 CELERY_TASK_ALWAYS_EAGER = CELERY_BROKER_URL == "memory://"
 CELERY_TASK_EAGER_PROPAGATES = True
 
+# Enable extended result attributes including task names, args, kwargs, etc.
+CELERY_RESULT_EXTENDED = True
+
 # Default queue / priorities.  Additional queues can be declared through
 # environment variables or the Django settings override mechanism.
 
@@ -202,15 +205,15 @@ if apps_path not in sys.path:
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Add Whitenoise middleware
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_htmx.middleware.HtmxMiddleware",  # HTMX middleware
-    "allauth.account.middleware.AccountMiddleware",  # Allauth middleware
+    "django_htmx.middleware.HtmxMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "hiredar.urls"

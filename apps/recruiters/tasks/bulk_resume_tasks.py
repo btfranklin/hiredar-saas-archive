@@ -154,9 +154,7 @@ def unpack_and_process_zip(
 
                 # Create and execute the chain
                 task_chain = chain(process_task, cleanup_task)
-                async_result = task_chain.apply_async(
-                    task_id=f"candidate_pool_process_{task_id}"
-                )
+                async_result = task_chain.apply_async()
 
                 # Back-link the TaskMeta row to the actual queue id
                 if async_result and async_result.id:

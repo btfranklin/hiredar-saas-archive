@@ -152,8 +152,7 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
             )
 
             # Execute the chain with semantic naming
-            chain_task_id = f"resume_processing_chain_{profile_id}_{timestamp}"
-            async_result = task_chain.apply_async(task_id=chain_task_id)  # type: ignore[misc]
+            async_result = task_chain.apply_async()  # type: ignore[misc]
 
             # Update the task to mark the first step as complete
             ResumeProcessor.update_task_progress(

@@ -10,18 +10,16 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from apps.core.tasks import safe_async_task
-from apps.matching.tasks.create_candidate_matches import (
-    create_candidate_matches as create_matches_task,
-)
+
+# Import tasks directly instead of aliasing to avoid type inference issues
+from apps.matching.tasks.create_candidate_matches import create_candidate_matches
 from apps.matching.tasks.create_job_opening_embeddings import (
-    create_job_opening_embeddings as create_job_embeddings_task,
+    create_job_opening_embeddings,
 )
 from apps.matching.tasks.create_talent_sheet_embeddings import (
-    create_talent_sheet_embeddings as create_talent_embeddings_task,
+    create_talent_sheet_embeddings,
 )
-from apps.matching.tasks.match_talent_to_active_jobs import (
-    match_talent_to_active_jobs as match_talent_task,
-)
+from apps.matching.tasks.match_talent_to_active_jobs import match_talent_to_active_jobs
 from apps.matching.tasks.remove_job_opening_embeddings import (
     remove_job_opening_embeddings,
 )
@@ -50,11 +48,12 @@ def handle_job_opening_save(sender, instance, created, **kwargs):
     # Only process embeddings for active jobs
     if instance.status == "active":
         # Create embeddings and then create candidate matches using Celery chain
-        transaction.on_commit(
-            lambda: chain(
-                create_job_embeddings_task.si(instance.id), create_matches_task.s()  # type: ignore[misc]
-            ).apply_async(task_id=f"embed_and_match_job_{instance.id}")
-        )
+        def _create_embeddings_and_matches():
+            chain(
+                create_job_opening_embeddings.si(instance.id), create_candidate_matches.s()  # type: ignore[misc]
+            ).apply_async()
+
+        transaction.on_commit(_create_embeddings_and_matches)
     else:
         # Remove embeddings and matches for inactive jobs
         def _cleanup_inactive():
@@ -126,11 +125,12 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
     # Handle publish or re-publish -> enqueue embedding task and matching
     else:
         # Create embeddings and then match to active jobs using Celery chain
-        transaction.on_commit(
-            lambda: chain(
-                create_talent_embeddings_task.si(instance.id), match_talent_task.s()  # type: ignore[misc]
-            ).apply_async(task_id=f"embed_and_match_talent_{instance.id}")
-        )
+        def _create_embeddings_and_match():
+            chain(
+                create_talent_sheet_embeddings.si(instance.id), match_talent_to_active_jobs.s()  # type: ignore[misc]
+            ).apply_async()
+
+        transaction.on_commit(_create_embeddings_and_match)
 
 
 @receiver(post_delete, sender="job_seekers.TalentSheet")
