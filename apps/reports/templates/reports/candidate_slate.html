@@ -111,85 +111,48 @@
             font-size: 10pt;
         }
         
-        .skills-matrix {
-            margin: 20px 0;
-        }
+
         
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
+        .scores-bars {
             margin-top: 10px;
         }
         
-        .skill-item {
+        .score-bar-item {
+            margin-bottom: 12px;
+        }
+        
+        .score-bar-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 5px;
-            background-color: #f9fafb;
-            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .score-bar-label {
             font-size: 10pt;
-        }
-        
-        .skill-check {
-            margin-right: 8px;
             font-weight: bold;
+            color: #374151;
         }
         
-        .skill-check.has { color: #10b981; }
-        .skill-check.missing { color: #ef4444; }
-        
-        .scores-section {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .scores-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            margin-top: 10px;
-        }
-        
-        .score-item {
-            text-align: center;
-        }
-        
-        .radial-progress {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: conic-gradient(#4f46e5 calc(var(--value) * 3.6deg), #e5e7eb 0deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 5px auto;
-            position: relative;
-        }
-        
-        .radial-progress::before {
-            content: '';
-            position: absolute;
-            width: 45px;
-            height: 45px;
-            background: white;
-            border-radius: 50%;
-        }
-        
-        .radial-progress .score-value {
-            position: relative;
-            z-index: 1;
-            font-size: 12pt;
+        .score-bar-value {
+            font-size: 10pt;
             font-weight: bold;
             color: #4f46e5;
         }
         
-        .score-label {
-            font-size: 9pt;
-            color: #6b7280;
-            margin-top: 2px;
+        .score-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .score-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
         }
         
         .section {
@@ -243,21 +206,7 @@
     
     <div class="section">
         <h3>Executive Summary</h3>
-        <p>This report presents the top {{ total_candidates }} candidate{% if total_candidates != 1 %}s{% endif %} for the <strong>{{ job.title }}</strong> position, ranked by AI-powered matching algorithms. Each candidate has been analyzed across multiple dimensions including skills alignment, experience relevance, and overall fit.</p>
-        
-        {% if job.location %}<p><strong>Location:</strong> {{ job.location }}</p>{% endif %}
-        {% if job.employment_type %}<p><strong>Employment Type:</strong> {{ job.get_employment_type_display }}</p>{% endif %}
-        {% if job.salary_min or job.salary_max %}
-            <p><strong>Salary Range:</strong> 
-            {% if job.salary_min and job.salary_max %}
-                ${{ job.salary_min|floatformat:0 }}k - ${{ job.salary_max|floatformat:0 }}k
-            {% elif job.salary_min %}
-                ${{ job.salary_min|floatformat:0 }}k+
-            {% elif job.salary_max %}
-                Up to ${{ job.salary_max|floatformat:0 }}k
-            {% endif %}
-            </p>
-        {% endif %}
+        <p>This report presents the top {{ total_candidates }} candidate{% if total_candidates != 1 %}s{% endif %} for the <strong>{{ job.title }}</strong> position. Each candidate has been analyzed across multiple dimensions including skills alignment, experience relevance, and overall fit.</p>
     </div>
     
     <!-- Candidate Summary Table -->
@@ -266,22 +215,16 @@
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>Rank</th>
                     <th>Name</th>
-                    <th>Current Role</th>
-                    <th>Location</th>
-                    <th>Match Score</th>
-                    <th>Key Strength</th>
+                    <th>Most Recent Role</th>
+                    <th>Summary</th>
                 </tr>
             </thead>
             <tbody>
                 {% for candidate in candidates %}
                 <tr>
-                    <td>{{ candidate.rank }}</td>
                     <td>{{ candidate.name }}</td>
                     <td>{{ candidate.current_title|default:"Not specified" }}</td>
-                    <td>{{ candidate.location|default:"Not specified" }}</td>
-                    <td>{{ candidate.holistic_score }}/10</td>
                     <td>{{ candidate.tagline|truncatechars:50 }}</td>
                 </tr>
                 {% endfor %}
@@ -293,7 +236,7 @@
     {% for candidate in candidates %}
     <div class="candidate-page">
         <div class="candidate-header">
-            <div class="rank">Rank #{{ candidate.rank }}</div>
+            <div class="rank">Candidate</div>
             <h2>{{ candidate.name }}</h2>
             <p><strong>{{ candidate.current_title|default:"Candidate" }}</strong></p>
         </div>
@@ -315,36 +258,51 @@
             
             <div class="info-section">
                 <h3>Match Scores</h3>
-                <div class="scores-grid">
-                    <div class="score-item">
-                        <div class="radial-progress" style="--value:{{ candidate.holistic_score|mul:10 }}">
-                            <span class="score-value">{{ candidate.holistic_score }}</span>
+                <div class="scores-bars">
+                    <div class="score-bar-item">
+                        <div class="score-bar-header">
+                            <span class="score-bar-label">Overall</span>
+                            <span class="score-bar-value">{{ candidate.holistic_score }}/10</span>
                         </div>
-                        <div class="score-label">Overall</div>
+                        <div class="score-bar-container">
+                            <div class="score-bar-fill" style="width: {{ candidate.holistic_score|mul:10 }}%"></div>
+                        </div>
                     </div>
-                    <div class="score-item">
-                        <div class="radial-progress" style="--value:{{ candidate.skills_score|mul:10 }}">
-                            <span class="score-value">{{ candidate.skills_score }}</span>
+                    <div class="score-bar-item">
+                        <div class="score-bar-header">
+                            <span class="score-bar-label">Skills</span>
+                            <span class="score-bar-value">{{ candidate.skills_score }}/10</span>
                         </div>
-                        <div class="score-label">Skills</div>
+                        <div class="score-bar-container">
+                            <div class="score-bar-fill" style="width: {{ candidate.skills_score|mul:10 }}%"></div>
+                        </div>
                     </div>
-                    <div class="score-item">
-                        <div class="radial-progress" style="--value:{{ candidate.experience_score|mul:10 }}">
-                            <span class="score-value">{{ candidate.experience_score }}</span>
+                    <div class="score-bar-item">
+                        <div class="score-bar-header">
+                            <span class="score-bar-label">Experience</span>
+                            <span class="score-bar-value">{{ candidate.experience_score }}/10</span>
                         </div>
-                        <div class="score-label">Experience</div>
+                        <div class="score-bar-container">
+                            <div class="score-bar-fill" style="width: {{ candidate.experience_score|mul:10 }}%"></div>
+                        </div>
                     </div>
-                    <div class="score-item">
-                        <div class="radial-progress" style="--value:{{ candidate.qualifications_score|mul:10 }}">
-                            <span class="score-value">{{ candidate.qualifications_score }}</span>
+                    <div class="score-bar-item">
+                        <div class="score-bar-header">
+                            <span class="score-bar-label">Qualifications</span>
+                            <span class="score-bar-value">{{ candidate.qualifications_score }}/10</span>
                         </div>
-                        <div class="score-label">Qualifications</div>
+                        <div class="score-bar-container">
+                            <div class="score-bar-fill" style="width: {{ candidate.qualifications_score|mul:10 }}%"></div>
+                        </div>
                     </div>
-                    <div class="score-item">
-                        <div class="radial-progress" style="--value:{{ candidate.wildcard_score|mul:10 }}">
-                            <span class="score-value">{{ candidate.wildcard_score }}</span>
+                    <div class="score-bar-item">
+                        <div class="score-bar-header">
+                            <span class="score-bar-label">Wildcard</span>
+                            <span class="score-bar-value">{{ candidate.wildcard_score }}/10</span>
                         </div>
-                        <div class="score-label">Wildcard</div>
+                        <div class="score-bar-container">
+                            <div class="score-bar-fill" style="width: {{ candidate.wildcard_score|mul:10 }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -360,25 +318,11 @@
         {% if candidate.experience_overview %}
         <div class="section">
             <h3>Experience Overview</h3>
-            <p>{{ candidate.experience_overview }}</p>
+            <div>{{ candidate.experience_overview|linebreaks }}</div>
         </div>
         {% endif %}
         
-        {% if candidate.skills_matrix %}
-        <div class="skills-matrix">
-            <h3>Skills Assessment</h3>
-            <div class="skills-grid">
-                {% for skill in candidate.skills_matrix %}
-                <div class="skill-item">
-                    <span class="skill-check {% if skill.has_skill %}has{% else %}missing{% endif %}">
-                        {% if skill.has_skill %}✓{% else %}✗{% endif %}
-                    </span>
-                    {{ skill.skill }}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+
         
         {% if candidate.qualifications %}
         <div class="section">
