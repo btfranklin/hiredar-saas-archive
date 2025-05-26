@@ -7,22 +7,22 @@ authors = [
 ]
 dependencies = [
     "django>=5.2.1",
-    "django-allauth>=65.8.0",
+    "django-allauth>=65.8.1",
     "django-htmx>=1.23.0",
-    "pymupdf>=1.25.4",  # For PDF parsing
+    "pymupdf>=1.25.5",  # For PDF parsing
     "python-dotenv>=1.1.0",
     "requests>=2.32.3",  # Required by django-allauth
     "pyjwt>=2.10.1",  # Required by django-allauth
-    "cryptography>=44.0.2",  # Required by django-allauth
+    "cryptography>=45.0.3",  # Required by django-allauth
     "pillow>=11.2.1",  # Required for ImageField
     "celery[sqlalchemy]>=5.5.2",
     "django-celery-results>=2.6.0",
     "pdfplumber>=0.11.5",
     "promptdown>=0.9.0",
-    "openai>=1.78.1",
-    "pinecone[grpc]>=6.0.2",
+    "openai>=1.82.0",
+    "pinecone[grpc]>=7.0.1",
     "unstructured[all-docs]>=0.13.3",
-    "numpy>=2.2.5",
+    "numpy>=2.2.6",
     "whitenoise>=6.9.0",
     "python-magic>=0.4.27",
     "django-storages[boto3]>=1.14.6",
@@ -31,6 +31,7 @@ dependencies = [
     "lxml>=5.4.0",
     "quickemailverification>=1.0.4",
     "gunicorn>=23.0.0",
+    "WeasyPrint>=65.1",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

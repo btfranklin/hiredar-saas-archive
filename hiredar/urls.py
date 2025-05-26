@@ -30,6 +30,7 @@ urlpatterns = [
     # path("messaging/", include("apps.messaging.urls", namespace="messaging")),  # messaging temporarily disabled
     path("job-seekers/", include("apps.job_seekers.urls", namespace="job_seekers")),
     path("recruiters/", include("apps.recruiters.urls", namespace="recruiters")),
+    path("reports/", include("apps.reports.urls", namespace="reports")),
     # Home page and core functionality
     path("", include("apps.core.urls", namespace="core")),
 ]
