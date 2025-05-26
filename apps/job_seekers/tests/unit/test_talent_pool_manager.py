@@ -25,20 +25,27 @@ class TalentPoolToggleTests(TestCase):
             user_owner=self.user
         )
 
-    @patch("apps.job_seekers.services.talent_pool_manager.async_task")
+    @patch(
+        "apps.job_seekers.services.talent_pool_manager.IdempotentTaskManager.safe_task_execution"
+    )
     def test_join_talent_pool_creates_placeholder_sheet_and_schedules_task(
-        self, mock_async_task
+        self, mock_safe_task_execution
     ):
+        # Mock the safe_task_execution to return a task ID
+        mock_safe_task_execution.return_value = "test_task_id_123"
+
         status = TalentPoolManager.toggle_talent_pool(self.user, join=True)
 
         self.assertTrue(status["in_talent_pool"])
         # No sheet exists yet – task will create it
         self.assertFalse(status["has_talent_sheet"])
 
-        mock_async_task.assert_called()  # Make sure scheduling attempted
+        mock_safe_task_execution.assert_called()  # Make sure scheduling attempted
 
-    @patch("apps.job_seekers.services.talent_pool_manager.async_task")
-    def test_leave_talent_pool_unpublishes_sheet(self, mock_async_task):
+    @patch(
+        "apps.job_seekers.services.talent_pool_manager.IdempotentTaskManager.safe_task_execution"
+    )
+    def test_leave_talent_pool_unpublishes_sheet(self, mock_safe_task_execution):
         # First, create a published sheet manually
         TalentSheet.objects.create(
             job_seeker=self.profile,
@@ -58,7 +65,7 @@ class TalentPoolToggleTests(TestCase):
         self.assertFalse(sheet.is_published)
 
         # Leaving the pool should not enqueue any tasks
-        mock_async_task.assert_not_called()
+        mock_safe_task_execution.assert_not_called()
 
 
 class RoleInterestToggleTests(TestCase):

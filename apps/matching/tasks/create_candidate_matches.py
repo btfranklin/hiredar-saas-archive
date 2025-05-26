@@ -8,14 +8,18 @@ from celery import shared_task
 from django.apps import apps
 from django.db import transaction
 
+from apps.core.utils.task_utils import IdempotentTaskManager
 from apps.matching.core.matching import match_job_to_talents
-from apps.matching.models import CandidateMatch
+from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.matching.tasks.common import logger
 
 
-@shared_task(name="apps.matching.tasks.create_candidate_matches")
+@shared_task(
+    name="apps.matching.tasks.create_candidate_matches",
+    bind=True,
+)
 def create_candidate_matches(
-    result: dict[str, Any] | int | None = None, **kwargs
+    self, result: dict[str, Any] | int | None = None, **kwargs
 ) -> dict[str, Any]:
     """
     Create candidate matches for a job opening.
@@ -42,6 +46,11 @@ def create_candidate_matches(
         return {"status": "error", "message": f"Invalid input type: {type(result)}"}
 
     try:
+        # Clean up the running marker when task completes
+        def cleanup_task_marker():
+            if hasattr(self, "request") and self.request.id:
+                IdempotentTaskManager.unmark_task_running(self.request.id)
+
         JobOpening = apps.get_model("recruiters", "JobOpening")
         job = JobOpening.objects.get(id=job_id)
 
@@ -81,21 +90,11 @@ def create_candidate_matches(
                     continue
 
                 try:
-                    talent_sheet = TalentSheet.objects.get(id=talent_sheet_id)
-
-                    CandidateMatch.objects.update_or_create(
-                        job_opening=job,
-                        talent_sheet=talent_sheet,
-                        defaults={
-                            "holistic_score": talent_scores.get("holistic", 0),
-                            "skills_score": talent_scores.get("skills", 0),
-                            "experience_score": talent_scores.get("experience", 0),
-                            "wildcard_score": talent_scores.get("wildcard", 0),
-                            "qualifications_score": talent_scores.get(
-                                "qualifications", 0
-                            ),
-                            "is_analyzed": False,
-                        },
+                    CandidateMatchService.safe_upsert_candidate_match(
+                        job_opening_id=job.id,
+                        talent_sheet_id=talent_sheet_id,
+                        score_updates=talent_scores,
+                        is_analyzed=False,
                     )
 
                 except Exception as e:
@@ -106,6 +105,7 @@ def create_candidate_matches(
                     )
 
         logger.info("Created/updated matches for job opening %s", job_id)
+        cleanup_task_marker()
         return {
             "status": "success",
             "job_opening_id": job_id,
@@ -113,4 +113,5 @@ def create_candidate_matches(
         }
     except Exception as e:
         logger.error("Error creating matches for job opening %s: %s", job_id, e)
+        cleanup_task_marker()
         raise

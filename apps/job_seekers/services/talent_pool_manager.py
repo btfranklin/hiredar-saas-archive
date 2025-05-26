@@ -7,17 +7,15 @@ import logging
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-# Use centralised helper to decouple from task queue implementation
 from apps.core.tasks import safe_async_task
+from apps.core.utils.task_utils import IdempotentTaskManager
 from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.services.profile_manager import ProfileManager
+from apps.job_seekers.services.talent_sheet_service import TalentSheetService
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
-# Alias safe_async_task as async_task
 async_task = safe_async_task
-# No top-level import of tasks to avoid circular dependencies; import inside methods when needed
 
 
 class TalentPoolManager:
@@ -105,16 +103,27 @@ class TalentPoolManager:
                 # The job seeker is joining the talent pool
                 # Schedule the talent sheet generation task
                 try:
-                    # Schedule talent sheet generation
+                    # Schedule talent sheet generation with idempotency
                     # Deferred import to avoid circular dependencies
-                    from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
-                    task_id = async_task(
+                    from apps.job_seekers.tasks.talent_sheet_tasks import (
                         generate_talent_sheet_task,
+                    )
+
+                    task_id = IdempotentTaskManager.safe_task_execution(
+                        generate_talent_sheet_task,
+                        "generate_talent_sheet",
                         profile_id,
-                        task_name=f"generate_talent_sheet_{profile_id}",
                         timeout=300,
                     )
-                    logger.info("Scheduled talent sheet generation task: %s", task_id)
+                    if task_id:
+                        logger.info(
+                            "Scheduled talent sheet generation task: %s", task_id
+                        )
+                    else:
+                        logger.info(
+                            "Talent sheet generation task already running for profile %s",
+                            profile_id,
+                        )
                 except Exception as e:
                     logger.error(
                         "Failed to schedule talent sheet generation task for profile %s: %s",
@@ -247,8 +256,8 @@ class TalentPoolManager:
         Returns:
             The created or updated TalentSheet
         """
-        talent_sheet, created = TalentSheet.objects.update_or_create(
-            job_seeker=profile, defaults=talent_sheet_data
+        talent_sheet, created = TalentSheetService.safe_upsert_talent_sheet(
+            job_seeker_id=profile.id, talent_sheet_data=talent_sheet_data
         )
 
         return talent_sheet

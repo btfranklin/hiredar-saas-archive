@@ -9,7 +9,7 @@ from django.apps import apps
 from django.db import transaction
 
 from apps.matching.core.matching import match_job_to_talents
-from apps.matching.models import CandidateMatch
+from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.matching.tasks.common import logger
 
 
@@ -97,19 +97,11 @@ def match_talent_to_active_jobs(
                         continue
 
                     try:
-                        CandidateMatch.objects.update_or_create(
-                            job_opening=job,
-                            talent_sheet=talent,
-                            defaults={
-                                "holistic_score": talent_scores.get("holistic", 0),
-                                "skills_score": talent_scores.get("skills", 0),
-                                "experience_score": talent_scores.get("experience", 0),
-                                "wildcard_score": talent_scores.get("wildcard", 0),
-                                "qualifications_score": talent_scores.get(
-                                    "qualifications", 0
-                                ),
-                                "is_analyzed": False,
-                            },
+                        CandidateMatchService.safe_upsert_candidate_match(
+                            job_opening_id=job.id,
+                            talent_sheet_id=talent.id,
+                            score_updates=talent_scores,
+                            is_analyzed=False,
                         )
                         matches_created += 1
 
