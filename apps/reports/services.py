@@ -63,7 +63,6 @@ def generate_csv(job: JobOpening, limit: int | None = None) -> bytes:
             "score_by_qualifications",
             "score_by_wildcard",
             "ai_tagline",
-            "ranking_position",
             "recruiter_notes",
         ]
     )
@@ -75,12 +74,13 @@ def generate_csv(job: JobOpening, limit: int | None = None) -> bytes:
         job_seeker = talent_sheet.job_seeker
         user = job_seeker.user_owner
 
-        # Get candidate name and contact info
+        # Get candidate name and contact info using the same logic as the UI
         if user:
-            full_name = user.get_full_name() or user.email
+            full_name = user.get_full_name()
             email = user.email
         else:
-            full_name = f"Candidate {job_seeker.pk}"
+            # For pool-owned candidates, use the parsed candidate_name
+            full_name = job_seeker.candidate_name or f"Candidate {job_seeker.pk}"
             email = ""
 
         # Convert skills from newline-separated to comma-separated
@@ -107,7 +107,6 @@ def generate_csv(job: JobOpening, limit: int | None = None) -> bytes:
                 f"{float(match.qualifications_score) * 100:.1f}%",
                 f"{float(match.wildcard_score) * 100:.1f}%",
                 match.match_summary or "",
-                rank,
                 "",  # recruiter_notes - empty for now, could be added later
             ]
         )
@@ -149,12 +148,13 @@ def generate_pdf(job: JobOpening, limit: int | None = None) -> bytes:
         job_seeker = talent_sheet.job_seeker
         user = job_seeker.user_owner
 
-        # Get candidate name
+        # Get candidate name using the same logic as the UI
         if user:
-            full_name = user.get_full_name() or user.email
+            full_name = user.get_full_name()
             email = user.email
         else:
-            full_name = f"Candidate {job_seeker.pk}"
+            # For pool-owned candidates, use the parsed candidate_name
+            full_name = job_seeker.candidate_name or f"Candidate {job_seeker.pk}"
             email = ""
 
         # Parse skills into a list
@@ -183,11 +183,11 @@ def generate_pdf(job: JobOpening, limit: int | None = None) -> bytes:
                 "current_title": job_seeker.most_recent_title or "",
                 "location": job_seeker.location or "",
                 "years_experience": job_seeker.years_of_experience or "",
-                "holistic_score": float(match.holistic_score) * 100,
-                "skills_score": float(match.skills_score) * 100,
-                "experience_score": float(match.experience_score) * 100,
-                "qualifications_score": float(match.qualifications_score) * 100,
-                "wildcard_score": float(match.wildcard_score) * 100,
+                "holistic_score": match.holistic_rating,
+                "skills_score": match.skills_rating,
+                "experience_score": match.experience_rating,
+                "qualifications_score": match.qualifications_rating,
+                "wildcard_score": match.wildcard_rating,
                 "tagline": match.match_summary or talent_sheet.personal_tagline or "",
                 "promotional_blurb": talent_sheet.promotional_blurb,
                 "experience_overview": talent_sheet.experience_overview,

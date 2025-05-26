@@ -1,3 +1,4 @@
+{% load matching_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -147,7 +148,7 @@
         
         .scores-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(5, 1fr);
             gap: 15px;
             margin-top: 10px;
         }
@@ -156,11 +157,33 @@
             text-align: center;
         }
         
-        .score-value {
-            font-size: 16pt;
+        .radial-progress {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#4f46e5 calc(var(--value) * 3.6deg), #e5e7eb 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 5px auto;
+            position: relative;
+        }
+        
+        .radial-progress::before {
+            content: '';
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .radial-progress .score-value {
+            position: relative;
+            z-index: 1;
+            font-size: 12pt;
             font-weight: bold;
             color: #4f46e5;
-            display: block;
         }
         
         .score-label {
@@ -258,7 +281,7 @@
                     <td>{{ candidate.name }}</td>
                     <td>{{ candidate.current_title|default:"Not specified" }}</td>
                     <td>{{ candidate.location|default:"Not specified" }}</td>
-                    <td>{{ candidate.holistic_score|floatformat:0 }}%</td>
+                    <td>{{ candidate.holistic_score }}/10</td>
                     <td>{{ candidate.tagline|truncatechars:50 }}</td>
                 </tr>
                 {% endfor %}
@@ -294,16 +317,34 @@
                 <h3>Match Scores</h3>
                 <div class="scores-grid">
                     <div class="score-item">
-                        <span class="score-value">{{ candidate.holistic_score|floatformat:0 }}%</span>
+                        <div class="radial-progress" style="--value:{{ candidate.holistic_score|mul:10 }}">
+                            <span class="score-value">{{ candidate.holistic_score }}</span>
+                        </div>
                         <div class="score-label">Overall</div>
                     </div>
                     <div class="score-item">
-                        <span class="score-value">{{ candidate.skills_score|floatformat:0 }}%</span>
+                        <div class="radial-progress" style="--value:{{ candidate.skills_score|mul:10 }}">
+                            <span class="score-value">{{ candidate.skills_score }}</span>
+                        </div>
                         <div class="score-label">Skills</div>
                     </div>
                     <div class="score-item">
-                        <span class="score-value">{{ candidate.experience_score|floatformat:0 }}%</span>
+                        <div class="radial-progress" style="--value:{{ candidate.experience_score|mul:10 }}">
+                            <span class="score-value">{{ candidate.experience_score }}</span>
+                        </div>
                         <div class="score-label">Experience</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="radial-progress" style="--value:{{ candidate.qualifications_score|mul:10 }}">
+                            <span class="score-value">{{ candidate.qualifications_score }}</span>
+                        </div>
+                        <div class="score-label">Qualifications</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="radial-progress" style="--value:{{ candidate.wildcard_score|mul:10 }}">
+                            <span class="score-value">{{ candidate.wildcard_score }}</span>
+                        </div>
+                        <div class="score-label">Wildcard</div>
                     </div>
                 </div>
             </div>
@@ -349,7 +390,7 @@
         {% if candidate.match_analysis %}
         <div class="section">
             <h3>Detailed Analysis</h3>
-            <p>{{ candidate.match_analysis }}</p>
+            <div>{{ candidate.match_analysis|linebreaks }}</div>
         </div>
         {% endif %}
     </div>

@@ -1,11 +1,10 @@
 """
-Unit tests for the reports app.
+Unit tests for the reports app services.
 
 Tests the CSV and PDF generation functionality for shortlisted candidates.
 """
 
 from django.test import TestCase
-from django.urls import reverse
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet
@@ -173,75 +172,53 @@ class ReportsServiceTests(TestCase):
         self.assertEqual(len(lines), 1)
         self.assertIn("candidate_id", lines[0])
 
-
-class ReportsViewTests(TestCase):
-    """Test the reports views."""
-
-    def setUp(self):
-        """Set up test data."""
-        # Create recruiter
-        self.recruiter_user = User.objects.create_user(
-            email="recruiter@test.com",
+    def test_generate_csv_with_pool_owned_candidate(self):
+        """Test CSV generation uses candidate_name for pool-owned candidates."""
+        # Create a recruiter for the pool
+        pool_recruiter_user = User.objects.create_user(
+            email="poolrecruiter@test.com",
             password="testpass123",
             user_type="recruiter",
-            name="Test Recruiter",
+            name="Pool Recruiter",
         )
-        self.recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
-            user=self.recruiter_user
-        )
-
-        # Create job opening
-        self.job_opening = JobOpening.objects.create(
-            recruiter=self.recruiter_profile,
-            title="Test Job",
-            description="Test description",
-            status="active",
+        pool_recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
+            user=pool_recruiter_user
         )
 
-    def test_export_csv_requires_login(self):
-        """Test that CSV export requires login."""
-        url = reverse("reports:export_csv", kwargs={"job_id": self.job_opening.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)  # Redirect to login
+        # Create a candidate pool
+        from apps.job_seekers.models import CandidatePool
 
-    def test_export_pdf_requires_login(self):
-        """Test that PDF export requires login."""
-        url = reverse("reports:export_pdf", kwargs={"job_id": self.job_opening.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)  # Redirect to login
-
-    def test_export_csv_success(self):
-        """Test successful CSV export."""
-        self.client.force_login(self.recruiter_user)
-        url = reverse("reports:export_csv", kwargs={"job_id": self.job_opening.id})
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertIn("attachment", response["Content-Disposition"])
-
-    def test_export_pdf_success(self):
-        """Test successful PDF export."""
-        self.client.force_login(self.recruiter_user)
-        url = reverse("reports:export_pdf", kwargs={"job_id": self.job_opening.id})
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        self.assertIn("attachment", response["Content-Disposition"])
-
-    def test_export_csv_wrong_recruiter(self):
-        """Test that recruiters can only export their own job openings."""
-        # Create another recruiter
-        other_recruiter = User.objects.create_user(
-            email="other@test.com",
-            password="testpass123",
-            user_type="recruiter",
-            name="Other Recruiter",
+        candidate_pool = CandidatePool.objects.create(
+            recruiter=pool_recruiter_user,  # Use the User, not the Profile
+            name="Test Pool",
         )
 
-        self.client.force_login(other_recruiter)
-        url = reverse("reports:export_csv", kwargs={"job_id": self.job_opening.id})
-        response = self.client.get(url)
+        # Create a pool-owned job seeker with candidate_name
+        pool_job_seeker = JobSeekerProfile.objects.create(
+            candidate_pool=candidate_pool,
+            candidate_name="Jane Smith",  # This should be used in the report
+            most_recent_title="Software Engineer",
+        )
 
-        self.assertEqual(response.status_code, 404)  # Job not found for this recruiter
+        talent_sheet_pool = TalentSheet.objects.create(
+            job_seeker=pool_job_seeker,
+            promotional_blurb="Pool candidate with parsed name",
+            is_published=True,
+        )
+        match_pool = CandidateMatch.objects.create(
+            job_opening=self.job_opening,
+            talent_sheet=talent_sheet_pool,
+            holistic_score=0.75,
+        )
+        ShortlistedMatch.objects.create(
+            job_opening=self.job_opening, candidate_match=match_pool
+        )
+
+        csv_data = generate_csv(self.job_opening)
+        csv_string = csv_data.decode("utf-8")
+
+        # Should use the parsed candidate_name
+        self.assertIn("Jane Smith", csv_string)
+        self.assertNotIn(
+            "Candidate ", csv_string
+        )  # Should not fall back to generic name
