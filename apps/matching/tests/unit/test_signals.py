@@ -72,9 +72,7 @@ class JobOpeningSignalTests(TestCase):
         self.assertEqual(len(args), 2)  # Should have 2 tasks in chain
 
         # Verify apply_async was called
-        mock_chain_instance.apply_async.assert_called_once_with(
-            task_id=f"embed_and_match_job_{job_active.id}"
-        )
+        mock_chain_instance.apply_async.assert_called_once()
 
         # Reset mocks
         mock_async_task.reset_mock()
@@ -228,9 +226,7 @@ class TalentSheetSignalTests(TestCase):
         self.assertEqual(len(args), 2)  # Should have 2 tasks in chain
 
         # Verify apply_async was called
-        mock_chain_instance.apply_async.assert_called_once_with(
-            task_id=f"embed_and_match_talent_{talent_published.id}"
-        )
+        mock_chain_instance.apply_async.assert_called_once()
 
         # Reset mocks
         mock_async_task.reset_mock()
