@@ -8,9 +8,6 @@ from apps.job_seekers.tasks.hooks import resume_processing_completed
 from apps.job_seekers.tasks.personal_tagline_tasks import generate_personal_tagline
 from apps.job_seekers.tasks.recommendation_tasks import generate_role_recommendations
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
-
-# Import cleanup helpers from canonical resume_processing app
-# Note: cleanup_resume_processing_progress is now scheduled via Celery Beat
 from apps.resume_processing.tasks.cleanup_tasks import (
     cleanup_resume_processing_progress,
 )
@@ -21,22 +18,14 @@ from apps.resume_processing.tasks.resume_processing_tasks import (
 
 from .pool_tasks import cleanup_temp_resume_file, process_resume_for_pool
 
-# Export all tasks at the module level
 __all__ = [
-    # Resume processing tasks
     "save_resume_file",
     "handle_resume_upload_task",
-    # Cleanup tasks (cleanup_resume_processing_progress now runs via Celery Beat)
     "cleanup_resume_processing_progress",
-    # Completion tasks
     "resume_processing_completed",
-    # Recommendation tasks
     "generate_role_recommendations",
-    # Personal tagline tasks
     "generate_personal_tagline",
-    # Talent sheet tasks
     "generate_talent_sheet_task",
-    # Pool processing tasks
     "process_resume_for_pool",
     "cleanup_temp_resume_file",
 ]

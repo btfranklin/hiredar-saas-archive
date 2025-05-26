@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Final
 
+from celery import current_app as celery_app
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,10 +64,6 @@ def safe_async_task(
     Retries on broker errors up to *retries* times before raising.
     """
 
-    # ---------------------------------------------------------------------
-    #  Prepare parameters
-    # ---------------------------------------------------------------------
-
     if callable(path_or_callable):
         task_name = getattr(path_or_callable, "name", None) or (
             f"{path_or_callable.__module__}.{path_or_callable.__name__}"
@@ -75,32 +73,6 @@ def safe_async_task(
 
     clean_kwargs, scheduler_kwargs = _split_kwargs(kwargs)
 
-    # ---------------------------------------------------------------------
-    #  Celery dispatch (single attempt – broker errors bubble up)
-    # ---------------------------------------------------------------------
-
-    from celery import current_app as celery_app  # Lazy import
-
-    hook_path: str | None = None
-    if "hook" in scheduler_kwargs:
-        hook_obj = scheduler_kwargs["hook"]
-        hook_path = (
-            f"{hook_obj.__module__}.{hook_obj.__name__}"
-            if callable(hook_obj)
-            else hook_obj
-        )
-
-    if hook_path:
-        # Run original callable inside the generic *run_with_hook* wrapper so
-        # we can execute the callback synchronously in the same worker.
-        return celery_app.send_task(
-            name="core.run_with_hook",
-            args=[task_name, args, clean_kwargs, hook_path],
-            queue=queue,
-            priority=priority,
-        )
-
-    # Fast path – plain task without special handling
     return celery_app.send_task(
         name=task_name,
         args=args,
