@@ -7,7 +7,6 @@ to convert job description text into structured XML format.
 
 import logging
 import os
-import re
 import xml.etree.ElementTree as ET
 from typing import Any, Iterable, cast
 
@@ -16,6 +15,8 @@ from django.conf import settings  # Import Django settings
 from dotenv import load_dotenv
 from openai import OpenAI
 from promptdown import StructuredPrompt
+
+from apps.core.utils.xml_processing import sanitize_xml_response
 
 # Load environment variables
 load_dotenv()
@@ -87,7 +88,7 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
             raise ValueError(error_msg)
 
         # Apply sanitization to fix common issues
-        xml_content = sanitize_xml(xml_content)
+        xml_content = sanitize_xml_response(xml_content, expected_root="job")
 
         # Store a reference to the XML content before attempting to validate it
         # This ensures it's available to the caller even if validation fails
@@ -128,86 +129,3 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
     except Exception as e:
         logger.error("Unexpected error in LLM processing: %s", str(e))
         raise
-
-
-def sanitize_xml(xml_content: str) -> str:
-    """Sanitize XML content if needed to ensure it is well-formed.
-
-    This function performs several sanitization steps on XML content:
-    1. Removes Markdown code block syntax if present
-    2. Ensures the XML has a root <job> element
-    3. Ensures the XML ends with the closing </job> tag
-    4. Sanitizes problematic characters for XML parsing
-
-    Args:
-        xml_content: The XML content to sanitize
-
-    Returns:
-        The sanitized XML content, as a string
-    """
-    # Handle Markdown code blocks
-    if xml_content.strip().startswith("```"):
-        # Find the opening code fence
-        first_line_end = xml_content.find("\n")
-        if first_line_end != -1:
-            # This will capture ```xml, ```html, etc.
-            opening_fence = xml_content[:first_line_end].strip()
-
-            # Find the closing code fence
-            closing_index = xml_content.rfind("```")
-            if closing_index > len(
-                opening_fence
-            ):  # Ensure we're not finding the opening fence
-                # Remove both the opening and closing fences
-                xml_content = xml_content[first_line_end + 1 : closing_index].strip()
-                logger.debug("Sanitization: Removed Markdown code block syntax")
-
-    # Ensure XML has a root element
-    if not xml_content.strip().startswith("<job>"):
-        xml_content = f"<job>{xml_content.strip()}</job>"
-        logger.debug("Sanitization: Added missing root <job> element")
-
-    # Ensure XML ends with the closing root tag
-    if not xml_content.strip().endswith("</job>"):
-        # If we already have a closing tag, don't add another one
-        if "</job>" not in xml_content:
-            xml_content = f"{xml_content.strip()}</job>"
-            logger.debug("Sanitization: Added missing closing </job> tag")
-
-    # Sanitize common problematic characters
-    replacements = [
-        # Common XML-invalid control characters
-        ("\x0b", ""),
-        ("\x0c", ""),
-        ("\x1b", ""),
-        # Common XML entities
-        ("&nbsp;", " "),
-        ("&ndash;", "-"),
-        ("&mdash;", "-"),
-        ("&quot;", '"'),
-        # Ensure proper escaping of ampersands
-        ("& ", "&amp; "),
-    ]
-
-    for old, new in replacements:
-        if old in xml_content:
-            count = xml_content.count(old)
-            xml_content = xml_content.replace(old, new)
-            # Use repr() to safely show control characters
-            logger.debug(
-                "Sanitization: Replaced %s with %s (%d occurrences)",
-                repr(old),
-                repr(new),
-                count,
-            )
-
-    # Handle ampersands in all contexts (not just followed by space)
-    # We need to be careful not to double-escape already escaped ampersands
-    # This pattern matches & that isn't part of an entity like &amp; or &quot;
-    pattern = r"&(?!amp;|quot;|lt;|gt;|apos;|#\d+;|#x[0-9a-fA-F]+;)"
-    matches = re.findall(pattern, xml_content)
-    if matches:
-        xml_content = re.sub(pattern, "&amp;", xml_content)
-        logger.debug("Sanitization: Escaped %d standalone ampersands", len(matches))
-
-    return xml_content

@@ -10,14 +10,16 @@ from typing import Any, cast
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
 
 from apps.authentication.types import AuthenticatedUser
+from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile as JobSeeker
 from apps.matching.models import CandidateMatch, ShortlistedMatch
+from apps.matching.tasks.analyze_candidate_match import analyze_candidate_match
 from apps.messaging.models import Conversation
 from apps.recruiters.models import JobOpening
 
@@ -283,3 +285,57 @@ def remove_from_shortlist(request: HttpRequest, job_id: int, shortlist_id: int):
         return response
 
     return JsonResponse({"status": "success"})
+
+
+@login_required
+def candidate_match_analysis_status(
+    request: HttpRequest, job_id: int, candidate_id: int
+) -> HttpResponse:
+    """
+    HTMX endpoint to check the analysis status of a candidate match.
+
+    This view is used for polling to update the UI when analysis is complete.
+    """
+    # Ensure the job opening exists and belongs to the current recruiter
+    job_opening = get_object_or_404(JobOpening, id=job_id)
+    user = cast(AuthenticatedUser, request.user)
+
+    if user.user_type != "recruiter" or job_opening.recruiter.user.email != user.email:
+        return HttpResponse("Unauthorized", status=403)
+
+    # Get the candidate match
+    candidate_match = get_object_or_404(
+        CandidateMatch,
+        job_opening=job_opening,
+        talent_sheet__job_seeker__id=candidate_id,
+    )
+
+    # If not analyzed yet, trigger analysis and return loading state
+    if not candidate_match.is_analyzed:
+        # Trigger analysis task if not already running
+        # We use a predictable task name to avoid duplicate tasks
+        task_name = f"analyze_match_{candidate_match.pk}"
+
+        # Trigger the analysis task
+        safe_async_task(
+            analyze_candidate_match,
+            candidate_match.pk,
+            task_name=task_name,
+        )
+
+        return render(
+            request,
+            "matching/partials/analysis_loading.html",
+            {
+                "candidate_match": candidate_match,
+            },
+        )
+
+    # Analysis is complete, return the analysis content
+    return render(
+        request,
+        "matching/partials/analysis_complete.html",
+        {
+            "candidate_match": candidate_match,
+        },
+    )

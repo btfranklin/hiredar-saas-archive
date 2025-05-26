@@ -1,0 +1,26 @@
+<div id="match-analysis-section" 
+     hx-get="{% url 'matching:candidate_match_analysis_status' candidate_match.job_opening.id candidate_match.talent_sheet.job_seeker.id %}"
+     hx-trigger="every 3s"
+     hx-target="#match-analysis-section"
+     hx-swap="outerHTML">
+    
+    <div class="divider my-2"></div>
+    
+    <div>
+        <h3 class="font-semibold">Why This Match?</h3>
+        <div class="flex items-center gap-2 mt-1">
+            <span class="loading loading-spinner loading-sm"></span>
+            <p class="text-base-content/70">Our AI is analyzing this match to provide detailed insights...</p>
+        </div>
+    </div>
+    
+    <div class="divider my-2"></div>
+    
+    <div>
+        <h3 class="font-semibold">Match Analysis</h3>
+        <div class="flex items-center gap-2 mt-1">
+            <span class="loading loading-spinner loading-sm"></span>
+            <p class="text-base-content/70">Generating detailed analysis...</p>
+        </div>
+    </div>
+</div> 

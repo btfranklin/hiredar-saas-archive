@@ -1,0 +1,19 @@
+<div id="match-analysis-section">
+    <div class="divider my-2"></div>
+    
+    <div>
+        <h3 class="font-semibold">Why This Match?</h3>
+        <p class="text-base-content/70 mt-1">{{ candidate_match.match_summary|default:"Our AI has determined this candidate is a good match based on their skills and experience." }}</p>
+    </div>
+    
+    {% if candidate_match.match_analysis %}
+    <div class="divider my-2"></div>
+    
+    <div>
+        <h3 class="font-semibold">Match Analysis</h3>
+        <div class="prose max-w-none text-base-content/70 mt-1">
+            {{ candidate_match.match_analysis|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+</div> 
