@@ -13,6 +13,7 @@ from django.apps import apps
 from django.conf import settings
 from promptdown import StructuredPrompt
 
+from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.matching.tasks.common import get_openai_client
 
 # Setup logging
@@ -215,13 +216,24 @@ Salary Expectation: ${talent_sheet.salary_min or 0:,.0f} minimum
                     "candidate_match_id": candidate_match_id,
                 }
 
-            # Update the candidate match
-            candidate_match.match_summary = match_summary
-            candidate_match.match_analysis = match_analysis
-            candidate_match.is_analyzed = True
-            candidate_match.save(
-                update_fields=["match_summary", "match_analysis", "is_analyzed"]
+            # Update the candidate match using the service
+            updated_match = CandidateMatchService.safe_update_analysis(
+                candidate_match_id=candidate_match_id,
+                match_summary=match_summary,
+                match_analysis=match_analysis,
+                is_analyzed=True,
             )
+
+            if not updated_match:
+                logger.error(
+                    "Failed to update candidate match %s with analysis",
+                    candidate_match_id,
+                )
+                return {
+                    "status": "error",
+                    "message": "Failed to update candidate match with analysis",
+                    "candidate_match_id": candidate_match_id,
+                }
 
             logger.info(
                 "Successfully analyzed candidate match %s for %s",

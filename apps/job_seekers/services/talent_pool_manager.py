@@ -149,8 +149,9 @@ class TalentPoolManager:
                         )
                     ):
                         # If it's just a placeholder, keep it unpublished until real content is ready
-                        talent_sheet.is_published = False
-                        talent_sheet.save(update_fields=["is_published"])
+                        TalentSheetService.safe_update_publication_status(
+                            profile.pk, False
+                        )
                 except TalentSheet.DoesNotExist:
                     # That's expected - the task will create one
                     pass
@@ -161,8 +162,7 @@ class TalentPoolManager:
                 try:
                     talent_sheet = TalentSheet.objects.get(job_seeker=profile)
                     has_talent_sheet = True
-                    talent_sheet.is_published = False
-                    talent_sheet.save(update_fields=["is_published"])
+                    TalentSheetService.safe_update_publication_status(profile.pk, False)
                 except TalentSheet.DoesNotExist:
                     # No talent sheet to unpublish
                     pass
@@ -227,17 +227,17 @@ class TalentPoolManager:
         if interested:
             profile = role.job_seeker
             try:
-                talent_sheet = TalentSheet.objects.get(job_seeker=profile)
-
                 # Get all roles the candidate is interested in
                 interested_roles = RoleRecommendation.objects.filter(
                     job_seeker=profile, is_candidate_interested=True
                 ).values_list("role_title", flat=True)
 
-                # Update talent sheet ideal roles
-                talent_sheet.ideal_roles = ", ".join(interested_roles)
-                talent_sheet.save(update_fields=["ideal_roles"])
-            except TalentSheet.DoesNotExist:
+                # Update talent sheet ideal roles using the service
+                TalentSheetService.safe_update_ideal_roles(
+                    profile.pk, ", ".join(interested_roles)
+                )
+            except Exception:
+                # If there's no talent sheet or other error, just continue
                 pass
 
         return role

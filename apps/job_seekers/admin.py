@@ -8,6 +8,7 @@ from apps.job_seekers.models import (
     RoleRecommendation,
     TalentSheet,
 )
+from apps.job_seekers.services.talent_sheet_service import TalentSheetService
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 
 async_task = safe_async_task
@@ -152,11 +153,10 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
         """Remove selected job seekers from the talent pool."""
         count = 0
         for profile in queryset:
-            # Unpublish any existing talent sheet
+            # Unpublish any existing talent sheet using the service
             talent_sheet = getattr(profile, "talent_sheet", None)
             if talent_sheet:
-                talent_sheet.is_published = False
-                talent_sheet.save(update_fields=["is_published"])
+                TalentSheetService.safe_update_publication_status(profile.pk, False)
                 count += 1
 
         if count:

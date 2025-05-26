@@ -118,3 +118,52 @@ class CandidateMatchService:
                 existing_match.save(update_fields=list(defaults.keys()))
 
                 return existing_match, False
+
+    @staticmethod
+    @transaction.atomic
+    def safe_update_analysis(
+        candidate_match_id: int,
+        match_summary: str,
+        match_analysis: str,
+        is_analyzed: bool = True,
+    ) -> Any | None:
+        """
+        Safely update the analysis fields of a candidate match.
+
+        Args:
+            candidate_match_id: ID of the candidate match
+            match_summary: Summary of the match analysis
+            match_analysis: Detailed analysis of the match
+            is_analyzed: Whether the match has been analyzed
+
+        Returns:
+            Updated CandidateMatch instance, or None if not found
+        """
+        CandidateMatch = apps.get_model("matching", "CandidateMatch")
+
+        try:
+            # Get and lock the candidate match
+            candidate_match = CandidateMatch.objects.select_for_update().get(
+                id=candidate_match_id
+            )
+
+            # Update analysis fields
+            candidate_match.match_summary = match_summary
+            candidate_match.match_analysis = match_analysis
+            candidate_match.is_analyzed = is_analyzed
+            candidate_match.save(
+                update_fields=["match_summary", "match_analysis", "is_analyzed"]
+            )
+
+            logger.debug(
+                "Updated analysis for CandidateMatch %s",
+                candidate_match_id,
+            )
+            return candidate_match
+
+        except CandidateMatch.DoesNotExist:
+            logger.warning(
+                "CandidateMatch %s not found when updating analysis",
+                candidate_match_id,
+            )
+            return None

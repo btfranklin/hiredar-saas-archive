@@ -83,8 +83,6 @@ def create_candidate_matches(
 
                     all_matches_by_talent[talent_sheet_id][match_type] = score
 
-            TalentSheet = apps.get_model("job_seekers", "TalentSheet")
-
             for talent_sheet_id, talent_scores in all_matches_by_talent.items():
                 if all(score < 0.5 for score in talent_scores.values()):
                     continue
