@@ -83,11 +83,7 @@
         <div class="space-y-3">
             {% get_providers as socialaccount_providers %}
             {% for provider in socialaccount_providers %}
-                {% if provider.id == "google" %}
-                <a href="{% provider_login_url provider.id process='login' %}?user_type=job_seeker" class="btn btn-outline w-full">
-                    <i class="fab fa-google mr-2"></i> Sign Up with Google
-                </a>
-                {% elif provider.id == "linkedin_oauth2" %}
+                {% if provider.id == "openid_connect" %}
                 <a href="{% provider_login_url provider.id process='login' %}?user_type=job_seeker" class="btn btn-outline w-full">
                     <i class="fab fa-linkedin mr-2"></i> Sign Up with LinkedIn
                 </a>

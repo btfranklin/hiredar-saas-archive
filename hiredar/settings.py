@@ -134,7 +134,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    "allauth.socialaccount.providers.linkedin_oauth2",
+    "allauth.socialaccount.providers.openid_connect",
     "django_htmx",
     "django_celery_results",
     "storages",  # django-storages for S3 support
@@ -423,19 +423,17 @@ SOCIALACCOUNT_PROVIDERS = {
             "email",
         ],
     },
-    "linkedin_oauth2": {
-        "APP": {
-            "client_id": os.environ.get("LINKEDIN_CLIENT_ID", ""),
-            "secret": os.environ.get("LINKEDIN_CLIENT_SECRET", ""),
-            "key": "",
-        },
-        "SCOPE": ["r_liteprofile", "r_emailaddress"],
-        "PROFILE_FIELDS": [
-            "id",
-            "first-name",
-            "last-name",
-            "email-address",
+    "openid_connect": {
+        "APPS": [
+            {
+                "provider_id": "linkedin",
+                "name": "LinkedIn",
+                "client_id": os.environ.get("LINKEDIN_CLIENT_ID", ""),
+                "secret": os.environ.get("LINKEDIN_CLIENT_SECRET", ""),
+                "settings": {"server_url": "https://www.linkedin.com/oauth"},
+            },
         ],
+        "SCOPE": ["openid", "profile", "email"],
     },
 }
 

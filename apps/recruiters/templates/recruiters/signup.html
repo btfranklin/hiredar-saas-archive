@@ -18,6 +18,20 @@
                             {% endfor %}
                         </div>
                     {% endif %}
+                    {% get_providers as socialaccount_providers %}
+                    {% if socialaccount_providers %}
+                    <div class="space-y-3 mb-4">
+                        {% for provider in socialaccount_providers %}
+                            {% if provider.id == "openid_connect" %}
+                                <a href="{% provider_login_url provider.id process='login' %}?user_type=recruiter" class="btn btn-outline w-full">
+                                    <i class="fab fa-linkedin mr-2"></i> Sign Up with LinkedIn
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="divider mb-4">or</div>
+
                     <form id="signup-form" method="post" class="space-y-4">
                         {% csrf_token %}
                         <input type="hidden" name="user_type" value="recruiter">

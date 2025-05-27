@@ -7,6 +7,7 @@ from typing import Any, cast
 from allauth.account import app_settings as account_settings
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.internal import flows
+from allauth.account.models import EmailAddress
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
@@ -198,8 +199,13 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
                             "name", "New User"
                         )
                     elif sociallogin.account.provider == "linkedin_oauth2":
-                        first_name = sociallogin.account.extra_data.get("firstName", "")
-                        last_name = sociallogin.account.extra_data.get("lastName", "")
+                        extra_data = sociallogin.account.extra_data or {}
+                        first_name = extra_data.get(
+                            "localizedFirstName"
+                        ) or extra_data.get("firstName", "")
+                        last_name = extra_data.get(
+                            "localizedLastName"
+                        ) or extra_data.get("lastName", "")
                         if first_name or last_name:
                             sociallogin.user.name = f"{first_name} {last_name}".strip()
 
@@ -236,6 +242,13 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             # Fallback if user_type wasn't set in pre_social_login
             user.user_type = "job_seeker"
             user.save(update_fields=["user_type"])
+
+        # Auto-verify LinkedIn-sourced email, both legacy and OIDC providers
+        if sociallogin.account.provider in ("linkedin_oauth2", "linkedin"):
+            EmailAddress.objects.filter(user=user, email=user.email).update(
+                verified=True,
+                primary=True,
+            )
 
         return cast(AuthenticatedUser, user)
 
