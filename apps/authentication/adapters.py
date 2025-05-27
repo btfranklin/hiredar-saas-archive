@@ -186,8 +186,8 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             if user_type in ["recruiter", "job_seeker"]:
                 sociallogin.user.user_type = user_type
             else:
-                # Always default to job_seeker if not specified
-                sociallogin.user.user_type = "job_seeker"
+                # Always default to recruiter if not specified
+                sociallogin.user.user_type = "recruiter"
 
             # Set name from social account if available
             if not sociallogin.user.name or sociallogin.user.name == "New User":
@@ -240,7 +240,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         # Set anything else needed after saving
         if hasattr(user, "user_type") and not user.user_type:
             # Fallback if user_type wasn't set in pre_social_login
-            user.user_type = "job_seeker"
+            user.user_type = "recruiter"
             user.save(update_fields=["user_type"])
 
         # Auto-verify LinkedIn-sourced email, both legacy and OIDC providers

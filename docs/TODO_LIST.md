@@ -3,7 +3,6 @@
 - Add some way for users to deactivate their accounts
 - Finish converting all the UI elements to DaisyUI v5 (from v4)
 - Create some kind of standardized "back" button for navigation
-- Add sign-up and log-in with LinkedIn
 - Add some logic that outright blocks job postings that are not US-based, to steer clear of GDPR issues
 - Possibly add a "resume de-duplication" process that doesn't process duplicted resumes
 - Possibly improve error reporting when a candidate fails to process
@@ -15,3 +14,7 @@
 - Add a "Give Us Feedback" button in the header
 - Fix the double-bar on the match view
 - Add resume view on the match view
+
+## In Progress
+
+- Add sign-up and log-in with LinkedIn
