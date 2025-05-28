@@ -28,56 +28,16 @@
                 <form method="post" action="{% url 'authentication:settings' %}" class="space-y-4">
                     {% csrf_token %}
                     
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Full Name</span>
-                        </label>
-                        <input type="text" name="name" value="{{ user.name }}" class="input input-bordered" required>
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Email Address</span>
-                        </label>
-                        <input type="email" name="email" value="{{ user.email }}" class="input input-bordered" required>
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Location</span>
-                        </label>
-                        <input type="text" name="location" value="{{ job_seeker_profile.location|default:'' }}" class="input input-bordered">
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Phone Number</span>
-                        </label>
-                        <input type="tel" name="phone" value="{{ job_seeker_profile.phone|default:'' }}" class="input input-bordered">
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='Full Name' id='name' name='name' widget_type='text' widget_class='input input-bordered' value=user.name required=True %}
+                    {% include 'core/components/fieldset_field.html' with label='Email Address' id='email' name='email' widget_type='email' widget_class='input input-bordered' value=user.email required=True %}
+                    {% include 'core/components/fieldset_field.html' with label='Location' id='location' name='location' widget_type='text' widget_class='input input-bordered' value=job_seeker_profile.location|default:'' %}
+                    {% include 'core/components/fieldset_field.html' with label='Phone Number' id='phone' name='phone' widget_type='tel' widget_class='input input-bordered' value=job_seeker_profile.phone|default:'' %}
                     
                     <div class="divider">Social Media Links</div>
                     
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">LinkedIn URL</span>
-                        </label>
-                        <input type="url" name="linkedin_url" value="{{ job_seeker_profile.linkedin_url|default:'' }}" class="input input-bordered" placeholder="https://linkedin.com/in/yourprofile">
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">GitHub URL</span>
-                        </label>
-                        <input type="url" name="github_url" value="{{ job_seeker_profile.github_url|default:'' }}" class="input input-bordered" placeholder="https://github.com/yourusername">
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Portfolio URL</span>
-                        </label>
-                        <input type="url" name="portfolio_url" value="{{ job_seeker_profile.portfolio_url|default:'' }}" class="input input-bordered" placeholder="https://yourportfolio.com">
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='LinkedIn URL' id='linkedin_url' name='linkedin_url' widget_type='url' widget_class='input input-bordered' value=job_seeker_profile.linkedin_url|default:'' placeholder='https://linkedin.com/in/yourprofile' %}
+                    {% include 'core/components/fieldset_field.html' with label='GitHub URL' id='github_url' name='github_url' widget_type='url' widget_class='input input-bordered' value=job_seeker_profile.github_url|default:'' placeholder='https://github.com/yourusername' %}
+                    {% include 'core/components/fieldset_field.html' with label='Portfolio URL' id='portfolio_url' name='portfolio_url' widget_type='url' widget_class='input input-bordered' value=job_seeker_profile.portfolio_url|default:'' placeholder='https://yourportfolio.com' %}
                     
                     <div class="form-control mt-6">
                         <button type="submit" class="btn btn-primary">
@@ -94,26 +54,9 @@
                 <form method="post" action="{% url 'authentication:change_password' %}" class="space-y-4">
                     {% csrf_token %}
                     
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Current Password</span>
-                        </label>
-                        <input type="password" name="old_password" class="input input-bordered" required>
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">New Password</span>
-                        </label>
-                        <input type="password" name="new_password1" class="input input-bordered" required>
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Confirm New Password</span>
-                        </label>
-                        <input type="password" name="new_password2" class="input input-bordered" required>
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='Current Password' id='old_password' name='old_password' widget_type='password' widget_class='input input-bordered' required=True %}
+                    {% include 'core/components/fieldset_field.html' with label='New Password' id='new_password1' name='new_password1' widget_type='password' widget_class='input input-bordered' required=True %}
+                    {% include 'core/components/fieldset_field.html' with label='Confirm New Password' id='new_password2' name='new_password2' widget_type='password' widget_class='input input-bordered' required=True %}
                     
                     <div class="form-control mt-6">
                         <button type="submit" class="btn btn-primary">

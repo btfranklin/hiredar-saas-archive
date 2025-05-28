@@ -21,58 +21,30 @@
                 </div>
             {% endif %}
             
-            <div>
-                <label class="label" for="{{ form.email.id_for_label }}">
-                    <span class="label-text">Email</span>
-                </label>
-                <input
-                    type="email"
-                    name="{{ form.email.name }}"
-                    id="{{ form.email.id_for_label }}"
-                    class="input input-bordered w-full {% if form.email.errors %}input-error{% endif %}"
-                    value="{{ form.email.value|default:'' }}"
-                    hx-get="{% url 'authentication:verify_email' %}"
-                    hx-trigger="blur"
-                    hx-target="#email-verification"
-                    hx-include="[name='email']"
-                >
-                <div id="email-verification"></div>
-                {% if form.email.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.email.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div>
-                <label class="label" for="{{ form.password1.id_for_label }}">
-                    <span class="label-text">Password</span>
-                </label>
-                <input type="password" name="{{ form.password1.name }}" id="{{ form.password1.id_for_label }}" class="input input-bordered w-full {% if form.password1.errors %}input-error{% endif %}">
-                {% if form.password1.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.password1.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div>
-                <label class="label" for="{{ form.password2.id_for_label }}">
-                    <span class="label-text">Confirm Password</span>
-                </label>
-                <input type="password" name="{{ form.password2.name }}" id="{{ form.password2.id_for_label }}" class="input input-bordered w-full {% if form.password2.errors %}input-error{% endif %}">
-                {% if form.password2.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.password2.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <div>
+            {% url 'authentication:verify_email' as verify_email_url %}
+
+            {% with "hx-get='"|add:verify_email_url|add:"' hx-trigger='blur' hx-target='#email-verification' hx-include='[name=email]'" as email_extra_attrs %}
+                {% include 'core/components/fieldset_field.html' with label='Email' id=form.email.id_for_label name=form.email.name widget_type='email' widget_class='input input-bordered w-full{% if form.email.errors %} input-error{% endif %}' value=form.email.value|default:'' required=True extra_attrs=email_extra_attrs %}
+            {% endwith %}
+            <div id="email-verification"></div>
+            {% if form.email.errors %}<div class="text-error text-sm mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+
+            {% include 'core/components/fieldset_field.html' with label='Password' id=form.password1.id_for_label name=form.password1.name widget_type='password' widget_class='input input-bordered w-full{% if form.password1.errors %} input-error{% endif %}' required=True %}
+            {% if form.password1.errors %}<div class="text-error text-sm mt-1">{{ form.password1.errors.0 }}</div>{% endif %}
+
+            {% include 'core/components/fieldset_field.html' with label='Confirm Password' id=form.password2.id_for_label name=form.password2.name widget_type='password' widget_class='input input-bordered w-full{% if form.password2.errors %} input-error{% endif %}' required=True %}
+            {% if form.password2.errors %}<div class="text-error text-sm mt-1">{{ form.password2.errors.0 }}</div>{% endif %}
+
+            <fieldset class="fieldset mb-2">
+                <legend class="fieldset-legend">US-only Certification</legend>
                 <label class="flex items-start gap-2 cursor-pointer">
                     <input id="raw-us-certification" type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
                     <span class="label-text">
                         I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based employment purposes.
                     </span>
                 </label>
-                {% if form.us_only_certification.errors %}
-                    <div class="text-error text-sm mt-1">{{ form.us_only_certification.errors.0 }}</div>
-                {% endif %}
-            </div>
+                {% if form.us_only_certification.errors %}<div class="text-error text-sm mt-1">{{ form.us_only_certification.errors.0 }}</div>{% endif %}
+            </fieldset>
             
             <div class="pt-2">
                 <button type="submit" id="raw-signup-submit" class="btn btn-primary w-full" disabled>Sign Up</button>

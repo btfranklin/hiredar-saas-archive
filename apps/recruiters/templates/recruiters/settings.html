@@ -28,19 +28,8 @@
                 <form method="post" action="{% url 'authentication:settings' %}" class="space-y-4">
                     {% csrf_token %}
                     
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Full Name</span>
-                        </label>
-                        <input type="text" name="name" value="{{ user.name }}" class="input input-bordered" required>
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Email Address</span>
-                        </label>
-                        <input type="email" name="email" value="{{ user.email }}" class="input input-bordered" required>
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='Full Name' id='name' name='name' widget_type='text' widget_class='input input-bordered' value=user.name required=True %}
+                    {% include 'core/components/fieldset_field.html' with label='Email Address' id='email' name='email' widget_type='email' widget_class='input input-bordered' value=user.email required=True %}
                     
                     <div class="form-control mt-6">
                         <button type="submit" class="btn btn-primary">
@@ -57,26 +46,9 @@
                 <form method="post" action="{% url 'authentication:change_password' %}" class="space-y-4">
                     {% csrf_token %}
                     
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Current Password</span>
-                        </label>
-                        <input type="password" name="old_password" class="input input-bordered" required>
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">New Password</span>
-                        </label>
-                        <input type="password" name="new_password1" class="input input-bordered" required>
-                    </div>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Confirm New Password</span>
-                        </label>
-                        <input type="password" name="new_password2" class="input input-bordered" required>
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='Current Password' id='old_password' name='old_password' widget_type='password' widget_class='input input-bordered' required=True %}
+                    {% include 'core/components/fieldset_field.html' with label='New Password' id='new_password1' name='new_password1' widget_type='password' widget_class='input input-bordered' required=True %}
+                    {% include 'core/components/fieldset_field.html' with label='Confirm New Password' id='new_password2' name='new_password2' widget_type='password' widget_class='input input-bordered' required=True %}
                     
                     <div class="form-control mt-6">
                         <button type="submit" class="btn btn-primary">
