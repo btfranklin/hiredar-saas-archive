@@ -24,15 +24,15 @@
             {% url 'authentication:verify_email' as verify_email_url %}
 
             {% with "hx-get='"|add:verify_email_url|add:"' hx-trigger='blur' hx-target='#email-verification' hx-include='[name=email]'" as email_extra_attrs %}
-                {% include 'core/components/fieldset_field.html' with label='Email' id=form.email.id_for_label name=form.email.name widget_type='email' widget_class='input input-bordered w-full{% if form.email.errors %} input-error{% endif %}' value=form.email.value|default:'' required=True extra_attrs=email_extra_attrs %}
+                {% include 'core/components/fieldset_field.html' with label='Email' id=form.email.id_for_label name=form.email.name widget_type='email' widget_class='input input-bordered w-full' value=form.email.value|default:'' required=True extra_attrs=email_extra_attrs %}
             {% endwith %}
             <div id="email-verification"></div>
             {% if form.email.errors %}<div class="text-error text-sm mt-1">{{ form.email.errors.0 }}</div>{% endif %}
 
-            {% include 'core/components/fieldset_field.html' with label='Password' id=form.password1.id_for_label name=form.password1.name widget_type='password' widget_class='input input-bordered w-full{% if form.password1.errors %} input-error{% endif %}' required=True %}
+            {% include 'core/components/fieldset_field.html' with label='Password' id=form.password1.id_for_label name=form.password1.name widget_type='password' widget_class='input input-bordered w-full' required=True %}
             {% if form.password1.errors %}<div class="text-error text-sm mt-1">{{ form.password1.errors.0 }}</div>{% endif %}
 
-            {% include 'core/components/fieldset_field.html' with label='Confirm Password' id=form.password2.id_for_label name=form.password2.name widget_type='password' widget_class='input input-bordered w-full{% if form.password2.errors %} input-error{% endif %}' required=True %}
+            {% include 'core/components/fieldset_field.html' with label='Confirm Password' id=form.password2.id_for_label name=form.password2.name widget_type='password' widget_class='input input-bordered w-full' required=True %}
             {% if form.password2.errors %}<div class="text-error text-sm mt-1">{{ form.password2.errors.0 }}</div>{% endif %}
 
             <fieldset class="fieldset mb-2">
