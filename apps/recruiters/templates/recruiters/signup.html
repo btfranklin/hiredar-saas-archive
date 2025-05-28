@@ -33,7 +33,7 @@
                     <div class="space-y-3 mb-4">
                         {% for provider in socialaccount_providers %}
                             {% if provider.id == "openid_connect" %}
-                                <a id="linkedin-auth-btn" href="{% provider_login_url provider.id process='login' %}?user_type=recruiter" class="btn btn-outline w-full opacity-50 pointer-events-none">
+                                <a id="linkedin-auth-btn" href="{% provider_login_url provider.id process='signup' %}?user_type=recruiter" class="btn btn-outline w-full opacity-50 pointer-events-none">
                                     <i class="fab fa-linkedin mr-2"></i> Sign Up with LinkedIn
                                 </a>
                             {% endif %}
