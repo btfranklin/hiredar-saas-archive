@@ -43,32 +43,14 @@
                 <form class="login" method="post" action="{% url 'authentication:login' %}">
                     {% csrf_token %}
                     
-                    <div class="form-control">
-                        <label class="label" for="{{ form.username.id_for_label }}">
-                            <span class="label-text">Email</span>
-                        </label>
-                        <input type="email" name="username" id="{{ form.username.id_for_label }}" placeholder="youremail@example.com" class="input input-bordered {% if form.username.errors %}input-error{% endif %}" required />
-                        {% if form.username.errors %}
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ form.username.errors|join:", " }}</span>
-                            </label>
-                        {% endif %}
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='Email' id=form.username.id_for_label name=form.username.name widget_type='email' widget_class='input input-bordered{% if form.username.errors %} input-error{% endif %}' placeholder='youremail@example.com' value=form.username.value|default:'' required=True %}
+                    {% if form.username.errors %}<div class="label text-error text-sm">{{ form.username.errors|join:", " }}</div>{% endif %}
                     
-                    <div class="form-control">
-                        <label class="label" for="{{ form.password.id_for_label }}">
-                            <span class="label-text">Password</span>
-                        </label>
-                        <input type="password" name="password" id="{{ form.password.id_for_label }}" placeholder="••••••••" class="input input-bordered {% if form.password.errors %}input-error{% endif %}" required />
-                        {% if form.password.errors %}
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ form.password.errors|join:", " }}</span>
-                            </label>
-                        {% endif %}
-                        <label class="label">
-                            <a href="{% url 'account_reset_password' %}" class="label-text-alt link link-hover">Forgot password?</a>
-                        </label>
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='Password' id=form.password.id_for_label name=form.password.name widget_type='password' widget_class='input input-bordered{% if form.password.errors %} input-error{% endif %}' placeholder='••••••••' required=True %}
+                    {% if form.password.errors %}<div class="label text-error text-sm">{{ form.password.errors|join:", " }}</div>{% endif %}
+                    <label class="label">
+                        <a href="{% url 'account_reset_password' %}" class="label-text-alt link link-hover">Forgot password?</a>
+                    </label>
                     
                     <div class="form-control mt-2">
                         <label class="inline-flex items-center cursor-pointer">

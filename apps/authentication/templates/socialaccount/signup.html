@@ -27,43 +27,19 @@
                 <form class="signup" id="signup_form" method="post" action="{% url 'socialaccount_signup' %}">
                     {% csrf_token %}
                     
-                    <div class="form-control">
-                        <label class="label" for="{{ form.email.id_for_label }}">
-                            <span class="label-text">{% trans "Email" %}</span>
-                        </label>
-                        <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" placeholder="youremail@example.com" class="input input-bordered {% if form.email.errors %}input-error{% endif %}" value="{{ form.email.value|default:'' }}" {% if form.email.field.disabled %}disabled{% endif %} />
-                        {% if form.email.errors %}
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ form.email.errors|join:", " }}</span>
-                            </label>
-                        {% endif %}
-                    </div>
+                    {% with form.email.field.disabled|yesno:"disabled," as email_disabled_attr %}
+                        {% include 'core/components/fieldset_field.html' with label='Email' id=form.email.id_for_label name=form.email.name widget_type='email' widget_class='input input-bordered{% if form.email.errors %} input-error{% endif %}' placeholder='youremail@example.com' value=form.email.value|default:'' extra_attrs=email_disabled_attr required=True %}
+                    {% endwith %}
+                    {% if form.email.errors %}<div class="label text-error text-sm">{{ form.email.errors|join:", " }}</div>{% endif %}
                     
                     {% if form.username %}
-                    <div class="form-control">
-                        <label class="label" for="{{ form.username.id_for_label }}">
-                            <span class="label-text">{% trans "Username" %}</span>
-                        </label>
-                        <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" placeholder="username" class="input input-bordered {% if form.username.errors %}input-error{% endif %}" value="{{ form.username.value|default:'' }}" />
-                        {% if form.username.errors %}
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ form.username.errors|join:", " }}</span>
-                            </label>
-                        {% endif %}
-                    </div>
+                        {% include 'core/components/fieldset_field.html' with label='Username' id=form.username.id_for_label name=form.username.name widget_type='text' widget_class='input input-bordered{% if form.username.errors %} input-error{% endif %}' placeholder='username' value=form.username.value|default:'' %}
+                        {% if form.username.errors %}<div class="label text-error text-sm">{{ form.username.errors|join:", " }}</div>{% endif %}
                     {% endif %}
                     
-                    <div class="form-control mt-4">
-                        <label class="label" for="id_name">
-                            <span class="label-text">{% trans "Full Name" %}</span>
-                        </label>
-                        <input type="text" name="name" id="id_name" placeholder="John Doe" class="input input-bordered" />
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label='Full Name' id='id_name' name='name' widget_type='text' widget_class='input input-bordered' placeholder='John Doe' %}
                     
                     <div class="form-control mt-4">
-                        <label class="label">
-                            <span class="label-text">{% trans "Account Type" %}</span>
-                        </label>
                         <div class="flex gap-4">
                             <label class="label cursor-pointer justify-start gap-2">
                                 <input type="radio" name="user_type" value="job_seeker" class="radio radio-primary" {% if request.GET.user_type == 'job_seeker' %}checked{% endif %} />
