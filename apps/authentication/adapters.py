@@ -186,35 +186,26 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         # Call the parent implementation first
         super().pre_social_login(request, sociallogin)
 
-        # Custom error handling for LinkedIn social login
-        # If social account already linked, allow default behavior
-        if sociallogin.is_existing:
-            return
+        # ------------------------------------------------------------------
+        # Simplified flow based solely on whether that e-mail is already
+        # present in our database.  If the social account is *not* already
+        # linked (`sociallogin.is_existing` is False) and we see that the
+        # e-mail address is registered, we assume the user should log in
+        # and *not* create a duplicate account.
+        # ------------------------------------------------------------------
 
-        # Determine context (signup vs login) and check for existing email
-        requested_user_type = self._get_user_type(request)
         user_email = getattr(sociallogin.user, "email", None)
         email_address_exists = (
-            user_email and EmailAddress.objects.filter(email=user_email).exists()
+            bool(user_email) and EmailAddress.objects.filter(email=user_email).exists()
         )
 
-        if requested_user_type:
-            # Signup context: if email registered, block signup
-            if email_address_exists:
-                messages.error(
-                    request,
-                    "An account with this email already exists. Please log in instead.",
-                )
-                raise ImmediateHttpResponse(redirect("authentication:login"))
-        else:
-            # Login context: if no account exists, block login
-            if not email_address_exists:
-                messages.error(
-                    request,
-                    "No account found for this LinkedIn account. Please sign up first.",
-                )
-                # Redirect to recruiter signup since job seeker via LinkedIn not supported
-                raise ImmediateHttpResponse(redirect("authentication:recruiter_signup"))
+        if not sociallogin.is_existing and email_address_exists:
+            messages.error(
+                request,
+                "An account with this email already exists. Please log in instead.",
+                fail_silently=True,
+            )
+            raise ImmediateHttpResponse(redirect("authentication:login"))
 
         # If this is a new user (about to be created), set default fields
         if not sociallogin.is_existing:
@@ -337,10 +328,12 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         if user_type in ["recruiter", "job_seeker"]:
             return user_type
 
-        # Try to get from session
-        user_type = request.session.get("user_type")
-        if user_type in ["recruiter", "job_seeker"]:
-            return user_type
+        # Try to get from session (if available)
+        session = getattr(request, "session", None)
+        if session:
+            user_type = session.get("user_type")
+            if user_type in ["recruiter", "job_seeker"]:
+                return user_type
 
         # Try to get from URL parameters
         user_type = request.GET.get("user_type")
