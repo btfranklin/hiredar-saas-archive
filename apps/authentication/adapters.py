@@ -8,11 +8,14 @@ from allauth.account import app_settings as account_settings
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.internal import flows
 from allauth.account.models import EmailAddress
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
+from django.shortcuts import redirect
 from django.urls import reverse
 
 from apps.authentication.services.email_verifier import verify_email
@@ -106,7 +109,13 @@ class AccountAdapter(DefaultAccountAdapter):
         if not ok:
             reason = result.get("reason", "unknown error").replace("_", " ")
             raise ValidationError(f"Email address appears invalid: {reason}.")
-        return super().clean_email(email)
+        try:
+            return super().clean_email(email)
+        except ValidationError:
+            # Duplicate email error: user should log in instead of signing up
+            raise ValidationError(
+                "An account with this email already exists. Please log in instead."
+            )
 
     def send_confirmation_mail(
         self, request: HttpRequest, emailconfirmation, signup: bool
@@ -177,6 +186,36 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         # Call the parent implementation first
         super().pre_social_login(request, sociallogin)
 
+        # Custom error handling for LinkedIn social login
+        # If social account already linked, allow default behavior
+        if sociallogin.is_existing:
+            return
+
+        # Determine context (signup vs login) and check for existing email
+        requested_user_type = self._get_user_type(request)
+        user_email = getattr(sociallogin.user, "email", None)
+        email_address_exists = (
+            user_email and EmailAddress.objects.filter(email=user_email).exists()
+        )
+
+        if requested_user_type:
+            # Signup context: if email registered, block signup
+            if email_address_exists:
+                messages.error(
+                    request,
+                    "An account with this email already exists. Please log in instead.",
+                )
+                raise ImmediateHttpResponse(redirect("authentication:login"))
+        else:
+            # Login context: if no account exists, block login
+            if not email_address_exists:
+                messages.error(
+                    request,
+                    "No account found for this LinkedIn account. Please sign up first.",
+                )
+                # Redirect to recruiter signup since job seeker via LinkedIn not supported
+                raise ImmediateHttpResponse(redirect("authentication:recruiter_signup"))
+
         # If this is a new user (about to be created), set default fields
         if not sociallogin.is_existing:
             # Get any user_type from session or POST data
@@ -245,10 +284,37 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
 
         # Auto-verify LinkedIn-sourced email, both legacy and OIDC providers
         if sociallogin.account.provider in ("linkedin_oauth2", "linkedin"):
+            # Verify primary email
             EmailAddress.objects.filter(user=user, email=user.email).update(
                 verified=True,
                 primary=True,
             )
+            # Extract name from LinkedIn extra_data
+            extra_data = sociallogin.account.extra_data or {}
+            # Try legacy and OIDC fields
+            first_name = (
+                extra_data.get("localizedFirstName")
+                or extra_data.get("firstName")
+                or extra_data.get("given_name")
+                or ""
+            )
+            last_name = (
+                extra_data.get("localizedLastName")
+                or extra_data.get("lastName")
+                or extra_data.get("family_name")
+                or ""
+            )
+            if first_name or last_name:
+                full_name = f"{first_name} {last_name}".strip()
+            else:
+                full_name = extra_data.get("name", "") or extra_data.get(
+                    "full_name", ""
+                )
+            if full_name:
+                user.name = full_name
+            # Mark user as US certified for social signup
+            user.is_us_certified = True
+            user.save(update_fields=["name", "is_us_certified"])
 
         return cast(AuthenticatedUser, user)
 

@@ -14,7 +14,9 @@
 - Add a "Give Us Feedback" button in the header
 - Fix the double-bar on the match view
 - Add resume view on the match view
+- Possibly add password complexity rules
 
 ## In Progress
 
 - Add sign-up and log-in with LinkedIn
+  - Need to make sure name gets set from Oauth, not left as "New User"

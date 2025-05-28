@@ -20,14 +20,36 @@
                     {% endif %}
                     {% get_providers as socialaccount_providers %}
                     {% if socialaccount_providers %}
+                    <!-- US-only certification for LinkedIn signup -->
+                    <div class="mb-4">
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" id="linkedin-us-certification" class="checkbox checkbox-primary">
+                            <span class="label-text">
+                                I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based recruiting activities.
+                            </span>
+                        </label>
+                    </div>
                     <div class="space-y-3 mb-4">
                         {% for provider in socialaccount_providers %}
                             {% if provider.id == "openid_connect" %}
-                                <a href="{% provider_login_url provider.id process='login' %}?user_type=recruiter" class="btn btn-outline w-full">
+                                <a id="linkedin-auth-btn" href="{% provider_login_url provider.id process='login' %}?user_type=recruiter" class="btn btn-outline w-full opacity-50 pointer-events-none">
                                     <i class="fab fa-linkedin mr-2"></i> Sign Up with LinkedIn
                                 </a>
                             {% endif %}
                         {% endfor %}
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const checkbox = document.getElementById('linkedin-us-certification');
+                            const button = document.getElementById('linkedin-auth-btn');
+                            checkbox.addEventListener('change', function() {
+                                if (checkbox.checked) {
+                                    button.classList.remove('opacity-50', 'pointer-events-none');
+                                } else {
+                                    button.classList.add('opacity-50', 'pointer-events-none');
+                                }
+                            });
+                        });
+                        </script>
                     </div>
                     {% endif %}
                     <div class="divider mb-4">or</div>
