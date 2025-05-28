@@ -51,7 +51,8 @@ class AccountAdapter(DefaultAccountAdapter):
             return reverse("admin:index")
 
         if user.user_type == "recruiter":
-            return reverse("recruiters:profile")
+            # Redirect recruiters to their dashboard (no standalone profile page exists)
+            return reverse("recruiters:dashboard")
         return reverse("job_seekers:profile_create")
 
     def populate_username(self, request, user):
