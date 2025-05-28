@@ -3,7 +3,10 @@
   {% if widget_type == 'textarea' %}
   <textarea id="{{ id }}" name="{{ name }}" class="{{ widget_class }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if required %} required{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}>{{ value }}</textarea>
   {% else %}
-  <input id="{{ id }}" name="{{ name }}" type="text" class="{{ widget_class }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if value %} value="{{ value }}"{% endif %}{% if required %} required{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %} />
+  {# Use widget_type for input types; default to text #}
+  {% with input_type=widget_type|default:'text' %}
+  <input id="{{ id }}" name="{{ name }}" type="{{ input_type }}" class="{{ widget_class }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if value %} value="{{ value }}"{% endif %}{% if required %} required{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %} />
+  {% endwith %}
   {% endif %}
   {% if help_text %}
   <div class='label text-sm text-base-content/70'>{{ help_text }}</div>

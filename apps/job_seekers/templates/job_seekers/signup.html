@@ -8,6 +8,7 @@
     <div class="max-w-md mx-auto bg-base-200 rounded-lg shadow-xl p-6">
         <h1 class="text-2xl font-bold mb-6 text-center">Sign Up as Job Seeker</h1>
         
+        <div id="email-signup-form-container" class="hidden">
         <form method="post" class="space-y-4">
             {% csrf_token %}
             <input type="hidden" name="user_type" value="job_seeker">
@@ -63,7 +64,7 @@
             
             <div>
                 <label class="flex items-start gap-2 cursor-pointer">
-                    <input type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
+                    <input id="raw-us-certification" type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
                     <span class="label-text">
                         I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based employment purposes.
                     </span>
@@ -74,12 +75,17 @@
             </div>
             
             <div class="pt-2">
-                <button type="submit" class="btn btn-primary w-full">Sign Up</button>
+                <button type="submit" id="raw-signup-submit" class="btn btn-primary w-full" disabled>Sign Up</button>
             </div>
         </form>
+        </div>
         
-        <div class="divider">or</div>
+        <div id="signup-or-divider" class="divider">or</div>
         
+        <!-- Email signup toggle button -->
+        <div id="email-signup-toggle-container" class="mb-4 px-4">
+            <button id="email-signup-toggle" class="btn btn-primary w-full">Sign Up with Email</button>
+        </div>
         <!-- US-only certification for LinkedIn signup -->
         <div class="mb-4 px-4">
             <label class="flex items-start gap-2 cursor-pointer">
@@ -117,6 +123,30 @@
         <div class="text-center mt-6">
             <p>Already have an account? <a href="{% url 'authentication:login' %}" class="text-primary hover:underline">Log in</a></p>
         </div>
+        
+        <!-- Toggle script -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const orDivider = document.getElementById('signup-or-divider');
+            const toggleContainer = document.getElementById('email-signup-toggle-container');
+            const toggleButton = document.getElementById('email-signup-toggle');
+            const formContainer = document.getElementById('email-signup-form-container');
+            const rawCheckbox = document.getElementById('raw-us-certification');
+            const rawSubmitBtn = document.getElementById('raw-signup-submit');
+            if (rawCheckbox && rawSubmitBtn) {
+                // Disable until attested
+                rawSubmitBtn.disabled = !rawCheckbox.checked;
+                rawCheckbox.addEventListener('change', function() {
+                    rawSubmitBtn.disabled = !rawCheckbox.checked;
+                });
+            }
+            toggleButton.addEventListener('click', function() {
+                toggleContainer.classList.add('hidden');
+                orDivider.classList.add('hidden');
+                formContainer.classList.remove('hidden');
+            });
+        });
+        </script>
     </div>
 </div>
 {% endblock %} 

@@ -20,6 +20,7 @@
                     {% endif %}
                     {% get_providers as socialaccount_providers %}
                     {% if socialaccount_providers %}
+                    <div id="social-signup-container">
                     <!-- US-only certification for LinkedIn signup -->
                     <div class="mb-4">
                         <label class="flex items-start gap-2 cursor-pointer">
@@ -51,9 +52,14 @@
                         });
                         </script>
                     </div>
+                    </div>
                     {% endif %}
-                    <div class="divider mb-4">or</div>
-
+                    <div id="signup-or-divider" class="divider mb-4">or</div>
+                    <!-- Email signup toggle button -->
+                    <div id="email-signup-toggle-container" class="mb-4">
+                        <button id="email-signup-toggle" class="btn btn-primary btn-xl w-full">Sign Up with Email</button>
+                    </div>
+                    <div id="email-signup-form-container" class="hidden">
                     <form id="signup-form" method="post" class="space-y-4">
                         {% csrf_token %}
                         <input type="hidden" name="user_type" value="recruiter">
@@ -72,18 +78,16 @@
                         {% if form.email.errors %}<div class="text-error text-sm">{{ form.email.errors.0 }}</div>{% endif %}
 
                         {# Password Field #}
-                        {% include 'core/components/fieldset_field.html' with label='Password' id=form.password1.id_for_label name=form.password1.name widget_class='input input-bordered w-full' required=True extra_attrs='type="password"' %}
-                        {% if form.password1.errors %}<div class="text-error text-sm">{{ form.password1.errors.0 }}</div>{% endif %}
+                        {% include 'core/components/fieldset_field.html' with label='Password' id=form.password1.id_for_label name=form.password1.name widget_class='input input-bordered w-full' widget_type='password' required=True %}
 
                         {# Confirm Password Field #}
-                        {% include 'core/components/fieldset_field.html' with label='Confirm Password' id=form.password2.id_for_label name=form.password2.name widget_class='input input-bordered w-full' required=True extra_attrs='type="password"' %}
-                        {% if form.password2.errors %}<div class="text-error text-sm">{{ form.password2.errors.0 }}</div>{% endif %}
+                        {% include 'core/components/fieldset_field.html' with label='Confirm Password' id=form.password2.id_for_label name=form.password2.name widget_class='input input-bordered w-full' widget_type='password' required=True %}
 
                         {# US Certification Checkbox #}
                         <fieldset class="fieldset mb-2">
                             <legend class="fieldset-legend">US-only Certification</legend>
                             <label class="flex items-start gap-2 cursor-pointer">
-                                <input type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
+                                <input id="raw-us-certification" type="checkbox" name="{{ form.us_only_certification.name }}" class="checkbox checkbox-primary" required>
                                 <span class="label-text">
                                     I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based recruiting activities.
                                 </span>
@@ -93,11 +97,37 @@
                             {% endif %}
                         </fieldset>
 
-                        <button type="submit" class="btn btn-primary btn-xl w-full">Sign Up</button>
+                        <button type="submit" id="raw-signup-submit" class="btn btn-primary btn-xl w-full" disabled>Sign Up</button>
                     </form>
+                    </div>
                     <div class="text-center">
                         <p>Already have an account? <a href="{% url 'authentication:login' %}" class="link link-primary">Log in</a></p>
                     </div>
+                    <!-- Toggle script -->
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const orDivider = document.getElementById('signup-or-divider');
+                        const socialContainer = document.getElementById('social-signup-container');
+                        const toggleContainer = document.getElementById('email-signup-toggle-container');
+                        const toggleButton = document.getElementById('email-signup-toggle');
+                        const formContainer = document.getElementById('email-signup-form-container');
+                        const rawCheckbox = document.getElementById('raw-us-certification');
+                        const rawSubmitBtn = document.getElementById('raw-signup-submit');
+                        if (rawCheckbox && rawSubmitBtn) {
+                            // Disable until attested
+                            rawSubmitBtn.disabled = !rawCheckbox.checked;
+                            rawCheckbox.addEventListener('change', function() {
+                                rawSubmitBtn.disabled = !rawCheckbox.checked;
+                            });
+                        }
+                        toggleButton.addEventListener('click', function() {
+                            socialContainer.classList.add('hidden');
+                            toggleContainer.classList.add('hidden');
+                            orDivider.classList.add('hidden');
+                            formContainer.classList.remove('hidden');
+                        });
+                    });
+                    </script>
                 </div>
             </div>
             <!-- Encouragement Panel -->
