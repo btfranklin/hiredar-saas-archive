@@ -175,7 +175,7 @@
 </div>
 
 <!-- Confirmation Modal -->
-<div id="talent-pool-modal" class="modal">
+<dialog id="talent-pool-modal" class="modal">
     <div class="modal-box">
         <h3 class="font-bold text-lg mb-4">Confirm Talent Pool Activation</h3>
         <p>
@@ -192,10 +192,7 @@
             <button id="confirm-talent-pool" class="btn btn-primary">Yes, Activate</button>
         </div>
     </div>
-    <div class="modal-backdrop">
-        <button id="close-modal">close</button>
-    </div>
-</div>
+</dialog>
 
 <!-- HTMX Handling for Role Interest Toggling -->
 <script>
@@ -223,18 +220,18 @@ function toggleTalentPoolConfirm(checkbox) {
     if (checkbox.checked) {
         checkbox.checked = false; // Revert until confirmed
         
-        // Show the modal
-        document.getElementById('talent-pool-modal').classList.add('modal-open');
+        // Show the dialog
+        document.getElementById('talent-pool-modal').showModal();
         
         // Handle confirmation
         document.getElementById('confirm-talent-pool').onclick = function() {
             activateTalentPool();
-            document.getElementById('talent-pool-modal').classList.remove('modal-open');
+            document.getElementById('talent-pool-modal').close();
         };
         
         // Handle cancellation
-        document.getElementById('cancel-talent-pool').onclick = document.getElementById('close-modal').onclick = function() {
-            document.getElementById('talent-pool-modal').classList.remove('modal-open');
+        document.getElementById('cancel-talent-pool').onclick = function() {
+            document.getElementById('talent-pool-modal').close();
         };
     } else {
         // Just turn off directly without confirmation
