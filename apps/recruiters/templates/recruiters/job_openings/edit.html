@@ -123,13 +123,7 @@
                     
                     {% if job_opening.original_description %}
                     <div id="original-fields" class="hidden">
-                        <div class="form-control">
-                            <label class="label" for="id_original_description">
-                                <span class="label-text font-medium">Original Job Description</span>
-                                <span class="label-text-alt text-base-content/70">The unprocessed version</span>
-                            </label>
-                            <textarea id="id_original_description" name="original_description" class="textarea textarea-bordered h-96">{{ job_opening.original_description }}</textarea>
-                        </div>
+                        {% include 'core/components/fieldset_field.html' with label="Original Job Description" id="id_original_description" name="original_description" widget_type="textarea" widget_class="textarea textarea-bordered h-96 w-full" value=job_opening.original_description help_text="The unprocessed version" %}
                     </div>
                     {% endif %}
                 </form>

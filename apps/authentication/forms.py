@@ -65,10 +65,6 @@ class CustomAuthenticationForm(AuthenticationForm):
         # Change field label from 'Username' to 'Email'
         self.fields["username"].label = "Email"
 
-        # Apply styling to form fields
-        for field_name, field in self.fields.items():
-            field.widget.attrs["class"] = "form-control"
-
     def clean(self) -> dict[str, Any]:
         """Authenticate using email as username."""
         username = self.cleaned_data.get("username")

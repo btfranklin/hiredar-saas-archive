@@ -1,7 +1,6 @@
 # Various Implementation To-Do's
 
 - Add some way for users to deactivate their accounts
-- Finish converting all the UI elements to DaisyUI v5 (from v4)
 - Create some kind of standardized "back" button for navigation
 - Add some logic that outright blocks job postings that are not US-based, to steer clear of GDPR issues
 - Add ability to add more candidates to an existing pool, and to create an empty pool

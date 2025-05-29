@@ -22,7 +22,7 @@
         extra_attrs="accept='application/pdf'"
         required=True %}
     {% if form.resume.errors %}<div class="label text-error text-sm">{{ form.resume.errors|join:", " }}</div>{% endif %}
-    <div class="form-control mt-6">
+    <div class="mt-6">
         <button type="submit" class="btn btn-primary">
             <span class="htmx-indicator loading loading-spinner loading-xs me-2"></span>
             Upload Resume

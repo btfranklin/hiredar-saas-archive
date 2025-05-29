@@ -31,7 +31,7 @@
                     {% include 'core/components/fieldset_field.html' with label='Full Name' id='name' name='name' widget_type='text' widget_class='input input-bordered' value=user.name required=True %}
                     {% include 'core/components/fieldset_field.html' with label='Email Address' id='email' name='email' widget_type='email' widget_class='input input-bordered' value=user.email required=True %}
                     
-                    <div class="form-control mt-6">
+                    <div class="mt-6">
                         <button type="submit" class="btn btn-primary">
                             Save Changes
                         </button>
@@ -50,7 +50,7 @@
                     {% include 'core/components/fieldset_field.html' with label='New Password' id='new_password1' name='new_password1' widget_type='password' widget_class='input input-bordered' required=True %}
                     {% include 'core/components/fieldset_field.html' with label='Confirm New Password' id='new_password2' name='new_password2' widget_type='password' widget_class='input input-bordered' required=True %}
                     
-                    <div class="form-control mt-6">
+                    <div class="mt-6">
                         <button type="submit" class="btn btn-primary">
                             Change Password
                         </button>

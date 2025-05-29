@@ -48,21 +48,9 @@
                       hx-swap="innerHTML">
                     {% csrf_token %}
                     
-                    <div class="form-control mb-6">
-                        <label class="label" for="job_title">
-                            <span class="label-text font-medium">Job Title</span>
-                            <span class="label-text-alt text-base-content/70">Required</span>
-                        </label>
-                        <input type="text" id="job_title" name="job_title" class="input input-bordered" required placeholder="e.g., Senior Software Engineer">
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label="Job Title" id="job_title" name="job_title" widget_type="text" widget_class="input input-bordered w-full" placeholder="e.g., Senior Software Engineer" required=True %}
                     
-                    <div class="form-control mb-6">
-                        <label class="label" for="job_description">
-                            <span class="label-text font-medium">Job Description</span>
-                            <span class="label-text-alt text-base-content/70">Paste your complete job description here</span>
-                        </label>
-                        <textarea id="job_description" name="job_description" class="textarea textarea-bordered min-h-[300px]" required placeholder="Paste or write your job description here, including details about responsibilities, requirements, benefits, etc."></textarea>
-                    </div>
+                    {% include 'core/components/fieldset_field.html' with label="Job Description" id="job_description" name="job_description" widget_type="textarea" widget_class="textarea textarea-bordered min-h-[300px] w-full" placeholder="Paste or write your job description here, including details about responsibilities, requirements, benefits, etc." required=True %}
                     
                     <div class="flex justify-end">
                         <button type="submit" class="btn btn-primary">

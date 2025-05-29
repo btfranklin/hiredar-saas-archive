@@ -7,18 +7,6 @@
   @apply flex items-center justify-center;
 }
 
-/* Restore DaisyUI v4 form-control layout: stack label and input vertically */
-.form-control {
-  @apply flex flex-col;
-}
-
-.form-control > .textarea,
-.form-control > textarea,
-.form-control > .input,
-.form-control > input {
-  @apply w-full;
-}
-
 /* Matching lens color utilities */
 @layer utilities {
   .radial-progress[data-lens="holistic"] { --tw-text-opacity: 1; color: #0ea5e9; }
