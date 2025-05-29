@@ -33,12 +33,7 @@
                 {% if role_recommendations %}
                     <!-- Filter controls -->
                     <div class="flex flex-wrap gap-4 mb-6">
-                        <div class="form-control">
-                            <div class="input-group">
-                                <i class="fas fa-search mr-2"></i>
-                                <input type="text" placeholder="Search roles..." class="input input-bordered" id="role-search">
-                            </div>
-                        </div>
+                        {% include 'core/components/fieldset_search.html' with label='Search Roles' id='role-search' name='role_search' icon_class='fas fa-search' widget_class='input input-bordered' placeholder='Search roles...' %}
                         
                         <div class="dropdown">
                             <label tabindex="0" class="btn">

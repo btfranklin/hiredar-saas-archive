@@ -1,0 +1,7 @@
+<fieldset class="fieldset space-y-2 mb-4">
+  <legend class="sr-only">{{ label }}</legend>
+  <label class="label cursor-pointer flex gap-3">
+    <span class="label-text font-medium">{{ label }}</span>
+    <input id="{{ id }}" name="{{ name }}" type="checkbox" class="{{ widget_class|default:'toggle toggle-primary' }}"{% if checked %} checked{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}/>
+  </label>
+</fieldset> 

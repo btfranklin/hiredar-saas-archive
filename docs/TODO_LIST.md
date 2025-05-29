@@ -18,8 +18,3 @@
 - Add password complexity rules
 - Add a "resume de-duplication" process that doesn't process duplicted resumes
 - Improve error reporting when a candidate fails to process
-
-## In Progress
-
-- Sign-up and log-in with LinkedIn
-  - Need to make sure name gets set from Oauth, not left as "New User"

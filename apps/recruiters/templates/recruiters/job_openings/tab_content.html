@@ -73,15 +73,17 @@
                 class="space-y-2">
             <input type="hidden" name="tab" value="candidates">
             <input type="hidden" name="section" value="{{ section }}">
-            <label for="candidate-pool-selector" class="label"><span class="label-text">Candidate Pool</span></label>
-            <select id="candidate-pool-selector"
-                    name="pool_id"
-                    class="select select-bordered w-full max-w-xs">
-              <option value="0" {% if candidate_pool_id == 0 %}selected{% endif %}>None</option>
-              {% for pool in candidate_pools %}
-                <option value="{{ pool.id }}" {% if pool.id == candidate_pool_id %}selected{% endif %}>{{ pool.name }}</option>
-              {% endfor %}
-            </select>
+            <fieldset class="fieldset space-y-2 mb-4">
+                <legend class="fieldset-legend">Candidate Pool</legend>
+                <select id="candidate-pool-selector"
+                        name="pool_id"
+                        class="select select-bordered w-full max-w-xs">
+                  <option value="0" {% if candidate_pool_id == 0 %}selected{% endif %}>None</option>
+                  {% for pool in candidate_pools %}
+                    <option value="{{ pool.id }}" {% if pool.id == candidate_pool_id %}selected{% endif %}>{{ pool.name }}</option>
+                  {% endfor %}
+                </select>
+            </fieldset>
           </form>
         </div>
 

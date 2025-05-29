@@ -28,17 +28,7 @@
                             </p>
                         </div>
                         
-                        <div class="form-control">
-                            <label class="label cursor-pointer flex gap-3">
-                                <span class="label-text font-medium">Enable Job Matching</span>
-                                <div id="talent-pool-toggle-container">
-                                    <input type="checkbox" class="toggle toggle-success toggle-lg" 
-                                           {% if in_talent_pool %}checked{% endif %}
-                                           id="talent-pool-toggle"
-                                           onclick="toggleTalentPoolConfirm(this)">
-                                </div>
-                            </label>
-                        </div>
+                        {% include 'core/components/fieldset_toggle.html' with id='talent-pool-toggle' name='talent_pool_toggle' widget_class='toggle toggle-success toggle-lg' checked=in_talent_pool extra_attrs="onclick='toggleTalentPoolConfirm(this)'" label='Enable Job Matching' %}
                     </div>
                 </div>
                 

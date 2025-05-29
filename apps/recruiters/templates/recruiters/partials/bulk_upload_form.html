@@ -10,20 +10,12 @@
       </div>
     {% endif %}
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-semibold">Pool Name</span>
-      </label>
-      {{ form.name }}
-      {{ form.name.errors }}
-    </div>
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text font-semibold">ZIP file of resumes (PDF, DOCX, RTF, ODT, TXT)</span>
-      </label>
-      {{ form.zip_file }}
-      {{ form.zip_file.errors }}
-    </div>
+    {% include 'core/components/fieldset_field.html' with label='Pool Name' id=form.name.id_for_label name=form.name.name widget_class='input input-bordered' value=form.name.value|default:'' required=True %}
+    {% if form.name.errors %}<div class="label text-error text-sm">{{ form.name.errors|join:", " }}</div>{% endif %}
+
+    {% include 'core/components/fieldset_field.html' with label='ZIP file of resumes (PDF, DOCX, RTF, ODT, TXT)' id=form.zip_file.id_for_label name=form.zip_file.name widget_type='file' widget_class='file-input file-input-bordered file-input-primary w-full' required=True %}
+    {% if form.zip_file.errors %}<div class="label text-error text-sm">{{ form.zip_file.errors|join:", " }}</div>{% endif %}
+
     <button type="submit" class="btn btn-primary w-full">Upload &amp; Start Processing</button>
   </form>
 </div> 

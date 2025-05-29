@@ -159,17 +159,7 @@
                     class="flex gap-2"
                 >
                     {% csrf_token %}
-                    <input 
-                        type="text" 
-                        name="message" 
-                        placeholder="Type your message..." 
-                        class="input input-bordered flex-1" 
-                        required
-                    >
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane"></i>
-                        <span class="ml-2">Send</span>
-                    </button>
+                    {% include 'core/components/fieldset_chat_input.html' with id='message' name='message' placeholder='Type your message...' widget_class='input input-bordered flex-1' extra_attrs='required' button_class='btn btn-primary' button_icon='fas fa-paper-plane' button_label='Send' %}
                 </form>
                 {% elif conversation.status == 'candidate_not_interested' %}
                 <div class="alert alert-error mt-4">

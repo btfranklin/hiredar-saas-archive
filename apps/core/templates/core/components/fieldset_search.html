@@ -1,0 +1,12 @@
+<fieldset class="fieldset space-y-2 mb-4">
+  <legend class="fieldset-legend">{{ label }}</legend>
+  <div class="input-group">
+    {% if icon_class %}
+      <i class="{{ icon_class }}"></i>
+    {% endif %}
+    <input id="{{ id }}" name="{{ name }}" type="text" class="{{ widget_class|default:'input input-bordered' }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}/>
+  </div>
+  {% if help_text %}
+  <div class="label text-sm text-base-content/70">{{ help_text }}</div>
+  {% endif %}
+</fieldset> 
