@@ -35,9 +35,9 @@
                                 <a href="{% url 'recruiters:job_openings_edit' job_opening.id %}" class="btn btn-sm btn-outline">
                                     <i class="fas fa-edit mr-1"></i> Edit
                                 </a>
-                                <label for="delete-modal-toggle" class="btn btn-sm btn-error btn-outline cursor-pointer">
+                                <button type="button" class="btn btn-sm btn-error btn-outline" onclick="document.getElementById('delete-modal-toggle').showModal()">
                                     <i class="fas fa-trash mr-1"></i> Delete
-                                </label>
+                                </button>
                             </div>
                         </div>
                     {% endif %}
@@ -72,20 +72,19 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<input type="checkbox" id="delete-modal-toggle" class="modal-toggle" />
-<div class="modal">
+<dialog id="delete-modal-toggle" class="modal">
   <div class="modal-box">
     <h3 class="font-bold text-lg">Delete Job Opening</h3>
     <p class="py-4">Are you sure you want to permanently delete "{{ job_opening.title }}"? This action cannot be undone.</p>
     <div class="modal-action">
-      <label for="delete-modal-toggle" class="btn">Cancel</label>
+      <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button>
       <form method="post" action="{% url 'recruiters:job_openings_delete' job_opening.id %}" class="inline">
         {% csrf_token %}
         <button type="submit" class="btn btn-error">Delete</button>
       </form>
     </div>
   </div>
-</div>
+</dialog>
 {% endblock %}
 
 {% block extra_scripts %}

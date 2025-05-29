@@ -8,15 +8,15 @@
     <h1 id="pool-name-{{ pool.pk }}" class="text-2xl font-bold flex items-center gap-2">
       {{ pool.name }}
       <!-- edit button -->
-      <label for="rename-pool-{{ pool.pk }}" class="btn btn-xs btn-ghost tooltip" data-tip="Rename">
+      <button type="button" class="btn btn-xs btn-ghost tooltip" data-tip="Rename" onclick="document.getElementById('rename-pool-{{ pool.pk }}').showModal()">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.5H3v-3.5L16.732 3.732z" />
         </svg>
-      </label>
+      </button>
     </h1>
     <div class="flex gap-2">
       <a href="{% url 'recruiters:candidate_pool_list' %}" class="btn btn-sm btn-ghost">Back to All Pools</a>
-      <label for="delete-pool-{{ pool.pk }}" class="btn btn-sm btn-error">Delete Pool</label>
+      <button type="button" class="btn btn-sm btn-error" onclick="document.getElementById('delete-pool-{{ pool.pk }}').showModal()">Delete Pool</button>
     </div>
   </div>
 
@@ -28,40 +28,38 @@
   </div>
 
   <!-- delete confirmation modal -->
-  <input type="checkbox" id="delete-pool-{{ pool.pk }}" class="modal-toggle" />
-  <div class="modal">
+  <dialog id="delete-pool-{{ pool.pk }}" class="modal">
     <div class="modal-box">
       <h3 class="font-bold text-lg">Confirm Deletion</h3>
       <p class="py-4">Are you sure you want to delete the candidate pool &quot;{{ pool.name }}&quot;? All associated resumes will be removed.</p>
       <div class="modal-action">
-        <label for="delete-pool-{{ pool.pk }}" class="btn">Cancel</label>
+        <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button>
         <form method="post" action="{% url 'recruiters:candidate_pool_delete' pool.pk %}" class="inline">
           {% csrf_token %}
           <button type="submit" class="btn btn-error">Delete</button>
         </form>
       </div>
     </div>
-  </div>
+  </dialog>
 
   <!-- rename modal -->
-  <input type="checkbox" id="rename-pool-{{ pool.pk }}" class="modal-toggle" />
-  <div class="modal">
+  <dialog id="rename-pool-{{ pool.pk }}" class="modal">
     <div class="modal-box">
       <h3 class="font-bold text-lg mb-4">Rename Candidate Pool</h3>
       <form
         hx-post="{% url 'recruiters:candidate_pool_detail' pool.pk %}"
         hx-target="#pool-name-{{ pool.pk }}"
         hx-swap="outerHTML"
-        hx-on="htmx:afterRequest: document.getElementById('rename-pool-{{ pool.pk }}').checked=false"
+        hx-on="htmx:afterRequest: document.getElementById('rename-pool-{{ pool.pk }}').close()"
       >
         {% csrf_token %}
         <input type="text" name="name" value="{{ pool.name }}" class="input input-bordered w-full mb-4" />
         <div class="modal-action">
-          <label for="rename-pool-{{ pool.pk }}" class="btn">Cancel</label>
+          <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button>
           <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
     </div>
-  </div>
+  </dialog>
 </div>
 {% endblock %} 

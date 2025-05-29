@@ -35,16 +35,15 @@
                     <div class="flex flex-wrap gap-4 mb-6">
                         {% include 'core/components/fieldset_search.html' with label='Search Roles' id='role-search' name='role_search' icon_class='fas fa-search' widget_class='input input-bordered' placeholder='Search roles...' %}
                         
-                        <div class="dropdown">
-                            <label tabindex="0" class="btn">
-                                <i class="fas fa-filter mr-2"></i> Filters
-                            </label>
-                            <ul tabindex="0" class="dropdown-content z-10 menu p-2 shadow bg-base-100 rounded-box w-52">
-                                <li><a data-filter="all">All Roles</a></li>
-                                <li><a data-filter="interested">Interested</a></li>
-                                <li><a data-filter="not-interested">Not Interested</a></li>
-                            </ul>
-                        </div>
+                        <!-- Filters popover -->
+                        <button class="btn" popovertarget="role-filters-popover" style="anchor-name:--role-filter-anchor">
+                            <i class="fas fa-filter mr-2"></i> Filters
+                        </button>
+                        <ul popover="auto" id="role-filters-popover" style="position-anchor:--role-filter-anchor" class="menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                            <li><a data-filter="all">All Roles</a></li>
+                            <li><a data-filter="interested">Interested</a></li>
+                            <li><a data-filter="not-interested">Not Interested</a></li>
+                        </ul>
                     </div>
                     
                     <!-- Recommendations Grid -->

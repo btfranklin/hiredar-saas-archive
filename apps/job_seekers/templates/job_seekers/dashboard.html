@@ -34,17 +34,16 @@
                 
                 <!-- Talent Sheet Collapse Section - Only shown if in talent pool -->
                 <div id="talent-sheet-collapse-container" class="{% if not in_talent_pool %}hidden{% endif %} my-5">
-                    <div class="collapse collapse-arrow bg-base-100 border border-primary/10 rounded-lg">
-                        <input type="checkbox" class="peer" id="talent-sheet-collapse" onclick="checkLoadTalentSheet(this)"/> 
-                        <div class="collapse-title text-lg font-medium text-primary flex items-center">
+                    <details class="collapse collapse-arrow bg-base-100 border border-primary/10 rounded-lg" ontoggle="if(this.open) checkLoadTalentSheet(this)">
+                        <summary class="collapse-title text-lg font-medium text-primary flex items-center">
                             <i class="fas fa-id-card mr-2"></i> View Your Talent Sheet
-                        </div>
+                        </summary>
                         <div class="collapse-content" id="talent-sheet-content">
                             <div id="talent-sheet-loading" class="w-full flex justify-center py-4">
                                 <span class="loading loading-spinner loading-md"></span>
                             </div>
                         </div>
-                    </div>
+                    </details>
                 </div>
                 
                 <div class="mt-5 bg-primary/5 rounded-lg p-4 border-l-4 border-primary">
@@ -421,10 +420,9 @@ function getCookie(name) {
 }
 
 // Function to load talent sheet when the collapse is opened
-function checkLoadTalentSheet(checkbox) {
-    // Only load the content if the checkbox is checked (collapse is open)
-    // and the content hasn't been loaded yet
-    if (checkbox.checked && !checkbox.dataset.loaded) {
+function checkLoadTalentSheet(details) {
+    // Only load the content if the details element is open
+    if (details.open) {
         const contentElement = document.getElementById('talent-sheet-content');
         
         // Show loading indicator
@@ -441,8 +439,6 @@ function checkLoadTalentSheet(checkbox) {
         .then(html => {
             // Replace content with the response
             contentElement.innerHTML = html;
-            // Mark as loaded so we don't load it again
-            checkbox.dataset.loaded = 'true';
         })
         .catch(error => {
             console.error('Error loading talent sheet:', error);
