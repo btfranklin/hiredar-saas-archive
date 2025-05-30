@@ -185,6 +185,9 @@
                 </ul>
             </div>
             <div class="navbar-end">
+                <a href="mailto:feedback@hiredar.com" class="btn btn-primary btn-sm mr-2" title="Give Feedback">
+                    <i class="fas fa-envelope mr-1"></i> Give Feedback
+                </a>
                 <!-- Theme Toggle using standard JavaScript -->
                 <button 
                     id="theme-toggle" 
@@ -258,9 +261,7 @@
                             </div>
                         </div>
                         <ul tabindex="0" class="dropdown-content menu menu-sm mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                            {% if user.user_type == 'recruiter' %}
-                                <li><a href="{% url 'recruiters:job_openings_list' %}">Job Openings</a></li>
-                            {% else %}
+                            {% if user.user_type == 'job_seeker' %}
                                 <li><a href="{% url 'job_seekers:profile' %}">Profile</a></li>
                             {% endif %}
                             {% comment %}
