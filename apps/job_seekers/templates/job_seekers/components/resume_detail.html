@@ -1,0 +1,39 @@
+<div class="space-y-6">
+    {% if profile.professional_summary %}
+    <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+        <h2 class="text-xl font-bold mb-4">Professional Summary</h2>
+        <div class="prose max-w-none">
+            <p>{{ profile.professional_summary|linebreaks }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% include 'job_seekers/components/skills_list.html' with skills_list=profile.skills_list %}
+
+    {% if profile.experience %}
+    <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+        <h2 class="text-xl font-bold mb-4">Work Experience</h2>
+        <div class="prose max-w-none">
+            <p>{{ profile.experience|linebreaks }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if profile.education %}
+    <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+        <h2 class="text-xl font-bold mb-4">Education</h2>
+        <div class="prose max-w-none">
+            <p>{{ profile.education|linebreaks }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if profile.certifications %}
+    <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+        <h2 class="text-xl font-bold mb-4">Certifications</h2>
+        <div class="prose max-w-none">
+            <p>{{ profile.certifications|linebreaks }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div> 

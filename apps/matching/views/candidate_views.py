@@ -98,6 +98,8 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         context["job_opening"] = self.job_opening
         context["talent_sheet"] = self.object.talent_sheet
         context["job_seeker"] = self.object.talent_sheet.job_seeker
+        # Add selected tab from query parameters, default to 'talent_sheet'
+        context["tab"] = self.request.GET.get("tab", "talent_sheet")
 
         # Check if this candidate is already shortlisted for this job opening
         context["is_shortlisted"] = ShortlistedMatch.objects.filter(

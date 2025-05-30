@@ -64,41 +64,104 @@
             </div>
 
             <!-- Talent Sheet Sections -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+            {% if job_seeker.candidate_pool and job_seeker.candidate_pool.recruiter == request.user %}
+            <div id="match-tabs-container">
+              <div role="tablist" class="tabs tabs-box mb-6">
+                <a role="tab"
+                   class="tab tab-lg {% if tab == 'talent_sheet' %}tab-active{% endif %}"
+                   hx-get="?tab=talent_sheet"
+                   hx-target="#match-tabs-container"
+                   hx-swap="outerHTML" hx-select="#match-tabs-container"
+                   hx-push-url="true">
+                  Talent Sheet
+                </a>
+                <a role="tab"
+                   class="tab tab-lg {% if tab == 'resume' %}tab-active{% endif %}"
+                   hx-get="?tab=resume"
+                   hx-target="#match-tabs-container"
+                   hx-swap="outerHTML" hx-select="#match-tabs-container"
+                   hx-push-url="true">
+                  Resume
+                </a>
+              </div>
+              <div id="match-tab-content">
+                {% if tab == 'resume' %}
+                  {% include 'job_seekers/components/resume_detail.html' with profile=job_seeker %}
+                {% else %}
+                  <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                    <h2 class="text-xl font-bold mb-4">Promotional Summary</h2>
+                    <div class="prose max-w-none">
+                      <p>{{ talent_sheet.promotional_blurb|linebreaks }}</p>
+                    </div>
+                  </div>
+
+                  <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                    <h2 class="text-xl font-bold mb-4">Experience Overview</h2>
+                    <div class="prose max-w-none">
+                      <p>{{ talent_sheet.experience_overview|linebreaks }}</p>
+                    </div>
+                  </div>
+
+                  {% if talent_sheet.qualifications %}
+                  <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                    <h2 class="text-xl font-bold mb-4">Qualifications</h2>
+                    <div class="prose max-w-none">
+                      <p>{{ talent_sheet.qualifications|linebreaks }}</p>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  {% include 'job_seekers/components/skills_list.html' with skills_list=talent_sheet.job_seeker.skills_list %}
+
+                  {% if talent_sheet.ideal_roles %}
+                  <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                    <h2 class="text-xl font-bold mb-4">Ideal Roles</h2>
+                    <div class="flex flex-wrap gap-2">
+                      {% for role in talent_sheet.ideal_roles_list %}
+                      <div class="badge badge-lg">{{ role }}</div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+            {% else %}
+              <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Promotional Summary</h2>
                 <div class="prose max-w-none">
-                    <p>{{ talent_sheet.promotional_blurb|linebreaks }}</p>
+                  <p>{{ talent_sheet.promotional_blurb|linebreaks }}</p>
                 </div>
-            </div>
+              </div>
 
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+              <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Experience Overview</h2>
                 <div class="prose max-w-none">
-                    <p>{{ talent_sheet.experience_overview|linebreaks }}</p>
+                  <p>{{ talent_sheet.experience_overview|linebreaks }}</p>
                 </div>
-            </div>
+              </div>
 
-            {% if talent_sheet.qualifications %}
-            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+              {% if talent_sheet.qualifications %}
+              <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Qualifications</h2>
                 <div class="prose max-w-none">
-                    <p>{{ talent_sheet.qualifications|linebreaks }}</p>
+                  <p>{{ talent_sheet.qualifications|linebreaks }}</p>
                 </div>
-            </div>
-            {% endif %}
+              </div>
+              {% endif %}
 
-            {% include 'job_seekers/components/skills_list.html' with skills_list=talent_sheet.job_seeker.skills_list %}
+              {% include 'job_seekers/components/skills_list.html' with skills_list=talent_sheet.job_seeker.skills_list %}
 
-            <!-- Ideal Roles Section -->
-            {% if talent_sheet.ideal_roles %}
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
+              {% if talent_sheet.ideal_roles %}
+              <div class="bg-base-200 rounded-box p-6 shadow-md">
                 <h2 class="text-xl font-bold mb-4">Ideal Roles</h2>
                 <div class="flex flex-wrap gap-2">
-                    {% for role in talent_sheet.ideal_roles_list %}
-                        <div class="badge badge-lg">{{ role }}</div>
-                    {% endfor %}
+                  {% for role in talent_sheet.ideal_roles_list %}
+                  <div class="badge badge-lg">{{ role }}</div>
+                  {% endfor %}
                 </div>
-            </div>
+              </div>
+              {% endif %}
             {% endif %}
         </div>
 
@@ -121,8 +184,6 @@
                             {% endfor %}
                         </div>
                     </div>
-                    
-                    <div class="divider my-2"></div>
                     
                     {% if candidate_match.is_analyzed %}
                         {% include 'matching/partials/analysis_complete.html' %}
