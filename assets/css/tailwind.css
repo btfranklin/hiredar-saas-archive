@@ -1,12 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* Custom fixes for DaisyUI v5 + Tailwind v4 integration */
-.avatar.placeholder > div,
-.avatar-placeholder > div {
-  @apply flex items-center justify-center;
-}
-
 /* Matching lens color utilities */
 @layer utilities {
   .radial-progress[data-lens="holistic"] { --tw-text-opacity: 1; color: #0ea5e9; }

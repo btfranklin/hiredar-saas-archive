@@ -118,11 +118,9 @@
                     {% if conversation.messages.all %}
                         {% for message in conversation.messages.all %}
                             <div class="chat {% if message.sender == request.user %}chat-end{% endif %}">
-                                <div class="chat-image avatar">
-                                    <div class="w-10 rounded-full">
-                                        <div class="bg-neutral text-neutral-content w-full h-full flex items-center justify-center">
-                                            <span class="text-sm">{{ message.sender.get_initials }}</span>
-                                        </div>
+                                <div class="chat-image avatar avatar-placeholder">
+                                    <div class="bg-neutral text-neutral-content rounded-full w-10">
+                                        <span class="text-sm">{{ message.sender.get_initials }}</span>
                                     </div>
                                 </div>
                                 <div class="chat-header">
