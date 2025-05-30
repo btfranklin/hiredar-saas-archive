@@ -1,4 +1,3 @@
-import uuid
 from typing import Any, cast
 from zipfile import ZipFile
 
@@ -90,6 +89,8 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
 
         # Save bulk upload first
         bulk.save()
+        recruiter_profile.total_bulk_uploads_performed += 1
+        recruiter_profile.save(update_fields=["total_bulk_uploads_performed"])
         self.object = bulk
 
         # ----------------------------------------------------------

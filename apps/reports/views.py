@@ -47,6 +47,9 @@ def export_csv(request: HttpRequest, job_id: int) -> HttpResponse:
     response = HttpResponse(csv_data, content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
+    job.recruiter.total_shortlist_csvs_generated += 1
+    job.recruiter.save(update_fields=["total_shortlist_csvs_generated"])
+
     return response
 
 
@@ -80,5 +83,8 @@ def export_pdf(request: HttpRequest, job_id: int) -> HttpResponse:
     filename = get_export_filename(job, "pdf")
     response = HttpResponse(pdf_data, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    job.recruiter.total_shortlist_pdfs_generated += 1
+    job.recruiter.save(update_fields=["total_shortlist_pdfs_generated"])
 
     return response

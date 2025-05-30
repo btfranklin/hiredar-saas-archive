@@ -9,6 +9,7 @@ from typing import Any, cast
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import F
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -21,7 +22,7 @@ from apps.job_seekers.models import JobSeekerProfile as JobSeeker
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.matching.tasks.analyze_candidate_match import analyze_candidate_match
 from apps.messaging.models import Conversation
-from apps.recruiters.models import JobOpening
+from apps.recruiters.models import JobOpening, RecruiterProfile
 
 
 @method_decorator(login_required, name="dispatch")  # type: ignore
@@ -221,10 +222,16 @@ def add_to_shortlist(request: HttpRequest, job_id: int, candidate_id: int):
 
     if existing:
         existing.delete()
+        RecruiterProfile.objects.filter(pk=job_opening.recruiter.pk).update(
+            total_candidates_shortlisted=F("total_candidates_shortlisted") - 1
+        )
         is_shortlisted = False
     else:
         ShortlistedMatch.objects.create(
             job_opening=job_opening, candidate_match=candidate_match
+        )
+        RecruiterProfile.objects.filter(pk=job_opening.recruiter.pk).update(
+            total_candidates_shortlisted=F("total_candidates_shortlisted") + 1
         )
         is_shortlisted = True
 
@@ -276,6 +283,9 @@ def remove_from_shortlist(request: HttpRequest, job_id: int, shortlist_id: int):
         )
 
     shortlist_obj.delete()
+    RecruiterProfile.objects.filter(pk=shortlist_obj.job_opening.recruiter.pk).update(
+        total_candidates_shortlisted=F("total_candidates_shortlisted") - 1
+    )
 
     if request.headers.get("HX-Request") == "true":
         # Inform front-end to refresh shortlist tab and counts

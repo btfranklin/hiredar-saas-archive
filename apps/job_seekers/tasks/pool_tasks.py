@@ -7,7 +7,7 @@ from django.db.models import F
 from apps.core.models import TaskMeta
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import CandidatePool, JobSeekerProfile
-from apps.recruiters.models import BulkResumeUpload
+from apps.recruiters.models import BulkResumeUpload, RecruiterProfile
 
 # Alias for decoupled task queue
 async_task = safe_async_task
@@ -31,6 +31,7 @@ def process_resume_for_pool(
     """
     try:
         candidate_pool = CandidatePool.objects.get(pk=pool_id)
+        bulk = BulkResumeUpload.objects.select_related("recruiter").get(pk=bulk_pk)
     except CandidatePool.DoesNotExist:
         return {
             "status": "error",
@@ -58,6 +59,9 @@ def process_resume_for_pool(
             BulkResumeUpload.objects.filter(pk=bulk_pk).update(
                 processed_profiles=F("processed_profiles") + 1
             )
+            RecruiterProfile.objects.filter(pk=bulk.recruiter.pk).update(
+                total_resumes_processed=F("total_resumes_processed") + 1
+            )
             return {
                 "status": "error",
                 "message": result.get("message", "Failed to process resume"),
@@ -80,6 +84,9 @@ def process_resume_for_pool(
             # Mark this file as processed (even though it failed) so we don't hang the bulk record
             BulkResumeUpload.objects.filter(pk=bulk_pk).update(
                 processed_profiles=F("processed_profiles") + 1
+            )
+            RecruiterProfile.objects.filter(pk=bulk.recruiter.pk).update(
+                total_resumes_processed=F("total_resumes_processed") + 1
             )
             return {
                 "status": "error",
@@ -124,6 +131,9 @@ def process_resume_for_pool(
         # Update bulk upload processed_profiles count
         BulkResumeUpload.objects.filter(pk=bulk_pk).update(
             processed_profiles=F("processed_profiles") + 1
+        )
+        RecruiterProfile.objects.filter(pk=bulk.recruiter.pk).update(
+            total_resumes_processed=F("total_resumes_processed") + 1
         )
         # If all profiles processed, delete the bulk upload and associated files
         BulkResumeUpload.objects.filter(

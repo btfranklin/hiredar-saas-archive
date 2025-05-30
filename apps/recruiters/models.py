@@ -31,6 +31,26 @@ class RecruiterProfile(models.Model):
         default=100,
         help_text="Remaining resume processing credits available",
     )
+    total_resumes_processed = models.PositiveIntegerField(
+        default=0,
+        help_text="Total resumes ever processed",
+    )
+    total_bulk_uploads_performed = models.PositiveIntegerField(
+        default=0,
+        help_text="Total bulk resume uploads performed",
+    )
+    total_candidates_shortlisted = models.PositiveIntegerField(
+        default=0,
+        help_text="Total candidates shortlisted",
+    )
+    total_shortlist_csvs_generated = models.PositiveIntegerField(
+        default=0,
+        help_text="Total shortlist CSVs generated",
+    )
+    total_shortlist_pdfs_generated = models.PositiveIntegerField(
+        default=0,
+        help_text="Total shortlist PDFs generated",
+    )
 
     def __str__(self) -> str:
         return f"Recruiter: {self.user.email}"
