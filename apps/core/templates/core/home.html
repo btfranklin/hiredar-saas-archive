@@ -4,7 +4,7 @@
 {% block title %}Stop Sifting. Start Matching. | Hiredar for Recruiters{% endblock %}
 
 {% block content %}
-<!-- 1️⃣ Hero Section -->
+<!-- Hero Section -->
 <section class="hero-gradient text-white">
   <div class="container mx-auto py-20 px-4 flex flex-col md:flex-row items-center gap-12">
     <div class="flex-1">
@@ -24,29 +24,17 @@
   </div>
 </section>
 
-<!-- 5️⃣ Reassurance Bar -->
-<section class="py-6 bg-base-100 border-t border-b border-base-200">
-  <div class="container mx-auto px-4 flex flex-col md:flex-row gap-6 md:gap-12 text-center justify-center">
-    <div class="flex items-center gap-2 justify-center"><i class="fas fa-shield-alt text-primary"></i> Secure & Confidential</div>
-    <div class="flex items-center gap-2 justify-center"><i class="fas fa-coins text-primary"></i> 100 Free Credits on Signup</div>
-    <div class="flex items-center gap-2 justify-center"><i class="fas fa-credit-card text-primary"></i> No Credit Card Required</div>
-  </div>
-</section>
-
-{% comment %}
-<!-- 2️⃣ 60-second Explainer Video -->
+<!-- 60-second Explainer Video -->
 <section id="video-demo" class="py-16 bg-base-100">
   <div class="container mx-auto px-4">
-    <h2 class="text-3xl font-bold text-center mb-6">Watch Hiredar Work (60&nbsp;sec)</h2>
-    <div class="aspect-w-16 aspect-h-9 mx-auto max-w-4xl rounded-lg shadow-xl overflow-hidden">
-      <!-- Replace the placeholder below with your real embed code -->
-      VIDEO_EMBED_CODE_HERE
+    <h2 class="text-3xl font-bold text-center mb-6">Watch Hiredar Work</h2>
+    <div class="relative w-full max-w-4xl mx-auto rounded-lg shadow-xl overflow-hidden" style="aspect-ratio:16/9">
+      <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube-nocookie.com/embed/V5_H6p6rv-E?rel=0&origin={{ request.scheme }}://{{ request.get_host }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
     </div>
   </div>
 </section>
-{% endcomment %}
 
-<!-- 3️⃣ Screenshot Walk-Through -->
+<!-- Screenshot Walk-Through -->
 <section class="py-20" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:#fff;">
   <div class="container mx-auto px-4">
     <h2 class="text-3xl font-bold text-center mb-16">
@@ -126,7 +114,7 @@
   </div>
 </section>
 
-<!-- 4️⃣ Before / After (unchanged copy, still accurate) -->
+<!-- Before / After -->
 <section class="py-16 bg-base-200">
   <div class="container mx-auto px-4">
     <h2 class="text-3xl font-bold text-center mb-10">Before & After Hiredar</h2>
@@ -157,7 +145,16 @@
   </div>
 </section>
 
-<!-- 6️⃣ Call to Action Footer -->
+<!-- Reassurance Bar -->
+<section class="py-6 bg-base-100 border-t border-b border-base-200">
+  <div class="container mx-auto px-4 flex flex-col md:flex-row gap-6 md:gap-12 text-center justify-center">
+    <div class="flex items-center gap-2 justify-center"><i class="fas fa-shield-alt text-primary"></i> Secure & Confidential</div>
+    <div class="flex items-center gap-2 justify-center"><i class="fas fa-coins text-primary"></i> 100 Free Credits on Signup</div>
+    <div class="flex items-center gap-2 justify-center"><i class="fas fa-credit-card text-primary"></i> No Credit Card Required</div>
+  </div>
+</section>
+
+<!-- Call to Action Footer -->
 <section class="py-20 bg-base-100">
   <div class="container mx-auto px-4 text-center">
     <h2 class="text-4xl font-bold mb-8">Ready to Focus on Candidates—not Paperwork?</h2>
@@ -169,7 +166,7 @@
 </section>
 
 {% comment %}
-<!-- 7️⃣ Social Proof (add real quotes when available) -->
+<!-- Social Proof (add real quotes when available) -->
 <section class="py-16 bg-base-100">
   <div class="container mx-auto px-4 text-center">
     <h2 class="text-3xl font-bold mb-8">Trusted by Recruiters Like You</h2>
