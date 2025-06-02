@@ -247,16 +247,16 @@ def add_to_shortlist(request: HttpRequest, job_id: int, candidate_id: int):
             button_html = (
                 f'<form hx-post="{toggle_url}" hx-target="this" hx-swap="outerHTML">'
                 f"{csrf_input}"
-                '<button type="submit" class="btn btn-success btn-sm">'
-                '<i class="fas fa-check mr-1"></i> In Shortlist'
+                '<button type="submit" class="btn btn-success">'
+                '<i class="fas fa-check mr-2"></i> In Shortlist'
                 "</button></form>"
             )
         else:
             button_html = (
                 f'<form hx-post="{toggle_url}" hx-target="this" hx-swap="outerHTML">'
                 f"{csrf_input}"
-                '<button type="submit" class="btn btn-outline btn-sm">'
-                '<i class="fas fa-plus mr-1"></i> Add to Shortlist'
+                '<button type="submit" class="btn btn-outline">'
+                '<i class="fas fa-plus mr-2"></i> Add to Shortlist'
                 "</button></form>"
             )
 

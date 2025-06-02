@@ -29,7 +29,7 @@
             {% if is_shortlisted %}
                 <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker.id %}" hx-target="this" hx-swap="outerHTML">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-md btn-success">
                         <i class="fas fa-check mr-2"></i> In Shortlist
                     </button>
                 </form>
