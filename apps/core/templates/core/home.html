@@ -10,17 +10,32 @@
     <div class="flex-1">
       <h1 class="text-5xl font-bold mb-4">Stop Sifting. Start Matching.</h1>
       <p class="text-xl mb-8 max-w-lg">
-        Upload a single ZIP of résumés and get your top-ranked candidates in
-        <span class="font-semibold">minutes</span>—scored across skills,
-        experience, and role fit.
+        Upload a ZIP of résumés and see your top-fit candidates in
+        <span class="font-semibold">just&nbsp;minutes</span>—
+        scored across skills, experience, and role fit.
       </p>
-      <div class="flex flex-col sm:flex-row gap-4">
-        <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Try It Free</a>
-        <a href="#video-demo" class="btn btn-outline btn-lg">See It in&nbsp;Action</a>
+
+      <!-- order reversed on mobile so the primary CTA is always first -->
+      <div class="flex flex-col-reverse sm:flex-row gap-4">
+        <a href="{% url 'authentication:recruiter_signup' %}"
+           class="btn btn-secondary btn-lg">
+          Get&nbsp;100&nbsp;Free&nbsp;Credits
+        </a>
+        <a href="#video-demo" class="btn btn-outline btn-lg">
+          See&nbsp;It&nbsp;in&nbsp;Action
+        </a>
       </div>
+
+      <!-- micro-reassurance under buttons -->
+      <p class="text-sm opacity-80 mt-2">
+        No subscription · Credits never expire · Pay only when you process
+      </p>
     </div>
+
     <div class="flex-1 hidden md:block">
-      <img src="{% static 'img/hero-image.png' %}" alt="Hiredar Dashboard Preview" class="rounded-lg shadow-xl w-full">
+      <img src="{% static 'img/hero-image.png' %}"
+           alt="Hiredar Match View Screenshot"
+           class="rounded-lg shadow-xl w-full">
     </div>
   </div>
 </section>
@@ -39,7 +54,12 @@
 <section class="py-20" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:#fff;">
   <div class="container mx-auto px-4">
     <h2 class="text-3xl font-bold text-center mb-16">
-      From Upload&nbsp;→&nbsp;Match&nbsp;→&nbsp;Shortlist&nbsp;→&nbsp;Export
+      <span class="hidden sm:inline">
+        From Upload&nbsp;→&nbsp;Match&nbsp;→&nbsp;Shortlist&nbsp;→&nbsp;Export
+      </span>
+      <span class="sm:hidden">
+        Upload&nbsp;•&nbsp;Match&nbsp;•&nbsp;Shortlist&nbsp;•&nbsp;Export
+      </span>
     </h2>
     <div class="grid md:grid-cols-2 gap-12">
 
@@ -151,7 +171,7 @@
   <div class="container mx-auto px-4 flex flex-col md:flex-row gap-6 md:gap-12 text-center justify-center">
     <div class="flex items-center gap-2 justify-center"><i class="fas fa-shield-alt text-primary"></i> Secure & Confidential</div>
     <div class="flex items-center gap-2 justify-center"><i class="fas fa-coins text-primary"></i> 100 Free Credits on Signup</div>
-    <div class="flex items-center gap-2 justify-center"><i class="fas fa-credit-card text-primary"></i> No Credit Card Required</div>
+    <div class="flex items-center gap-2 justify-center"><i class="fas fa-credit-card text-primary"></i> No Subscription Fees</div>
   </div>
 </section>
 
@@ -159,9 +179,9 @@
 <section class="py-20 bg-base-100">
   <div class="container mx-auto px-4 text-center">
     <h2 class="text-4xl font-bold mb-8">Ready to Focus on Candidates—not Paperwork?</h2>
-    <p class="text-xl mb-8 max-w-3xl mx-auto">Create your free account in under a minute and start matching right away.</p>
+    <p class="text-xl mb-8 max-w-3xl mx-auto">Open your free account now and claim 100 credits—use them whenever you need.</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Start Free Trial</a>
+      <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Create Free Account</a>
     </div>
   </div>
 </section>
