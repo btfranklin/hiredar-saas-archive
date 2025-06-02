@@ -78,6 +78,7 @@ class CustomAuthenticationForm(AuthenticationForm):
                 raise forms.ValidationError(
                     self.error_messages["invalid_login"],
                     code="invalid_login",
+                    params={"username": self.fields["username"].label},
                 )
             else:
                 self.confirm_login_allowed(self.user_cache)
