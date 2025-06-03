@@ -20,12 +20,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.authentication.views.oauth_mobile import (
-    LinkedInMobileFinishAPI,
-    LinkedInMobileFinishView,
-    LinkedInMobileRedirectView,
-)
-
 urlpatterns = [
     path("admin/", admin.site.urls),
     # Authentication (django-allauth)
@@ -39,20 +33,6 @@ urlpatterns = [
     path("reports/", include("apps.reports.urls", namespace="reports")),
     # Home page and core functionality
     path("", include("apps.core.urls", namespace="core")),
-    # LinkedIn mobile OAuth flow
-    path(
-        "linkedin-mobile/", LinkedInMobileRedirectView.as_view(), name="linkedin_mobile"
-    ),
-    path(
-        "linkedin-mobile-finish/",
-        LinkedInMobileFinishView.as_view(),
-        name="linkedin_mobile_finish",
-    ),
-    path(
-        "api/auth/linkedin/mobile-finish",
-        LinkedInMobileFinishAPI.as_view(),
-        name="linkedin_mobile_finish_api",
-    ),
 ]
 
 # Serve media files in development
