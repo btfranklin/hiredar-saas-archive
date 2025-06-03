@@ -32,6 +32,16 @@ class JobSeekerSignupView(SignupView):
         """Return the profile creation URL after successful signup."""
         return reverse("job_seekers:profile_create")
 
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        from django.conf import settings
+
+        context["linkedin_client_id"] = settings.LI_CLIENT_ID
+        context["linkedin_desktop_redirect"] = settings.LI_DESKTOP_REDIRECT
+        context["linkedin_mobile_redirect"] = settings.LI_MOBILE_REDIRECT
+        context["user_type"] = "job_seeker"
+        return context
+
 
 class RecruiterSignupView(SignupView):
     """
@@ -47,6 +57,16 @@ class RecruiterSignupView(SignupView):
     def get_success_url(self) -> str:
         """Return the recruiter dashboard URL after successful signup."""
         return reverse("recruiters:dashboard")
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        from django.conf import settings
+
+        context["linkedin_client_id"] = settings.LI_CLIENT_ID
+        context["linkedin_desktop_redirect"] = settings.LI_DESKTOP_REDIRECT
+        context["linkedin_mobile_redirect"] = settings.LI_MOBILE_REDIRECT
+        context["user_type"] = "recruiter"
+        return context
 
 
 class CustomLoginView(SuccessMessageMixin, LoginView):

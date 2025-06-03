@@ -592,3 +592,16 @@ STRIPE_PRICE_IDS = {
     500: os.getenv("STRIPE_PRICE_ID_500", "prod_SD8mpUBQ3863q0"),
     1000: os.getenv("STRIPE_PRICE_ID_1000", "prod_SD8oe2ca7Wd7O1"),
 }
+
+# LinkedIn mobile OAuth settings
+LI_CLIENT_ID = os.environ.get("LINKEDIN_CLIENT_ID", "")
+LI_CLIENT_SECRET = os.environ.get("LINKEDIN_CLIENT_SECRET", "")
+# Desktop OAuth redirect URI (existing allauth callback)
+LI_DESKTOP_REDIRECT = os.environ.get(
+    "LINKEDIN_DESKTOP_REDIRECT",
+    "https://hiredar.com/accounts/oidc/linkedin/login/callback/",
+)
+# Mobile OAuth redirect URI (universal-link stub)
+LI_MOBILE_REDIRECT = os.environ.get(
+    "LINKEDIN_MOBILE_REDIRECT", "https://hiredar.com/linkedin-mobile/"
+)
