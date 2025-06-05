@@ -237,7 +237,7 @@ files = [
 
 [[package]]
 name = "celery"
-version = "5.5.2"
+version = "5.5.3"
 requires_python = ">=3.8"
 summary = "Distributed Task Queue."
 groups = ["default", "dev"]
@@ -253,24 +253,24 @@ dependencies = [
     "vine<6.0,>=5.1.0",
 ]
 files = [
-    {file = "celery-5.5.2-py3-none-any.whl", hash = "sha256:54425a067afdc88b57cd8d94ed4af2ffaf13ab8c7680041ac2c4ac44357bdf4c"},
-    {file = "celery-5.5.2.tar.gz", hash = "sha256:4d6930f354f9d29295425d7a37261245c74a32807c45d764bedc286afd0e724e"},
+    {file = "celery-5.5.3-py3-none-any.whl", hash = "sha256:0b5761a07057acee94694464ca482416b959568904c9dfa41ce8413a7d65d525"},
+    {file = "celery-5.5.3.tar.gz", hash = "sha256:6c972ae7968c2b5281227f01c3a3f984037d21c5129d07bf3550cc2afc6b10a5"},
 ]
 
 [[package]]
 name = "celery"
-version = "5.5.2"
+version = "5.5.3"
 extras = ["sqlalchemy"]
 requires_python = ">=3.8"
 summary = "Distributed Task Queue."
 groups = ["default", "dev"]
 dependencies = [
-    "celery==5.5.2",
-    "sqlalchemy<2.1,>=1.4.48",
+    "celery==5.5.3",
+    "kombu[sqlalchemy]",
 ]
 files = [
-    {file = "celery-5.5.2-py3-none-any.whl", hash = "sha256:54425a067afdc88b57cd8d94ed4af2ffaf13ab8c7680041ac2c4ac44357bdf4c"},
-    {file = "celery-5.5.2.tar.gz", hash = "sha256:4d6930f354f9d29295425d7a37261245c74a32807c45d764bedc286afd0e724e"},
+    {file = "celery-5.5.3-py3-none-any.whl", hash = "sha256:0b5761a07057acee94694464ca482416b959568904c9dfa41ce8413a7d65d525"},
+    {file = "celery-5.5.3.tar.gz", hash = "sha256:6c972ae7968c2b5281227f01c3a3f984037d21c5129d07bf3550cc2afc6b10a5"},
 ]
 
 [[package]]
@@ -565,7 +565,7 @@ files = [
 
 [[package]]
 name = "django"
-version = "5.2.1"
+version = "5.2.2"
 requires_python = ">=3.10"
 summary = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 groups = ["default", "dev"]
@@ -575,13 +575,13 @@ dependencies = [
     "tzdata; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "django-5.2.1-py3-none-any.whl", hash = "sha256:a9b680e84f9a0e71da83e399f1e922e1ab37b2173ced046b541c72e1589a5961"},
-    {file = "django-5.2.1.tar.gz", hash = "sha256:57fe1f1b59462caed092c80b3dd324fd92161b620d59a9ba9181c34746c97284"},
+    {file = "django-5.2.2-py3-none-any.whl", hash = "sha256:997ef2162d04ead6869551b22cde4e06da1f94cf595f4af3f3d3afeae1f3f6fe"},
+    {file = "django-5.2.2.tar.gz", hash = "sha256:85852e517f84435e9b13421379cd6c43ef5b48a9c8b391d29a26f7900967e952"},
 ]
 
 [[package]]
 name = "django-allauth"
-version = "65.8.1"
+version = "65.9.0"
 requires_python = ">=3.8"
 summary = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
 groups = ["default", "dev"]
@@ -590,7 +590,7 @@ dependencies = [
     "asgiref>=3.8.1",
 ]
 files = [
-    {file = "django_allauth-65.8.1.tar.gz", hash = "sha256:38f54708eb06e542af33beeb553e0abb0d7524fded43a5e42c078f20d8e9fc18"},
+    {file = "django_allauth-65.9.0.tar.gz", hash = "sha256:a06bca9974df44321e94c33bcf770bb6f924d1a44b57defbce4d7ec54a55483e"},
 ]
 
 [[package]]
@@ -1188,19 +1188,36 @@ files = [
 
 [[package]]
 name = "kombu"
-version = "5.5.3"
+version = "5.5.4"
 requires_python = ">=3.8"
 summary = "Messaging library for Python."
 groups = ["default", "dev"]
 dependencies = [
     "amqp<6.0.0,>=5.1.1",
     "backports-zoneinfo[tzdata]>=0.2.1; python_version < \"3.9\"",
+    "packaging",
     "tzdata>=2025.2; python_version >= \"3.9\"",
     "vine==5.1.0",
 ]
 files = [
-    {file = "kombu-5.5.3-py3-none-any.whl", hash = "sha256:5b0dbceb4edee50aa464f59469d34b97864be09111338cfb224a10b6a163909b"},
-    {file = "kombu-5.5.3.tar.gz", hash = "sha256:021a0e11fcfcd9b0260ef1fb64088c0e92beb976eb59c1dfca7ddd4ad4562ea2"},
+    {file = "kombu-5.5.4-py3-none-any.whl", hash = "sha256:a12ed0557c238897d8e518f1d1fdf84bd1516c5e305af2dacd85c2015115feb8"},
+    {file = "kombu-5.5.4.tar.gz", hash = "sha256:886600168275ebeada93b888e831352fe578168342f0d1d5833d88ba0d847363"},
+]
+
+[[package]]
+name = "kombu"
+version = "5.5.4"
+extras = ["sqlalchemy"]
+requires_python = ">=3.8"
+summary = "Messaging library for Python."
+groups = ["default", "dev"]
+dependencies = [
+    "kombu==5.5.4",
+    "sqlalchemy<2.1,>=1.4.48",
+]
+files = [
+    {file = "kombu-5.5.4-py3-none-any.whl", hash = "sha256:a12ed0557c238897d8e518f1d1fdf84bd1516c5e305af2dacd85c2015115feb8"},
+    {file = "kombu-5.5.4.tar.gz", hash = "sha256:886600168275ebeada93b888e831352fe578168342f0d1d5833d88ba0d847363"},
 ]
 
 [[package]]
@@ -1356,24 +1373,25 @@ files = [
 
 [[package]]
 name = "mypy"
-version = "1.15.0"
+version = "1.16.0"
 requires_python = ">=3.9"
 summary = "Optional static typing for Python"
 groups = ["dev"]
 dependencies = [
     "mypy-extensions>=1.0.0",
+    "pathspec>=0.9.0",
     "tomli>=1.1.0; python_version < \"3.11\"",
     "typing-extensions>=4.6.0",
 ]
 files = [
-    {file = "mypy-1.15.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:aea39e0583d05124836ea645f412e88a5c7d0fd77a6d694b60d9b6b2d9f184fd"},
-    {file = "mypy-1.15.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:2f2147ab812b75e5b5499b01ade1f4a81489a147c01585cda36019102538615f"},
-    {file = "mypy-1.15.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ce436f4c6d218a070048ed6a44c0bbb10cd2cc5e272b29e7845f6a2f57ee4464"},
-    {file = "mypy-1.15.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8023ff13985661b50a5928fc7a5ca15f3d1affb41e5f0a9952cb68ef090b31ee"},
-    {file = "mypy-1.15.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:1124a18bc11a6a62887e3e137f37f53fbae476dc36c185d549d4f837a2a6a14e"},
-    {file = "mypy-1.15.0-cp312-cp312-win_amd64.whl", hash = "sha256:171a9ca9a40cd1843abeca0e405bc1940cd9b305eaeea2dda769ba096932bb22"},
-    {file = "mypy-1.15.0-py3-none-any.whl", hash = "sha256:5469affef548bd1895d86d3bf10ce2b44e33d86923c29e4d675b3e323437ea3e"},
-    {file = "mypy-1.15.0.tar.gz", hash = "sha256:404534629d51d3efea5c800ee7c42b72a6554d6c400e6a79eafe15d11341fd43"},
+    {file = "mypy-1.16.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:c5436d11e89a3ad16ce8afe752f0f373ae9620841c50883dc96f8b8805620b13"},
+    {file = "mypy-1.16.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:f2622af30bf01d8fc36466231bdd203d120d7a599a6d88fb22bdcb9dbff84090"},
+    {file = "mypy-1.16.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d045d33c284e10a038f5e29faca055b90eee87da3fc63b8889085744ebabb5a1"},
+    {file = "mypy-1.16.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b4968f14f44c62e2ec4a038c8797a87315be8df7740dc3ee8d3bfe1c6bf5dba8"},
+    {file = "mypy-1.16.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:eb14a4a871bb8efb1e4a50360d4e3c8d6c601e7a31028a2c79f9bb659b63d730"},
+    {file = "mypy-1.16.0-cp312-cp312-win_amd64.whl", hash = "sha256:bd4e1ebe126152a7bbaa4daedd781c90c8f9643c79b9748caa270ad542f12bec"},
+    {file = "mypy-1.16.0-py3-none-any.whl", hash = "sha256:29e1499864a3888bca5c1542f2d7232c6e586295183320caa95758fc84034031"},
+    {file = "mypy-1.16.0.tar.gz", hash = "sha256:84b94283f817e2aa6350a14b4a8fb2a35a53c286f97c9d30f53b63620e7af8ab"},
 ]
 
 [[package]]
@@ -1724,7 +1742,7 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.82.0"
+version = "1.84.0"
 requires_python = ">=3.8"
 summary = "The official Python library for the openai API"
 groups = ["default", "dev"]
@@ -1739,8 +1757,8 @@ dependencies = [
     "typing-extensions<5,>=4.11",
 ]
 files = [
-    {file = "openai-1.82.0-py3-none-any.whl", hash = "sha256:8c40647fea1816516cb3de5189775b30b5f4812777e40b8768f361f232b61b30"},
-    {file = "openai-1.82.0.tar.gz", hash = "sha256:b0a009b9a58662d598d07e91e4219ab4b1e3d8ba2db3f173896a92b9b874d1a7"},
+    {file = "openai-1.84.0-py3-none-any.whl", hash = "sha256:7ec4436c3c933d68dc0f5a0cef0cb3dbc0864a54d62bddaf2ed5f3d521844711"},
+    {file = "openai-1.84.0.tar.gz", hash = "sha256:4caa43bdab262cc75680ce1a2322cfc01626204074f7e8d9939ab372acf61698"},
 ]
 
 [[package]]
@@ -1819,6 +1837,17 @@ files = [
     {file = "pandas-2.2.3-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:062309c1b9ea12a50e8ce661145c6aab431b1e99530d3cd60640e255778bd43a"},
     {file = "pandas-2.2.3-cp312-cp312-win_amd64.whl", hash = "sha256:59ef3764d0fe818125a5097d2ae867ca3fa64df032331b7e0917cf5d7bf66b13"},
     {file = "pandas-2.2.3.tar.gz", hash = "sha256:4f18ba62b61d7e192368b84517265a99b4d7ee8912f8708660fb4a366cc82667"},
+]
+
+[[package]]
+name = "pathspec"
+version = "0.12.1"
+requires_python = ">=3.8"
+summary = "Utility library for gitignore style pattern matching of file paths."
+groups = ["dev"]
+files = [
+    {file = "pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08"},
+    {file = "pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712"},
 ]
 
 [[package]]
@@ -1931,12 +1960,13 @@ files = [
 
 [[package]]
 name = "pinecone"
-version = "7.0.1"
+version = "7.0.2"
 requires_python = "<4.0,>=3.9"
 summary = "Pinecone client and SDK"
 groups = ["default", "dev"]
 dependencies = [
     "certifi>=2019.11.17",
+    "pinecone-plugin-assistant<2.0.0,>=1.6.0",
     "pinecone-plugin-interface<0.0.8,>=0.0.7",
     "python-dateutil>=2.5.3",
     "typing-extensions>=3.7.4",
@@ -1944,8 +1974,23 @@ dependencies = [
     "urllib3>=1.26.5; python_version ~= \"3.12\"",
 ]
 files = [
-    {file = "pinecone-7.0.1-py3-none-any.whl", hash = "sha256:ce7b0dab3c9f7d81e75b24c13fcbca4a51371e08021faaecaf0cd9a45ca1be6c"},
-    {file = "pinecone-7.0.1.tar.gz", hash = "sha256:49ff7b0f5be4a2ddec5aaa709758a9f2df56baa58ad46507d081409e246a81ec"},
+    {file = "pinecone-7.0.2-py3-none-any.whl", hash = "sha256:c112c6be314178da13701e92df77d9e32db4f92b5e8a4d9b3e0b071abc49fe39"},
+    {file = "pinecone-7.0.2.tar.gz", hash = "sha256:ff17f6ac798979adf0df0817e8f1d356a3363768f42e341b2a47f2bf895eb46a"},
+]
+
+[[package]]
+name = "pinecone-plugin-assistant"
+version = "1.6.1"
+requires_python = "<4.0,>=3.9"
+summary = "Assistant plugin for Pinecone SDK"
+groups = ["default", "dev"]
+dependencies = [
+    "packaging<25.0,>=24.2",
+    "requests<3.0.0,>=2.32.3",
+]
+files = [
+    {file = "pinecone_plugin_assistant-1.6.1-py3-none-any.whl", hash = "sha256:bbe6dd33d6f4f3b038178a1e2a8309fdc0b56d21cfc09f1f19b2749c2cebadc9"},
+    {file = "pinecone_plugin_assistant-1.6.1.tar.gz", hash = "sha256:d05826327bd8b715451b3b2c84ce335c41cb23fd7d9fb9f92f3e9965d5bab06b"},
 ]
 
 [[package]]
@@ -1961,7 +2006,7 @@ files = [
 
 [[package]]
 name = "pinecone"
-version = "7.0.1"
+version = "7.0.2"
 extras = ["grpc"]
 requires_python = "<4.0,>=3.9"
 summary = "Pinecone client and SDK"
@@ -1972,13 +2017,13 @@ dependencies = [
     "grpcio>=1.59.0; python_version ~= \"3.11\"",
     "grpcio>=1.68.0; python_version ~= \"3.13\"",
     "lz4>=3.1.3",
-    "pinecone==7.0.1",
+    "pinecone==7.0.2",
     "protobuf<6.0,>=5.29",
     "protoc-gen-openapiv2<0.0.2,>=0.0.1",
 ]
 files = [
-    {file = "pinecone-7.0.1-py3-none-any.whl", hash = "sha256:ce7b0dab3c9f7d81e75b24c13fcbca4a51371e08021faaecaf0cd9a45ca1be6c"},
-    {file = "pinecone-7.0.1.tar.gz", hash = "sha256:49ff7b0f5be4a2ddec5aaa709758a9f2df56baa58ad46507d081409e246a81ec"},
+    {file = "pinecone-7.0.2-py3-none-any.whl", hash = "sha256:c112c6be314178da13701e92df77d9e32db4f92b5e8a4d9b3e0b071abc49fe39"},
+    {file = "pinecone-7.0.2.tar.gz", hash = "sha256:ff17f6ac798979adf0df0817e8f1d356a3363768f42e341b2a47f2bf895eb46a"},
 ]
 
 [[package]]
@@ -2256,6 +2301,17 @@ files = [
 ]
 
 [[package]]
+name = "pygments"
+version = "2.19.1"
+requires_python = ">=3.8"
+summary = "Pygments is a syntax highlighting package written in Python."
+groups = ["dev"]
+files = [
+    {file = "pygments-2.19.1-py3-none-any.whl", hash = "sha256:9ea1544ad55cecf4b8242fab6dd35a93bbce657034b0611ee383099054ab6d8c"},
+    {file = "pygments-2.19.1.tar.gz", hash = "sha256:61c16d2a8576dc0649d9f39e089b5f02bcd27fba10d8fb4dcc28173f7a45151f"},
+]
+
+[[package]]
 name = "pyjwt"
 version = "2.10.1"
 requires_python = ">=3.9"
@@ -2324,7 +2380,7 @@ name = "pylint-plugins"
 version = "0.1.0"
 requires_python = "==3.12.*"
 editable = true
-path = "./."
+path = "."
 summary = "AI-powered job matching platform"
 groups = ["dev"]
 dependencies = [
@@ -2456,21 +2512,22 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "8.3.5"
-requires_python = ">=3.8"
+version = "8.4.0"
+requires_python = ">=3.9"
 summary = "pytest: simple powerful testing with Python"
 groups = ["dev"]
 dependencies = [
-    "colorama; sys_platform == \"win32\"",
-    "exceptiongroup>=1.0.0rc8; python_version < \"3.11\"",
-    "iniconfig",
-    "packaging",
+    "colorama>=0.4; sys_platform == \"win32\"",
+    "exceptiongroup>=1; python_version < \"3.11\"",
+    "iniconfig>=1",
+    "packaging>=20",
     "pluggy<2,>=1.5",
+    "pygments>=2.7.2",
     "tomli>=1; python_version < \"3.11\"",
 ]
 files = [
-    {file = "pytest-8.3.5-py3-none-any.whl", hash = "sha256:c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820"},
-    {file = "pytest-8.3.5.tar.gz", hash = "sha256:f4efe70cc14e511565ac476b57c279e12a855b11f48f212af1080ef2263d3845"},
+    {file = "pytest-8.4.0-py3-none-any.whl", hash = "sha256:f40f825768ad76c0977cbacdf1fd37c6f7a468e460ea6a0636078f8972d4517e"},
+    {file = "pytest-8.4.0.tar.gz", hash = "sha256:14d920b48472ea0dbf68e45b96cd1ffda4705f33307dcc86c676c1b5104838a6"},
 ]
 
 [[package]]
@@ -2872,7 +2929,7 @@ files = [
 
 [[package]]
 name = "stripe"
-version = "12.1.0"
+version = "12.2.0"
 requires_python = ">=3.6"
 summary = "Python bindings for the Stripe API"
 groups = ["default", "dev"]
@@ -2882,8 +2939,8 @@ dependencies = [
     "typing-extensions>=4.5.0; python_version >= \"3.7\"",
 ]
 files = [
-    {file = "stripe-12.1.0-py2.py3-none-any.whl", hash = "sha256:1a3c9c0647c46da152efbd3b49f3494a32472b222857758e43df99759e790f29"},
-    {file = "stripe-12.1.0.tar.gz", hash = "sha256:4a4b8516952cf5095e982257f0d47c45c1d2bbf7743e2cb12d6685f55da8b8d4"},
+    {file = "stripe-12.2.0-py2.py3-none-any.whl", hash = "sha256:cc9086d162e65e32893e4a03c31194e36e07870653a5f30aacc62da61e548cb9"},
+    {file = "stripe-12.2.0.tar.gz", hash = "sha256:1ac2a4abba371acb3f99ff1c4a8748929862ad42d0cdee488298982f1be8d56e"},
 ]
 
 [[package]]
