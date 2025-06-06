@@ -430,12 +430,17 @@ SOCIALACCOUNT_PROVIDERS = {
                 "name": "LinkedIn",
                 "client_id": os.environ.get("LINKEDIN_CLIENT_ID", ""),
                 "secret": os.environ.get("LINKEDIN_CLIENT_SECRET", ""),
-                "settings": {"server_url": "https://www.linkedin.com/oauth"},
-            },
-        ],
-        "SCOPE": ["openid", "profile", "email"],
+                "settings": {
+                    "server_url": "https://www.linkedin.com/oauth",
+                    "scope": ["openid", "profile", "email"],
+                    "token_endpoint_auth_method": "client_secret_post",
+                },
+            }
+        ]
     },
 }
+
+OPENID_CONNECT_URL_PREFIX = "oidc"
 
 # Common settings for all social account providers
 SOCIALACCOUNT_ADAPTER = "apps.authentication.adapters.SocialAccountAdapter"
