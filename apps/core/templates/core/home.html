@@ -1,25 +1,23 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Stop Sifting. Start Matching. | Hiredar for Recruiters{% endblock %}
+{% block title %}Stop Drowning in Resumes. Start Finding Top Talent. | Hiredar{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-gradient text-white">
-  <div class="container mx-auto py-20 px-4 flex flex-col md:flex-row items-center gap-12">
+  <div class="mx-auto max-w-5xl py-24 px-6 flex flex-col md:flex-row items-center gap-12">
     <div class="flex-1">
-      <h1 class="text-5xl font-bold mb-4">Stop Sifting. Start Matching.</h1>
+      <h1 class="text-5xl font-bold mb-4">Stop Drowning in Resumes. Start Finding Top Talent.</h1>
       <p class="text-xl mb-8 max-w-lg">
-        Upload a ZIP of résumés and see your top-fit candidates in
-        <span class="font-semibold">just&nbsp;minutes</span>—
-        scored across skills, experience, and role fit.
+        Hiredar uses AI to instantly parse, score, and surface the best candidates from resume overload, so you can focus on what truly matters—connecting with talent.
       </p>
 
       <!-- order reversed on mobile so the primary CTA is always first -->
       <div class="flex flex-col-reverse sm:flex-row gap-4">
         <a href="{% url 'authentication:recruiter_signup' %}"
            class="btn btn-secondary btn-lg">
-          Get&nbsp;100&nbsp;Free&nbsp;Credits
+          Open&nbsp;Your&nbsp;Free&nbsp;Account&nbsp;&amp;&nbsp;Claim&nbsp;100&nbsp;Credits
         </a>
         <a href="#video-demo" class="btn btn-outline btn-lg">
           See&nbsp;It&nbsp;in&nbsp;Action
@@ -28,14 +26,36 @@
 
       <!-- micro-reassurance under buttons -->
       <p class="text-sm opacity-80 mt-2">
-        No subscription · Credits never expire · Pay only when you process
+        Use them whenever you need. No obligations.
       </p>
     </div>
 
-    <div class="flex-1 hidden md:block">
-      <img src="{% static 'img/hero-image.png' %}"
-           alt="Hiredar Match View Screenshot"
-           class="rounded-lg shadow-xl w-full">
+    <div class="hidden md:block flex-none md:w-72 lg:w-80">
+      <picture>
+        <source srcset="{% static 'img/hero-image.webp' %}" type="image/webp">
+        <img src="{% static 'img/hero-image.png' %}"
+             alt="Hiredar's mascot, Ping"
+             class="rounded-lg w-full h-auto">
+      </picture>
+    </div>
+  </div>
+</section>
+
+<!-- Problem Section -->
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold text-center mb-10">The Challenge: Resume Overload is Overwhelming</h2>
+    <div class="grid md:grid-cols-2 gap-6 items-center">
+      <div class="order-2 md:order-1">
+        <picture>
+          <source srcset="{% static 'img/resume-wave.webp' %}" type="image/webp">
+          <img src="{% static 'img/resume-wave.png' %}" alt="Cartoon of a stressed recruiter overwhelmed by a wave of flying resumes" class="rounded-lg shadow-lg w-3/4 mx-auto" />
+        </picture>
+      </div>
+      <div class="order-1 md:order-2 space-y-4 text-lg pr-4 md:pr-8">
+        <p>Recruiters, you know the drill: endless hours sifting through stacks of resumes, inconsistent screening, and the nagging fear of missing out on the perfect candidate. Manually processing hundreds of applications for a single role is inefficient and exhausting.</p>
+        <p>Hiredar is designed to eliminate this bottleneck, giving you back valuable time and improving the quality of your shortlists.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -53,13 +73,8 @@
 <!-- Screenshot Walk-Through -->
 <section class="py-20" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:#fff;">
   <div class="container mx-auto px-4">
-    <h2 class="text-3xl font-bold text-center mb-16">
-      <span class="hidden sm:inline">
-        From Upload&nbsp;→&nbsp;Match&nbsp;→&nbsp;Shortlist&nbsp;→&nbsp;Export
-      </span>
-      <span class="sm:hidden">
-        Upload • Match • Shortlist • Export
-      </span>
+    <h2 class="text-3xl font-bold text-center mb-16" id="features-overview">
+      How Hiredar Transforms Your Hiring
     </h2>
     <div class="grid md:grid-cols-2 gap-12">
 
@@ -76,8 +91,8 @@
             class="rounded-lg shadow-lg mb-4"
           >
         </picture>
-        <h3 class="text-xl font-semibold">1. Upload Resumes</h3>
-        <p>Select any number of PDF/DOCX files and let Hiredar queue them for processing—no drag-and-drop gymnastics required.</p>
+        <h3 class="text-xl font-semibold">1. Upload Resumes with Ease</h3>
+        <p>Bulk upload PDF/DOCX files—no more tedious drag-and-drop gymnastics. Get your candidate pool into Hiredar in minutes.</p>
       </div>
 
       <!-- Matches View -->
@@ -94,7 +109,7 @@
           >
         </picture>
         <h3 class="text-xl font-semibold">2. Instant AI-Scored Matches</h3>
-        <p>Hiredar parses every resume, scores candidates across multiple lenses, and surfaces the best fits immediately.</p>
+        <p>Our AI parses and scores resumes across multiple lenses, instantly surfacing the best fits for your roles.</p>
       </div>
 
       <!-- Candidate Profile -->
@@ -110,8 +125,8 @@
             class="rounded-lg shadow-lg mb-4"
           >
         </picture>
-        <h3 class="text-xl font-semibold">3. Build Your Shortlist</h3>
-        <p>Review AI-generated taglines and deeper insights, then add top candidates to your shortlist with one click.</p>
+        <h3 class="text-xl font-semibold">3. Build Your Shortlist Intelligently</h3>
+        <p>Review AI-generated explanations, gain deeper insights, and add top candidates to your shortlist with a single click.</p>
       </div>
 
       <!-- Export View -->
@@ -127,8 +142,8 @@
             class="rounded-lg shadow-lg mb-4"
           >
         </picture>
-        <h3 class="text-xl font-semibold">4. Export & Share</h3>
-        <p>Generate clean PDF or CSV reports for hiring managers—ready in seconds.</p>
+        <h3 class="text-xl font-semibold">4. Export &amp; Share Clean Reports</h3>
+        <p>Generate professional PDF or CSV reports of your shortlisted candidates to share with your team or clients.</p>
       </div>
 
     </div>
@@ -138,16 +153,16 @@
 <!-- Before / After -->
 <section class="py-16 bg-base-200">
   <div class="container mx-auto px-4">
-    <h2 class="text-3xl font-bold text-center mb-10">Before & After Hiredar</h2>
+    <h2 class="text-3xl font-bold text-center mb-10">The Hiredar Difference: Before &amp; After</h2>
     <div class="grid md:grid-cols-2 gap-8">
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h3 class="font-bold text-xl mb-2 text-error">Before Hiredar 🔴</h3>
           <ul class="list-disc ml-6 space-y-2">
-            <li>Hours spent manually sorting resumes</li>
-            <li>Unqualified applicants cluttering inboxes</li>
-            <li>Notes and summaries written by hand</li>
-            <li>Best candidates buried under piles</li>
+            <li>Time-consuming manual resume sifting</li>
+            <li>Inconsistent candidate evaluation</li>
+            <li>Key talent potentially overlooked</li>
+            <li>Tedious report creation</li>
           </ul>
         </div>
       </div>
@@ -155,10 +170,10 @@
         <div class="card-body">
           <h3 class="font-bold text-xl mb-2">After Hiredar 🟢</h3>
           <ul class="list-disc ml-6 space-y-2">
-            <li>AI-powered resume parsing in minutes</li>
-            <li>Instantly surfaced best-fit matches</li>
-            <li>AI-generated outreach taglines</li>
-            <li>Shareable PDF / CSV reports</li>
+            <li>AI-powered parsing in minutes</li>
+            <li>Instantly surfaced, objectively scored matches</li>
+            <li>AI-generated outreach taglines &amp; insights</li>
+            <li>Shareable, professional reports with one click</li>
           </ul>
         </div>
       </div>
@@ -167,7 +182,7 @@
 </section>
 
 <!-- Reassurance Bar -->
-<section class="py-6 bg-base-100 border-t border-b border-base-200">
+<section class="py-6 bg-base-100 border-t border-b border-base-200" id="value-props">
   <div class="container mx-auto px-4 flex flex-col md:flex-row gap-6 md:gap-12 text-center justify-center">
     <div class="flex items-center gap-2 justify-center"><i class="fas fa-shield-alt text-primary"></i> Secure & Confidential</div>
     <div class="flex items-center gap-2 justify-center"><i class="fas fa-coins text-primary"></i> 100 Free Credits on Signup</div>
@@ -176,12 +191,12 @@
 </section>
 
 <!-- Call to Action Footer -->
-<section class="py-20 bg-base-100">
+<section class="py-20 bg-base-100" id="pricing">
   <div class="container mx-auto px-4 text-center">
     <h2 class="text-4xl font-bold mb-8">Ready to Focus on Candidates—not Paperwork?</h2>
-    <p class="text-xl mb-8 max-w-3xl mx-auto">Open your free account now and claim 100 credits—use them whenever you need.</p>
+    <p class="text-xl mb-8 max-w-3xl mx-auto">Stop letting resume overload slow you down. Empower your recruitment with AI.</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Create Free Account</a>
+      <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Open&nbsp;Your&nbsp;Free&nbsp;Account&nbsp;&amp;&nbsp;Claim&nbsp;100&nbsp;Credits</a>
     </div>
   </div>
 </section>

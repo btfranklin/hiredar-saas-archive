@@ -4,7 +4,16 @@ __all__ = [
     "ContactView",
     "PrivacyPolicyView",
     "TermsOfServiceView",
+    "FeaturesView",
+    "PricingSignupView",
 ]
 
 from .index import HomeView
-from .info import AboutView, ContactView, PrivacyPolicyView, TermsOfServiceView
+from .info import (
+    AboutView,
+    ContactView,
+    FeaturesView,
+    PricingSignupView,
+    PrivacyPolicyView,
+    TermsOfServiceView,
+)

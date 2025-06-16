@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Pricing & Signup | Hiredar{% endblock %}
+
+{% block content %}
+<section class="py-20 bg-base-100">
+  <div class="container mx-auto px-4 text-center max-w-3xl">
+    <h1 class="text-4xl font-bold mb-6">Pricing & Signup</h1>
+    <p class="text-lg opacity-80 mb-8">Get started with 100 free credits. After that, pay only for what you process—no subscriptions, no hidden fees.</p>
+    <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Create Your Free Account</a>
+  </div>
+</section>
+{% endblock %} 

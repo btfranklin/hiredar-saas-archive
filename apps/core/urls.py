@@ -11,7 +11,9 @@ from django.urls import path
 from apps.core.views import (
     AboutView,
     ContactView,
+    FeaturesView,
     HomeView,
+    PricingSignupView,
     PrivacyPolicyView,
     TermsOfServiceView,
 )
@@ -34,6 +36,8 @@ def test_view(request: HttpRequest) -> HttpResponse:
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("features/", FeaturesView.as_view(), name="features"),
+    path("pricing/", PricingSignupView.as_view(), name="pricing"),
     path("about/", AboutView.as_view(), name="about"),
     path("contact/", ContactView.as_view(), name="contact"),
     path("privacy/", PrivacyPolicyView.as_view(), name="privacy"),
