@@ -18,7 +18,6 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.templatetags.static import static as static_asset
 from django.urls import include, path
 from django.views.generic import RedirectView
 
@@ -38,18 +37,22 @@ urlpatterns = [
     # Icon redirects (handle browsers that automatically request these files at the root)
     path(
         "favicon.ico",
-        RedirectView.as_view(url=static_asset("icons/favicon.ico"), permanent=True),
+        RedirectView.as_view(
+            url=f"{settings.STATIC_URL.rstrip('/')}/icons/favicon.ico", permanent=True
+        ),
     ),
     path(
         "apple-touch-icon.png",
         RedirectView.as_view(
-            url=static_asset("icons/apple-touch-icon.png"), permanent=True
+            url=f"{settings.STATIC_URL.rstrip('/')}/icons/apple-touch-icon.png",
+            permanent=True,
         ),
     ),
     path(
         "apple-touch-icon-precomposed.png",
         RedirectView.as_view(
-            url=static_asset("icons/apple-touch-icon.png"), permanent=True
+            url=f"{settings.STATIC_URL.rstrip('/')}/icons/apple-touch-icon.png",
+            permanent=True,
         ),
     ),
 ]
