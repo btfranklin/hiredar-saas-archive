@@ -1,12 +1,108 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Features | Hiredar{% endblock %}
 
 {% block content %}
-<section class="py-20 bg-base-100">
-  <div class="container mx-auto px-4 text-center max-w-3xl">
-    <h1 class="text-4xl font-bold mb-6">Explore Hiredar's Features</h1>
-    <p class="text-lg opacity-80">This page is coming soon. In the meantime, check back later for a full breakdown of all the ways Hiredar streamlines your hiring workflow.</p>
+<!-- Page Title -->
+<section class="py-20 hero-gradient text-white">
+  <div class="container mx-auto px-4 text-center max-w-4xl">
+    <h1 class="text-4xl md:text-5xl font-bold mb-6">Hiredar Features: Your AI-Powered Hiring Toolkit</h1>
+    <p class="text-lg opacity-90">Dive deeper into how Hiredar revolutionizes each step of your candidate screening process.</p>
   </div>
 </section>
+
+<!-- Feature 1: Upload Resumes -->
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <picture>
+        <source srcset="{% static 'img/upload-ui.webp' %}" type="image/webp">
+        <img src="{% static 'img/upload-ui.png' %}" alt="Bulk resume upload interface" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div>
+      <h2 class="text-2xl font-bold mb-4">1. Effortless Resume Uploads (Bulk PDF/DOCX)</h2>
+      <p class="mb-4">Say goodbye to time-consuming, one-by-one resume uploads. Hiredar handles bulk uploads of PDF and DOCX files seamlessly. No complex drag-and-drop gymnastics, just straightforward efficiency. Focus on finding talent, not wrestling with files.</p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Supports industry-standard PDF and DOCX formats</li>
+        <li>Process hundreds of resumes in a single batch</li>
+        <li>Secure and reliable file handling</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Feature 2: AI-Scored Matches -->
+<section class="py-16 bg-base-200">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div class="order-2 md:order-1">
+      <picture>
+        <source srcset="{% static 'img/matches-view.webp' %}" type="image/webp">
+        <img src="{% static 'img/matches-view.png' %}" alt="AI scoring and matching visualization" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div class="order-1 md:order-2">
+      <h2 class="text-2xl font-bold mb-4">2. Instant AI-Scored Matches for Precision</h2>
+      <p class="mb-4">Hiredar's intelligent engine doesn't just read resumes; it understands them. It parses text, analyzes skills, experience, and qualifications against your job requirements, and provides an instant, objective score. Uncover top candidates that manual screening might miss, across multiple lenses.</p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Advanced Natural Language Processing (NLP) for deep understanding</li>
+        <li>Scores skills, experience, and qualifications against role requirements</li>
+        <li>Reduces bias and ensures consistent evaluation</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Feature 3: Build Shortlist -->
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <picture>
+        <source srcset="{% static 'img/candidate-profile.webp' %}" type="image/webp">
+        <img src="{% static 'img/candidate-profile.png' %}" alt="Shortlist building tool interface" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div>
+      <h2 class="text-2xl font-bold mb-4">3. Build Your Shortlist with AI-Generated Insights</h2>
+      <p class="mb-4">Move beyond simple lists. Hiredar helps you build dynamic shortlists with valuable context. Get AI-generated taglines summarizing candidate strengths, access deeper profile insights, and easily manage your selections. One-click additions make it fast and intuitive.</p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Quickly identify key strengths with AI-generated summaries</li>
+        <li>Build and refine your shortlist with simple add/remove controls</li>
+        <li>Drill into structured candidate profiles for deeper insights</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Feature 4: Export & Share -->
+<section class="py-16 bg-base-200">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div class="order-2 md:order-1">
+      <picture>
+        <source srcset="{% static 'img/export-view.webp' %}" type="image/webp">
+        <img src="{% static 'img/export-view.png' %}" alt="Exportable report examples" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div class="order-1 md:order-2">
+      <h2 class="text-2xl font-bold mb-4">4. Export &amp; Share Professional Reports (PDF/CSV)</h2>
+      <p class="mb-4">Communicating your findings is crucial. Hiredar allows you to generate clean, professional reports of your shortlisted candidates in both PDF and CSV formats. Perfect for sharing with hiring managers, clients, or for your own records.</p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Clean, well-formatted PDF reports for presentations</li>
+        <li>Flexible CSV exports for data analysis or ATS integration</li>
+        <li>Standardized layout ensures every report looks polished and professional</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="py-20 bg-base-100">
+  <div class="container mx-auto px-4 text-center max-w-3xl">
+    <h2 class="text-4xl font-bold mb-6">Experience the Future of Recruitment</h2>
+    <p class="text-lg mb-8">Streamline your workflow, identify top talent faster, and make data-driven hiring decisions with Hiredar.</p>
+    <a href="{% url 'core:pricing' %}#signup" class="btn btn-secondary btn-lg">Get Started with 100 Free Credits</a>
+  </div>
+</section>
+
 {% endblock %} 
