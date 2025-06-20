@@ -16,5 +16,5 @@
 ## Consider these
 
 - Add password complexity rules
-- Add a "resume de-duplication" process that doesn't process duplicted resumes
+- Add a "resume de-duplication" process that doesn't process duplicated resumes
 - Improve error reporting when a candidate fails to process
