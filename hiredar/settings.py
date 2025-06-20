@@ -42,6 +42,11 @@ ALLOWED_HOSTS = [
     for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 ]
 
+# Include Django's default test host when running in DEBUG mode so the
+# test-suite can issue requests without triggering DisallowedHost errors.
+if DEBUG and "testserver" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("testserver")
+
 # Trust the X-Forwarded-Proto header from the load balancer so Django knows it's HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -266,6 +271,14 @@ else:
             "PASSWORD": os.getenv("DB_PASSWORD"),
         }
     }
+    # Fallback to a local SQLite database if no name is configured. This
+    # ensures the test-suite runs without requiring external environment
+    # variables or PostgreSQL service.
+    if not DATABASES["default"]["NAME"]:
+        DATABASES["default"] = {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
 
 # ---------------------------------------------------------------------------
 # Cache configuration
@@ -283,6 +296,14 @@ CACHES = {
         "TIMEOUT": 300,  # default TTL (seconds) – individual calls may vary
     }
 }
+
+# Use an in-memory cache backend when running tests so the test-suite does not
+# require the django_cache table to exist.
+if "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules:
+    CACHES["default"] = {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "test-cache",
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
