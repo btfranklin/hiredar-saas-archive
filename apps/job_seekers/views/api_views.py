@@ -6,9 +6,11 @@ from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views import View
 
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models import RoleRecommendation
 from apps.job_seekers.services import ProfileManager, TalentPoolManager
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 
@@ -101,94 +103,68 @@ class ToggleRoleInterestView(
         # Get the user's profile
         profile = ProfileManager.get_profile_for_user(user)
 
-        # Get the role recommendation
-        try:
-            # Parse action from the request body
-            try:
-                data = json.loads(request.body.decode("utf-8"))
-                interested = data.get("interested", True)  # Default to showing interest
-            except json.JSONDecodeError:
-                interested = True  # Default action if no JSON is provided
+        # Get the role recommendation and determine new interest state
+        role = get_object_or_404(RoleRecommendation, id=role_id)
+        new_interest_state = not role.is_candidate_interested
 
-            # Use the service to toggle role interest, passing the profile for authorization check
-            updated_role = TalentPoolManager.toggle_role_interest(
-                role_id, interested=interested, profile=profile
+        # Use the service to toggle role interest to the opposite of current
+        updated_role = TalentPoolManager.toggle_role_interest(
+            role_id, interested=new_interest_state, profile=profile
+        )
+
+        if updated_role is None:
+            return self.render_htmx_or_json(
+                request,
+                "job_seekers/partials/error.html",
+                {
+                    "success": False,
+                    "message": "Role recommendation not found or unauthorized",
+                },
+                status=404,
             )
 
-            if updated_role is None:
-                return self.render_htmx_or_json(
-                    request,
-                    "job_seekers/partials/error.html",
-                    {
-                        "success": False,
-                        "message": "Role recommendation not found or unauthorized",
-                    },
-                    status=404,
-                )
-
-            # For HTMX requests, return updated button
-            if self.is_htmx_request(request):
-                if updated_role.is_candidate_interested:
-                    # Button to remove interest
-                    button_html = f"""
-                    <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/"
-                            hx-headers='{{"Content-Type": "application/json"}}'
-                            hx-swap="outerHTML"
-                            hx-trigger="click"
-                            hx-vals='{{"interested": false}}'
-                            class="btn btn-sm btn-primary">
-                        <span class="mr-1">✓</span> Interested
-                    </button>
-                    """
-                else:
-                    # Button to add interest
-                    button_html = f"""
-                    <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/"
-                            hx-headers='{{"Content-Type": "application/json"}}'
-                            hx-swap="outerHTML"
-                            hx-trigger="click"
-                            hx-vals='{{"interested": true}}'
-                            class="btn btn-sm btn-outline">
-                        <span class="mr-1">+</span> Show Interest
-                    </button>
-                    """
-                # Add a special header to update the card class
-                response = HttpResponse(button_html)
-
-                # Trigger card class update via JavaScript
-                js_trigger = {
-                    "updateCardClass": {
-                        "roleId": role_id,
-                        "isInterested": updated_role.is_candidate_interested,
-                    }
+        # For HTMX requests, return updated button
+        if self.is_htmx_request(request):
+            # Build updated button HTML matching static template
+            if updated_role.is_candidate_interested:
+                # Button for interested state (green)
+                button_html = f"""
+                <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/"
+                        hx-swap="outerHTML"
+                        hx-target="closest .interest-btn"
+                        class="btn btn-sm interest-btn btn-success">
+                    <i class="fas fa-check mr-2"></i> Interested
+                </button>
+                """
+            else:
+                # Button for not interested state (blue)
+                button_html = f"""
+                <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/"
+                        hx-swap="outerHTML"
+                        hx-target="closest .interest-btn"
+                        class="btn btn-sm interest-btn btn-primary">
+                    <i class="fas fa-thumbs-up mr-2"></i> I'm Interested
+                </button>
+                """
+            # Create response and trigger card class update via HTMX
+            response = HttpResponse(button_html)
+            js_trigger = {
+                "updateCardClass": {
+                    "roleId": role_id,
+                    "isInterested": updated_role.is_candidate_interested,
                 }
-                response.headers["HX-Trigger"] = json.dumps(js_trigger)
-
-                return response
-            else:
-                # For API requests, return JSON with updated status
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "role_id": updated_role.pk,
-                        "is_interested": updated_role.is_candidate_interested,
-                    }
-                )
-
-        except Exception as e:
-            # Log the error
-            logger.exception("Error toggling role interest: %s", str(e))
-
-            # Return appropriate error response
-            if self.is_htmx_request(request):
-                return self.render_for_htmx(
-                    request,
-                    "job_seekers/partials/error.html",
-                    {"message": f"Error: {str(e)}"},
-                    status=500,
-                )
-            else:
-                return JsonResponse({"error": str(e)}, status=500)
+            }
+            response.headers["HX-Trigger"] = json.dumps(js_trigger)
+            return response
+        else:
+            # For API requests, return JSON with updated status
+            return JsonResponse(
+                {
+                    "success": True,
+                    "role_id": updated_role.pk,
+                    "is_interested": updated_role.is_candidate_interested,
+                }
+            )
 
 
 class TalentPoolStatusView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, View):

@@ -12,9 +12,6 @@
     }
     .recommendation-card.interested .interest-indicator {
         display: inline-flex;
-        position: absolute;
-        top: 10px;
-        right: 10px;
     }
 </style>
 
@@ -56,13 +53,12 @@
                     <!-- Recommendations Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="recommendations-container">
                         {% for recommendation in role_recommendations %}
-                            <div class="card bg-base-100 shadow-md h-full recommendation-card position-relative {% if recommendation.is_candidate_interested %}interested{% else %}not-interested{% endif %}" 
+                            <div class="card bg-base-100 shadow-md h-full recommendation-card relative pt-4 {% if recommendation.is_candidate_interested %}interested{% else %}not-interested{% endif %}" 
                                  data-role-id="{{ recommendation.id }}">
+                                <div class="interest-indicator badge badge-success absolute top-2 right-2">
+                                    <i class="fas fa-star mr-1"></i> Interested
+                                </div>
                                 <div class="card-body">
-                                    <div class="interest-indicator badge badge-success">
-                                        <i class="fas fa-star mr-1"></i> Interested
-                                    </div>
-                                    
                                     <div class="flex justify-between items-start">
                                         <h3 class="card-title text-lg role-title">{{ recommendation.role_title }}</h3>
                                     </div>
