@@ -42,18 +42,36 @@ class IdempotentTaskManager:
     @staticmethod
     def is_task_running(task_id: str) -> bool:
         """
-        Check if a task with the given ID is currently running.
+        Determine whether a task with *task_id* is currently executing **or** has
+        already been queued.
 
-        Args:
-            task_id: The task ID to check
+        We treat a task as "running" when either of the following is true:
 
-        Returns:
-            True if the task is running, False otherwise
+        1. Celery reports the task state as ``STARTED`` or ``RETRY`` (actively
+           executing or waiting for retry), _not_ merely ``PENDING`` which can
+           also mean the task ID has never been seen before.
+        2. Our cache-based lock (set by :pyfunc:`mark_task_running`) indicates
+           the task is in flight.  This covers the brief window after we mark
+           the lock but before Celery workers pick the job up and transition it
+           out of ``PENDING``.
         """
+
         try:
             result = AsyncResult(task_id, app=current_app)
-            return result.state in ["PENDING", "STARTED", "RETRY"]
-        except Exception as e:
+
+            # Treat STARTED / RETRY as definitely running.  PENDING on its own
+            # does **not** guarantee existence, so we fall back to the cache
+            # lock in that case.
+            if result.state in ["STARTED", "RETRY"]:
+                return True
+
+            if result.state == "PENDING":
+                return bool(cache.get(f"task_running:{task_id}"))
+
+            # For SUCCESS / FAILURE / REVOKED the task is no longer running.
+            return False
+
+        except Exception as e:  # pragma: no cover – defensive
             logger.warning("Error checking task status for %s: %s", task_id, e)
             return False
 

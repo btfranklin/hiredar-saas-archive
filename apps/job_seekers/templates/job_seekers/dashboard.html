@@ -28,7 +28,9 @@
                             </p>
                         </div>
                         
-                        {% include 'core/components/fieldset_toggle.html' with id='talent-pool-toggle' name='talent_pool_toggle' widget_class='toggle toggle-success toggle-lg' checked=in_talent_pool extra_attrs="onclick='toggleTalentPoolConfirm(this)'" label='Enable Job Matching' %}
+                        <div id="talent-pool-toggle-container">
+                            {% include 'core/components/fieldset_toggle.html' with id='talent-pool-toggle' name='talent_pool_toggle' widget_class='toggle toggle-success toggle-lg' checked=in_talent_pool extra_attrs="onclick='toggleTalentPoolConfirm(this)'" label='Enable Job Matching' %}
+                        </div>
                     </div>
                 </div>
                 
