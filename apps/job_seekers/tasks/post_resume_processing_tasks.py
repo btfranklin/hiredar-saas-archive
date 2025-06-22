@@ -1,8 +1,8 @@
 """
-Task functions for job seekers.
+Post-resume-processing tasks for job seekers.
 
-This module contains Celery tasks for handling completion workflows
-and managing next steps in asynchronous processing chains.
+This module contains Celery tasks that run after a resume upload has been
+processed, handling completion workflows and follow-up tasks.
 """
 
 import logging
@@ -18,14 +18,13 @@ from apps.resume_processing.tasks.cleanup_tasks import (
     cleanup_resume_processing_progress,
 )
 
-# Setup logging
 logger = logging.getLogger(__name__)
-
-# Alias safe_async_task as async_task
 async_task = safe_async_task
 
 
-@shared_task(name="apps.job_seekers.tasks.hooks.resume_processing_completed")
+@shared_task(
+    name="apps.job_seekers.tasks.post_resume_processing_tasks.resume_processing_completed"
+)
 def resume_processing_completed(
     result: dict[str, Any] | None = None,
     profile_id: int | None = None,
@@ -97,17 +96,18 @@ def resume_processing_completed(
                 profile_id,
             )
 
-            # Generate role recommendations with semantic naming
-            rec_task_id = async_task(
+            # Schedule the role recommendation generation task. safe_async_task returns
+            # a celery.AsyncResult instance which is not JSON-serialisable and will
+            # break Celery's result backend if returned directly. We extract only the id.
+            rec_async_result = async_task(
                 generate_role_recommendations,
                 profile_id,
                 task_name=f"role_recommendations_{profile_id}",
             )
 
-            logger.info(
-                "Queued role recommendations task with ID: %s",
-                rec_task_id,
-            )
+            rec_task_id = getattr(rec_async_result, "id", rec_async_result)
+
+            logger.info("Queued role recommendations task with ID: %s", rec_task_id)
 
             # Perform ad-hoc cleanup of stale progress records
             try:

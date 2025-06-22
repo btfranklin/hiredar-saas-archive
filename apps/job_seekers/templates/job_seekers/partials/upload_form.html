@@ -13,16 +13,9 @@
       hx-target="#profile-card .card-body"
       hx-swap="innerHTML">
     {% csrf_token %}
-    {% include 'core/components/fieldset_field.html' with
-        label='Resume (PDF only)'
-        id='resume'
-        name='resume'
-        widget_type='file'
-        widget_class='file-input file-input-bordered file-input-primary w-full'
-        extra_attrs="accept='application/pdf'"
-        required=True %}
+    {% include "core/components/fieldset_field.html" with label="Resume (PDF only)" id="resume" name="resume" widget_type="file" widget_class="file-input file-input-bordered file-input-primary w-full" extra_attrs="accept='application/pdf'" required=True %}
     {% if form.resume.errors %}<div class="label text-error text-sm">{{ form.resume.errors|join:", " }}</div>{% endif %}
-    <div class="mt-6">
+    <div class="mt-6 flex justify-center">
         <button type="submit" class="btn btn-primary">
             <span class="htmx-indicator loading loading-spinner loading-xs me-2"></span>
             Upload Resume

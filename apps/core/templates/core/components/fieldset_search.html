@@ -1,12 +1,15 @@
 <fieldset class="fieldset space-y-2 mb-4">
   <legend class="fieldset-legend">{{ label }}</legend>
-  <div class="input-group">
+
+  <!-- DaisyUI search input with inline icon -->
+  <label class="input input-bordered flex items-center gap-2 w-full">
     {% if icon_class %}
-      <i class="{{ icon_class }}"></i>
+      <i class="{{ icon_class }} opacity-70"></i>
     {% endif %}
-    <input id="{{ id }}" name="{{ name }}" type="text" class="{{ widget_class|default:'input input-bordered' }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}/>
-  </div>
+    <input id="{{ id }}" name="{{ name }}" type="text" class="grow"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}/>
+  </label>
+
   {% if help_text %}
-  <div class="label text-sm text-base-content/70">{{ help_text }}</div>
+    <div class="label text-sm text-base-content/70">{{ help_text }}</div>
   {% endif %}
 </fieldset> 

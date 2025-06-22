@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Terms of Service | Hiredar{% endblock %}
+
+{% block content %}
+<section class="container mx-auto px-4 py-16 max-w-4xl prose lg:prose-lg">
+  <h1>Terms of Service</h1>
+  <p>Effective Date: {% now "Y-m-d" %}</p>
+
+  <h2>1. Acceptance of Terms</h2>
+  <p>By accessing or using the Hiredar platform (the "Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Platform.</p>
+
+  <h2>2. The Service</h2>
+  <p>Hiredar provides AI-powered résumé parsing, candidate matching, and related tools designed primarily for professional recruiters. Job seekers may access limited features when invited by recruiters. Hiredar operates as a sole proprietorship registered in Arizona.</p>
+
+  <h2>3. Eligibility</h2>
+  <p>You must be at least 18 years old and capable of forming a binding contract under applicable law to use the Platform.</p>
+
+  <h2>4. Account Registration &amp; Security</h2>
+  <ul>
+    <li>You agree to provide accurate, current, and complete information during registration and to keep it updated.</li>
+    <li>You are responsible for safeguarding your password. You agree not to disclose your password to any third party.</li>
+    <li>You are responsible for any activities or actions under your account, whether or not you have authorized such activities.</li>
+  </ul>
+
+  <h2>5. Payment &amp; Billing (Recruiters)</h2>
+  <p>Recruiter accounts may incur subscription or usage fees as displayed at checkout. All payments are due in U.S. dollars. Late payments may result in suspension of service.</p>
+
+  <h2>6. User Content</h2>
+  <p>"User Content" includes résumés, job descriptions, and any data you upload to the Platform.</p>
+  <ul>
+    <li>You grant Hiredar a non-exclusive, worldwide, royalty-free license to host, process, and display User Content solely to provide the Service.</li>
+    <li>You represent that you have all rights necessary to upload the User Content and that doing so does not violate any law or third-party rights.</li>
+  </ul>
+
+  <h2>7. Prohibited Activities</h2>
+  <ul>
+    <li>Reverse engineer, decompile, or attempt to discover source code.</li>
+    <li>Use the Platform to violate any applicable law, including U.S. export controls and privacy statutes.</li>
+    <li>Upload malicious code or interfere with the Platform's operation.</li>
+    <li>Scrape or harvest data without written permission.</li>
+  </ul>
+
+  <h2>8. Intellectual Property</h2>
+  <p>All intellectual property rights in the Platform and its content, excluding User Content, are owned by Hiredar LLC or its licensors.</p>
+
+  <h2>9. Disclaimer of Warranties</h2>
+  <p>The Platform is provided "as is" and "as available" without warranties of any kind, express or implied. Hiredar disclaims all warranties, including merchantability, fitness for a particular purpose, and non-infringement.</p>
+
+  <h2>10. Limitation of Liability</h2>
+  <p>To the maximum extent permitted by law, Hiredar shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or loss of profits or data, whether incurred directly or indirectly, arising from your use of the Platform.</p>
+
+  <h2>11. Indemnification</h2>
+  <p>You agree to defend, indemnify, and hold harmless Hiredar and its owner from any claims, damages, obligations, and expenses arising from your use of the Platform or violation of these Terms.</p>
+
+  <h2>12. Governing Law &amp; Venue</h2>
+  <p>These Terms are governed by and construed in accordance with the laws of the State of Arizona and the United States, without regard to conflict-of-law principles. You agree to submit to the exclusive jurisdiction of the state and federal courts located in Maricopa County, Arizona.</p>
+
+  <h2>13. Dispute Resolution</h2>
+  <p>Before initiating legal action, you agree to attempt to resolve the dispute informally by contacting Hiredar at <a href="mailto:support@hiredar.com">support@hiredar.com</a>. If we are unable to resolve the dispute within 30 days, either party may file suit in the courts specified above.</p>
+
+  <h2>14. Changes to the Terms</h2>
+  <p>We may modify these Terms at any time. When we do, we will post the revised Terms on this page and update the "Effective Date" above. Continued use of the Platform after changes become effective constitutes acceptance of the new Terms.</p>
+
+  <h2>15. Contact Information</h2>
+  <p>Questions about these Terms? Email us at <a href="mailto:support@hiredar.com">support@hiredar.com</a> or write to Hiredar, Phoenix, AZ, United States.</p>
+</section>
+{% endblock %}
+
+{% block brochure_nav %}
+<div role="tablist" class="tabs tabs-border">
+  <a role="tab" href="{% url 'job_seekers:marketing_home' %}" class="tab {% if request.resolver_match.url_name == 'marketing_home' and request.resolver_match.app_name == 'job_seekers' %}tab-active{% endif %}">Home</a>
+  <a role="tab" href="{% url 'job_seekers:marketing_home' %}#how-it-works" class="tab">How&nbsp;It&nbsp;Works</a>
+  <a role="tab" href="{% url 'job_seekers:contact' %}" class="tab {% if request.resolver_match.url_name == 'contact' %}tab-active{% endif %}">Contact</a>
+</div>
+{% endblock %} 

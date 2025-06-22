@@ -3,6 +3,7 @@
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
+from apps.core.views.index import RecruiterHomeView
 from apps.recruiters.views import (
     BulkResumeUploadView,
     CandidatePoolDetailView,
@@ -35,6 +36,7 @@ from apps.recruiters.views.pool_status_views import (
 app_name = "recruiters"
 
 urlpatterns: list[URLPattern] = [
+    path("", RecruiterHomeView.as_view(), name="marketing_home"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("settings/", SettingsView.as_view(), name="settings"),
     # Job Opening routes

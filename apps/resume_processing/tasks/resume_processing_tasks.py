@@ -1,7 +1,7 @@
 """
 Resume processing tasks for job seekers.
 
-This module contains Django Q2 tasks for handling asynchronous processing of
+This module contains Celery tasks for handling asynchronous processing of
 resume uploads and parsing.
 """
 
@@ -50,7 +50,7 @@ def handle_resume_upload_task(
     task_id: str | None = None,
 ) -> dict[str, Any]:
     """
-    Django Q2 task to process a resume file asynchronously.
+    Celery task to process a resume file asynchronously.
 
     Args:
         uploaded_file_path: Path to the temporary uploaded file.

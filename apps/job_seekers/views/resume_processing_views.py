@@ -17,7 +17,10 @@ from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
 from apps.core.upload_validators import DEFAULT_RESUME_VALIDATORS
-from apps.job_seekers.tasks.hooks import resume_processing_completed
+from apps.job_seekers.models import JobSeekerProfile  # local import to avoid cycles
+from apps.job_seekers.tasks.post_resume_processing_tasks import (
+    resume_processing_completed,
+)
 from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
 from apps.resume_processing.services.resume_processor import ResumeProcessor
 from apps.resume_processing.tasks.resume_processing_tasks import (
@@ -121,15 +124,17 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
             # Save the file
             file_path = save_resume_file(resume_file, unique_filename)
 
-            # Get job seeker profile ID
-            job_seeker_profile = getattr(user, "job_seeker_profile", None)
+            # Ensure the user has a JobSeekerProfile (create one if it doesn't exist)
+            job_seeker_profile = JobSeekerProfile.objects.filter(
+                user_owner=user_model
+            ).first()
             if job_seeker_profile is None:
-                return self.render_htmx_or_json(
-                    request,
-                    "job_seekers/partials/error.html",
-                    {"success": False, "message": "Job seeker profile not found."},
-                    status=400,
+                job_seeker_profile = JobSeekerProfile.objects.create(
+                    user_owner=user_model
                 )
+
+            # Expose convenience attribute for the rest of the request lifecycle
+            setattr(user_model, "job_seeker_profile", job_seeker_profile)
 
             profile_id = job_seeker_profile.pk
 

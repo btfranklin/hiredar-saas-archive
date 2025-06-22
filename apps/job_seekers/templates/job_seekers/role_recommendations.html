@@ -32,18 +32,25 @@
                 
                 {% if role_recommendations %}
                     <!-- Filter controls -->
-                    <div class="flex flex-wrap gap-4 mb-6">
-                        {% include 'core/components/fieldset_search.html' with label='Search Roles' id='role-search' name='role_search' icon_class='fas fa-search' widget_class='input input-bordered' placeholder='Search roles...' %}
+                    <div class="flex flex-wrap gap-4 mb-6 items-center">
+                        <!-- Plain search input without visible label -->
+                        <div class="relative">
+                            <label for="role-search" class="sr-only">Search Roles</label>
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/70"></i>
+                            <input id="role-search" name="role_search" type="text" placeholder="Search roles..." class="input input-bordered pl-10" />
+                        </div>
                         
-                        <!-- Filters popover -->
-                        <button class="btn" popovertarget="role-filters-popover" style="anchor-name:--role-filter-anchor">
-                            <i class="fas fa-filter mr-2"></i> Filters
-                        </button>
-                        <ul popover="auto" id="role-filters-popover" style="position-anchor:--role-filter-anchor" class="menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
-                            <li><a data-filter="all">All Roles</a></li>
-                            <li><a data-filter="interested">Interested</a></li>
-                            <li><a data-filter="not-interested">Not Interested</a></li>
-                        </ul>
+                        <!-- Filters dropdown using DaisyUI -->
+                        <div class="dropdown">
+                            <div tabindex="0" role="button" class="btn">
+                                <i class="fas fa-filter mr-2"></i> Filters
+                            </div>
+                            <ul tabindex="0" class="dropdown-content z-[1000] menu p-2 shadow bg-base-100 rounded-box w-52">
+                                <li><a data-filter="all">All Roles</a></li>
+                                <li><a data-filter="interested">Interested</a></li>
+                                <li><a data-filter="not-interested">Not Interested</a></li>
+                            </ul>
+                        </div>
                     </div>
                     
                     <!-- Recommendations Grid -->
@@ -140,6 +147,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         card.style.display = 'none';
                     }
                 });
+                // Close the dropdown after selection by blurring the clicked filter link
+                this.blur();
             });
         });
     }

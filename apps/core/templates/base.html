@@ -178,22 +178,26 @@
                 {% endif %}
             </div>
 
-            {% if not user.is_authenticated %}
+            {% if not hide_brochure_nav and not user.is_authenticated %}
             <!-- Brochure site navigation -->
             <div class="navbar-center hidden lg:flex justify-center">
+                {% block brochure_nav %}
                 <div role="tablist" class="tabs tabs-border">
                     <a role="tab" href="{% url 'core:home' %}" class="tab {% if request.resolver_match.url_name == 'home' %}tab-active{% endif %}">Home</a>
                     <a role="tab" href="{% url 'core:features' %}" class="tab {% if request.resolver_match.url_name == 'features' %}tab-active{% endif %}">Features</a>
                     <a role="tab" href="{% url 'core:pricing' %}" class="tab {% if request.resolver_match.url_name == 'pricing' %}tab-active{% endif %}">Pricing & Signup</a>
                     <a role="tab" href="{% url 'core:contact' %}" class="tab {% if request.resolver_match.url_name == 'contact' %}tab-active{% endif %}">Contact</a>
                 </div>
+                {% endblock %}
             </div>
             {% endif %}
 
             <div class="navbar-end">
                 {% if not user.is_authenticated %}
                     <a href="{% url 'authentication:login' %}" class="btn btn-ghost btn-sm mr-2">Log In</a>
+                    {% block header_signup_button %}
                     <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-primary btn-sm">Get Free Credits</a>
+                    {% endblock %}
                 {% endif %}
                 {% if user.is_authenticated %}
                 <a href="mailto:feedback@hiredar.com" class="btn btn-primary btn-sm mr-2" title="Give Feedback">
@@ -339,12 +343,21 @@
     <!-- Footer -->
     <footer class="footer footer-center p-10 bg-base-200 text-base-content">
         <div>
+            {% if request.resolver_match.namespace == 'job_seekers' %}
+            <div class="grid grid-flow-col gap-4">
+                <a href="{% url 'job_seekers:about' %}" class="link link-hover">About Us</a>
+                <a href="{% url 'job_seekers:contact' %}" class="link link-hover">Contact</a>
+                <a href="{% url 'job_seekers:privacy' %}" class="link link-hover">Privacy Policy</a>
+                <a href="{% url 'job_seekers:terms' %}" class="link link-hover">Terms of Service</a>
+            </div>
+            {% else %}
             <div class="grid grid-flow-col gap-4">
                 <a href="{% url 'core:about' %}" class="link link-hover">About Us</a>
                 <a href="{% url 'core:contact' %}" class="link link-hover">Contact</a>
                 <a href="{% url 'core:privacy' %}" class="link link-hover">Privacy Policy</a>
                 <a href="{% url 'core:terms' %}" class="link link-hover">Terms of Service</a>
             </div>
+            {% endif %}
             <div>
                 <p>Copyright © {% now "Y" %} Hiredar - All rights reserved</p>
             </div>

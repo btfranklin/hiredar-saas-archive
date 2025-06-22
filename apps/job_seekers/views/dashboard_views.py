@@ -122,8 +122,8 @@ class RoleRecommendationsView(LoginRequiredMixin, ListView):
         if not user.is_authenticated or user.user_type != "job_seeker":
             return redirect("core:home")
 
-        if not hasattr(user, "job_seeker_profile"):
-            return redirect("job_seekers:create_profile")
+        if not ProfileManager.get_profile_for_user(user):
+            return redirect("job_seekers:profile_create")
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -169,7 +169,7 @@ class TalentSheetDetailsView(LoginRequiredMixin, TemplateView):
         if not user.is_authenticated or user.user_type != "job_seeker":
             return redirect("core:home")
 
-        if not hasattr(user, "job_seeker_profile"):
+        if not ProfileManager.get_profile_for_user(user):
             return redirect("job_seekers:profile_create")
 
         return super().dispatch(request, *args, **kwargs)

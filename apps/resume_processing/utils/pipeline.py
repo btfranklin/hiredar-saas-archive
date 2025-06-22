@@ -6,11 +6,13 @@ This module defines the complete resume processing pipeline for processing resum
 
 import logging
 import os
+import tempfile
 import time
 import traceback
 import xml.etree.ElementTree as ET
 from typing import Any
 
+from django.conf import settings
 from django.core.files.storage import default_storage
 
 from apps.job_seekers.models.profile import JobSeekerProfile
@@ -101,12 +103,33 @@ def process_resume(
             try:
                 abs_file_path = default_storage.path(file_path)
             except NotImplementedError:
-                # If the storage doesn't support path, we need to use the file directly
-                logger.warning(
-                    "Storage doesn't support absolute paths. Using original path: %s",
-                    file_path,
-                )
-                abs_file_path = file_path
+                # If the storage backend doesn't expose a local path (e.g. S3),
+                # fall back to joining with MEDIA_ROOT so we can still access the
+                # file on local file-system based iterations.
+                abs_candidate = os.path.join(settings.MEDIA_ROOT, file_path)
+                if os.path.exists(abs_candidate):
+                    abs_file_path = abs_candidate
+                else:
+                    # As a last resort, keep the original value (may still work
+                    # for storage backends that provide file-like access).
+                    logger.warning(
+                        "Storage doesn't support absolute paths and local file not found. Using original path: %s",
+                        file_path,
+                    )
+                    abs_file_path = file_path
+
+        # If the resolved path isn't accessible on disk, create a temporary local copy
+        if not (os.path.exists(abs_file_path) and os.access(abs_file_path, os.R_OK)):
+            logger.info(
+                "Creating temporary local copy for inaccessible file: %s", abs_file_path
+            )
+            # Read from storage and dump to temp file
+            with default_storage.open(file_path, "rb") as stored_file:
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=os.path.splitext(file_path)[1]
+                ) as tmp:
+                    tmp.write(stored_file.read())
+                    abs_file_path = tmp.name
 
         logger.info("Resolved file path: %s", abs_file_path)
         pipeline_steps.append("file_path_resolved")

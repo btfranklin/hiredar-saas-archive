@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Privacy Policy | Hiredar{% endblock %}
+
 {% block content %}
 <section class="container mx-auto px-4 py-16 max-w-4xl prose lg:prose-lg">
   <h1>Privacy Policy</h1>
@@ -51,12 +54,6 @@
   <p>The Platform is not directed to children under 13. We do not knowingly collect personal information from children. If you believe we have collected such data, please <a href="mailto:support@hiredar.com">contact us</a>.</p>
 
   <h2>8-bis. Cookies</h2>
-  <p>We use only strictly-necessary cookies that are required for Platform functionality, such as the session cookie (<code>sessionid</code>) and CSRF protection cookie (<code>csrftoken</code>). These cookies do not track you across third-party sites and are not used for advertising. Because they are essential to provide the service you request, they cannot be disabled.</p>
-
-  <h2>9. Changes to This Policy</h2>
-  <p>We may update this Privacy Policy periodically. We will notify you of significant changes by posting the new Policy on this page and updating the "Last updated" date above.</p>
-
-  <h2>10. Contact Us</h2>
-  <p>If you have any questions or concerns about this Privacy Policy, please email us at <a href="mailto:support@hiredar.com">support@hiredar.com</a> or write to: Hiredar, Phoenix, AZ, United States.</p>
+  <p>We use only strictly-necessary cookies that are required for Platform functionality, such as the session cookie (<code>sessionid</code>) and CSRF protection cookie (<code>csrf_token</code>)... etc.
 </section>
 {% endblock %} 
