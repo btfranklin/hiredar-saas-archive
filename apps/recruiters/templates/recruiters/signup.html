@@ -18,48 +18,7 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                    {% get_providers as socialaccount_providers %}
-                    {% if socialaccount_providers %}
-                    <div id="social-signup-container">
-                    <!-- US-only certification for LinkedIn signup -->
-                    <div class="mb-4">
-                        <label class="flex items-start gap-2 cursor-pointer">
-                            <input type="checkbox" id="linkedin-us-certification" class="checkbox checkbox-primary">
-                            <span class="label-text">
-                                I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based recruiting activities.
-                            </span>
-                        </label>
-                    </div>
-                    <div class="space-y-3 mb-4">
-                        {% for provider in socialaccount_providers %}
-                            {% if provider.id == "openid_connect" %}
-                                <a id="linkedin-auth-btn" href="{% provider_login_url provider.id process='signup' %}&user_type=recruiter" class="btn btn-outline w-full opacity-50 pointer-events-none">
-                                    <i class="fab fa-linkedin mr-2"></i> Sign Up with LinkedIn
-                                </a>
-                            {% endif %}
-                        {% endfor %}
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const checkbox = document.getElementById('linkedin-us-certification');
-                            const button = document.getElementById('linkedin-auth-btn');
-                            checkbox.addEventListener('change', function() {
-                                if (checkbox.checked) {
-                                    button.classList.remove('opacity-50', 'pointer-events-none');
-                                } else {
-                                    button.classList.add('opacity-50', 'pointer-events-none');
-                                }
-                            });
-                        });
-                        </script>
-                    </div>
-                    </div>
-                    {% endif %}
-                    <div id="signup-or-divider" class="divider mb-4">or</div>
-                    <!-- Email signup toggle button -->
-                    <div id="email-signup-toggle-container" class="mb-4">
-                        <button id="email-signup-toggle" class="btn btn-primary btn-xl w-full">Sign Up with Email</button>
-                    </div>
-                    <div id="email-signup-form-container" class="hidden">
+                    <div id="email-signup-form-container">
                     <form id="signup-form" method="post" class="space-y-4">
                         {% csrf_token %}
                         <input type="hidden" name="user_type" value="recruiter">
@@ -103,29 +62,17 @@
                     <div class="text-center">
                         <p>Already have an account? <a href="{% url 'authentication:login' %}" class="link link-primary">Log in</a></p>
                     </div>
-                    <!-- Toggle script -->
+                    <!-- Enable/disable submit based on certification checkbox -->
                     <script>
                     document.addEventListener('DOMContentLoaded', function() {
-                        const orDivider = document.getElementById('signup-or-divider');
-                        const socialContainer = document.getElementById('social-signup-container');
-                        const toggleContainer = document.getElementById('email-signup-toggle-container');
-                        const toggleButton = document.getElementById('email-signup-toggle');
-                        const formContainer = document.getElementById('email-signup-form-container');
                         const rawCheckbox = document.getElementById('raw-us-certification');
                         const rawSubmitBtn = document.getElementById('raw-signup-submit');
                         if (rawCheckbox && rawSubmitBtn) {
-                            // Disable until attested
                             rawSubmitBtn.disabled = !rawCheckbox.checked;
                             rawCheckbox.addEventListener('change', function() {
                                 rawSubmitBtn.disabled = !rawCheckbox.checked;
                             });
                         }
-                        toggleButton.addEventListener('click', function() {
-                            socialContainer.classList.add('hidden');
-                            toggleContainer.classList.add('hidden');
-                            orDivider.classList.add('hidden');
-                            formContainer.classList.remove('hidden');
-                        });
                     });
                     </script>
                 </div>

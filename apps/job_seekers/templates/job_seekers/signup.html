@@ -8,7 +8,7 @@
     <div class="max-w-md mx-auto bg-base-200 rounded-lg shadow-xl p-6">
         <h1 class="text-2xl font-bold mb-6 text-center">Sign Up as Job Seeker</h1>
         
-        <div id="email-signup-form-container" class="hidden">
+        <div id="email-signup-form-container">
         <form method="post" class="space-y-4">
             {% csrf_token %}
             <input type="hidden" name="user_type" value="job_seeker">
@@ -52,71 +52,21 @@
         </form>
         </div>
         
-        <div id="signup-or-divider" class="divider">or</div>
-        
-        <!-- Email signup toggle button -->
-        <div id="email-signup-toggle-container" class="mb-4 px-4">
-            <button id="email-signup-toggle" class="btn btn-primary w-full">Sign Up with Email</button>
-        </div>
-        <!-- US-only certification for LinkedIn signup -->
-        <div class="mb-4 px-4">
-            <label class="flex items-start gap-2 cursor-pointer">
-                <input type="checkbox" id="linkedin-us-certification" class="checkbox checkbox-primary">
-                <span class="label-text">
-                    I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based employment purposes.
-                </span>
-            </label>
-        </div>
-        
-        <div class="space-y-3 px-4">
-            {% get_providers as socialaccount_providers %}
-            {% for provider in socialaccount_providers %}
-                {% if provider.id == "openid_connect" %}
-                <a id="linkedin-auth-btn" href="{% provider_login_url provider.id process='signup' %}&user_type=job_seeker" class="btn btn-outline w-full opacity-50 pointer-events-none">
-                    <i class="fab fa-linkedin mr-2"></i> Sign Up with LinkedIn
-                </a>
-                {% endif %}
-            {% endfor %}
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const checkbox = document.getElementById('linkedin-us-certification');
-                const button = document.getElementById('linkedin-auth-btn');
-                checkbox.addEventListener('change', function() {
-                    if (checkbox.checked) {
-                        button.classList.remove('opacity-50', 'pointer-events-none');
-                    } else {
-                        button.classList.add('opacity-50', 'pointer-events-none');
-                    }
-                });
-            });
-            </script>
-        </div>
-        
         <div class="text-center mt-6">
             <p>Already have an account? <a href="{% url 'authentication:login' %}" class="text-primary hover:underline">Log in</a></p>
         </div>
         
-        <!-- Toggle script -->
+        <!-- Enable/disable submit based on certification checkbox -->
         <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const orDivider = document.getElementById('signup-or-divider');
-            const toggleContainer = document.getElementById('email-signup-toggle-container');
-            const toggleButton = document.getElementById('email-signup-toggle');
-            const formContainer = document.getElementById('email-signup-form-container');
             const rawCheckbox = document.getElementById('raw-us-certification');
             const rawSubmitBtn = document.getElementById('raw-signup-submit');
             if (rawCheckbox && rawSubmitBtn) {
-                // Disable until attested
                 rawSubmitBtn.disabled = !rawCheckbox.checked;
                 rawCheckbox.addEventListener('change', function() {
                     rawSubmitBtn.disabled = !rawCheckbox.checked;
                 });
             }
-            toggleButton.addEventListener('click', function() {
-                toggleContainer.classList.add('hidden');
-                orDivider.classList.add('hidden');
-                formContainer.classList.remove('hidden');
-            });
         });
         </script>
     </div>

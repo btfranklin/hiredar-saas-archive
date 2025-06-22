@@ -27,19 +27,6 @@
                     </div>
                 {% endif %}
                 
-                {% get_providers as socialaccount_providers %}
-                {% if socialaccount_providers %}
-                <div class="space-y-3 mb-4">
-                    {% for provider in socialaccount_providers %}
-                        {% if provider.id == "openid_connect" %}
-                            <a href="{% provider_login_url provider.id process='login' %}" class="btn btn-outline w-full">
-                                <i class="fab fa-linkedin mr-2"></i> Continue with LinkedIn
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                <div class="divider mb-4">or</div>
-                {% endif %}
                 <form class="login" method="post" action="{% url 'authentication:login' %}">
                     {% csrf_token %}
                     
