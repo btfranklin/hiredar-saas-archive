@@ -4,13 +4,28 @@
 {% block title %}Hiredar | Find Your Path{% endblock %}
 
 {% block content %}
-<section class="py-32 bg-base-100 text-center">
-  <div class="container mx-auto px-4">
-    <h1 class="text-5xl font-bold mb-8">Who Are You?</h1>
-    <p class="text-xl mb-12 max-w-2xl mx-auto">Choose the experience that fits you best.</p>
-    <div class="flex flex-col sm:flex-row gap-6 justify-center">
-      <a href="{% url 'job_seekers:marketing_home' %}" class="btn btn-primary btn-lg">I'm&nbsp;Job&nbsp;Seeker</a>
-      <a href="{% url 'recruiters:marketing_home' %}" class="btn btn-secondary btn-lg">I'm&nbsp;Recruiter</a>
+<section class="hero-gradient text-white">
+  <div class="mx-auto max-w-5xl py-24 px-6 flex flex-col md:flex-row items-center gap-12">
+    <!-- Text / CTA column -->
+    <div class="flex-1 text-center md:text-left">
+      <h1 class="text-7xl font-extrabold mb-4 tracking-tight">Hiredar</h1>
+      <p class="text-2xl md:text-3xl mb-10 max-w-3xl md:mx-0 mx-auto">AI-powered hiring made simple for recruiters and empowering for job seekers.</p>
+
+      <h2 class="text-4xl font-bold mb-6">Who Are You?</h2>
+      <p class="text-xl mb-12 max-w-xl md:mx-0 mx-auto">Choose the experience that fits you best.</p>
+
+      <div class="flex flex-col sm:flex-row gap-6 justify-center md:justify-start">
+        <a href="{% url 'job_seekers:marketing_home' %}" class="btn btn-primary btn-lg">I'm&nbsp;Job&nbsp;Seeker</a>
+        <a href="{% url 'recruiters:marketing_home' %}" class="btn btn-secondary btn-lg">I'm&nbsp;Recruiter</a>
+      </div>
+    </div>
+
+    <!-- Mascot image column -->
+    <div class="hidden md:block flex-none md:w-72 lg:w-80">
+      <picture>
+        <source srcset="{% static 'img/hero-image.webp' %}" type="image/webp">
+        <img src="{% static 'img/hero-image.png' %}" alt="Hiredar mascot, Ping, waving" class="rounded-lg w-full h-auto">
+      </picture>
     </div>
   </div>
 </section>

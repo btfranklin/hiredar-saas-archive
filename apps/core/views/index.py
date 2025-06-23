@@ -35,6 +35,10 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["hide_brochure_nav"] = True
+        # Suppress the global header and footer on the landing page so users
+        # can choose their experience without any contextual navigation.
+        context["hide_header"] = True
+        context["hide_footer"] = True
         return context
 
 

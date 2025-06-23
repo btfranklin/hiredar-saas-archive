@@ -160,6 +160,7 @@
 </head>
 <body class="min-h-screen flex flex-col bg-base-100">
     <!-- Header/Navbar -->
+    {% if not hide_header %}
     <header class="bg-base-100 shadow-md">
         <div class="navbar container mx-auto">
             <div class="navbar-start">
@@ -295,6 +296,7 @@
             </div>
         </div>
     </header>
+    {% endif %}
 
     <!-- Django Messages - Styled as notifications that don't affect layout -->
     {% if messages %}
@@ -341,6 +343,7 @@
     </main>
 
     <!-- Footer -->
+    {% if not hide_footer %}
     <footer class="footer footer-center p-10 bg-base-200 text-base-content">
         <div>
             {% if request.resolver_match.namespace == 'job_seekers' %}
@@ -363,6 +366,7 @@
             </div>
         </div>
     </footer>
+    {% endif %}
     
     <!-- Custom JavaScript -->
     {% block extra_scripts %}{% endblock %}
