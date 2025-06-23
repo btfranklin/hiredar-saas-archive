@@ -202,62 +202,66 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                     job_opening.candidate_pool_id = selected_pool_id
                     job_opening.save(update_fields=["candidate_pool_id"])
                 context["candidate_pool_id"] = selected_pool_id
-                # Filter matches by selected pool
-                if selected_pool_id != 0:
-                    matches = CandidateMatch.objects.filter(
-                        job_opening=job_opening,
-                        talent_sheet__job_seeker__candidate_pool_id=selected_pool_id,
+                # ------------------------------------------------------------------
+                # Build the base queryset for matches on this job opening.
+                # ``candidate_pool_id`` semantics:
+                #   • 0  ⇒  Global pool = *all* user-owned profiles (candidate_pool IS NULL)
+                #   • n>0 ⇒  A specific CandidatePool uploaded by the recruiter
+                # ------------------------------------------------------------------
+                matches = CandidateMatch.objects.filter(job_opening=job_opening)
+
+                if selected_pool_id == 0:
+                    # Global pool – only job seekers that are **not** part of any
+                    # recruiter-owned CandidatePool (i.e. user-created profiles)
+                    matches = matches.filter(
+                        talent_sheet__job_seeker__candidate_pool__isnull=True
                     )
                 else:
-                    matches = CandidateMatch.objects.none()
+                    # Specific candidate pool – restrict to that pool ID
+                    matches = matches.filter(
+                        talent_sheet__job_seeker__candidate_pool_id=selected_pool_id
+                    )
                 # Determine matches for requested section
                 section = context["section"]
 
-                if selected_pool_id != 0:
-                    if section == "wildcard":
-                        context["candidate_matches"] = (
-                            matches.filter(wildcard_score__gt=0)
-                            .annotate(
-                                match_type=Value("wildcard", output_field=CharField())
-                            )
-                            .order_by("-wildcard_score")
+                if section == "wildcard":
+                    context["candidate_matches"] = (
+                        matches.filter(wildcard_score__gt=0)
+                        .annotate(
+                            match_type=Value("wildcard", output_field=CharField())
                         )
-                    elif section == "skills":
-                        context["candidate_matches"] = (
-                            matches.filter(skills_score__gt=0)
-                            .annotate(
-                                match_type=Value("skills", output_field=CharField())
-                            )
-                            .order_by("-skills_score")
+                        .order_by("-wildcard_score")
+                    )
+                elif section == "skills":
+                    context["candidate_matches"] = (
+                        matches.filter(skills_score__gt=0)
+                        .annotate(match_type=Value("skills", output_field=CharField()))
+                        .order_by("-skills_score")
+                    )
+                elif section == "experience":
+                    context["candidate_matches"] = (
+                        matches.filter(experience_score__gt=0)
+                        .annotate(
+                            match_type=Value("experience", output_field=CharField())
                         )
-                    elif section == "experience":
-                        context["candidate_matches"] = (
-                            matches.filter(experience_score__gt=0)
-                            .annotate(
-                                match_type=Value("experience", output_field=CharField())
-                            )
-                            .order_by("-experience_score")
+                        .order_by("-experience_score")
+                    )
+                elif section == "qualifications":
+                    context["candidate_matches"] = (
+                        matches.filter(qualifications_score__gt=0)
+                        .annotate(
+                            match_type=Value("qualifications", output_field=CharField())
                         )
-                    elif section == "qualifications":
-                        context["candidate_matches"] = (
-                            matches.filter(qualifications_score__gt=0)
-                            .annotate(
-                                match_type=Value(
-                                    "qualifications", output_field=CharField()
-                                )
-                            )
-                            .order_by("-qualifications_score")
-                        )
-                    else:
-                        context["candidate_matches"] = (
-                            matches.filter(holistic_score__gt=0)
-                            .annotate(
-                                match_type=Value("holistic", output_field=CharField())
-                            )
-                            .order_by("-holistic_score")
-                        )
+                        .order_by("-qualifications_score")
+                    )
                 else:
-                    context["candidate_matches"] = []
+                    context["candidate_matches"] = (
+                        matches.filter(holistic_score__gt=0)
+                        .annotate(
+                            match_type=Value("holistic", output_field=CharField())
+                        )
+                        .order_by("-holistic_score")
+                    )
                 # Compute counts (for tabs)
                 context["holistic_count"] = matches.filter(holistic_score__gt=0).count()
                 context["skills_count"] = matches.filter(skills_score__gt=0).count()

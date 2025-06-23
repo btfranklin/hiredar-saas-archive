@@ -78,7 +78,7 @@
                 <select id="candidate-pool-selector"
                         name="pool_id"
                         class="select select-bordered w-full max-w-xs">
-                  <option value="0" {% if candidate_pool_id == 0 %}selected{% endif %}>None</option>
+                  <option value="0" {% if candidate_pool_id == 0 %}selected{% endif %}>All Hiredar Users</option>
                   {% for pool in candidate_pools %}
                     <option value="{{ pool.id }}" {% if pool.id == candidate_pool_id %}selected{% endif %}>{{ pool.name }}</option>
                   {% endfor %}
@@ -87,17 +87,11 @@
           </form>
         </div>
 
-        {% if candidate_pool_id != 0 %}
-            <div class="card bg-base-100 shadow-md mb-6">
-              <div class="card-body p-4">
-                {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
-              </div>
-            </div>
-        {% else %}
-            <div class="p-6 text-center text-base-content/70">
-                <p>Select a candidate pool to view matches.</p>
-            </div>
-        {% endif %}
+        <div class="card bg-base-100 shadow-md mb-6">
+          <div class="card-body p-4">
+            {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
+          </div>
+        </div>
     {% else %}
         <div class="p-6 text-center text-base-content/70">
             <p>Candidate matches are only generated when the job opening status is "Active".</p>
