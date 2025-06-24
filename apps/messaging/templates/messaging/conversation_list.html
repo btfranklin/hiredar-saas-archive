@@ -82,16 +82,6 @@
                                     <p class="text-base-content/70 mb-4">
                                         Messages from recruiters interested in your profile will appear here
                                     </p>
-                                    <div class="text-center mt-4">
-                                        <p class="text-sm mb-2">No conversations yet.</p>
-                                        {% if user.user_type == 'recruiter' %}
-                                            <a href="{% url 'recruiters:profile' %}" class="btn btn-primary">
-                                        {% else %}
-                                            <a href="{% url 'job_seekers:profile' %}" class="btn btn-primary">
-                                        {% endif %}
-                                            View My Profile
-                                        </a>
-                                    </div>
                                 {% endif %}
                             </div>
                         {% endif %}
