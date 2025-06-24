@@ -103,6 +103,6 @@
 <div role="tablist" class="tabs tabs-border">
   <a role="tab" href="{% url 'job_seekers:marketing_home' %}" class="tab {% if request.resolver_match.url_name == 'marketing_home' and request.resolver_match.app_name == 'job_seekers' %}tab-active{% endif %}">Home</a>
   <a role="tab" href="#how-it-works" class="tab">How&nbsp;It&nbsp;Works</a>
-  <a role="tab" href="{% url 'job_seekers:contact' %}" class="tab {% if request.resolver_match.url_name == 'contact' %}tab-active{% endif %}">Contact</a>
+  <a role="tab" href="{% url 'core:contact' %}" class="tab {% if request.resolver_match.url_name == 'contact' and request.resolver_match.namespace == 'core' %}tab-active{% endif %}">Contact</a>
 </div>
 {% endblock %} 

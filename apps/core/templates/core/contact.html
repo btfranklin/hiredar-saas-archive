@@ -16,4 +16,25 @@
   </div>
   <p class="mt-8 text-sm text-base-content/60">Hiredar · Phoenix, AZ · United States</p>
 </section>
+{% endblock %}
+
+{% block brochure_nav %}{% endblock %}
+{% block header_signup_button %}{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const logo = document.querySelector('.navbar-start a');
+    if (logo) {
+      logo.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = "{% url 'core:home' %}";
+        }
+      });
+    }
+  });
+</script>
 {% endblock %} 

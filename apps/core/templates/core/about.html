@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us | Hiredar{% endblock %}
+
+{% block content %}
+<section class="container mx-auto px-4 py-16 max-w-4xl">
+  <h1 class="text-4xl font-bold mb-8 text-center">About Hiredar</h1>
+
+  <div class="mb-10">
+    <h2 class="text-2xl font-semibold mb-2">Our Vision</h2>
+    <p class="text-lg">To radically improve the hiring experience for <span class="font-semibold">recruiters and job seekers alike</span>—making talent matching smarter, fairer, and more human, powered by ethical AI.</p>
+  </div>
+
+  <div class="mb-10">
+    <h2 class="text-2xl font-semibold mb-2">Our Mission</h2>
+    <p class="mb-2">Hiredar empowers recruiters <span class="font-normal">and</span> job seekers with truly intelligent tools that streamline hiring without losing sight of the human element.</p>
+    <ul class="list-disc ml-6 space-y-2">
+      <li><strong>Makes recruiters' lives easier:</strong> Automates the repetitive grunt work of parsing resumes, extracting data, and matching candidates—so you can focus on relationships, judgment, and hiring the right people.</li>
+      <li><strong>Helps job seekers, not exploits them:</strong> Job seekers will <span class="font-semibold">never pay</span> to be seen or get access. We provide real, practical help—resume improvement, better matching, and a platform that puts your skills first, not just keywords.</li>
+      <li><strong>Isn't just another generic hiring tool:</strong> Hiredar is for people tired of the old way. We make hiring more accurate, more transparent, and less painful for everyone.</li>
+      <li><strong>Respects privacy and data:</strong> We only use data in service of matching people to the right opportunities. No black-box nonsense, no selling data behind anyone's back.</li>
+      <li><strong>Stays focused on the core problem:</strong> We don't exist to maximize "engagement" or force people to pay for access. Our value is in making the process better, not more extractive.</li>
+    </ul>
+  </div>
+
+  <div class="mb-10">
+    <h2 class="text-2xl font-semibold mb-2">Core Principles</h2>
+    <ul class="list-disc ml-6 space-y-2">
+      <li><strong>AI as a tool, not a gatekeeper:</strong> AI should <em>assist</em> and <em>amplify</em> good hiring—not replace judgment or dehumanize candidates.</li>
+      <li><strong>Never charge job seekers:</strong> Our business model will never depend on job seekers paying for visibility or access.</li>
+      <li><strong>Simplicity and transparency:</strong> We prioritize clear, honest communication and workflow. No hidden fees, no misleading metrics.</li>
+      <li><strong>Constant improvement:</strong> We listen, we learn, and we iterate based on feedback from both recruiters and job seekers.</li>
+    </ul>
+  </div>
+
+  <div class="mb-10">
+    <h2 class="text-2xl font-semibold mb-2">What Makes Hiredar Different</h2>
+    <ul class="list-disc ml-6 space-y-2">
+      <li><strong>Recruiter-first tools:</strong> Fast, frictionless resume and candidate processing with a modern, beautiful UI.</li>
+      <li><strong>Job seeker empowerment:</strong> Resume feedback, actionable insights, and meaningful job matches—never paywalled.</li>
+      <li><strong>Ethical and modern:</strong> Latest AI and Python tech, with strict respect for privacy and fairness.</li>
+    </ul>
+  </div>
+
+  <div class="mb-10">
+    <h2 class="text-2xl font-semibold mb-2">The Bottom Line</h2>
+    <p class="mb-2">Hiredar's mission is to put the <span class="font-semibold">human</span> back into hiring, using AI to do the heavy lifting—never to obscure, exploit, or exclude.</p>
+    <p class="text-center mt-8">Have questions? <a href="{% url 'core:contact' %}" class="link">Contact our team</a>.</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block brochure_nav %}{% endblock %}
+{% block header_signup_button %}{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const logo = document.querySelector('.navbar-start a');
+    if (logo) {
+      logo.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = "{% url 'core:home' %}";
+        }
+      });
+    }
+  });
+</script>
+{% endblock %} 

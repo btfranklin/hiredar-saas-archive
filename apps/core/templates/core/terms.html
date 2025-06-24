@@ -24,7 +24,7 @@
     <li>You are responsible for any activities or actions under your account, whether or not you have authorized such activities.</li>
   </ul>
 
-  <h2>5. Payment &amp; Billing (Recruiters)</h2>
+  <h2>5. Payment &amp; Billing</h2>
   <p>Recruiter accounts may incur subscription or usage fees as displayed at checkout. All payments are due in U.S. dollars. Late payments may result in suspension of service.</p>
 
   <h2>6. User Content</h2>
@@ -43,7 +43,7 @@
   </ul>
 
   <h2>8. Intellectual Property</h2>
-  <p>All intellectual property rights in the Platform and its content, excluding User Content, are owned by Hiredar LLC or its licensors.</p>
+  <p>All intellectual property rights in the Platform and its content, excluding User Content, are owned by Hiredar or its licensors.</p>
 
   <h2>9. Disclaimer of Warranties</h2>
   <p>The Platform is provided "as is" and "as available" without warranties of any kind, express or implied. Hiredar disclaims all warranties, including merchantability, fitness for a particular purpose, and non-infringement.</p>
@@ -65,4 +65,26 @@
 
   <h2>15. Contact Information</h2>
   <p>Questions about these Terms? Email us at <a href="mailto:support@hiredar.com">support@hiredar.com</a> or write to Hiredar, Phoenix, AZ, United States.</p>
- 
+</section>
+{% endblock %}
+
+{% block brochure_nav %}{% endblock %}
+{% block header_signup_button %}{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const logo = document.querySelector('.navbar-start a');
+    if (logo) {
+      logo.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = "{% url 'core:home' %}";
+        }
+      });
+    }
+  });
+</script>
+{% endblock %} 

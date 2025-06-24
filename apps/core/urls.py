@@ -10,12 +10,12 @@ from django.urls import path
 
 from apps.core.views.index import HomeView
 from apps.core.views.info import (
-    RecruiterAboutView,
-    RecruiterContactView,
+    AboutView,
+    ContactView,
+    PrivacyPolicyView,
     RecruiterFeaturesView,
     RecruiterPricingSignupView,
-    RecruiterPrivacyPolicyView,
-    RecruiterTermsOfServiceView,
+    TermsOfServiceView,
 )
 
 app_name = "core"
@@ -38,9 +38,9 @@ urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("features/", RecruiterFeaturesView.as_view(), name="features"),
     path("pricing/", RecruiterPricingSignupView.as_view(), name="pricing"),
-    path("about/", RecruiterAboutView.as_view(), name="about"),
-    path("contact/", RecruiterContactView.as_view(), name="contact"),
-    path("privacy/", RecruiterPrivacyPolicyView.as_view(), name="privacy"),
-    path("terms/", RecruiterTermsOfServiceView.as_view(), name="terms"),
+    path("about/", AboutView.as_view(), name="about"),
+    path("contact/", ContactView.as_view(), name="contact"),
+    path("privacy/", PrivacyPolicyView.as_view(), name="privacy"),
+    path("terms/", TermsOfServiceView.as_view(), name="terms"),
     path("test/", test_view, name="test"),
 ]

@@ -4,12 +4,6 @@ from django.urls import path
 from django.urls.resolvers import URLPattern
 
 from apps.core.views.index import JobSeekerHomeView
-from apps.core.views.info import (
-    JobSeekerAboutView,
-    JobSeekerContactView,
-    JobSeekerPrivacyPolicyView,
-    JobSeekerTermsOfServiceView,
-)
 from apps.job_seekers.views.api_views import (
     TalentPoolStatusView,
     ToggleRoleInterestView,
@@ -34,10 +28,6 @@ from apps.job_seekers.views.resume_processing_views import (
 app_name = "job_seekers"
 
 urlpatterns: list[URLPattern] = [
-    path("contact/", JobSeekerContactView.as_view(), name="contact"),
-    path("about/", JobSeekerAboutView.as_view(), name="about"),
-    path("privacy/", JobSeekerPrivacyPolicyView.as_view(), name="privacy"),
-    path("terms/", JobSeekerTermsOfServiceView.as_view(), name="terms"),
     path("", JobSeekerHomeView.as_view(), name="marketing_home"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("profile/", ProfileView.as_view(), name="profile"),
