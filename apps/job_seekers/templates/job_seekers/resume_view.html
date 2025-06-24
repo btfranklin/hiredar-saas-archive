@@ -9,13 +9,11 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 {% if conversation %}
-                <a href="{% url 'messaging:conversation_detail' conversation.id %}" class="btn btn-ghost btn-sm mb-2">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Conversation
-                </a>
+                {% url 'messaging:conversation_detail' conversation.id as back_url %}
+                {% include 'core/components/back_button.html' with href=back_url label='Back to Conversation' %}
                 {% else %}
-                <a href="{% url 'recruiters:dashboard' %}" class="btn btn-ghost btn-sm mb-2">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
-                </a>
+                {% url 'recruiters:dashboard' as back_url %}
+                {% include 'core/components/back_button.html' with href=back_url label='Back to Dashboard' %}
                 {% endif %}
                 
                 <h1 class="text-3xl font-bold">Candidate Resume</h1>
