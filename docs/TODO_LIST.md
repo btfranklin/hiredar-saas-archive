@@ -11,7 +11,6 @@
 - Add some logic that outright blocks job postings that are not US-based, to steer clear of GDPR issues
 - Add ability to add more candidates to an existing pool, and to create an empty pool
 - Add some way for users to deactivate their accounts
-- Create some kind of standardized "back" button for navigation
 
 ## Refactors
 
