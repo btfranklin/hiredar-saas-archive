@@ -68,7 +68,9 @@ class ConversationListView(LoginRequiredMixin, ListView):
         # Get unread message counts for each conversation
         for conversation in context["conversations"]:
             # Determine other participant relative to current user for accurate display
-            conversation.other_participant = conversation.get_other_participant(
+            # (Cannot assign to the property 'other_participant', so store under a
+            # different attribute that the template can use.)
+            conversation.display_other_participant = conversation.get_other_participant(
                 cast(Any, self.request.user)
             )
 
@@ -141,6 +143,15 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
             is_read=True
         )
 
+        # Also mark any related notifications (e.g., initial interest request) as read
+        # so dashboard "Unread" badges disappear after the user views the conversation.
+        conv_url = reverse(
+            "messaging:conversation_detail", kwargs={"pk": conversation.pk}
+        )
+        Notification.objects.filter(
+            user=self.request.user, link=conv_url, is_read=False
+        ).update(is_read=True)
+
         context["messages"] = message_queryset
         # Cast request.user to Any to bypass strict type checking with Django's ORM
         user = cast(Any, self.request.user)
@@ -149,6 +160,22 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
         # Add job opening to context if it exists
         if conversation.job_opening:
             context["job_opening"] = conversation.job_opening
+
+        # For recruiters, supply the candidate's JobSeekerProfile primary key for resume links
+        if (
+            getattr(self.request.user, "user_type", "") == "recruiter"
+            and context["other_participant"] is not None
+            and getattr(context["other_participant"], "user_type", "") == "job_seeker"
+        ):
+            try:
+                from apps.job_seekers.models import JobSeekerProfile  # local import
+
+                profile = JobSeekerProfile.objects.get(
+                    user_owner=context["other_participant"]
+                )
+                context["job_seeker_profile_id"] = profile.pk
+            except Exception:
+                context["job_seeker_profile_id"] = None
 
         # Provide match object for candidate system card
         if (

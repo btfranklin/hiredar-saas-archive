@@ -13,9 +13,9 @@
         <div class="w-full lg:w-3/4">
             <h1 class="text-2xl font-bold mb-6">Messages</h1>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 gap-6">
                 <!-- Conversations list -->
-                <div class="md:col-span-2">
+                <div>
                     <div class="bg-base-200 rounded-box p-6 shadow-md">
                         <!-- Heading removed per UX -->
                         
@@ -27,16 +27,16 @@
                                             <div class="flex items-center gap-4">
                                                 <div class="avatar avatar-placeholder">
                                                     <div class="bg-neutral text-neutral-content rounded-full w-12">
-                                                        <span>{{ conversation.other_participant.get_initials }}</span>
+                                                        <span>{{ conversation.display_other_participant.get_initials }}</span>
                                                     </div>
                                                 </div>
                                                 <div class="flex-1">
                                                     <div class="flex justify-between items-center">
                                                         <h3 class="font-semibold">
                                                             {% if request.user.user_type == 'job_seeker' %}
-                                                                Recruiter: {{ conversation.other_participant.get_full_name }}
+                                                                Recruiter: {{ conversation.display_other_participant.get_full_name }}
                                                             {% else %}
-                                                                {{ conversation.other_participant.get_full_name }}
+                                                                {{ conversation.display_other_participant.get_full_name }}
                                                             {% endif %}
                                                         </h3>
                                                         <span class="text-xs text-base-content/60">
@@ -92,51 +92,7 @@
                     </div>
                 </div>
                 
-                <!-- Notifications panel - moved to right side -->
-                <div class="md:col-span-1">
-                    <div class="bg-base-200 rounded-box p-4 shadow-md">
-                        <h2 class="text-xl font-bold mb-4">Notifications</h2>
-                        
-                        {% if notifications %}
-                            <div class="space-y-3">
-                                {% for notification in notifications %}
-                                    <div class="bg-base-100 p-3 rounded-lg shadow-sm flex items-start gap-3">
-                                        <div class="indicator">
-                                            {% if not notification.is_read %}
-                                                <span class="indicator-item badge badge-primary badge-xs"></span>
-                                            {% endif %}
-                                            <div class="avatar avatar-placeholder">
-                                                <div class="bg-neutral text-neutral-content rounded-full w-8">
-                                                    <span class="text-xs">{{ notification.user.get_initials }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex-1">
-                                            <p class="text-sm">{{ notification.content }}</p>
-                                            <p class="text-xs text-base-content/60">{{ notification.created_at|timesince }} ago</p>
-                                            <a href="{{ notification.link }}" class="text-xs text-primary hover:underline">View</a>
-                                        </div>
-                                        <button 
-                                            class="btn btn-ghost btn-xs"
-                                            hx-post="{% url 'messaging:mark_notification_read' notification.id %}"
-                                            hx-swap="outerHTML"
-                                            hx-target="closest div"
-                                        >
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            <div class="mt-4 text-center">
-                                <a href="{% url 'messaging:notifications' %}" class="btn btn-outline btn-sm">View All</a>
-                            </div>
-                        {% else %}
-                            <div class="text-center py-4">
-                                <p class="text-base-content/70">No new notifications</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
+                <!-- Notifications panel removed; handled via global bell dropdown -->
             </div>
         </div>
     </div>

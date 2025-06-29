@@ -4,7 +4,6 @@ from typing import Any, cast
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
 from django.http import HttpRequest, HttpResponseBase
 from django.shortcuts import redirect
 from django.views.generic import DetailView, TemplateView
@@ -76,20 +75,23 @@ class ResumeView(LoginRequiredMixin, DetailView):
         profile = self.get_object()
 
         # Allow recruiters to view resumes from pools they own
-        if (
-            profile.candidate_pool
-            and profile.candidate_pool.recruiter == user
-        ):
+        if profile.candidate_pool and profile.candidate_pool.recruiter == user:
             return super().dispatch(request, *args, **kwargs)
 
         job_seeker = profile.user_owner
 
         # Check if there's a conversation where the job seeker has expressed interest
-        conversation = Conversation.objects.filter(
-            Q(participants=user)
-            & Q(participants=job_seeker)
-            & Q(status="candidate_interested")
-        ).first()
+        conversation = (
+            Conversation.objects.filter(participants=user)
+            .filter(participants=job_seeker)
+            .first()
+        )
+
+        if conversation and conversation.status not in [
+            "candidate_interested",
+            "active",
+        ]:
+            conversation = None
 
         if not conversation:
             messages.error(
@@ -106,11 +108,17 @@ class ResumeView(LoginRequiredMixin, DetailView):
         profile = self.get_object()
 
         # Get the conversation for context
-        conversation = Conversation.objects.filter(
-            Q(participants=self.request.user)
-            & Q(participants=profile.user_owner)
-            & Q(status="candidate_interested")
-        ).first()
+        conversation = (
+            Conversation.objects.filter(participants=self.request.user)
+            .filter(participants=profile.user_owner)
+            .first()
+        )
+
+        if conversation and conversation.status not in [
+            "candidate_interested",
+            "active",
+        ]:
+            conversation = None
 
         context["conversation"] = conversation
         context["job_opening"] = conversation.job_opening if conversation else None

@@ -42,9 +42,11 @@
                     <span>Good news! {{ other_participant.name }} is interested in this role.</span>
                     <div class="text-sm">You can now view their full resume.</div>
                 </div>
-                <a href="{% url 'job_seekers:resume_view' other_participant.job_seeker_profile.id %}" class="btn btn-sm btn-primary">
+                {% if job_seeker_profile_id %}
+                <a href="{% url 'job_seekers:resume_view' job_seeker_profile_id %}" class="btn btn-sm btn-primary">
                     View Resume
                 </a>
+                {% endif %}
             </div>
             {% endif %}
             
@@ -144,7 +146,9 @@
                 <p class="mb-4">
                     You now have access to view {{ other_participant.get_full_name }}'s full resume details.
                 </p>
-                <a href="{% url 'job_seekers:resume_view' other_participant.job_seeker_profile.id %}" class="btn btn-primary btn-sm">View Full Resume</a>
+                {% if job_seeker_profile_id %}
+                <a href="{% url 'job_seekers:resume_view' job_seeker_profile_id %}" class="btn btn-primary btn-sm">View Full Resume</a>
+                {% endif %}
             </div>
             {% endif %}
         </div>

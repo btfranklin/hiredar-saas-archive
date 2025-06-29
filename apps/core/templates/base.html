@@ -229,7 +229,7 @@
                                 <i class="fas fa-bell text-lg"></i>
                                 {% with unread_count=user.get_unread_notifications_count %}
                                     {% if unread_count > 0 %}
-                                        <span class="badge badge-xs badge-primary indicator-item">{{ unread_count }}</span>
+                                        <span class="badge badge-error badge-sm indicator-item">{{ unread_count }}</span>
                                     {% endif %}
                                 {% endwith %}
                             </div>

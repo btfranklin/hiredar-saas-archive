@@ -3,10 +3,11 @@
 from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import models  # <- add this along existing imports
+from django.db import models
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponseBase
 from django.shortcuts import redirect
+from django.urls import reverse  # local import to avoid circular issues
 from django.views.generic import ListView, TemplateView
 
 from apps.authentication.types import AuthenticatedUser
@@ -129,13 +130,21 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             recruiter = conv.get_other_participant(cast(Any, user))
             if recruiter is None:
                 continue
+
             job_title = getattr(conv.job_opening, "title", "a new opportunity")
+
+            # Determine unread state based on whether the initial notification is still unread
+            conv_url = reverse("messaging:conversation_detail", kwargs={"pk": conv.pk})
+            notification_unread = Notification.objects.filter(
+                user=user, link=conv_url, is_read=False
+            ).exists()
+
             recent_messages.append(
                 {
                     "sender": recruiter,
                     "text": f"Recruiter is interested in discussing {job_title}",
                     "created_at": conv.created_at,
-                    "is_unread": True,
+                    "is_unread": notification_unread,
                     "conversation_id": conv.id,
                 }
             )
