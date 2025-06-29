@@ -3,7 +3,11 @@
   <legend class="sr-only">{{ legend }}</legend>
   {% endif %}
   <div class="{{ wrapper_class|default:'flex gap-2' }}">
-    <input id="{{ id }}" name="{{ name }}" type="text" class="{{ widget_class|default:'input input-bordered flex-1' }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}/>
+    {% if input_type == 'textarea' %}
+      <textarea id="{{ id }}" name="{{ name }}" rows="3" class="{{ widget_class|default:'textarea textarea-bordered flex-1' }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}></textarea>
+    {% else %}
+      <input id="{{ id }}" name="{{ name }}" type="{{ input_type|default:'text' }}" class="{{ widget_class|default:'input input-bordered flex-1' }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if extra_attrs %} {{ extra_attrs|safe }}{% endif %}/>
+    {% endif %}
     <button type="submit" class="{{ button_class|default:'btn btn-primary' }}">
       {% if button_icon %}<i class="{{ button_icon }}"></i>{% endif %}
       {% if button_label %}<span class="{{ button_label_class|default:'ml-2' }}">{{ button_label }}</span>{% endif %}

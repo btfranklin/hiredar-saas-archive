@@ -236,3 +236,23 @@ class User(AbstractBaseUser, PermissionsMixin):
                     "is_superuser": "Administrator accounts must have superuser privileges (is_superuser=True)."
                 }
             )
+
+    def get_unread_notifications_count(self) -> int:
+        """Return the number of unread notifications for this user."""
+        from apps.messaging.models import (
+            Notification,  # local import to avoid circular dependency
+        )
+
+        return Notification.objects.filter(user=self, is_read=False).count()
+
+    def get_recent_notifications(self, limit: int = 5):
+        """Return the most recent notifications for this user.
+
+        Args:
+            limit: Maximum number of notifications to return.
+        """
+        from apps.messaging.models import (
+            Notification,  # local import to avoid circular dependency
+        )
+
+        return Notification.objects.filter(user=self).order_by("-created_at")[:limit]
