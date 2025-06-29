@@ -152,7 +152,13 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
             user=self.request.user, link=conv_url, is_read=False
         ).update(is_read=True)
 
-        context["messages"] = message_queryset
+        # Use a non-conflicting key name so it does not shadow Django's built-in
+        # `messages` context processor (which powers flash/alert messages in
+        # the base template). Shadowing it caused every `Message` instance to
+        # be rendered as a toast in the UI because the base template loops over
+        # a variable called `messages`.  By renaming the key we eliminate the
+        # accidental collision and the unwanted pop-ups.
+        context["conversation_messages"] = message_queryset
         # Cast request.user to Any to bypass strict type checking with Django's ORM
         user = cast(Any, self.request.user)
         context["other_participant"] = conversation.get_other_participant(user)
@@ -421,6 +427,15 @@ class SendMessageView(LoginRequiredMixin, View):
                 )
 
             # Render message HTML
+            if "HX-Request" in request.headers:
+                html = render_to_string(
+                    "messaging/components/message.html",
+                    {"message": message},
+                    request=request,
+                )
+                return HttpResponse(html, headers={"HX-Reswap": "beforeend"})
+
+            # Non-HTMX fallback
             message_html = render_to_string(
                 "messaging/components/message.html",
                 {"message": message},
@@ -487,20 +502,9 @@ class RespondToInterestView(LoginRequiredMixin, View):
             conversation.status = new_status
             conversation.save()
 
-            # Create response message from job seeker
-            message_content = (
-                "Thank you for reaching out! I'm interested in learning more about this opportunity."
-                if is_interested
-                else "Thank you for considering me, but I'm not interested in this opportunity at this time."
-            )
-
-            Message.objects.create(
-                conversation=conversation,
-                sender=request.user,
-                content=message_content,
-            )
-
-            # If interested, notify recruiter
+            # If Interested, notify recruiter. We no longer create a textual
+            # message for either response – the UI now reflects the status via
+            # banners/badges only.
             if is_interested:
                 recruiter = conversation.get_other_participant(cast(Any, request.user))
 
@@ -513,6 +517,32 @@ class RespondToInterestView(LoginRequiredMixin, View):
                     ),
                 )
 
+            # If HTMX request, return updated interest card HTML so client can
+            # swap it without a full page reload.
+            if "HX-Request" in request.headers:
+                html = render_to_string(
+                    "messaging/partials/interest_card.html",
+                    {
+                        "conversation": conversation,
+                        "job_opening": conversation.job_opening,
+                        # candidate_match may or may not exist – reuse earlier logic
+                        "candidate_match": None,
+                    },
+                    request=request,
+                )
+
+                resp = HttpResponse(html, headers={"HX-Reswap": "outerHTML"})
+
+                modal_id = (
+                    "confirm-not-interested-modal"
+                    if not is_interested
+                    else "confirm-interested-modal"
+                )
+                resp["HX-Trigger"] = '{"closeModal": {"id": "' + modal_id + '"}}'
+
+                return resp
+
+            # Non-HTMX fallback
             return JsonResponse({"status": "success"})
 
         except Exception as e:

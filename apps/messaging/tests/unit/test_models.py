@@ -12,7 +12,6 @@ class ConversationModelTest(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        # Create test users using create_user method
         self.user1 = User.objects.create_user(  # type: ignore[attr-defined]
             email="conv_user1@example.com",
             password="password123",
@@ -26,24 +25,24 @@ class ConversationModelTest(TestCase):
             name="Test User2",
         )
 
-        # Fetch the automatically created profiles via user_owner foreign key
+        # Fetch the automatically created profiles
         self.profile1 = JobSeekerProfile.objects.get(user_owner=self.user1)
         self.profile2 = JobSeekerProfile.objects.get(user_owner=self.user2)
 
-        # Create a conversation with User objects (not profiles)
+        # Create a conversation with participants
         self.conversation = Conversation.objects.create()
         self.conversation.participants.add(self.user1, self.user2)
 
     def test_conversation_creation(self):
-        """Test that conversation can be created with participants"""
+        """Conversation should start with two participants."""
         self.assertEqual(self.conversation.participants.count(), 2)
         self.assertIn(self.user1, self.conversation.participants.all())
         self.assertIn(self.user2, self.conversation.participants.all())
 
     def test_get_other_participant(self):
-        """Test the method to get the other participant in a conversation"""
-        other_participant = self.conversation.get_other_participant(self.user1)
-        self.assertEqual(other_participant, self.user2)
+        """Should return the other participant correctly."""
+        other = self.conversation.get_other_participant(self.user1)
+        self.assertEqual(other, self.user2)
 
 
 class MessageModelTest(TestCase):
@@ -51,7 +50,6 @@ class MessageModelTest(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        # Create test users using create_user method with unique emails
         self.user1 = User.objects.create_user(  # type: ignore[attr-defined]
             email="msg_user1@example.com",
             password="password123",
@@ -65,15 +63,13 @@ class MessageModelTest(TestCase):
             name="Test User2",
         )
 
-        # Fetch the automatically created profiles via user_owner foreign key
+        # Fetch profiles
         self.profile1 = JobSeekerProfile.objects.get(user_owner=self.user1)
         self.profile2 = JobSeekerProfile.objects.get(user_owner=self.user2)
 
-        # Create a conversation with User objects (not profiles)
+        # Create conversation and message
         self.conversation = Conversation.objects.create()
         self.conversation.participants.add(self.user1, self.user2)
-
-        # Create a message
         self.message = Message.objects.create(
             conversation=self.conversation,
             sender=self.user1,
@@ -81,7 +77,7 @@ class MessageModelTest(TestCase):
         )
 
     def test_message_creation(self):
-        """Test that message can be created"""
+        """Message fields should match and be unread by default."""
         self.assertEqual(self.message.sender, self.user1)
         self.assertEqual(self.message.content, "Hello, this is a test message.")
         self.assertFalse(self.message.is_read)
