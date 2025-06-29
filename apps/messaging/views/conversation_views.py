@@ -33,11 +33,13 @@ class ConversationListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self) -> QuerySet[Conversation]:
         """Get conversations for the current user."""
-        return (
-            Conversation.objects.filter(participants=self.request.user)
-            .order_by("-updated_at")
-            .distinct()
-        )
+        qs = Conversation.objects.filter(participants=self.request.user)
+
+        # Hide pre-interest conversations for recruiters
+        if getattr(self.request.user, "user_type", "") == "recruiter":
+            qs = qs.exclude(status="interest_requested")
+
+        return qs.order_by("-updated_at").distinct()
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
@@ -180,7 +182,26 @@ class StartConversationView(LoginRequiredMixin, View):
                     status=403,
                 )
 
-            recipient = get_object_or_404(User, id=recipient_id)
+            # Allow recipient_id to be either a User ID or a JobSeekerProfile ID
+            try:
+                recipient = User.objects.get(id=recipient_id)
+            except User.DoesNotExist:
+                try:
+                    from apps.job_seekers.models import (
+                        JobSeekerProfile,  # local import to avoid circular
+                    )
+
+                    profile = JobSeekerProfile.objects.get(id=recipient_id)
+                    recipient = profile.user_owner
+                except JobSeekerProfile.DoesNotExist:
+                    return JsonResponse(
+                        {
+                            "status": "error",
+                            "message": "Recipient not found",
+                        },
+                        status=404,
+                    )
+
             job_opening = get_object_or_404(JobOpening, id=job_id)
 
             # Verify the job belongs to the recruiter
@@ -247,11 +268,30 @@ class StartConversationView(LoginRequiredMixin, View):
                     kwargs={"pk": conversation.pk},
                 )
 
-            # Check if this is an HTMX request
+            # If HTMX request, return updated contact-controls HTML instead of redirect
             if "HX-Request" in request.headers:
-                # For HTMX requests, use HX-Redirect for client-side redirection
-                response = HttpResponse("<div>Creating conversation...</div>")
-                response["HX-Redirect"] = redirect_url
+                from django.template.loader import render_to_string
+
+                # Re-render the controls partial with new context reflecting conversation
+                html = render_to_string(
+                    "matching/partials/contact_controls.html",
+                    {
+                        "candidate_conversation": (
+                            conversation
+                            if not existing_conversation
+                            else existing_conversation
+                        ),
+                        "is_shortlisted": False,
+                        "job_opening": job_opening,
+                        "job_seeker_id": recipient.pk,
+                    },
+                    request=request,
+                )
+
+                response = HttpResponse(html, headers={"HX-Reswap": "outerHTML"})
+                response["HX-Trigger"] = (
+                    '{"closeModal": {"id": "confirm-interest-modal"}}'
+                )
                 return response
             else:
                 # For non-HTMX requests (API), return JSON response with redirect URL
@@ -305,8 +345,10 @@ class SendMessageView(LoginRequiredMixin, View):
                     {"status": "error", "message": "Not authorized"}, status=403
                 )
 
-            # Only allow messages if conversation is in appropriate status
-            if conversation.status not in ["active", "candidate_interested"]:
+            # Determine allowed conversation states
+            ALLOWED_STATUSES = ["active", "candidate_interested"]
+
+            if conversation.status not in ALLOWED_STATUSES:
                 return JsonResponse(
                     {
                         "status": "error",
@@ -314,6 +356,11 @@ class SendMessageView(LoginRequiredMixin, View):
                     },
                     status=400,
                 )
+
+            # If candidate already said yes but conversation not promoted to active yet
+            if conversation.status == "candidate_interested":
+                conversation.status = "active"
+                conversation.save(update_fields=["status"])
 
             # Create message
             message = Message.objects.create(

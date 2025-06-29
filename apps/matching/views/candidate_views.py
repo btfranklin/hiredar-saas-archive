@@ -12,6 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
@@ -163,17 +164,27 @@ def withdraw_interest(request, job_id, candidate_id):
         is_htmx = "HX-Request" in request.headers
 
         if is_htmx:
-            # Return the updated button HTML for HTMX
-            contact_button_html = """
-            <button class="btn btn-primary" onclick="document.getElementById('confirm-interest-modal').showModal()">
-                <i class="fas fa-envelope mr-2"></i> Contact Candidate
-            </button>
-            """
-            # Close the modal via HX-Trigger
-            response = HttpResponse(contact_button_html)
+            from django.template.loader import render_to_string
+
+            # Determine shortlist status after deletion
+            is_shortlisted = ShortlistedMatch.objects.filter(
+                job_opening=job_opening,
+                candidate_match__talent_sheet__job_seeker=job_seeker,
+            ).exists()
+
+            html = render_to_string(
+                "matching/partials/contact_controls.html",
+                {
+                    "candidate_conversation": None,
+                    "is_shortlisted": is_shortlisted,
+                    "job_opening": job_opening,
+                    "job_seeker_id": job_seeker.pk,
+                },
+                request=request,
+            )
+
+            response = HttpResponse(html, headers={"HX-Reswap": "outerHTML"})
             response["HX-Trigger"] = '{"closeModal": {"id": "confirm-withdraw-modal"}}'
-            response["HX-Reswap"] = "outerHTML"
-            response["HX-Target"] = ".flex.gap-2"
             return response
         else:
             # For non-HTMX requests, return JSON

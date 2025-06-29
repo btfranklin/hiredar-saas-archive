@@ -36,7 +36,7 @@ urlpatterns = [
         name="conversation_create",
     ),
     path(
-        "conversations/<int:conversation_id>/send/",
+        "conversations/<int:pk>/send/",
         SendMessageView.as_view(),
         name="send_message",
     ),
