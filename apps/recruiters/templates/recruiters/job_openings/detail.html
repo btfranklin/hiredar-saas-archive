@@ -58,15 +58,7 @@
             {% endif %}
             
             <!-- Job Seeker Specific Section -->
-            {% if request.user.user_type == 'job_seeker' %}
-                <div class="bg-base-200 rounded-box p-6 shadow-md mt-8">
-                    <h2 class="text-xl font-bold mb-4">About {{ job_opening.company }}</h2>
-                    <p class="text-base-content/70 mb-4">Learn more about this company and their culture.</p>
-                    <a href="#" class="btn btn-outline w-full">
-                        <i class="fas fa-building mr-2"></i> Company Profile
-                    </a>
-                </div>
-            {% endif %}
+            {# Job-seeker section removed: recruiters-only template #}
         </div>
     </div>
 </div>

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ job_opening.title }} | {{ job_opening.company }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-4 flex items-center gap-2">
+        {% include 'core/components/back_button.html' with href='javascript:history.back()' label='Back to Messages' %}
+    </div>
+
+    <div class="bg-base-200 rounded-box p-6 shadow-md mb-6">
+        <h1 class="text-2xl font-bold">{{ job_opening.title }}</h1>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+            <span>{{ job_opening.company }}</span>
+            <span class="text-base-content/50">•</span>
+            <span>{{ job_opening.location }}</span>
+            {% if job_opening.work_environment == 'Remote' %}
+                <span class="badge badge-outline">Remote</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Job description (structured content include) -->
+    <div class="bg-base-200 rounded-box p-6 shadow-md">
+        {% include 'recruiters/job_openings/structured_content.html' %}
+        <div class="divider"></div>
+        <div class="text-sm text-base-content/70">Posted: {{ job_opening.created_at|date:"F j, Y" }}</div>
+    </div>
+</div>
+{% endblock %} 

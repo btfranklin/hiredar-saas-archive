@@ -3,6 +3,7 @@
 from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import models  # <- add this along existing imports
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponseBase
 from django.shortcuts import redirect
@@ -12,7 +13,7 @@ from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.services import ProfileManager
 from apps.matching.models import CandidateMatch
-from apps.messaging.models import Notification
+from apps.messaging.models import Message, Notification
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -85,6 +86,63 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["personal_tagline"] = (
             getattr(profile, "personal_tagline", None) or "Job Seeker"
         )
+
+        # ---------------------------------------------------
+        # Recent Messages & Interest Requests Panel
+        # ---------------------------------------------------
+
+        # 1. Actual message objects
+        message_records = list(
+            Message.objects.filter(conversation__participants=user)
+            .order_by("-created_at")
+            .select_related("sender")[:20]  # grab a few extra for later slicing
+        )
+
+        # 2. Conversations where a recruiter has sent an interest request but no messages yet
+
+        from apps.messaging.models import Conversation  # local import to avoid circular
+
+        interest_conversations = (
+            Conversation.objects.filter(participants=user, status="interest_requested")
+            .annotate(message_count=models.Count("messages"))
+            .filter(message_count=0)
+            .order_by("-created_at")[:20]
+        )
+
+        # Build a unified list-like structure
+        recent_messages: list[dict[str, Any]] = []
+
+        # Add actual messages
+        for msg in message_records:
+            recent_messages.append(
+                {
+                    "sender": msg.sender,
+                    "text": msg.content,
+                    "created_at": msg.created_at,
+                    "is_unread": (not msg.is_read and msg.sender != user),
+                    "conversation_id": msg.conversation.pk,
+                }
+            )
+
+        # Add interest requests (pseudo-messages)
+        for conv in interest_conversations:
+            recruiter = conv.get_other_participant(cast(Any, user))
+            if recruiter is None:
+                continue
+            job_title = getattr(conv.job_opening, "title", "a new opportunity")
+            recent_messages.append(
+                {
+                    "sender": recruiter,
+                    "text": f"Recruiter is interested in discussing {job_title}",
+                    "created_at": conv.created_at,
+                    "is_unread": True,
+                    "conversation_id": conv.id,
+                }
+            )
+
+        # Sort by newest and take top 5
+        recent_messages.sort(key=lambda item: item["created_at"], reverse=True)
+        context["recent_messages"] = recent_messages[:5]
 
         return context
 

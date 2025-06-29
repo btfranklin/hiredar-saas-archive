@@ -163,6 +163,27 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "job_opening"
     object: JobOpening | None = None
 
+    # ------------------------------------------------------------------
+    # Access control: Recruiters only
+    # ------------------------------------------------------------------
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
+        """Allow only authenticated recruiter accounts to view this page.
+
+        Any request coming from a non-recruiter (job-seeker, admin impersonation, or
+        anonymous) is blocked with HTTP 403 to avoid accidentally exposing
+        recruiter-only tooling like candidate tabs or status buttons.
+        """
+        user = cast(AuthenticatedUser, request.user)
+
+        if not user.is_authenticated or user.user_type != "recruiter":
+            from django.core.exceptions import PermissionDenied
+
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Get context data for rendering the template.

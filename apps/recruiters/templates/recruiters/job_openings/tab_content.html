@@ -104,8 +104,8 @@
         <div class="mb-6">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-lg font-semibold">Job Description</h2>
-                
-                {% if job_opening.original_description %}
+
+                {% if job_opening.original_description and request.user.user_type == 'recruiter' %}
                 <div class="flex items-center">
                     <span class="text-sm mr-2">View original</span>
                     <input type="checkbox" 
@@ -118,26 +118,18 @@
                 </div>
                 {% endif %}
             </div>
-            
+
             {% if view == 'original' %}
                 {% include 'recruiters/job_openings/original_content.html' %}
             {% else %}
                 {% include 'recruiters/job_openings/structured_content.html' %}
             {% endif %}
         </div>
-        
+
         <div class="divider"></div>
-        
-        <div class="flex justify-between items-center">
-            <div class="text-sm text-base-content/70">
-                Posted: {{ job_opening.created_at|date:"F j, Y" }}
-            </div>
-            
-            {% if request.user.user_type == 'job_seeker' %}
-                <button class="btn btn-primary">
-                    <i class="fas fa-paper-plane mr-2"></i> Apply Now
-                </button>
-            {% endif %}
+
+        <div class="text-sm text-base-content/70">
+            Posted: {{ job_opening.created_at|date:"F j, Y" }}
         </div>
     </div>
 {% endif %} 

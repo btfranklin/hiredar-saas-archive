@@ -14,6 +14,7 @@ from apps.job_seekers.views.dashboard_views import (
     RoleRecommendationsView,
     TalentSheetDetailsView,
 )
+from apps.job_seekers.views.job_opening_views import JobOpeningDetailView
 from apps.job_seekers.views.job_seeker_profile_views import (
     ProfileView,
     ResumeView,
@@ -53,6 +54,12 @@ urlpatterns: list[URLPattern] = [
         "task-status/<str:task_id>/",
         ResumeProcessingTaskProgressView.as_view(),
         name="task_status",
+    ),
+    # Job opening detail (read-only) for job seekers
+    path(
+        "job-openings/<int:pk>/",
+        JobOpeningDetailView.as_view(),
+        name="job_opening_detail",
     ),
     # API endpoints
     path(

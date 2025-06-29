@@ -12,7 +12,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView

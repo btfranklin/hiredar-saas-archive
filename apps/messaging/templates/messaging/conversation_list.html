@@ -17,7 +17,7 @@
                 <!-- Conversations list -->
                 <div class="md:col-span-2">
                     <div class="bg-base-200 rounded-box p-6 shadow-md">
-                        <h2 class="text-xl font-bold mb-4">Your Conversations</h2>
+                        <!-- Heading removed per UX -->
                         
                         {% if conversations %}
                             <div class="space-y-4">
@@ -33,7 +33,11 @@
                                                 <div class="flex-1">
                                                     <div class="flex justify-between items-center">
                                                         <h3 class="font-semibold">
-                                                            {{ conversation.other_participant.get_full_name }}
+                                                            {% if request.user.user_type == 'job_seeker' %}
+                                                                Recruiter: {{ conversation.other_participant.get_full_name }}
+                                                            {% else %}
+                                                                {{ conversation.other_participant.get_full_name }}
+                                                            {% endif %}
                                                         </h3>
                                                         <span class="text-xs text-base-content/60">
                                                             {{ conversation.updated_at|timesince }} ago

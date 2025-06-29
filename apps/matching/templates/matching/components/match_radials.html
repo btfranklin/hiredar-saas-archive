@@ -1,0 +1,10 @@
+{% load matching_filters %}
+{% comment %}Reusable radial gauge grid for candidate/job match ratings. Expects context var `match` with .get_all_match_ratings method.{% endcomment %}
+<div class="grid gap-6" style="grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));">
+  {% for match_type, match_label, rating in match.get_all_match_ratings %}
+    <div class="flex flex-col items-center">
+      <div class="radial-progress" data-lens="{{ match_type }}" style="--value:{{ rating|mul:10 }}; --size:4.5rem;">{{ rating }}/10</div>
+      <div class="text-xs text-base-content/70 mt-1 text-center">{{ match_label }}</div>
+    </div>
+  {% endfor %}
+</div> 

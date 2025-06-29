@@ -7,6 +7,7 @@ including sending messages and handling notifications.
 
 from typing import Any, cast
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
@@ -16,6 +17,8 @@ from django.urls import reverse
 from django.views.generic import DetailView, ListView, View
 
 from apps.authentication.models import User
+from apps.job_seekers.services import ProfileManager
+from apps.matching.models import CandidateMatch
 from apps.messaging.models import Conversation, Message, Notification
 from apps.recruiters.models import JobOpening
 
@@ -64,6 +67,11 @@ class ConversationListView(LoginRequiredMixin, ListView):
 
         # Get unread message counts for each conversation
         for conversation in context["conversations"]:
+            # Determine other participant relative to current user for accurate display
+            conversation.other_participant = conversation.get_other_participant(
+                cast(Any, self.request.user)
+            )
+
             conversation.unread_count = (
                 Message.objects.filter(
                     conversation=conversation,
@@ -106,6 +114,9 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
         user = cast(Any, request.user)
         if user not in conversation.participants.all():
             return redirect("messaging:conversation_list")
+
+        # Clear any Django messages to prevent toast pop-ups in this view
+        list(messages.get_messages(request))
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -138,6 +149,22 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
         # Add job opening to context if it exists
         if conversation.job_opening:
             context["job_opening"] = conversation.job_opening
+
+        # Provide match object for candidate system card
+        if (
+            conversation.status == "interest_requested"
+            and getattr(self.request.user, "user_type", "") == "job_seeker"
+            and conversation.job_opening
+        ):
+            try:
+                profile = ProfileManager.get_profile_for_user(self.request.user)
+                match_obj = CandidateMatch.objects.get(
+                    job_opening=conversation.job_opening,
+                    talent_sheet__job_seeker=profile,
+                )
+                context["candidate_match"] = match_obj
+            except Exception:
+                context["candidate_match"] = None
 
         return context
 
@@ -236,21 +263,6 @@ class StartConversationView(LoginRequiredMixin, View):
                 # Cast user objects to Any to satisfy type checker with Django's ORM
                 conversation.participants.add(
                     cast(Any, request.user), cast(Any, recipient)
-                )
-
-                # Create initial message with job interest check
-                job_title = job_opening.title
-                job_company = job_opening.company
-                message_content = request.POST.get(
-                    "message",
-                    f"Hi there! I found your profile and think you might be a good fit for the {job_title} role at {job_company}. "
-                    f"Would you be interested in learning more about this opportunity?",
-                )
-
-                Message.objects.create(
-                    conversation=conversation,
-                    sender=request.user,
-                    content=message_content,
                 )
 
                 # Create notification for recipient
