@@ -26,7 +26,7 @@
         </div>
         {% if request.user.user_type == 'recruiter' %}
             <div class="flex flex-wrap gap-2">
-                {% include 'matching/partials/contact_controls.html' with job_seeker_id=job_seeker.id %}
+                {% include 'matching/partials/contact_controls.html' with job_seeker_id=job_seeker.id show_contact=show_contact %}
             </div>
         {% endif %}
     </div>

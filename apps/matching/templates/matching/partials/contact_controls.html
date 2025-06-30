@@ -1,31 +1,35 @@
 {% load static %}
 <div id="contact-shortlist-container" class="flex flex-wrap gap-2">
     {# Contact / Interest Status Controls #}
-    {% if candidate_conversation %}
-        {% if candidate_conversation.status == 'interest_requested' %}
-            <a href="#" class="badge badge-warning badge-lg cursor-default">Interest Requested</a>
-            <button class="btn btn-sm btn-ghost" onclick="document.getElementById('confirm-withdraw-modal').showModal()">Withdraw</button>
-        {% elif candidate_conversation.status == 'candidate_not_interested' %}
-            <div class="badge badge-error badge-lg">Not Interested</div>
+    {% if show_contact %}
+        {% if candidate_conversation %}
+            {% if candidate_conversation.status == 'interest_requested' %}
+                <a href="#" class="badge badge-warning badge-lg cursor-default">Interest Requested</a>
+                <button class="btn btn-outline" onclick="document.getElementById('confirm-withdraw-modal').showModal()"><i class="fas fa-times mr-2"></i> Withdraw</button>
+            {% elif candidate_conversation.status == 'candidate_not_interested' %}
+                <div class="badge badge-error badge-lg">Candidate Not Interested</div>
+            {% else %}
+                <a href="{% url 'messaging:conversation_detail' candidate_conversation.id %}" class="btn btn-outline"><i class="fas fa-comments mr-2"></i> Open Conversation</a>
+            {% endif %}
         {% else %}
-            <a href="{% url 'messaging:conversation_detail' candidate_conversation.id %}" class="btn btn-sm btn-outline">Open Conversation</a>
+            <button class="btn btn-primary" onclick="document.getElementById('confirm-interest-modal').showModal()">
+                <i class="fas fa-envelope mr-2"></i> Contact Candidate
+            </button>
         {% endif %}
-    {% else %}
-        <button class="btn btn-primary" onclick="document.getElementById('confirm-interest-modal').showModal()">
-            <i class="fas fa-envelope mr-2"></i> Contact Candidate
-        </button>
     {% endif %}
 
     {# Shortlist Controls #}
-    {% if is_shortlisted %}
-        <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-md btn-success"><i class="fas fa-check mr-2"></i> In Shortlist</button>
-        </form>
-    {% else %}
-        <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline"><i class="fas fa-plus mr-2"></i> Add to Shortlist</button>
-        </form>
+    {% if show_shortlist %}
+        {% if is_shortlisted %}
+            <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-md btn-success"><i class="fas fa-check mr-2"></i> In Shortlist</button>
+            </form>
+        {% else %}
+            <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline"><i class="fas fa-plus mr-2"></i> Add to Shortlist</button>
+            </form>
+        {% endif %}
     {% endif %}
 </div> 

@@ -31,14 +31,13 @@ class NotificationListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self) -> QuerySet[Notification]:
         """
-        Get the notifications to display for the current user.
-
-        Returns:
-            QuerySet[Notification]: A queryset of notifications for the current user.
+        Return only *unread* notifications for the current user so that the
+        list view stays consistent with the bell-dropdown, which surfaces just
+        the actionable items.
         """
-        return Notification.objects.filter(user=self.request.user).order_by(
-            "-created_at"
-        )
+        return Notification.objects.filter(
+            user=self.request.user, is_read=False
+        ).order_by("-created_at")
 
 
 class MarkNotificationReadView(LoginRequiredMixin, View):
@@ -63,9 +62,9 @@ class MarkNotificationReadView(LoginRequiredMixin, View):
             # Get the notification
             notification = get_object_or_404(Notification, pk=pk, user=request.user)
 
-            # Mark as read
-            notification.is_read = True
-            notification.save()
+            # Instead of retaining a read flag we now delete the record to keep
+            # the notifications table lean and guarantee bell-menu freshness.
+            notification.delete()
 
             return JsonResponse({"success": True})
 
@@ -96,14 +95,10 @@ class MarkAllNotificationsReadView(LoginRequiredMixin, View):
                 user=request.user, is_read=False
             )
 
-            # Mark all as read
-            for notification in unread_notifications:
-                notification.is_read = True
-                notification.save()
+            deleted_count = unread_notifications.count()
+            unread_notifications.delete()
 
-            return JsonResponse(
-                {"success": True, "count": unread_notifications.count()}
-            )
+            return JsonResponse({"success": True, "count": deleted_count})
 
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=500)

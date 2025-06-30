@@ -21,7 +21,7 @@ from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile as JobSeeker
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.matching.tasks.analyze_candidate_match import analyze_candidate_match
-from apps.messaging.models import Conversation
+from apps.messaging.models import Conversation, Notification
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
 
@@ -107,9 +107,13 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
             job_opening=self.job_opening, candidate_match=self.object
         ).exists()
 
-        # Get existing conversation between the recruiter and job seeker for this job opening
+        # Attempt to fetch an existing conversation, if any, between recruiter
+        # and candidate for this job opening.  Regardless of whether it exists
+        # or not, ensure the local variable `conversation` is defined so later
+        # logic doesn't raise UnboundLocalError.
+
+        conversation = None
         try:
-            # Use filter with multiple conditions instead of repeating parameters
             conversation = (
                 Conversation.objects.filter(
                     job_opening=self.job_opening, participants=self.request.user
@@ -117,9 +121,23 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
                 .filter(participants=self.object.talent_sheet.job_seeker.user_owner)
                 .get()
             )
-            context["candidate_conversation"] = conversation
         except Conversation.DoesNotExist:
-            context["candidate_conversation"] = None
+            pass
+
+        context["candidate_conversation"] = conversation
+
+        # Determine if recruiter is allowed to initiate contact. Candidates who
+        # originate from recruiter-uploaded pools have no `user_owner`; those
+        # should *not* expose a "Contact Candidate" button.
+        job_seeker_obj = context["job_seeker"]
+        context["show_contact"] = bool(getattr(job_seeker_obj, "user_owner", None))
+
+        # Hide shortlist button any time the candidate has explicitly declined
+        # interest (status == candidate_not_interested).
+        context["show_shortlist"] = not (
+            conversation is not None
+            and conversation.status == "candidate_not_interested"
+        )
 
         return context
 
@@ -157,7 +175,18 @@ def withdraw_interest(request, job_id, candidate_id):
             )
             .get()
         )
+
+        # Capture link before deleting the conversation so we can clean up
+        conv_link = reverse(
+            "messaging:conversation_detail", kwargs={"pk": conversation.pk}
+        )
+
+        # Remove conversation and any messages
         conversation.delete()
+
+        # Delete notifications for *any* user that reference this conversation.
+        # (Normally only the candidate has one, but this is future-proof.)
+        Notification.objects.filter(link=conv_link).delete()
 
         # Check if this is an HTMX request
         is_htmx = "HX-Request" in request.headers
@@ -171,6 +200,10 @@ def withdraw_interest(request, job_id, candidate_id):
                 candidate_match__talent_sheet__job_seeker=job_seeker,
             ).exists()
 
+            # Determine if contact should be shown (only if job_seeker has a
+            # public account)
+            show_contact = bool(job_seeker.user_owner)
+
             html = render_to_string(
                 "matching/partials/contact_controls.html",
                 {
@@ -178,6 +211,8 @@ def withdraw_interest(request, job_id, candidate_id):
                     "is_shortlisted": is_shortlisted,
                     "job_opening": job_opening,
                     "job_seeker_id": job_seeker.pk,
+                    "show_contact": show_contact,
+                    "show_shortlist": True,
                 },
                 request=request,
             )

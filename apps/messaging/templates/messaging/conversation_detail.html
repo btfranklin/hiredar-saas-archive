@@ -104,25 +104,25 @@
                 {% if conversation.status == 'active' or conversation.status == 'candidate_interested' %}
                     {% if request.user.user_type == 'recruiter' %}
                         <form 
+                            class="message-send-form flex gap-2 w-full items-end"
                             hx-post="{% url 'messaging:send_message' conversation.id %}"
                             hx-target="#message-container"
                             hx-swap="beforeend"
-                            hx-on::after-request="this.reset(); document.getElementById('message-container').scrollTop = document.getElementById('message-container').scrollHeight;"
-                            class="flex gap-2 w-full"
+                            hx-on::after-swap="document.getElementById('message-container').scrollTop = document.getElementById('message-container').scrollHeight;"
                         >
                             {% csrf_token %}
-                            {% include 'core/components/fieldset_chat_input.html' with id='message' name='message' placeholder='Type your message...' wrapper_class='flex gap-2 w-full' input_type='textarea' widget_class='textarea textarea-bordered flex-1' extra_attrs='required' button_class='btn btn-primary' button_icon='fas fa-paper-plane' button_label='Send' %}
+                            {% include 'core/components/fieldset_chat_input.html' with id='message' name='message' placeholder='Type your message...' wrapper_class='flex gap-2 w-full items-end' input_type='textarea' widget_class='textarea textarea-bordered w-full resize-none min-h-[3rem]' extra_attrs='required data-autogrow' button_class='btn btn-primary' button_icon='fas fa-paper-plane' button_label='Send' %}
                         </form>
                     {% elif conversation_messages %}
                         <form 
+                            class="message-send-form flex gap-2 w-full items-end"
                             hx-post="{% url 'messaging:send_message' conversation.id %}"
                             hx-target="#message-container"
                             hx-swap="beforeend"
-                            hx-on::after-request="this.reset(); document.getElementById('message-container').scrollTop = document.getElementById('message-container').scrollHeight;"
-                            class="flex gap-2 w-full"
+                            hx-on::after-swap="document.getElementById('message-container').scrollTop = document.getElementById('message-container').scrollHeight;"
                         >
                             {% csrf_token %}
-                            {% include 'core/components/fieldset_chat_input.html' with id='message' name='message' placeholder='Type your message...' wrapper_class='flex gap-2 w-full' input_type='textarea' widget_class='textarea textarea-bordered flex-1' extra_attrs='required' button_class='btn btn-primary' button_icon='fas fa-paper-plane' button_label='Send' %}
+                            {% include 'core/components/fieldset_chat_input.html' with id='message' name='message' placeholder='Type your message...' wrapper_class='flex gap-2 w-full items-end' input_type='textarea' widget_class='textarea textarea-bordered w-full resize-none min-h-[3rem]' extra_attrs='required data-autogrow' button_class='btn btn-primary' button_icon='fas fa-paper-plane' button_label='Send' %}
                         </form>
                     {% endif %}
                 {% elif conversation.status == 'candidate_not_interested' and request.user.user_type == 'recruiter' %}
@@ -133,18 +133,7 @@
                 {% endif %}
             </div>
             
-            <!-- Resume section (for recruiters if candidate is interested) -->
-            {% if request.user.user_type == 'recruiter' and conversation.status == 'candidate_interested' %}
-            <div class="mt-6 bg-base-200 rounded-box p-6 shadow-md">
-                <h3 class="text-lg font-semibold mb-4">Candidate Resume</h3>
-                <p class="mb-4">
-                    You now have access to view {{ other_participant.get_full_name }}'s full resume details.
-                </p>
-                {% if job_seeker_profile_id %}
-                <a href="{% url 'job_seekers:resume_view' job_seeker_profile_id %}" class="btn btn-primary btn-sm">View Full Resume</a>
-                {% endif %}
-            </div>
-            {% endif %}
+            {# Removed outdated candidate resume promo block #}
         </div>
     </div>
 </div>
@@ -167,6 +156,32 @@
       if (dlg && typeof dlg.close === 'function') {
         dlg.close();
       }
+    }
+  });
+</script>
+
+<!-- Simple auto-grow for textareas marked with data-autogrow -->
+<script>
+  document.addEventListener('input', function (e) {
+    if (e.target.matches('textarea[data-autogrow]')) {
+      const el = e.target;
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight + 2) + 'px';
+    }
+  });
+</script>
+
+<!-- Clear chat textarea after successful send -->
+<script>
+  document.body.addEventListener('htmx:afterRequest', function(evt) {
+    const form = evt.target.closest('form.message-send-form');
+    if (form && evt.detail && evt.detail.successful) {
+      const ta = form.querySelector('[name="message"]');
+      if (ta) {
+        ta.value = '';
+        ta.style.height = 'auto';
+      }
+      form.reset();
     }
   });
 </script>

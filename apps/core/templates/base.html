@@ -156,6 +156,20 @@
     <!-- Compiled Tailwind + DaisyUI -->
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet" />
     
+    <!-- Detect and store browser timezone in a cookie for per-user localisation -->
+    <script>
+      (function() {
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (tz) {
+            document.cookie = `tz=${tz};path=/;max-age=31536000`; // 1 year
+          }
+        } catch (e) {
+          // Ignore browsers that lack Intl support
+        }
+      })();
+    </script>
+    
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen flex flex-col bg-base-100">

@@ -19,11 +19,11 @@
                 <button 
                     class="btn btn-outline btn-sm"
                     hx-post="{% url 'messaging:mark_all_read' %}"
-                    hx-confirm="Mark all notifications as read?"
+                    hx-confirm="Clear all notifications?"
                     hx-swap="none"
                     hx-on::after-request="window.location.reload()"
                 >
-                    Mark all as read
+                    Clear All
                 </button>
             </div>
             
@@ -31,7 +31,7 @@
             
             <div class="space-y-4" id="notifications-container">
                 {% for notification in notifications %}
-                    <div class="bg-base-100 p-4 rounded-lg shadow-sm flex items-start gap-4 {% if not notification.is_read %}border-l-4 border-primary{% endif %}">
+                    <div class="notification-item bg-base-100 p-4 rounded-lg shadow-sm flex items-start gap-4 border-l-4 border-primary">
                         <div class="avatar avatar-placeholder">
                             <div class="bg-neutral text-neutral-content rounded-full w-10">
                                 <span class="text-xs">{{ notification.user.get_initials }}</span>
@@ -53,7 +53,7 @@
                                         class="btn btn-ghost btn-xs"
                                         hx-post="{% url 'messaging:mark_notification_read' notification.id %}"
                                         hx-swap="none"
-                                        hx-on::after-request="this.closest('.border-primary').classList.remove('border-primary', 'border-l-4')"
+                                        hx-on::after-request="this.closest('.notification-item').remove()"
                                     >
                                         <i class="fas fa-check"></i>
                                     </button>

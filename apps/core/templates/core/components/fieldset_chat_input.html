@@ -1,4 +1,4 @@
-<fieldset class="fieldset space-y-2 mb-4">
+<fieldset class="{{ outer_class|default:'fieldset space-y-2 mb-4 w-full' }}">
   {% if legend %}
   <legend class="sr-only">{{ legend }}</legend>
   {% endif %}

@@ -137,20 +137,21 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
         conversation: Conversation = self.get_object()
 
         # Get messages and mark them as read
-        # Since the type checker can't infer the related_name, we need to use getattr
-        message_queryset = getattr(conversation, "messages").order_by("-created_at")
+        # Display messages in chronological order (oldest first) so that the
+        # newest messages appear at the bottom, which matches typical chat UX.
+        message_queryset = getattr(conversation, "messages").order_by("created_at")
         message_queryset.filter(is_read=False).exclude(sender=self.request.user).update(
             is_read=True
         )
 
-        # Also mark any related notifications (e.g., initial interest request) as read
-        # so dashboard "Unread" badges disappear after the user views the conversation.
+        # Remove any matching unread notifications entirely so they disappear from
+        # the bell dropdown once the candidate opens the conversation detail.
         conv_url = reverse(
             "messaging:conversation_detail", kwargs={"pk": conversation.pk}
         )
         Notification.objects.filter(
             user=self.request.user, link=conv_url, is_read=False
-        ).update(is_read=True)
+        ).delete()
 
         # Use a non-conflicting key name so it does not shadow Django's built-in
         # `messages` context processor (which powers flash/alert messages in
@@ -317,7 +318,8 @@ class StartConversationView(LoginRequiredMixin, View):
             if "HX-Request" in request.headers:
                 from django.template.loader import render_to_string
 
-                # Re-render the controls partial with new context reflecting conversation
+                # Always allow contact here because this endpoint is only
+                # reached for public-pool candidates who have a `user_owner`.
                 html = render_to_string(
                     "matching/partials/contact_controls.html",
                     {
@@ -329,6 +331,8 @@ class StartConversationView(LoginRequiredMixin, View):
                         "is_shortlisted": False,
                         "job_opening": job_opening,
                         "job_seeker_id": recipient.pk,
+                        "show_contact": True,
+                        "show_shortlist": True,
                     },
                     request=request,
                 )

@@ -146,6 +146,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     date_joined = models.DateTimeField(_("date joined"), auto_now_add=True)
 
+    # Olson timezone string (e.g. "America/Los_Angeles") for per-user localization
+    timezone = models.CharField(
+        _("timezone"),
+        max_length=50,
+        default="UTC",
+        help_text=_(
+            "Preferred IANA timezone name for this user (e.g. 'Europe/Paris')."
+        ),
+    )
+
     # Field to record if the user has certified they are located in the US and will
     # only use Hiredar for US-based recruiting and employment activity. This helps us
     # limit our user base geographically for GDPR and other non-US regulatory
@@ -255,4 +265,8 @@ class User(AbstractBaseUser, PermissionsMixin):
             Notification,  # local import to avoid circular dependency
         )
 
-        return Notification.objects.filter(user=self).order_by("-created_at")[:limit]
+        # Return only *unread* notifications so already-acted-on items do not
+        # clutter the bell menu.
+        return Notification.objects.filter(user=self, is_read=False).order_by(
+            "-created_at"
+        )[:limit]
