@@ -2,6 +2,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.authentication.models import User
+from apps.job_seekers.models import JobSeekerProfile
 from apps.messaging.models import Conversation, Message
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
@@ -40,6 +41,12 @@ class InterestFlowTest(TestCase):
         self.client_candidate = Client()
         self.client_recruiter.force_login(self.recruiter_user)
         self.client_candidate.force_login(self.job_seeker_user)
+
+        # Ensure the candidate profile has a resume attached so resume-upload
+        # middleware allows access to messaging endpoints used in these tests.
+        seeker_profile = JobSeekerProfile.objects.get(user_owner=self.job_seeker_user)
+        seeker_profile.resume_xml = "<resume />"
+        seeker_profile.save(update_fields=["resume_xml"])
 
     def _create_conversation(self) -> Conversation:
         url = reverse(

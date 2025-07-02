@@ -7,6 +7,7 @@ from typing import cast
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.views import View
 
 from apps.authentication.types import AuthenticatedUser
@@ -123,39 +124,29 @@ class ToggleRoleInterestView(
                 status=404,
             )
 
-        # For HTMX requests, return updated button
         if self.is_htmx_request(request):
-            # Build updated button HTML matching static template
-            if updated_role.is_candidate_interested:
-                # Button for interested state (green)
-                button_html = f"""
-                <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/"
-                        hx-swap="outerHTML"
-                        hx-target="closest .interest-btn"
-                        class="btn btn-sm interest-btn btn-success">
-                    <i class="fas fa-check mr-2"></i> Interested
-                </button>
-                """
-            else:
-                # Button for not interested state (blue)
-                button_html = f"""
-                <button hx-post="/job-seekers/api/toggle-role-interest/{updated_role.pk}/"
-                        hx-swap="outerHTML"
-                        hx-target="closest .interest-btn"
-                        class="btn btn-sm interest-btn btn-primary">
-                    <i class="fas fa-thumbs-up mr-2"></i> I'm Interested
-                </button>
-                """
-            # Create response and trigger card class update via HTMX
-            response = HttpResponse(button_html)
-            js_trigger = {
-                "updateCardClass": {
-                    "roleId": role_id,
-                    "isInterested": updated_role.is_candidate_interested,
-                }
-            }
-            response.headers["HX-Trigger"] = json.dumps(js_trigger)
-            return response
+            # Re-render the recommended roles section and return it for swapping
+            # Recompute role lists for current profile
+            interested_roles = RoleRecommendation.objects.filter(
+                job_seeker=profile,
+                is_candidate_interested=True,
+            ).order_by("role_title")[:5]
+
+            other_roles = RoleRecommendation.objects.filter(
+                job_seeker=profile,
+                is_candidate_interested=False,
+            ).order_by("role_title")[:5]
+
+            html = render_to_string(
+                "job_seekers/partials/recommended_roles.html",
+                {
+                    "interested_roles": interested_roles,
+                    "other_roles": other_roles,
+                },
+                request=request,
+            )
+
+            return HttpResponse(html)
         else:
             # For API requests, return JSON with updated status
             return JsonResponse(

@@ -1,0 +1,60 @@
+<div id="recommended-roles-section" class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Recommended Roles</h2>
+        <a href="{% url 'job_seekers:role_recommendations' %}" class="text-primary hover:underline">View all</a>
+    </div>
+
+    {% if interested_roles or other_roles %}
+        {# Interested Roles Section #}
+        {% if interested_roles %}
+            <div class="mb-6">
+                <h3 class="text-md font-semibold mb-3 text-success flex items-center">
+                    <i class="fas fa-star mr-2"></i> Roles You're Interested In
+                </h3>
+                <div class="grid grid-cols-1 gap-2">
+                    {% for role in interested_roles %}
+                        <div class="flex items-center justify-between bg-base-100 p-3 rounded-lg shadow-sm hover:shadow-md transition-all border-l-4 border-success">
+                            <span class="font-medium">{{ role.role_title }}</span>
+                            <button class="btn btn-sm btn-success interest-btn"
+                                    hx-post="{% url 'job_seekers:toggle_role_interest' role.id %}"
+                                    hx-target="#recommended-roles-section"
+                                    hx-swap="outerHTML">
+                                <i class="fas fa-check mr-2"></i> Interested
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {# Other Recommendations Section #}
+        {% if other_roles %}
+            <div>
+                {% if interested_roles %}
+                <h3 class="text-md font-semibold mb-3 text-base-content/70 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i> Other Recommendations
+                </h3>
+                {% endif %}
+
+                <div class="grid grid-cols-1 gap-2">
+                    {% for role in other_roles %}
+                        <div class="flex items-center justify-between bg-base-100 p-3 rounded-lg shadow-sm hover:shadow-md transition-all">
+                            <span class="font-medium">{{ role.role_title }}</span>
+                            <button class="btn btn-sm btn-primary interest-btn"
+                                    hx-post="{% url 'job_seekers:toggle_role_interest' role.id %}"
+                                    hx-target="#recommended-roles-section"
+                                    hx-swap="outerHTML">
+                                <i class="fas fa-thumbs-up mr-2"></i> I'm Interested
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>
+            <span>We haven't generated role recommendations for you yet. Please check back soon!</span>
+        </div>
+    {% endif %}
+</div> 
