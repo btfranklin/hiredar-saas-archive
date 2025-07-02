@@ -14,6 +14,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -112,11 +113,11 @@ class AccountAdapter(DefaultAccountAdapter):
             raise ValidationError(f"Email address appears invalid: {reason}.")
         try:
             return super().clean_email(email)
-        except ValidationError:
+        except ValidationError as exc:
             # Duplicate email error: user should log in instead of signing up
             raise ValidationError(
                 "An account with this email already exists. Please log in instead."
-            )
+            ) from exc
 
     def send_confirmation_mail(
         self, request: HttpRequest, emailconfirmation, signup: bool
@@ -163,9 +164,46 @@ class AccountAdapter(DefaultAccountAdapter):
         if override:
             original = emailconfirmation.email_address.email
             emailconfirmation.email_address.email = override
-        super().send_confirmation_mail(request, emailconfirmation, signup)
+
+        # --------------------------------------------------
+        # Use django-post-office immediate priority so the
+        # verification e-mail goes out synchronously.
+        # --------------------------------------------------
+        setattr(message, "priority", "now")  # mark for immediate send
+        message.send(fail_silently=False)
+
         if override:
             emailconfirmation.email_address.email = original
+
+        logger.info(
+            "Sent immediate confirmation e-mail to %s (signup=%s)",
+            emailconfirmation.email_address.email,
+            signup,
+        )
+        return  # skip parent implementation
+
+    # ------------------------------------------------------------------
+    #  Immediate-send priority for *all* system e-mails
+    # ------------------------------------------------------------------
+    def render_mail(
+        self,
+        template_prefix: str,
+        email: str,
+        context: dict[str, Any],
+        headers: dict[str, str] | None = None,
+    ) -> EmailMessage | EmailMultiAlternatives:
+        """Wrap parent implementation, tagging the message for instant send.
+
+        We delegate all heavy lifting (context augmentation, subject formatting,
+        multi-part rendering, etc.) to the base class, then simply mark the
+        resulting ``EmailMessage`` with ``priority='now'``.  The subsequent
+        call to ``message.send()`` performed by ``DefaultAccountAdapter`` will
+        therefore bypass the Post-Office queue.
+        """
+
+        message = super().render_mail(template_prefix, email, context, headers=headers)
+        setattr(message, "priority", "now")
+        return message
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):

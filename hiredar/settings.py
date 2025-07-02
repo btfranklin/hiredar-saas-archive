@@ -152,6 +152,7 @@ INSTALLED_APPS = [
     "apps.reports.apps.ReportsConfig",
     # Resume processing subsystem
     "apps.resume_processing.apps.ResumeProcessingConfig",
+    "post_office",
 ]
 
 # ---------------------------------------------------------------------------
@@ -378,17 +379,50 @@ ACCOUNT_USERNAME_BLACKLIST = []
 # Require email confirmation for all accounts
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
-# Email backend configuration
-if DEBUG:
-    # During development, output emails to console rather than sending
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    EMAIL_VERIFICATION_OVERRIDE_ADDRESS = "verification@hiredar.com"
-    print("DEBUG MODE: Using console email backend and override email address")
-else:
-    # Use SMTP2GO HTTP API backend in production
-    EMAIL_BACKEND = "apps.core.email_backends.SMTP2GOAPIEmailBackend"
-    EMAIL_VERIFICATION_OVERRIDE_ADDRESS = None
+# ---------------------------------------------------------------------------
+#  Email backend configuration (via django-post-office)
+# ---------------------------------------------------------------------------
 
+# Resolve the *actual* backend we want Post-Office to delegate to.  During
+# development we keep using Django's console backend so e-mails are printed to
+# stdout.  In production we continue to use the custom SMTP2GO HTTP backend.
+REAL_EMAIL_BACKEND = (
+    "django.core.mail.backends.console.EmailBackend"
+    if DEBUG
+    else "apps.core.email_backends.SMTP2GOAPIEmailBackend"
+)
+
+# Post-Office integration – queue e-mails to the database and let Celery flush
+# them asynchronously.  The ``BACKENDS`` mapping tells Post-Office what engine
+# to use when actually sending.
+POST_OFFICE = {
+    "BACKENDS": {
+        "default": REAL_EMAIL_BACKEND,
+    },
+    # Enable the built-in Celery tasks so ``send_queued_mail`` is dispatched
+    # automatically rather than being run by a management command.
+    "CELERY_ENABLED": True,
+}
+
+# Point Django to Post-Office's email backend so **all** calls to
+# ``EmailMessage.send()`` are transparently queued.
+EMAIL_BACKEND = "post_office.EmailBackend"
+
+# Email confirmation overriding address remains useful during development.
+EMAIL_VERIFICATION_OVERRIDE_ADDRESS = "verification@hiredar.com" if DEBUG else None
+
+# Ensure Celery Beat periodically flushes the queue (every minute).
+if "post_office" in INSTALLED_APPS:
+    CELERY_BEAT_SCHEDULE.setdefault(
+        "send-queued-mail",
+        {
+            "task": "post_office.tasks.send_queued_mail",
+            "schedule": 60.0,  # once per minute
+            "options": {"queue": "default"},
+        },
+    )
+
+# Default from email
 DEFAULT_FROM_EMAIL = "Hiredar <noreply@hiredar.com>"
 
 # SMTP2GO HTTP API settings
