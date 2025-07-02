@@ -55,39 +55,63 @@ def parse_role_recommendations_xml(
 
     xml_content = xml_response[xml_start:xml_end]
 
+    # Sanitize XML: remove invalid control chars and escape stray ampersands
+    xml_content = remove_invalid_xml_chars(xml_content)
+    xml_content = re.sub(
+        r"&(?!amp;|lt;|gt;|apos;|quot;|#[0-9]+;)", "&amp;", xml_content
+    )
+
+    # Attempt parsing, with fallback for malformed XML
     try:
-        # Parse the XML
         root = ET.fromstring(xml_content)
-        recommendations = []
-
-        for role_elem in root.findall("./role_recommendation"):
-            title_elem = role_elem.find("title")
-            desc_elem = role_elem.find("description")
-
-            if (
-                title_elem is not None
-                and title_elem.text
-                and desc_elem is not None
-                and desc_elem.text
-            ):
-                recommendation = RoleRecommendation(
-                    job_seeker=job_seeker,
-                    role_title=title_elem.text.strip(),
-                    description=desc_elem.text.strip(),
-                    is_candidate_interested=False,  # Default to not interested
-                )
-                recommendations.append(recommendation)
-
-        if not recommendations:
-            logger.warning("No role recommendations found in XML response")
-
-        logger.info("Parsed %d role recommendations from XML", len(recommendations))
-        return recommendations
-
     except ET.ParseError as e:
-        logger.error("Failed to parse XML response: %s", str(e))
-        logger.debug("Response content: %s", xml_response[:1000])
-        raise ValueError(f"Failed to parse XML response: {str(e)}") from e
+        logger.warning(
+            "xml.etree parser failed for role recommendations: %s, attempting recovery",
+            str(e),
+        )
+        try:
+            from lxml import etree as lxml_etree
+
+            parser = lxml_etree.XMLParser(recover=True)
+            root = lxml_etree.fromstring(xml_content.encode("utf-8"), parser)
+        except ImportError:
+            logger.error(
+                "lxml not installed; cannot recover malformed XML for role recommendations"
+            )
+            logger.debug("Response content: %s", xml_response[:1000])
+            return []
+        except Exception as rec_e:
+            logger.error(
+                "Failed to recover malformed XML for role recommendations: %s",
+                str(rec_e),
+            )
+            logger.debug("Response content: %s", xml_response[:1000])
+            return []
+
+    # Build recommendation objects from parsed XML
+    recommendations: list[RoleRecommendation] = []
+    for role_elem in root.findall("./role_recommendation"):
+        title_elem = role_elem.find("title")
+        desc_elem = role_elem.find("description")
+        if (
+            title_elem is not None
+            and title_elem.text
+            and desc_elem is not None
+            and desc_elem.text
+        ):
+            rec = RoleRecommendation(
+                job_seeker=job_seeker,
+                role_title=title_elem.text.strip(),
+                description=desc_elem.text.strip(),
+                is_candidate_interested=False,
+            )
+            recommendations.append(rec)
+
+    if not recommendations:
+        logger.warning("No role recommendations found in XML response")
+    else:
+        logger.info("Parsed %d role recommendations from XML", len(recommendations))
+    return recommendations
 
 
 def parse_talent_sheet_xml(

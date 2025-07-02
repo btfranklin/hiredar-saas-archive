@@ -10,6 +10,12 @@
         
         <!-- Main content -->
         <div class="w-full lg:w-2/3 xl:w-3/4">
+            <div class="flex justify-end mb-6">
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('resume-upload-modal').showModal()">
+                    <i class="fas fa-upload mr-2"></i>
+                    Upload New Resume
+                </button>
+            </div>
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-2xl font-bold mb-6">Professional Summary</h2>
                 
@@ -97,4 +103,32 @@
         </div>
     </div>
 </div>
+
+<!-- Resume Upload Modal -->
+<dialog id="resume-upload-modal" class="modal">
+    <div class="modal-box space-y-4">
+        <h3 class="font-bold text-lg">Upload a New Resume</h3>
+        <p class="text-sm mb-2">Upload your updated PDF resume and we'll refresh your profile automatically.</p>
+
+        <form id="modal-resume-upload-form"
+              method="post"
+              action="{% url 'job_seekers:resume_upload' %}"
+              enctype="multipart/form-data"
+              hx-post="{% url 'job_seekers:resume_upload' %}"
+              hx-encoding="multipart/form-data"
+              hx-target="#resume-upload-modal .modal-box"
+              hx-swap="innerHTML"
+              class="space-y-4">
+            {% csrf_token %}
+            {% include "core/components/fieldset_field.html" with label="Resume (PDF only)" id="modal_resume" name="resume" widget_type="file" widget_class="file-input file-input-bordered file-input-primary w-full" extra_attrs="accept='application/pdf'" required=True %}
+            <div class="flex justify-end gap-2">
+                <button type="button" class="btn" onclick="document.getElementById('resume-upload-modal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <span class="htmx-indicator loading loading-spinner loading-xs me-2"></span>
+                    Upload &amp; Process
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
 {% endblock %} 

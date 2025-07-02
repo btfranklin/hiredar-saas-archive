@@ -17,7 +17,8 @@ from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
 from apps.core.upload_validators import DEFAULT_RESUME_VALIDATORS
-from apps.job_seekers.models import JobSeekerProfile  # local import to avoid cycles
+from apps.job_seekers.models import JobSeekerProfile, TalentSheet
+from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 from apps.job_seekers.tasks.post_resume_processing_tasks import (
     resume_processing_completed,
 )
@@ -132,6 +133,10 @@ class ResumeUploadView(LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, Vi
                 job_seeker_profile = JobSeekerProfile.objects.create(
                     user_owner=user_model
                 )
+
+            # Immediately withdraw from talent pool and remove outdated talent sheet
+            TalentPoolManager.toggle_talent_pool(user_model, join=False)
+            TalentSheet.objects.filter(job_seeker=job_seeker_profile).delete()
 
             # Expose convenience attribute for the rest of the request lifecycle
             setattr(user_model, "job_seeker_profile", job_seeker_profile)

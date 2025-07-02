@@ -35,6 +35,34 @@ class RoleRecommendationXMLParserTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             parse_role_recommendations_xml("<nope></nope>")
 
+    def test_control_chars_and_ampersands_are_handled(self):
+        # Control chars should be stripped and ampersands escaped, preserving text
+        xml = (
+            "<role_recommendations>"
+            "<role_recommendation>"
+            "<title>AT&T\x07Example</title>"
+            "<description>Test & More</description>"
+            "</role_recommendation>"
+            "</role_recommendations>"
+        )
+        recommendations = parse_role_recommendations_xml(xml)
+        self.assertEqual(len(recommendations), 1)
+        self.assertEqual(recommendations[0].role_title, "AT&TExample")
+        self.assertEqual(recommendations[0].description, "Test & More")
+
+    def test_malformed_xml_returns_empty_list(self):
+        # Missing closing envelope should not raise, but return empty list
+        xml = (
+            "<role_recommendations>"
+            "<role_recommendation>"
+            "<title>Foo</title>"
+            "<description>Bar</description>"
+            "</role_recommendation>"
+            # no closing </role_recommendations>
+        )
+        recommendations = parse_role_recommendations_xml(xml)
+        self.assertEqual(recommendations, [])
+
 
 class TalentSheetXMLParserTests(SimpleTestCase):
     """Tests for talent sheet XML parsing."""
