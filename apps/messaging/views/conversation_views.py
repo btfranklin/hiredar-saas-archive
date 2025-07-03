@@ -9,6 +9,7 @@ from typing import Any, cast
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import F
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -20,7 +21,7 @@ from apps.authentication.models import User
 from apps.job_seekers.services import ProfileManager
 from apps.matching.models import CandidateMatch
 from apps.messaging.models import Conversation, Message, Notification
-from apps.recruiters.models import JobOpening
+from apps.recruiters.models import JobOpening, RecruiterProfile
 
 
 class ConversationListView(LoginRequiredMixin, ListView):
@@ -290,6 +291,56 @@ class StartConversationView(LoginRequiredMixin, View):
                     kwargs={"pk": existing_conversation.pk},
                 )
             else:
+                # ----------------------------------------------
+                # Credits check + deduction for initial outreach
+                # ----------------------------------------------
+                recruiter_profile = getattr(request.user, "recruiter_profile", None)
+
+                if recruiter_profile is None:
+                    return JsonResponse(
+                        {
+                            "status": "error",
+                            "message": "Recruiter profile not found",
+                        },
+                        status=400,
+                    )
+
+                credits_needed = 2
+                if recruiter_profile.credits_available < credits_needed:
+                    error_message = (
+                        f"Insufficient credits: you have {recruiter_profile.credits_available} "
+                        f"credits but need {credits_needed} to contact this candidate."
+                    )
+
+                    # HTMX response: inject a modal and close the current one
+                    if "HX-Request" in request.headers:
+                        modal_html = render_to_string(
+                            "recruiters/partials/insufficient_credits_modal.html",
+                            {
+                                "message": error_message,
+                                "credits_url": reverse("recruiters:credits"),
+                            },
+                            request=request,
+                        )
+
+                        resp = HttpResponse(modal_html, status=200)
+                        # Insert modal after the target element so existing buttons stay
+                        resp["HX-Reswap"] = "afterend"
+                        resp["HX-Trigger"] = (
+                            '{"closeModal": {"id": "confirm-interest-modal"}}'
+                        )
+                        return resp
+
+                    return JsonResponse(
+                        {"status": "error", "message": error_message}, status=400
+                    )
+
+                # Deduct credits and increment outreach counter atomically
+                RecruiterProfile.objects.filter(pk=recruiter_profile.pk).update(
+                    credits_available=F("credits_available") - credits_needed,
+                    total_interest_requests_sent=F("total_interest_requests_sent") + 1,
+                )
+
                 # Create new conversation
                 conversation = Conversation.objects.create(
                     job_opening=job_opening, status="interest_requested"
@@ -316,8 +367,6 @@ class StartConversationView(LoginRequiredMixin, View):
 
             # If HTMX request, return updated contact-controls HTML instead of redirect
             if "HX-Request" in request.headers:
-                from django.template.loader import render_to_string
-
                 # Always allow contact here because this endpoint is only
                 # reached for public-pool candidates who have a `user_owner`.
                 html = render_to_string(
@@ -410,6 +459,25 @@ class SendMessageView(LoginRequiredMixin, View):
             if conversation.status == "candidate_interested":
                 conversation.status = "active"
                 conversation.save(update_fields=["status"])
+
+            # -----------------------------------------------------------------
+            # Increment recruiter message counter (no credits deducted here)
+            # -----------------------------------------------------------------
+            if getattr(request.user, "user_type", "") == "recruiter":
+                recruiter_profile = getattr(request.user, "recruiter_profile", None)
+
+                if recruiter_profile is None:
+                    return JsonResponse(
+                        {
+                            "status": "error",
+                            "message": "Recruiter profile not found",
+                        },
+                        status=400,
+                    )
+
+                RecruiterProfile.objects.filter(pk=recruiter_profile.pk).update(
+                    total_messages_sent=F("total_messages_sent") + 1
+                )
 
             # Create message
             message = Message.objects.create(
