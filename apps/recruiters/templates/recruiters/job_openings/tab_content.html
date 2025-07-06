@@ -13,11 +13,15 @@
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold">Shortlisted Candidates ({{ shortlist_count }})</h2>
                 <div class="flex gap-2">
-                    <a href="{% url 'reports:export_csv' job_opening.id %}" 
+                    <a hx-get="{% url 'reports:export_csv' job_opening.id %}" 
+                       hx-target="body"
+                       hx-swap="beforeend"
                        class="btn btn-outline btn-sm">
                         <i class="fas fa-file-csv mr-2"></i> Export CSV
                     </a>
-                    <a href="{% url 'reports:export_pdf' job_opening.id %}" 
+                    <a hx-get="{% url 'reports:export_pdf' job_opening.id %}" 
+                       hx-target="body"
+                       hx-swap="beforeend"
                        class="btn btn-secondary btn-sm">
                         <i class="fas fa-file-pdf mr-2"></i> Export PDF
                     </a>

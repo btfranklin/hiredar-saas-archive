@@ -90,4 +90,5 @@ testpaths = ["apps"]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
+    "ignore:.*Error when trying to teardown test databases.*:pytest.PytestWarning",
 ]

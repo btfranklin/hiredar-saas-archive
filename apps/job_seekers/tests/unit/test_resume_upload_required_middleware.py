@@ -7,6 +7,7 @@ until they have uploaded a resume, while exempt URLs remain accessible.
 from __future__ import annotations
 
 import uuid
+from typing import Any, cast
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -24,14 +25,13 @@ class ResumeUploadRequiredMiddlewareTests(TestCase):
 
         # Create a *job-seeker* account (profile is created automatically by signal)
         self.seeker_password = "Testpass123!"
-        # Using `create` instead of the helper avoids static-analysis false positives
-        self.seeker: User = User.objects.create(
+        # Use create_user to ensure proper password hashing and avoid warnings
+        self.seeker: User = cast(Any, User.objects).create_user(
             email="seeker@example.com",
+            password=self.seeker_password,
             user_type="job_seeker",
             name="Job Seeker",
         )
-        self.seeker.set_password(self.seeker_password)
-        self.seeker.save(update_fields=["password"])
 
         # Convenience URLs
         self.dashboard_url = reverse("job_seekers:dashboard")
