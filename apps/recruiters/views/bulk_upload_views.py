@@ -1,3 +1,5 @@
+"""Views for bulk resume upload and candidate pool management."""
+
 from typing import Any, cast
 from zipfile import ZipFile
 
@@ -17,6 +19,7 @@ from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models.profile import CandidatePool, JobSeekerProfile
 from apps.job_seekers.models.talent import TalentSheet
+from apps.recruiters.constants import RESUME_PROCESSING_CREDIT_COST
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
 from apps.recruiters.tasks.bulk_resume_tasks import unpack_and_process_zip
@@ -66,8 +69,13 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
 
         # Ensure recruiter has enough credits
         credits_available = recruiter_profile.credits_available
-        if pdf_count > credits_available:
-            error_message = f"Insufficient credits: you have {credits_available} credits but uploaded {pdf_count} resumes."
+        credits_needed = pdf_count * RESUME_PROCESSING_CREDIT_COST
+
+        if credits_needed > credits_available:
+            error_message = (
+                f"Insufficient credits: you have {credits_available} credits but "
+                f"need {credits_needed} to process {pdf_count} resumes."
+            )
             # If HTMX request, return an error fragment with Buy More Credits button
             if self.request.headers.get("HX-Request"):
                 return render(
@@ -84,7 +92,7 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
             return self.form_invalid(form)
 
         # Deduct credits up-front
-        recruiter_profile.credits_available = credits_available - pdf_count
+        recruiter_profile.credits_available = credits_available - credits_needed
         recruiter_profile.save(update_fields=["credits_available"])
 
         # Save bulk upload first
@@ -215,6 +223,8 @@ class CandidatePoolDeleteView(LoginRequiredMixin, View):
     def post(
         self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any
     ) -> HttpResponseBase:
+        """Handle deletion of a processed candidate pool via POST."""
+
         user = cast(AuthenticatedUser, request.user)
         pool = get_object_or_404(
             CandidatePool,

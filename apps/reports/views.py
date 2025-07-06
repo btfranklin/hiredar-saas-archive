@@ -15,6 +15,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from apps.authentication.types import AuthenticatedUser
+from apps.recruiters.constants import SHORTLIST_EXPORT_CREDIT_COST
 from apps.recruiters.models import JobOpening, RecruiterProfile
 from apps.reports.services import generate_csv, generate_pdf, get_export_filename
 
@@ -58,7 +59,7 @@ def export_csv(request: HttpRequest, job_id: int) -> HttpResponse:
     # Credits check + deduction for export action
     # ----------------------------------------------
     recruiter_profile = job.recruiter
-    credits_needed = 5
+    credits_needed = SHORTLIST_EXPORT_CREDIT_COST
 
     if recruiter_profile.credits_available < credits_needed:
         error_message = (
@@ -147,7 +148,7 @@ def export_pdf(request: HttpRequest, job_id: int) -> HttpResponse:
     # Credits check + deduction for export action
     # ----------------------------------------------
     recruiter_profile = job.recruiter
-    credits_needed = 5
+    credits_needed = SHORTLIST_EXPORT_CREDIT_COST
 
     if recruiter_profile.credits_available < credits_needed:
         error_message = (

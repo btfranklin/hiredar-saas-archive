@@ -6,6 +6,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.authentication.models import User
+from apps.recruiters.constants import RESUME_PROCESSING_CREDIT_COST
 from apps.recruiters.models import RecruiterProfile
 
 
@@ -43,3 +44,38 @@ class RecruiterCountersTests(TestCase):
         # Refresh profile and check counter
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.total_bulk_uploads_performed, 1)
+
+        # Credits should have been deducted for one resume
+        expected_credits = self.profile.credits_total - RESUME_PROCESSING_CREDIT_COST
+        self.assertEqual(self.profile.credits_available, expected_credits)
+
+    def test_bulk_upload_insufficient_credits_blocks_upload(self):
+        """Uploading when credits are insufficient should not create a bulk upload and should keep credits unchanged."""
+
+        # Set credits to zero
+        self.profile.credits_available = 0
+        self.profile.save(update_fields=["credits_available"])
+
+        # Create in-memory zip with one PDF
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, mode="w") as zf:
+            zf.writestr("resume1.pdf", b"%PDF-1.4 fake pdf content")
+        buffer.seek(0)
+        upload_file = SimpleUploadedFile(
+            "resumes.zip", buffer.read(), content_type="application/zip"
+        )
+
+        url = reverse("recruiters:bulk_upload_create")
+        response = self.client.post(url, {"name": "Pool", "zip_file": upload_file})
+
+        # Form should be invalid → status 200 and no redirect
+        self.assertEqual(response.status_code, 200)
+
+        # No bulk uploads should have been created
+        from apps.recruiters.models import BulkResumeUpload
+
+        self.assertEqual(BulkResumeUpload.objects.count(), 0)
+
+        # Credits remain unchanged
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.credits_available, 0)

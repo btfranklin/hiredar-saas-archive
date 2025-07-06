@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from apps.authentication.models import User
 from apps.messaging.models import Conversation
+from apps.recruiters.constants import CANDIDATE_OUTREACH_CREDIT_COST
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
 
@@ -65,7 +66,10 @@ class CreditAndCounterTests(TestCase):
 
         # Refresh profile
         self.recruiter_profile.refresh_from_db()
-        self.assertEqual(self.recruiter_profile.credits_available, starting_credits - 2)
+        self.assertEqual(
+            self.recruiter_profile.credits_available,
+            starting_credits - CANDIDATE_OUTREACH_CREDIT_COST,
+        )
         self.assertEqual(self.recruiter_profile.total_interest_requests_sent, 1)
         self.assertEqual(self.recruiter_profile.total_messages_sent, 0)
 
@@ -89,9 +93,10 @@ class CreditAndCounterTests(TestCase):
         )
 
     def test_insufficient_credits_blocks_outreach(self):
-        # Reduce credits to 1 (< required 2)
+        # Reduce credits below required threshold (cost - 1)
+        insufficient_credits = CANDIDATE_OUTREACH_CREDIT_COST - 1
         RecruiterProfile.objects.filter(pk=self.recruiter_profile.pk).update(
-            credits_available=1
+            credits_available=insufficient_credits
         )
         self.recruiter_profile.refresh_from_db()
 
@@ -100,7 +105,7 @@ class CreditAndCounterTests(TestCase):
 
         # No change to credits or counters
         self.recruiter_profile.refresh_from_db()
-        self.assertEqual(self.recruiter_profile.credits_available, 1)
+        self.assertEqual(self.recruiter_profile.credits_available, insufficient_credits)
         self.assertEqual(self.recruiter_profile.total_interest_requests_sent, 0)
         self.assertEqual(Conversation.objects.count(), 0)
 
@@ -121,5 +126,5 @@ class CreditAndCounterTests(TestCase):
         # Credits should remain unchanged after sending message
         self.assertEqual(
             self.recruiter_profile.credits_available,
-            self.recruiter_profile.credits_total - 2,
+            self.recruiter_profile.credits_total - CANDIDATE_OUTREACH_CREDIT_COST,
         )

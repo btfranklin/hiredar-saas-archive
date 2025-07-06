@@ -18,9 +18,20 @@
         <h2 class="text-lg font-semibold mb-4">Purchase More Credits</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           {% for option in price_options %}
-            <div class="card bg-base-100 shadow-md p-4">
-              <h3 class="text-xl font-bold mb-2">{{ option.credits }} credits</h3>
-              <a href="{% url 'recruiters:create_checkout' option.credits %}" class="btn btn-primary w-full">
+            <div class="card bg-base-100 shadow-md p-4 {% if option.is_best %}border-primary border-2{% endif %}">
+              <h3 class="text-xl font-bold mb-1">{{ option.credits }} credits</h3>
+              <p class="text-2xl font-extrabold mb-2">${{ option.usd_price }}</p>
+              {% if option.is_best %}
+                <span class="badge badge-primary mb-2">Best Deal</span>
+              {% endif %}
+
+              <ul class="list-disc list-inside text-sm mb-4">
+                <li>Process {{ option.resume_count }} resumes with AI</li>
+                <li>Message {{ option.outreach_count }} candidates</li>
+                <li>Export {{ option.export_count }} shortlists</li>
+              </ul>
+
+              <a href="{% url 'recruiters:create_checkout' option.credits %}" class="btn btn-primary w-full mt-auto">
                 Buy {{ option.credits }} credits
               </a>
             </div>

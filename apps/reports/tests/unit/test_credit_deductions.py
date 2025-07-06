@@ -4,6 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.authentication.models import User
+from apps.recruiters.constants import SHORTLIST_EXPORT_CREDIT_COST
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
 
@@ -36,7 +37,10 @@ class ShortlistExportCreditsTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.credits_available, starting_credits - 5)
+        self.assertEqual(
+            self.profile.credits_available,
+            starting_credits - SHORTLIST_EXPORT_CREDIT_COST,
+        )
         self.assertEqual(self.profile.total_shortlist_csvs_generated, 1)
 
     def test_export_pdf_deducts_credits(self):
@@ -46,7 +50,10 @@ class ShortlistExportCreditsTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.credits_available, starting_credits - 5)
+        self.assertEqual(
+            self.profile.credits_available,
+            starting_credits - SHORTLIST_EXPORT_CREDIT_COST,
+        )
         self.assertEqual(self.profile.total_shortlist_pdfs_generated, 1)
 
     # ------------------------------------------------------------------
@@ -54,8 +61,8 @@ class ShortlistExportCreditsTests(TestCase):
     # ------------------------------------------------------------------
 
     def test_export_csv_insufficient_credits(self):
-        # Reduce credits below threshold
-        self.profile.credits_available = 3
+        # Reduce credits below threshold (cost - 2)
+        self.profile.credits_available = SHORTLIST_EXPORT_CREDIT_COST - 2
         self.profile.save(update_fields=["credits_available"])
 
         url = reverse("reports:export_csv", args=[self.job_opening.pk])
@@ -64,11 +71,14 @@ class ShortlistExportCreditsTests(TestCase):
 
         # Credits unchanged
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.credits_available, 3)
+        self.assertEqual(
+            self.profile.credits_available,
+            SHORTLIST_EXPORT_CREDIT_COST - 2,
+        )
         self.assertEqual(self.profile.total_shortlist_csvs_generated, 0)
 
     def test_export_pdf_insufficient_credits(self):
-        self.profile.credits_available = 2
+        self.profile.credits_available = SHORTLIST_EXPORT_CREDIT_COST - 3
         self.profile.save(update_fields=["credits_available"])
 
         url = reverse("reports:export_pdf", args=[self.job_opening.pk])
@@ -76,5 +86,8 @@ class ShortlistExportCreditsTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.credits_available, 2)
+        self.assertEqual(
+            self.profile.credits_available,
+            SHORTLIST_EXPORT_CREDIT_COST - 3,
+        )
         self.assertEqual(self.profile.total_shortlist_pdfs_generated, 0)

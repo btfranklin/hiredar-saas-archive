@@ -8,6 +8,15 @@ from django.urls import reverse
 from django.views.generic import TemplateView
 from stripe.error import StripeError  # type: ignore
 
+# Recruiter credit pricing constants
+from apps.recruiters.constants import (
+    BEST_DEAL_CREDITS,
+    CANDIDATE_OUTREACH_CREDIT_COST,
+    CREDIT_BUNDLES,
+    RESUME_PROCESSING_CREDIT_COST,
+    SHORTLIST_EXPORT_CREDIT_COST,
+)
+
 
 class CreditsView(LoginRequiredMixin, TemplateView):
     """Display the recruiter's current credits and purchase options."""
@@ -19,11 +28,23 @@ class CreditsView(LoginRequiredMixin, TemplateView):
         profile = self.request.user.recruiter_profile  # type: ignore[attr-defined]
         context["credits_available"] = profile.credits_available
         context["credits_total"] = profile.credits_total
-        # Prepare price options: list of dicts with credits count and Stripe price_id
-        context["price_options"] = [
-            {"credits": credits, "price_id": settings.STRIPE_PRICE_IDS[credits]}
-            for credits in sorted(settings.STRIPE_PRICE_IDS)
-        ]
+        # Build enriched price options including USD price and what each bundle enables
+        price_options: list[dict[str, int | str | bool]] = []
+        for credits in sorted(CREDIT_BUNDLES):
+            usd_price = CREDIT_BUNDLES[credits]
+            price_options.append(
+                {
+                    "credits": credits,
+                    "usd_price": usd_price,
+                    "price_id": settings.STRIPE_PRICE_IDS.get(credits, ""),
+                    "resume_count": credits // RESUME_PROCESSING_CREDIT_COST,
+                    "outreach_count": credits // CANDIDATE_OUTREACH_CREDIT_COST,
+                    "export_count": credits // SHORTLIST_EXPORT_CREDIT_COST,
+                    "is_best": credits == BEST_DEAL_CREDITS,
+                }
+            )
+
+        context["price_options"] = price_options
         return context
 
 

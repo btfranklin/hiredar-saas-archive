@@ -21,6 +21,7 @@ from apps.authentication.models import User
 from apps.job_seekers.services import ProfileManager
 from apps.matching.models import CandidateMatch
 from apps.messaging.models import Conversation, Message, Notification
+from apps.recruiters.constants import CANDIDATE_OUTREACH_CREDIT_COST
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
 
@@ -305,7 +306,7 @@ class StartConversationView(LoginRequiredMixin, View):
                         status=400,
                     )
 
-                credits_needed = 2
+                credits_needed = CANDIDATE_OUTREACH_CREDIT_COST
                 if recruiter_profile.credits_available < credits_needed:
                     error_message = (
                         f"Insufficient credits: you have {recruiter_profile.credits_available} "
