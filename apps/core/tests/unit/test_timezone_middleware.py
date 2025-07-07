@@ -20,7 +20,7 @@ from apps.core.middleware.timezone_middleware import UserTimezoneMiddleware
 
 
 class UserTimezoneMiddlewareTests(TestCase):
-    """Test behaviour of per-user timezone activation middleware."""
+    """Test behavior of per-user timezone activation middleware."""
 
     def setUp(self) -> None:  # noqa: D401 – simple override
         self.factory = RequestFactory()

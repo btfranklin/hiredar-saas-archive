@@ -1,7 +1,7 @@
 """Reusable validators for uploaded files.
 
 The project currently accepts PDF resumes (and potentially other files) from
-untrusted users.  These helpers provide defence‑in‑depth by validating:
+untrusted users.  These helpers provide defense‑in‑depth by validating:
 
 * **extension** – only ``.pdf`` is allowed at the moment;
 * **MIME type** – must be *application/pdf* (based on ``python‑magic`` if
@@ -94,7 +94,7 @@ def validate_resume_file_mime(file_obj) -> None:  # noqa: D401 – Django valida
 
     ext = os.path.splitext(file_obj.name)[1].lower()
 
-    # Skip strict MIME matching if we don't recognise the extension (handled above).
+    # Skip strict MIME matching if we don't recognize the extension (handled above).
     allowed_mimes = _EXT_TO_ALLOWED_MIME.get(ext)
     if not allowed_mimes:
         return

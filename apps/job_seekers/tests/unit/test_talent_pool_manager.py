@@ -10,7 +10,7 @@ from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 
 
 class TalentPoolToggleTests(TestCase):
-    """Verify join/leave behaviour without executing background jobs."""
+    """Verify join/leave behavior without executing background jobs."""
 
     def setUp(self):
         self.user = User.objects.create_user(  # type: ignore[attr-defined]

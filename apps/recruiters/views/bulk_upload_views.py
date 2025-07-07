@@ -194,7 +194,7 @@ class CandidatePoolDetailView(LoginRequiredMixin, DetailView):
 
         Expected POST payload: ``name`` – the new pool name.
 
-        Behaviour:
+        Behavior:
         * Update the object and return either an HTMX fragment (just the <h1>)
           or redirect back to GET depending on request headers.
         """

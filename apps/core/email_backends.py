@@ -52,7 +52,7 @@ class SMTP2GOAPIEmailBackend(BaseEmailBackend):
                 # Do not increment ``sent_count``; treat as unsent.
                 continue
             except requests.exceptions.RequestException as exc:
-                # For all other network-level errors we honour Django's
+                # For all other network-level errors we honor Django's
                 # ``fail_silently`` semantics: raise only if the backend
                 # was instantiated with ``fail_silently=False``.  Allauth
                 # calls ``EmailMessage.send`` with ``fail_silently=False``,

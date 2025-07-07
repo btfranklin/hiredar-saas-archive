@@ -65,7 +65,7 @@ def consolidate_duplicates(apps, schema_editor):
             (row.qualifications_score for row in rows), default=Decimal("0.0")
         )
 
-        # Preserve analysed state and status if any row has it.
+        # Preserve analyzed state and status if any row has it.
         if any(row.is_analyzed for row in rows):
             primary.is_analyzed = True
 

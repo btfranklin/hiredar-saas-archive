@@ -39,7 +39,7 @@ class SMTP2GOAPIEmailBackendTests(TestCase):
         self.assertEqual(sent, 0)
 
     # ------------------------------------------------------------------
-    # Generic RequestException behaviour – fail_silently variations
+    # Generic RequestException behavior – fail_silently variations
     # ------------------------------------------------------------------
 
     def test_request_exception_suppressed_when_fail_silently(self):

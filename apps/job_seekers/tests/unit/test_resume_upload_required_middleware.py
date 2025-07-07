@@ -17,7 +17,7 @@ from apps.job_seekers.models import JobSeekerProfile
 
 
 class ResumeUploadRequiredMiddlewareTests(TestCase):
-    """Verify the behaviour of the resume-upload enforcement middleware."""
+    """Verify the behavior of the resume-upload enforcement middleware."""
 
     def setUp(self):
         super().setUp()

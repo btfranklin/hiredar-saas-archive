@@ -119,7 +119,7 @@ class RoleRecommendationModelTests(TestCase):
         rec = RoleRecommendation.objects.create(
             job_seeker=profile,
             role_title="Data Analyst",
-            description="Analyse stuff",
+            description="Analyze stuff",
         )
 
         stringified = str(rec)

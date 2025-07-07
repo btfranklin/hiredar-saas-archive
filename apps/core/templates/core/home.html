@@ -10,10 +10,6 @@
     <div class="flex-1 text-center md:text-left">
       <h1 class="text-6xl font-extrabold mb-4 tracking-tight">Where Recruiters &amp; Talent Meet <span class="opacity-80">Faster</span></h1>
       <p class="text-2xl md:text-3xl mb-10 max-w-3xl md:mx-0 mx-auto">Hiredar parses résumés, scores talent, and matches people to opportunities—so everyone spends less time searching and more time connecting.</p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-        <a href="#for-recruiters" class="btn btn-secondary btn-lg">I'm&nbsp;a&nbsp;Recruiter</a>
-        <a href="#for-job-seekers" class="btn btn-primary btn-lg">I'm&nbsp;a&nbsp;Job&nbsp;Seeker</a>
-      </div>
     </div>
 
     <!-- Mascot image column -->
@@ -26,54 +22,36 @@
   </div>
 </section>
 
-<!-- Recruiter Section -->
-<section id="for-recruiters" class="py-20 bg-base-100">
-  <div class="container mx-auto px-4 text-center max-w-4xl">
-    <h2 class="text-4xl font-bold mb-6">Recruiters: Stop Drowning in Résumés</h2>
-    <p class="text-xl opacity-80 mb-12">Bulk-upload PDFs or DOCXs and let our AI surface the best candidates instantly.</p>
-    <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Claim&nbsp;100&nbsp;Free&nbsp;Credits</a>
-  </div>
-  <div class="container mx-auto px-4 mt-16 grid md:grid-cols-2 gap-8 items-center">
-    <div class="order-2 md:order-1">
-      <picture>
-        <source srcset="{% static 'img/resume-wave.webp' %}" type="image/webp">
-        <img src="{% static 'img/resume-wave.png' %}" alt="Recruiter overwhelmed by résumés" class="rounded-lg shadow-lg w-3/4 mx-auto" />
-      </picture>
+<!-- Audience Overview -->
+<section class="py-20 bg-base-100">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12">
+    <!-- Recruiter Column -->
+    <div class="space-y-6 text-center md:text-left">
+      <h2 class="text-4xl font-bold">Recruiters</h2>
+      <p class="text-lg opacity-80">Bulk-upload résumés, get AI-scored matches, and build shortlists in minutes.</p>
+      <ul class="list-disc list-inside text-left space-y-2">
+        <li>Bulk PDF/DOCX uploads</li>
+        <li>Instant AI-scored matches</li>
+        <li>Shareable candidate reports</li>
+      </ul>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+        <a href="{% url 'core:features_recruiters' %}" class="btn btn-outline btn-secondary">Learn&nbsp;More</a>
+        <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary">Sign&nbsp;Up&nbsp;—&nbsp;100&nbsp;Free&nbsp;Credits&nbsp;($30&nbsp;value)</a>
+      </div>
     </div>
-    <div class="order-1 md:order-2 text-lg space-y-4">
-      <p>Manual screening is inconsistent, exhausting, and slow. Hiredar analyses skills, experience, and qualifications against your role requirements to highlight top candidates—fast.</p>
-      <p class="font-semibold">Focus on conversations, not copy-pasting.</p>
-    </div>
-  </div>
-</section>
 
-<!-- Job Seeker Section (excerpt from old job-seeker page) -->
-<section id="for-job-seekers" class="py-20 bg-base-200">
-  <div class="container mx-auto px-4 text-center max-w-4xl">
-    <h2 class="text-4xl font-bold mb-6">Job Seekers: Let Opportunities Find You</h2>
-    <p class="text-xl opacity-80 mb-12">Upload your résumé once and receive personalised role suggestions—no endless applications.</p>
-    <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary btn-lg">Create&nbsp;Your&nbsp;Free&nbsp;Profile</a>
-  </div>
-  <div class="container mx-auto px-4 mt-16 grid md:grid-cols-3 gap-12">
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body items-center text-center">
-        <div class="text-4xl font-bold text-primary mb-4">1</div>
-        <h3 class="card-title text-xl mb-2">Upload Your Résumé</h3>
-        <p>Our AI extracts your skills, experience, and achievements.</p>
-      </div>
-    </div>
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body items-center text-center">
-        <div class="text-4xl font-bold text-primary mb-4">2</div>
-        <h3 class="card-title text-xl mb-2">Get Tailored Role Suggestions</h3>
-        <p>Receive openings that align with your goals and strengths.</p>
-      </div>
-    </div>
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body items-center text-center">
-        <div class="text-4xl font-bold text-primary mb-4">3</div>
-        <h3 class="card-title text-xl mb-2">Connect Directly with Recruiters</h3>
-        <p>Skip the queue—interested recruiters can reach out instantly.</p>
+    <!-- Job Seeker Column -->
+    <div class="space-y-6 text-center md:text-left">
+      <h2 class="text-4xl font-bold">Job&nbsp;Seekers</h2>
+      <p class="text-lg opacity-80">Create an AI-enhanced profile and receive tailored role suggestions—no endless applications.</p>
+      <ul class="list-disc list-inside text-left space-y-2">
+        <li>AI-generated personal tagline &amp; profile</li>
+        <li>Personalized role recommendations</li>
+        <li>Direct messaging with recruiters</li>
+      </ul>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+        <a href="{% url 'core:features_job_seekers' %}" class="btn btn-outline btn-primary">Learn&nbsp;More</a>
+        <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary">Sign&nbsp;Up&nbsp;Free</a>
       </div>
     </div>
   </div>

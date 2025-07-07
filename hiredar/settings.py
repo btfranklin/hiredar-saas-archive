@@ -167,7 +167,7 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "memory://")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "django-db")
 
 # Ensure tasks execute locally and synchronously when the broker is the in-
-# memory variant.  This keeps behaviour predictable inside unit tests.
+# memory variant.  This keeps behavior predictable inside unit tests.
 
 CELERY_TASK_ALWAYS_EAGER = CELERY_BROKER_URL == "memory://"
 CELERY_TASK_EAGER_PROPAGATES = True
