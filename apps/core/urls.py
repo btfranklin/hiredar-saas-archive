@@ -13,6 +13,7 @@ from apps.core.views.info import (
     AboutView,
     ContactView,
     JobSeekerFeaturesView,
+    ManifestoView,
     PrivacyPolicyView,
     RecruiterFeaturesView,
     RecruiterPricingSignupView,
@@ -51,6 +52,7 @@ urlpatterns = [
     path("about/", AboutView.as_view(), name="about"),
     path("contact/", ContactView.as_view(), name="contact"),
     path("privacy/", PrivacyPolicyView.as_view(), name="privacy"),
+    path("manifesto/", ManifestoView.as_view(), name="manifesto"),
     path("terms/", TermsOfServiceView.as_view(), name="terms"),
     path("test/", test_view, name="test"),
 ]

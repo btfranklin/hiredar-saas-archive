@@ -41,3 +41,9 @@ class JobSeekerFeaturesView(TemplateView):
     """Display the job-seeker-focused Features marketing page."""
 
     template_name = "core/job_seekers/features.html"
+
+
+class ManifestoView(TemplateView):
+    """Display the Manifesto page."""
+
+    template_name = "core/manifesto.html"

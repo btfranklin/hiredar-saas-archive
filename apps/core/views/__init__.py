@@ -2,6 +2,7 @@ from .index import HomeView  # noqa: F401 – re-export
 from .info import (  # noqa: F401 – re-export for convenience
     AboutView,
     ContactView,
+    ManifestoView,
     PrivacyPolicyView,
     RecruiterFeaturesView,
     RecruiterPricingSignupView,
@@ -16,4 +17,5 @@ __all__ = [
     "TermsOfServiceView",
     "RecruiterFeaturesView",
     "RecruiterPricingSignupView",
+    "ManifestoView",
 ]
