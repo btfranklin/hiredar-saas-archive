@@ -73,6 +73,25 @@ class CandidateMatchService:
                 job_opening=job_opening, talent_sheet=talent_sheet
             )
 
+            # ---------------------------------------------------------------------
+            # Preserve analysis status if it has already been generated
+            # ---------------------------------------------------------------------
+            # When upstream matching tasks refresh scores they often pass
+            # ``is_analyzed=False`` by default.  If the match has already been
+            # analyzed we **do not** want to overwrite the existing
+            # ``is_analyzed=True`` flag – doing so would trigger repeated calls
+            # to the expensive LLM when the recruiter views the match detail
+            # page.  Only allow the flag to change if the caller explicitly
+            # sets it to ``True`` or if the match has never been analyzed.
+
+            if (
+                "is_analyzed" in defaults
+                and defaults["is_analyzed"] is False
+                and existing_match.is_analyzed
+            ):
+                # Remove the attempted reset so we preserve the current value
+                defaults.pop("is_analyzed")
+
             # Update the existing match
             for field, value in defaults.items():
                 setattr(existing_match, field, value)
