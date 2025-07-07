@@ -18,21 +18,40 @@
         <h2 class="text-lg font-semibold mb-4">Purchase More Credits</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           {% for option in price_options %}
-            <div class="card bg-base-100 shadow-md p-4 {% if option.is_best %}border-primary border-2{% endif %}">
-              <h3 class="text-xl font-bold mb-1">{{ option.credits }} credits</h3>
-              <p class="text-2xl font-extrabold mb-2">${{ option.usd_price }}</p>
+            <div
+              class="card p-6 shadow-xl transition-transform duration-200 hover:scale-[1.03] {% if option.is_best %}bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white ring-4 ring-primary ring-offset-2{% else %}bg-base-100{% endif %}"
+            >
               {% if option.is_best %}
-                <span class="badge badge-primary mb-2">Best Deal</span>
+                <span
+                  class="absolute -top-3 right-3 badge badge-primary text-xs py-1 px-2 shadow-lg"
+                >
+                  Best&nbsp;Deal
+                </span>
               {% endif %}
 
-              <ul class="list-disc list-inside text-sm mb-4">
+              <h3 class="text-2xl font-extrabold mb-1 tracking-tight">
+                {{ option.credits }} <span class="text-base font-semibold">credits</span>
+              </h3>
+              <p class="text-3xl font-black mb-1">${{ option.usd_price }}</p>
+              {% if option.savings_percent and option.savings_percent > 0 %}
+                <p class="text-sm font-medium opacity-90 mb-3">
+                  {{ option.savings_percent }}% cheaper per credit
+                </p>
+              {% else %}
+                <p class="mb-3">&nbsp;</p>
+              {% endif %}
+
+              <ul class="list-disc list-inside text-sm space-y-1 mb-6 opacity-90">
                 <li>Process {{ option.resume_count }} resumes with AI</li>
                 <li>Message {{ option.outreach_count }} candidates</li>
                 <li>Export {{ option.export_count }} shortlists</li>
               </ul>
 
-              <a href="{% url 'recruiters:create_checkout' option.credits %}" class="btn btn-primary w-full mt-auto">
-                Buy {{ option.credits }} credits
+              <a
+                href="{% url 'recruiters:create_checkout' option.credits %}"
+                class="btn btn-primary w-full font-bold uppercase tracking-wider"
+              >
+                Buy&nbsp;Now
               </a>
             </div>
           {% endfor %}

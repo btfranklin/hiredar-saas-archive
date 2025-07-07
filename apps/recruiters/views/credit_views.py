@@ -29,9 +29,27 @@ class CreditsView(LoginRequiredMixin, TemplateView):
         context["credits_available"] = profile.credits_available
         context["credits_total"] = profile.credits_total
         # Build enriched price options including USD price and what each bundle enables
-        price_options: list[dict[str, int | str | bool]] = []
+        price_options: list[dict[str, int | str | bool | float]] = []
+        # Determine baseline cost per credit (smallest bundle)
+        smallest_bundle = min(CREDIT_BUNDLES)
+        baseline_cost_per_credit = CREDIT_BUNDLES[smallest_bundle] / smallest_bundle
+
         for credits in sorted(CREDIT_BUNDLES):
             usd_price = CREDIT_BUNDLES[credits]
+            cost_per_credit = usd_price / credits
+            # Calculate savings percentage relative to baseline (integer %)
+            savings_percent = (
+                int(
+                    round(
+                        (baseline_cost_per_credit - cost_per_credit)
+                        / baseline_cost_per_credit
+                        * 100
+                    )
+                )
+                if credits != smallest_bundle
+                else 0
+            )
+
             price_options.append(
                 {
                     "credits": credits,
@@ -41,6 +59,7 @@ class CreditsView(LoginRequiredMixin, TemplateView):
                     "outreach_count": credits // CANDIDATE_OUTREACH_CREDIT_COST,
                     "export_count": credits // SHORTLIST_EXPORT_CREDIT_COST,
                     "is_best": credits == BEST_DEAL_CREDITS,
+                    "savings_percent": savings_percent,
                 }
             )
 
