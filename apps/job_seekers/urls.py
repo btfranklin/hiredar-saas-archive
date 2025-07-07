@@ -3,7 +3,6 @@
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
-from apps.core.views.index import JobSeekerHomeView
 from apps.job_seekers.views.api_views import (
     TalentPoolStatusView,
     ToggleRoleInterestView,
@@ -29,8 +28,9 @@ from apps.job_seekers.views.resume_processing_views import (
 app_name = "job_seekers"
 
 urlpatterns: list[URLPattern] = [
-    path("", JobSeekerHomeView.as_view(), name="marketing_home"),
-    path("dashboard/", DashboardView.as_view(), name="dashboard"),
+    # Root of the job_seekers sub-site now redirects to the dashboard.
+    path("", DashboardView.as_view(), name="dashboard"),
+    path("dashboard/", DashboardView.as_view(), name="dashboard_alt"),
     path("profile/", ProfileView.as_view(), name="profile"),
     path("profile/create/", ProfileCreateView.as_view(), name="profile_create"),
     path("settings/", SettingsView.as_view(), name="settings"),

@@ -12,6 +12,31 @@
   </div>
 </section>
 
+<!-- Video Demo Section with Modal -->
+<section id="video-demo" class="py-16 bg-base-100 text-center">
+  <div class="container mx-auto px-4 max-w-4xl">
+    <h2 class="text-3xl font-bold mb-6">See Hiredar in Action</h2>
+    <p class="text-lg opacity-80 mb-10">Watch a quick walkthrough of how recruiters can upload résumés, review AI-scored matches, and build shortlists in minutes.</p>
+    <button class="btn btn-secondary btn-lg" onclick="videoModal.showModal()">Watch&nbsp;Video&nbsp;Demo</button>
+  </div>
+</section>
+
+<!-- DaisyUI modal (HTML & JS) -->
+<dialog id="videoModal" class="modal">
+  <div class="modal-box w-11/12 max-w-5xl p-0 bg-base-100 relative">
+    <!-- Close icon -->
+    <button class="btn btn-sm btn-circle absolute right-3 top-3" aria-label="Close" onclick="videoModal.close()">✕</button>
+
+    <iframe
+      id="videoIframe"
+      src="https://www.youtube.com/embed/V5_H6p6rv-E?rel=0"
+      title="Hiredar Recruiter Demo"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      class="w-full h-[70vh] rounded-t-lg"></iframe>
+  </div>
+</dialog>
+
 <!-- Feature 1: Upload Resumes -->
 <section class="py-16 bg-base-100">
   <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
@@ -104,5 +129,22 @@
     <a href="{% url 'core:pricing' %}#signup" class="btn btn-secondary btn-lg">Get Started with 100 Free Credits</a>
   </div>
 </section>
+
+{% block extra_scripts %}
+{{ block.super }}
+<script>
+  // Stop video playback when modal closes by resetting the iframe source
+  const videoModal = document.getElementById('videoModal');
+  const videoIframe = document.getElementById('videoIframe');
+  if (videoModal && videoIframe) {
+    const originalSrc = videoIframe.src;
+    videoModal.addEventListener('close', () => {
+      videoIframe.src = '';
+      // Restore the source after a brief moment so replay works next time
+      setTimeout(() => { videoIframe.src = originalSrc; }, 100);
+    });
+  }
+</script>
+{% endblock %}
 
 {% endblock %}

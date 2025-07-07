@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Features for Job Seekers | Hiredar{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white">
+  <div class="mx-auto max-w-5xl py-24 px-6 text-center">
+    <h1 class="text-5xl font-bold mb-4">Level-Up Your Job Search with AI-Powered Tools</h1>
+    <p class="text-xl mb-8 max-w-3xl mx-auto">From résumé parsing to tailored role suggestions, Hiredar gives you the edge in today's competitive market.</p>
+    <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary btn-lg">Create&nbsp;Your&nbsp;Free&nbsp;Profile</a>
+  </div>
+</section>
+
+<!-- Feature 1 -->
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <picture>
+        <source srcset="{% static 'img/candidate-profile.webp' %}" type="image/webp">
+        <img src="{% static 'img/candidate-profile.png' %}" alt="AI-enhanced candidate profile" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div>
+      <h2 class="text-2xl font-bold mb-4">Stand-Out Profiles, Powered by AI</h2>
+      <p>Upload your résumé and let Hiredar generate an engaging profile that highlights your top skills, achievements, and potential.</p>
+      <ul class="list-disc ml-6 space-y-2 mt-4">
+        <li>Automatic skill extraction &amp; categorisation</li>
+        <li>AI-generated personal tagline</li>
+        <li>Control your privacy at every step</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Feature 2 -->
+<section class="py-16 bg-base-200">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div class="order-2 md:order-1">
+      <picture>
+        <source srcset="{% static 'img/matches-view.webp' %}" type="image/webp">
+        <img src="{% static 'img/matches-view.png' %}" alt="Tailored role suggestions" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div class="order-1 md:order-2">
+      <h2 class="text-2xl font-bold mb-4">Personalised Role Recommendations</h2>
+      <p>Our algorithms analyse both your experience and career goals to suggest roles where you'll thrive—no more guesswork.</p>
+      <ul class="list-disc ml-6 space-y-2 mt-4">
+        <li>Real-time matching against live openings</li>
+        <li>Suggestions ranked by best fit</li>
+        <li>Transparent scoring to see why you match</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Feature 3 -->
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <picture>
+        <source srcset="{% static 'img/conversation-list.webp' %}" type="image/webp">
+        <img src="{% static 'img/conversation-list.png' %}" alt="Direct messaging with recruiters" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div>
+      <h2 class="text-2xl font-bold mb-4">Connect Directly with Recruiters</h2>
+      <p>Skip the application black hole. Interested recruiters can reach out to you directly on Hiredar—so you can focus on conversations, not submissions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="py-20 bg-base-100">
+  <div class="container mx-auto px-4 text-center max-w-3xl">
+    <h2 class="text-4xl font-bold mb-6">Ready to Get Started?</h2>
+    <p class="text-lg mb-8">Create your profile in minutes and unlock smarter job matching.</p>
+    <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary btn-lg">Join&nbsp;Hiredar&nbsp;Free</a>
+  </div>
+</section>
+{% endblock %} 

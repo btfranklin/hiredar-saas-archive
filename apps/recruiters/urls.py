@@ -3,7 +3,6 @@
 from django.urls import path
 from django.urls.resolvers import URLPattern
 
-from apps.core.views.index import RecruiterHomeView
 from apps.recruiters.views import (
     BulkResumeUploadView,
     CandidatePoolDetailView,
@@ -36,8 +35,9 @@ from apps.recruiters.views.pool_status_views import (
 app_name = "recruiters"
 
 urlpatterns: list[URLPattern] = [
-    path("", RecruiterHomeView.as_view(), name="marketing_home"),
-    path("dashboard/", DashboardView.as_view(), name="dashboard"),
+    # Root of the recruiters sub-site now redirects to the dashboard.
+    path("", DashboardView.as_view(), name="dashboard"),
+    path("dashboard/", DashboardView.as_view(), name="dashboard_alt"),
     path("settings/", SettingsView.as_view(), name="settings"),
     # Job Opening routes
     path("job-openings/", JobOpeningListView.as_view(), name="job_openings_list"),

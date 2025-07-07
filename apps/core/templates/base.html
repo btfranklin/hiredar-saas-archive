@@ -193,16 +193,40 @@
                 {% endif %}
             </div>
 
-            {% if not hide_brochure_nav and not user.is_authenticated %}
+            {% if not user.is_authenticated %}
             <!-- Brochure site navigation -->
             <div class="navbar-center hidden lg:flex justify-center">
                 {% block brochure_nav %}
-                <div role="tablist" class="tabs tabs-border">
-                    <a role="tab" href="{% url 'core:home' %}" class="tab {% if request.resolver_match.url_name == 'home' %}tab-active{% endif %}">Home</a>
-                    <a role="tab" href="{% url 'core:features' %}" class="tab {% if request.resolver_match.url_name == 'features' %}tab-active{% endif %}">Features</a>
-                    <a role="tab" href="{% url 'core:pricing' %}" class="tab {% if request.resolver_match.url_name == 'pricing' %}tab-active{% endif %}">Pricing & Signup</a>
-                    <a role="tab" href="{% url 'core:contact' %}" class="tab {% if request.resolver_match.url_name == 'contact' %}tab-active{% endif %}">Contact</a>
-                </div>
+                <!-- Unified brochure navigation using DaisyUI dropdown menus -->
+                <ul class="menu menu-horizontal px-1 gap-1">
+                    <li>
+                        <a href="{% url 'core:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+                    </li>
+
+                    <li tabindex="0">
+                        <details>
+                            <summary>Features</summary>
+                            <ul class="p-2 bg-base-100">
+                                <li><a href="{% url 'core:features_recruiters' %}">for Recruiters</a></li>
+                                <li><a href="{% url 'core:features_job_seekers' %}">for Job Seekers</a></li>
+                            </ul>
+                        </details>
+                    </li>
+
+                    <li tabindex="0">
+                        <details>
+                            <summary>Sign&nbsp;Up</summary>
+                            <ul class="p-2 bg-base-100">
+                                <li><a href="{% url 'authentication:recruiter_signup' %}">as Recruiter</a></li>
+                                <li><a href="{% url 'authentication:job_seeker_signup' %}">as Job Seeker</a></li>
+                            </ul>
+                        </details>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'core:contact' %}" class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a>
+                    </li>
+                </ul>
                 {% endblock %}
             </div>
             {% endif %}
@@ -210,9 +234,7 @@
             <div class="navbar-end">
                 {% if not user.is_authenticated %}
                     <a href="{% url 'authentication:login' %}" class="btn btn-ghost btn-sm mr-2">Log In</a>
-                    {% block header_signup_button %}
-                    <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-primary btn-sm">Get Free Credits</a>
-                    {% endblock %}
+                    {% block header_signup_button %}{% endblock %}
                 {% endif %}
                 {% if user.is_authenticated %}
                 <a href="mailto:feedback@hiredar.com" class="btn btn-primary btn-sm mr-2" title="Give Feedback">

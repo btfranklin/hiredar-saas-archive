@@ -13,8 +13,6 @@ from django.views.generic import TemplateView
 
 from apps.authentication.types import AuthenticatedUser
 
-# Create your views here.
-
 
 class HomeView(TemplateView):
     """View for the home page."""
@@ -31,24 +29,3 @@ class HomeView(TemplateView):
             elif user.user_type == "admin":
                 return redirect("/admin/")
         return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["hide_brochure_nav"] = True
-        # Suppress the global header and footer on the landing page so users
-        # can choose their experience without any contextual navigation.
-        context["hide_header"] = True
-        context["hide_footer"] = True
-        return context
-
-
-class RecruiterHomeView(TemplateView):
-    """Marketing landing page for recruiters."""
-
-    template_name = "core/recruiters/home.html"
-
-
-class JobSeekerHomeView(TemplateView):
-    """Marketing landing page for job seekers."""
-
-    template_name = "core/job_seekers/home.html"
