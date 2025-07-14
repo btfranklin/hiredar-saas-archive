@@ -15,8 +15,8 @@ from promptdown import StructuredPrompt
 
 from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.matching.tasks.common import get_openai_client
+from hiredar.llm.xml_utils import extract_element_text, parse_llm_xml_response
 
-# Setup logging
 logger = logging.getLogger(__name__)
 
 
@@ -179,12 +179,6 @@ Salary Expectation: ${talent_sheet.salary_min or 0:,.0f} minimum
             response_content = response.choices[0].message.content
             if not response_content:
                 raise ValueError("Empty response from LLM")
-
-            # Parse the XML response using common utilities
-            from apps.core.utils.xml_processing import (
-                extract_element_text,
-                parse_llm_xml_response,
-            )
 
             try:
                 root = parse_llm_xml_response(

@@ -7,12 +7,11 @@ and processing the responses to generate recommendations.
 
 import logging
 import os
-from typing import Any, Iterable, cast
+from typing import Any, cast
 
 import requests
 from django.conf import settings  # Import Django settings
 from dotenv import load_dotenv
-from openai import OpenAI
 from promptdown import StructuredPrompt
 
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
@@ -20,6 +19,7 @@ from apps.job_seekers.services.recommendation.xml_parser import (
     parse_role_recommendations_xml,
     parse_talent_sheet_xml,
 )
+from hiredar.llm import chat_complete
 
 # Load environment variables
 load_dotenv()
@@ -95,51 +95,20 @@ def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
             f"Unable to generate role recommendations: Error preparing prompt: {str(e)}"
         ) from e
 
-    client = OpenAI(api_key=api_key)
+    response_content = chat_complete(
+        messages=cast(list[dict[str, Any]], messages),
+        model=settings.JOBSEEKERS_ROLE_RECOMMENDATION_MODEL,
+        temperature=settings.JOBSEEKERS_RECOMMENDATION_TEMPERATURE,
+    )
 
-    # Log the start of processing
-    logger.info("Sending resume XML to LLM for role recommendations generation")
-    logger.debug("XML length: %d characters", len(resume_xml))
-
-    # Make the API call with proper error handling
-    try:
-        completion = client.chat.completions.create(
-            model=settings.JOBSEEKERS_ROLE_RECOMMENDATION_MODEL,  # Renamed setting
-            messages=cast(Iterable[Any], messages),
-            temperature=settings.JOBSEEKERS_RECOMMENDATION_TEMPERATURE,  # Use settings
-        )
-
-        # Extract the content from the response
-        response_content = completion.choices[0].message.content
-
-        # Perform basic validation
-        if not response_content or not isinstance(response_content, str):
-            error_msg = "LLM response content is None or not a string"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-
-        # Use the XML parser to parse the response content
-        return parse_role_recommendations_xml(response_content)
-
-    except requests.exceptions.RequestException as e:
-        logger.error("API request failed: %s", str(e))
-        # For RequestException, we carefully check for response attributes
-        response = getattr(e, "response", None)
-        if response is not None:
-            if hasattr(response, "status_code"):
-                logger.error("Response status: %s", response.status_code)
-            if hasattr(response, "text"):
-                logger.error("Response body: %s...", response.text[:500])
-        raise
-
-    except (KeyError, IndexError) as e:
-        error_msg = f"Failed to extract content from API response: {str(e)}"
+    # Perform basic validation
+    if not response_content or not isinstance(response_content, str):
+        error_msg = "LLM response content is None or not a string"
         logger.error(error_msg)
-        raise ValueError(error_msg) from e
+        raise ValueError(error_msg)
 
-    except Exception as e:
-        logger.error("Unexpected error in LLM processing: %s", str(e))
-        raise
+    # Use the XML parser to parse the response content
+    return parse_role_recommendations_xml(response_content)
 
 
 def generate_personal_tagline(resume_xml: str) -> str:
@@ -202,55 +171,24 @@ def generate_personal_tagline(resume_xml: str) -> str:
         logger.error("Error preparing prompt: %s", str(e))
         return f"Unable to generate tagline: Error preparing prompt: {str(e)}"
 
-    client = OpenAI(api_key=api_key)
+    tagline = chat_complete(
+        messages=cast(list[dict[str, Any]], messages),
+        model=settings.JOBSEEKERS_TAGLINE_GENERATION_MODEL,
+        temperature=settings.JOBSEEKERS_TAGLINE_TEMPERATURE,
+        max_tokens=settings.JOBSEEKERS_TAGLINE_MAX_TOKENS,
+    )
 
-    # Capture the start of processing for logging
-    logger.info("Sending resume XML to LLM for tagline generation")
-    logger.debug("XML length: %d characters", len(resume_xml))
-
-    # Make the API call with proper error handling
-    try:
-        completion = client.chat.completions.create(
-            model=settings.JOBSEEKERS_TAGLINE_GENERATION_MODEL,  # Renamed setting
-            messages=cast(Iterable[Any], messages),
-            temperature=settings.JOBSEEKERS_TAGLINE_TEMPERATURE,  # Use settings
-            max_tokens=settings.JOBSEEKERS_TAGLINE_MAX_TOKENS,  # Use settings
-        )
-
-        # Extract the content from the response
-        tagline = completion.choices[0].message.content
-
-        # Perform basic validation
-        if not tagline or not isinstance(tagline, str):
-            error_msg = "LLM response content is None or not a string"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-
-        # Clean up the tagline - strip whitespace and ensure no quotes
-        tagline = tagline.strip().strip('"').strip("'")
-
-        logger.info("Generated tagline: %s", tagline)
-        return tagline
-
-    except requests.exceptions.RequestException as e:
-        logger.error("API request failed: %s", str(e))
-        # For RequestException, we carefully check for response attributes
-        response = getattr(e, "response", None)
-        if response is not None:
-            if hasattr(response, "status_code"):
-                logger.error("Response status: %s", response.status_code)
-            if hasattr(response, "text"):
-                logger.error("Response body: %s...", response.text[:500])
-        raise
-
-    except (KeyError, IndexError) as e:
-        error_msg = f"Failed to extract content from API response: {str(e)}"
+    # Perform basic validation
+    if not tagline or not isinstance(tagline, str):
+        error_msg = "LLM response content is None or not a string"
         logger.error(error_msg)
-        raise ValueError(error_msg) from e
+        raise ValueError(error_msg)
 
-    except Exception as e:
-        logger.error("Unexpected error in LLM processing: %s", str(e))
-        raise
+    # Clean up the tagline - strip whitespace and ensure no quotes
+    tagline = tagline.strip().strip('"').strip("'")
+
+    logger.info("Generated tagline: %s", tagline)
+    return tagline
 
 
 def generate_talent_sheet(
@@ -275,13 +213,7 @@ def generate_talent_sheet(
         requests.exceptions.RequestException: If the API request fails
         Exception: For any other processing errors
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        error_msg = "No API key found. Set OPENAI_API_KEY environment variable."
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    client = OpenAI(api_key=api_key)
+    # LLM wrapper handles API key resolution
 
     # Extract resume XML from the profile (required for LLM prompt)
     resume_xml = job_seeker_profile.resume_xml or ""
@@ -320,15 +252,14 @@ def generate_talent_sheet(
         messages = structured_prompt.to_chat_completion_messages()
 
         # Call the OpenAI API
-        response = client.chat.completions.create(
+        xml_response = chat_complete(
+            messages=cast(list[dict[str, Any]], messages),
             model=settings.JOBSEEKERS_TALENT_SHEET_MODEL,
-            messages=cast(Iterable[Any], messages),
             temperature=settings.JOBSEEKERS_TALENT_SHEET_TEMPERATURE,
             timeout=60,
         )
 
         # Extract talent sheet XML from response
-        xml_response = cast(str, response.choices[0].message.content)
         if not xml_response:
             raise ValueError("Empty response from LLM")
 

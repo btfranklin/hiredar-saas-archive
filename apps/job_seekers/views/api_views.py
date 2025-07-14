@@ -125,28 +125,58 @@ class ToggleRoleInterestView(
             )
 
         if self.is_htmx_request(request):
-            # Re-render the recommended roles section and return it for swapping
-            # Recompute role lists for current profile
-            interested_roles = RoleRecommendation.objects.filter(
-                job_seeker=profile,
-                is_candidate_interested=True,
-            ).order_by("role_title")[:5]
+            # Determine the HTMX target to decide which partial to render
+            hx_target = request.headers.get("HX-Target", "")
 
-            other_roles = RoleRecommendation.objects.filter(
-                job_seeker=profile,
-                is_candidate_interested=False,
-            ).order_by("role_title")[:5]
+            # If the dashboard section is being updated, return the stacked view
+            if "recommended-roles-section" in hx_target:
+                # Recompute role lists for current profile
+                interested_roles = RoleRecommendation.objects.filter(
+                    job_seeker=profile,
+                    is_candidate_interested=True,
+                ).order_by("role_title")[:5]
 
-            html = render_to_string(
-                "job_seekers/partials/recommended_roles.html",
+                other_roles = RoleRecommendation.objects.filter(
+                    job_seeker=profile,
+                    is_candidate_interested=False,
+                ).order_by("role_title")[:5]
+
+                html = render_to_string(
+                    "job_seekers/partials/recommended_roles.html",
+                    {
+                        "interested_roles": interested_roles,
+                        "other_roles": other_roles,
+                    },
+                    request=request,
+                )
+
+                return HttpResponse(html)
+
+            # Otherwise, assume we are on the dedicated role recommendations page
+            # and only need to swap out the interest button itself
+
+            button_html = render_to_string(
+                "job_seekers/partials/role_interest_button.html",
                 {
-                    "interested_roles": interested_roles,
-                    "other_roles": other_roles,
+                    "role_id": updated_role.pk,
+                    "is_candidate_interested": updated_role.is_candidate_interested,
                 },
                 request=request,
             )
 
-            return HttpResponse(html)
+            response = HttpResponse(button_html)
+
+            # Send a trigger so the front-end JS can update card classes
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "updateCardClass": {
+                        "roleId": updated_role.pk,
+                        "isInterested": updated_role.is_candidate_interested,
+                    }
+                }
+            )
+
+            return response
         else:
             # For API requests, return JSON with updated status
             return JsonResponse(

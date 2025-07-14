@@ -11,6 +11,7 @@ Hiredar is a job matching platform that connects job seekers with recruiters usi
 ## Cheat Sheet (TL;DR)
 
 - **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, `messaging`, **new** `resume_processing` (background parsing of resumes).
+- **Shared LLM utilities**: `hiredar.llm` package (centralized OpenAI wrapper with retries, and XML sanitization/parsing helpers).
 - **Primary user types**: *job seeker* and *recruiter* (custom `User.user_type`).
 - **Key models**: `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
 - **Async engine**: Celery; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
@@ -533,3 +534,15 @@ Recruiters use credits to access premium features such as resume processing. Cre
 - **Spending Credits**: Credits are deducted for actions such as resume processing. If a recruiter has insufficient credits, they are prompted to purchase more.
 - **Stripe Integration**: Stripe Checkout is used for secure payments. Price IDs are managed in Django settings. Credits are only granted after payment is confirmed.
 - **Admin and UI**: Admins can view and search recruiter credit balances. Recruiters see their credit balance in the sidebar and on the credits page.
+
+### Shared LLM Utilities (`hiredar/llm`)
+
+Although not a Django *app*, the `hiredar.llm` package contains code that is shared across multiple apps when interacting with Large Language Models and processing their XML output.
+
+- **client.py** – Singleton OpenAI client plus high-level helpers:
+  - `chat_complete(...)` – chat completion with built-in timeout + exponential back-off (powered by `tenacity`).
+  - `embed(...)` – embedding helper.
+- **xml_utils.py** – Sanitisation and parsing helpers used throughout the codebase (previously duplicated in several apps).
+- **prompts.py** – Tiny wrapper around Promptdown for loading templated prompts.
+
+Unit tests for this package live alongside the code in `hiredar/llm/tests/`.

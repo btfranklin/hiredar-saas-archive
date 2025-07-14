@@ -54,7 +54,11 @@ class TestToggleRoleInterestView:
 
         url = reverse("job_seekers:toggle_role_interest", args=[role.pk])
 
-        response = client.post(url, HTTP_HX_REQUEST="true")
+        response = client.post(
+            url,
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="recommended-roles-section",
+        )
 
         assert response.status_code == 200
 

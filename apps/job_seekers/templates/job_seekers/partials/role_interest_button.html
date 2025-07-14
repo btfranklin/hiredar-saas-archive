@@ -1,0 +1,10 @@
+<button class="btn btn-sm interest-btn {% if is_candidate_interested %}btn-success{% else %}btn-primary{% endif %}"
+        hx-post="{% url 'job_seekers:toggle_role_interest' role_id %}"
+        hx-swap="outerHTML"
+        hx-target="closest .interest-btn">
+    {% if is_candidate_interested %}
+        <i class="fas fa-check mr-2"></i> Interested
+    {% else %}
+        <i class="fas fa-thumbs-up mr-2"></i> I'm Interested
+    {% endif %}
+</button> 

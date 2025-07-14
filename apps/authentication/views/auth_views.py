@@ -2,7 +2,10 @@
 
 from typing import cast
 
+from allauth.account.adapter import get_adapter
+from allauth.account.utils import has_verified_email
 from allauth.account.views import SignupView
+from django.conf import settings
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
@@ -77,15 +80,14 @@ class CustomLoginView(SuccessMessageMixin, LoginView):
         """Process the form if it is valid, enforcing email verification."""
         # Check if email verification is mandatory and user is unverified
         user = getattr(form, "user_cache", None) or self.request.user
-        from allauth.account.utils import has_verified_email, send_email_confirmation
-        from django.conf import settings
-        from django.http import HttpResponseRedirect
-        from django.urls import reverse
 
         if getattr(settings, "ACCOUNT_EMAIL_VERIFICATION", "").lower() == "mandatory":
             # If the user has not verified their primary email, resend confirmation and redirect
             if not has_verified_email(user):
-                send_email_confirmation(self.request, user)
+                # Always use the modern adapter-based API
+                get_adapter(self.request).send_confirmation_mail(
+                    self.request, user, signup=False
+                )
                 return HttpResponseRedirect(reverse("account_email_verification_sent"))
 
         # Proceed with normal login

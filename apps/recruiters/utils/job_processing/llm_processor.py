@@ -8,15 +8,15 @@ to convert job description text into structured XML format.
 import logging
 import os
 import xml.etree.ElementTree as ET
-from typing import Any, Iterable, cast
+from typing import Any, cast
 
 import requests
-from django.conf import settings  # Import Django settings
+from django.conf import settings
 from dotenv import load_dotenv
-from openai import OpenAI
 from promptdown import StructuredPrompt
 
-from apps.core.utils.xml_processing import sanitize_xml_response
+from hiredar.llm import chat_complete
+from hiredar.llm.xml_utils import sanitize_xml_response
 
 # Load environment variables
 load_dotenv()
@@ -42,13 +42,6 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
         requests.exceptions.RequestException: If the API request fails
         Exception: For any other processing errors
     """
-    # Use settings for API key if available, fall back to env var (for compatibility)
-    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        error_msg = "No API key found. Set OPENAI_API_KEY environment variable."
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
     prompt_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
         "prompts",
@@ -63,23 +56,17 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
     )
     messages = structured_prompt.to_chat_completion_messages()
 
-    client = OpenAI(api_key=api_key)
-
-    # Capture the start of processing for logging
+    # Call via shared helper
     logger.info("Sending job description to LLM for XML conversion")
     logger.debug("Job title: %s", job_title)
     logger.debug("Job description length: %d characters", len(job_description))
 
-    # Make the API call with proper error handling
     try:
-        completion = client.chat.completions.create(
+        xml_content = chat_complete(
+            messages=cast(list[dict[str, Any]], messages),
             model=settings.RECRUITERS_JOB_PROCESSING_MODEL,
-            messages=cast(Iterable[Any], messages),
             temperature=settings.RECRUITERS_JOB_PROCESSING_TEMPERATURE,
         )
-
-        # Extract the XML content from the response
-        xml_content = completion.choices[0].message.content
 
         # Perform basic validation
         if not xml_content or not isinstance(xml_content, str):

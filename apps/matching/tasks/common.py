@@ -10,9 +10,10 @@ from functools import lru_cache
 from typing import Any
 
 from django.conf import settings  # Import Django settings
-from openai import OpenAI
 from pinecone import Pinecone
 from pinecone.openapi_support.exceptions import NotFoundException, PineconeException
+
+from hiredar.llm import embed, get_client
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +22,14 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 
 
-@lru_cache(maxsize=1)
-def get_openai_client() -> OpenAI | None:
-    """Return a singleton OpenAI client or *None* if the API key is absent."""
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        logger.warning(
-            "OPENAI_API_KEY is not set; OpenAI features are disabled during this run"
-        )
-        return None
+def get_openai_client():  # kept for backward compatibility within this module
+    """Return the shared OpenAI client instance (or *None* if unavailable)."""
 
-    return OpenAI(api_key=api_key)
+    try:
+        return get_client()
+    except RuntimeError as exc:
+        logger.warning("OpenAI unavailable: %s", exc)
+        return None
 
 
 @lru_cache(maxsize=1)
@@ -169,12 +167,7 @@ def get_embedding(text: str) -> list[float]:
         if client is None:
             raise RuntimeError("OpenAI client unavailable; missing API key")
 
-        response = client.embeddings.create(
-            input=text,
-            model=settings.MATCHING_EMBEDDING_MODEL,  # Use settings
-        )
-        # Extract the embedding from the response
-        return response.data[0].embedding
+        return embed([text], model=settings.MATCHING_EMBEDDING_MODEL)[0]
     except Exception as e:
         logger.error("Embedding API error for text: %s... Error: %s", text[:50], e)
         raise

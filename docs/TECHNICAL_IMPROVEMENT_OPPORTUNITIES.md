@@ -1,23 +1,6 @@
 # Technical Improvement Opportunities
 
-## 1. Async & Background Processing
-
-### OpenAI timeouts & retry/backoff
-
-- _Current:_ LLM client calls in several modules (e.g. `apps/job_seekers/services/recommendation/llm_processor.py`,
-    `apps/recruiters/utils/job_processing/llm_processor.py`,
-    `apps/resume_processing/utils/llm_processor.py`) now include a `timeout` parameter but still lack centralized retry or backoff handling.
-- _Next:_ Consolidate all LLM invocations into a shared wrapper that enforces request timeouts,
-    implements exponential backoff/retries (e.g. via `tenacity`), and surfaces failures cleanly in workers or APIs.
-
-## 2. Code Organization & Maintainability
-
-### Consolidate XML/LLM utilities**
-
-- _Current:_ `services/…` vs `utils/…` both contain XML and LLM logic (in job_seekers, recruiters, resume_processing).
-- _Next:_ Centralize under a documented public API module (e.g. `hiredar.llm`), remove copy‑pasted parsers.
-
-## 3. Matching System Improvements
+## 1. Matching System Improvements
 
 1. **Dynamic Vector Weighting**
    - Instead of using fixed averages for composite vectors, implement a dynamic weighting system that adjusts based on job context. For example, technical roles could weight skills higher, while management roles could emphasize experience.
@@ -40,7 +23,7 @@
 7. **Asynchronous API Endpoints**
    - Convert the API to async endpoints using Django Channels or FastAPI for better performance with many concurrent users.
 
-## 4. Observability & Monitoring
+## 2. Observability & Monitoring
 
 - **Metrics & tracing for embedding & matching pipelines**
   - _Current:_ Pipelines rely on ad-hoc logging; lack structured metrics or distributed tracing for embedding tasks, Pinecone queries, and match tasks.

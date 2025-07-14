@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from apps.core.utils.xml_processing import sanitize_xml_response
+from hiredar.llm.xml_utils import sanitize_xml_response
 
 
 class XMLProcessingTests(SimpleTestCase):
@@ -78,7 +78,7 @@ class XMLProcessingTests(SimpleTestCase):
   </personal>
 </resume>"""
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_no_sanitization_needed(self, mock_logger):
         """Test when no sanitization is needed for well-formed XML."""
         result = sanitize_xml_response(self.valid_xml, expected_root="resume")
@@ -89,7 +89,7 @@ class XMLProcessingTests(SimpleTestCase):
         # Logger should not have been called for sanitization logs
         mock_logger.debug.assert_not_called()
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_markdown_code_block_removal(self, mock_logger):
         """Test removal of Markdown code blocks from XML content."""
         result = sanitize_xml_response(self.markdown_xml, expected_root="resume")
@@ -105,7 +105,7 @@ class XMLProcessingTests(SimpleTestCase):
             "Sanitization: Removed Markdown code block syntax"
         )
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_add_root_element(self, mock_logger):
         """Test adding root element when missing from XML content."""
         result = sanitize_xml_response(self.no_root_xml, expected_root="resume")
@@ -119,7 +119,7 @@ class XMLProcessingTests(SimpleTestCase):
             "Sanitization: Added missing root <%s> element", "resume"
         )
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_close_root_element(self, mock_logger):
         """Test closing root element when missing from XML content."""
         result = sanitize_xml_response(self.unclosed_root_xml, expected_root="resume")
@@ -132,7 +132,7 @@ class XMLProcessingTests(SimpleTestCase):
             "Sanitization: Added missing closing </%s> tag", "resume"
         )
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_character_replacements(self, mock_logger):
         """Test replacement of problematic characters in XML content."""
         result = sanitize_xml_response(
@@ -146,7 +146,7 @@ class XMLProcessingTests(SimpleTestCase):
         # Logger should have recorded the sanitization
         # We don't check the exact messages here as they depend on the specific characters found
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_multiple_sanitizations(self, mock_logger):
         """Test XML with multiple sanitization needs applied correctly."""
         complex_xml = """```xml
@@ -182,7 +182,7 @@ class XMLProcessingTests(SimpleTestCase):
             ampersand_message_found, "No log message about escaped ampersands found"
         )
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_edge_cases(self, mock_logger):
         """Test edge cases like empty strings and non-XML content."""
         # Empty string
@@ -200,7 +200,7 @@ class XMLProcessingTests(SimpleTestCase):
             "Sanitization: Added missing root <%s> element", "resume"
         )
 
-    @patch("apps.core.utils.xml_processing.logger")
+    @patch("hiredar.llm.xml_utils.logger")
     def test_sanitization_without_expected_root(self, mock_logger):
         """Test sanitization when no expected root is specified."""
         xml_with_ampersands = "Some text with & characters"
