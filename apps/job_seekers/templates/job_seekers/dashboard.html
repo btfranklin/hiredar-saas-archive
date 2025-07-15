@@ -86,30 +86,10 @@
                     </a>
                 </div>
                 
-                {% if recent_messages %}
-                    <div class="divide-y">
-                        {% for message in recent_messages %}
-                            <a href="{% url 'messaging:conversation_detail' message.conversation_id %}" class="py-3 px-2 flex items-center justify-between hover:bg-base-100 rounded-lg group">
-                                <div class="flex items-center gap-3 flex-1 overflow-hidden">
-                                    <div class="avatar avatar-placeholder">
-                                        <div class="bg-neutral text-neutral-content rounded-full w-10">
-                                            <span>{{ message.sender.get_initials }}</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="min-w-0">
-                                        <p class="font-medium leading-tight">{{ message.sender.get_full_name }}</p>
-                                        <p class="text-sm text-base-content/70 truncate">{{ message.text }}</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex-shrink-0 text-right ml-3">
-                                    <span class="text-xs text-base-content/60">{{ message.created_at|date:"M j" }}</span>
-                                    {% if message.is_unread %}
-                                        <div class="badge badge-primary badge-sm ml-2">Unread</div>
-                                    {% endif %}
-                                </div>
-                            </a>
+                {% if recent_conversations %}
+                    <div class="space-y-4">
+                        {% for conversation in recent_conversations %}
+                            {% include 'messaging/components/conversation_summary_card.html' with conversation=conversation %}
                         {% endfor %}
                     </div>
                 {% else %}

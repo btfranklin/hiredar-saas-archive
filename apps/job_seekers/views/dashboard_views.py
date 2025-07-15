@@ -3,18 +3,16 @@
 from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import models
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponseBase
 from django.shortcuts import redirect
-from django.urls import reverse  # local import to avoid circular issues
 from django.views.generic import ListView, TemplateView
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.services import ProfileManager
 from apps.matching.models import CandidateMatch
-from apps.messaging.models import Message, Notification
+from apps.messaging.models import Conversation, Message, Notification
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -89,69 +87,27 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         )
 
         # ---------------------------------------------------
-        # Recent Messages & Interest Requests Panel
+        # Recent Conversations Panel
         # ---------------------------------------------------
 
-        # 1. Actual message objects
-        message_records = list(
-            Message.objects.filter(conversation__participants=user)
-            .order_by("-created_at")
-            .select_related("sender")[:20]  # grab a few extra for later slicing
+        # Fetch the five most recently updated conversations for the current user
+        recent_conversations = (
+            Conversation.objects.filter(participants=user)
+            .order_by("-updated_at")
+            .distinct()[:5]
         )
 
-        # 2. Conversations where a recruiter has sent an interest request but no messages yet
-
-        from apps.messaging.models import Conversation  # local import to avoid circular
-
-        interest_conversations = (
-            Conversation.objects.filter(participants=user, status="interest_requested")
-            .annotate(message_count=models.Count("messages"))
-            .filter(message_count=0)
-            .order_by("-created_at")[:20]
-        )
-
-        # Build a unified list-like structure
-        recent_messages: list[dict[str, Any]] = []
-
-        # Add actual messages
-        for msg in message_records:
-            recent_messages.append(
-                {
-                    "sender": msg.sender,
-                    "text": msg.content,
-                    "created_at": msg.created_at,
-                    "is_unread": (not msg.is_read and msg.sender != user),
-                    "conversation_id": msg.conversation.pk,
-                }
+        # Attach helper attributes that the template expects (mirrors conversation list view)
+        for conv in recent_conversations:
+            conv.display_other_participant = conv.get_other_participant(cast(Any, user))  # type: ignore[attr-defined]
+            conv.unread_count = (  # type: ignore[attr-defined]
+                Message.objects.filter(conversation=conv, is_read=False)
+                .exclude(sender=user)
+                .count()
             )
+            conv.message_count = conv.messages.count()  # type: ignore[attr-defined]
 
-        # Add interest requests (pseudo-messages)
-        for conv in interest_conversations:
-            recruiter = conv.get_other_participant(cast(Any, user))
-            if recruiter is None:
-                continue
-
-            job_title = getattr(conv.job_opening, "title", "a new opportunity")
-
-            # Determine unread state based on whether the initial notification is still unread
-            conv_url = reverse("messaging:conversation_detail", kwargs={"pk": conv.pk})
-            notification_unread = Notification.objects.filter(
-                user=user, link=conv_url, is_read=False
-            ).exists()
-
-            recent_messages.append(
-                {
-                    "sender": recruiter,
-                    "text": f"Recruiter is interested in discussing {job_title}",
-                    "created_at": conv.created_at,
-                    "is_unread": notification_unread,
-                    "conversation_id": conv.id,
-                }
-            )
-
-        # Sort by newest and take top 5
-        recent_messages.sort(key=lambda item: item["created_at"], reverse=True)
-        context["recent_messages"] = recent_messages[:5]
+        context["recent_conversations"] = recent_conversations
 
         return context
 

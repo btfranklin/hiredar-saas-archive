@@ -17,57 +17,10 @@
                 <!-- Conversations list -->
                 <div>
                     <div class="bg-base-200 rounded-box p-6 shadow-md">
-                        <!-- Heading removed per UX -->
-                        
                         {% if conversations %}
                             <div class="space-y-4">
                                 {% for conversation in conversations %}
-                                    <div class="bg-base-100 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                                        <a href="{% url 'messaging:conversation_detail' conversation.id %}" class="block">
-                                            <div class="flex items-center gap-4">
-                                                <div class="avatar avatar-placeholder">
-                                                    <div class="bg-neutral text-neutral-content rounded-full w-12">
-                                                        <span>{{ conversation.display_other_participant.get_initials }}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <div class="flex justify-between items-center">
-                                                        <h3 class="font-semibold">
-                                                            {% if request.user.user_type == 'job_seeker' %}
-                                                                Recruiter: {{ conversation.display_other_participant.get_full_name }}
-                                                            {% else %}
-                                                                {{ conversation.display_other_participant.get_full_name }}
-                                                            {% endif %}
-                                                        </h3>
-                                                        <span class="text-xs text-base-content/60">
-                                                            {{ conversation.updated_at|timesince }} ago
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    {% if conversation.job_opening %}
-                                                        <div class="badge badge-outline mt-1">
-                                                            {{ conversation.job_opening.title }}
-                                                        </div>
-                                                    {% endif %}
-                                                    
-                                                    {% with last_message=conversation.messages.last %}
-                                                        {% if last_message %}
-                                                            <p class="text-sm text-base-content/70 mt-2 truncate">
-                                                                {% if last_message.sender == request.user %}
-                                                                    <span class="text-xs font-medium">You:</span>
-                                                                {% endif %}
-                                                                {{ last_message.content }}
-                                                            </p>
-                                                        {% endif %}
-                                                    {% endwith %}
-                                                </div>
-                                                
-                                                {% if conversation.unread_count > 0 %}
-                                                    <div class="badge badge-primary">{{ conversation.unread_count }}</div>
-                                                {% endif %}
-                                            </div>
-                                        </a>
-                                    </div>
+                                    {% include 'messaging/components/conversation_summary_card.html' with conversation=conversation %}
                                 {% endfor %}
                             </div>
                         {% else %}
@@ -91,8 +44,6 @@
                         {% endif %}
                     </div>
                 </div>
-                
-                <!-- Notifications panel removed; handled via global bell dropdown -->
             </div>
         </div>
     </div>

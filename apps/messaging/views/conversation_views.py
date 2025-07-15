@@ -85,6 +85,9 @@ class ConversationListView(LoginRequiredMixin, ListView):
                 .count()
             )
 
+            # Total message count for summary card display
+            conversation.message_count = conversation.messages.count()  # type: ignore[attr-defined]
+
         return context
 
 
