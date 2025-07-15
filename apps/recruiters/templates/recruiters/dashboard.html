@@ -36,7 +36,10 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">Candidate Pools</h2>
-                    <a href="{% url 'recruiters:candidate_pool_list' %}" class="text-primary hover:underline">View all</a>
+                    <!-- Styled button matching the appearance of our standard back navigation button -->
+                    <a href="{% url 'recruiters:candidate_pool_list' %}" class="btn btn-ghost gap-2 text-base-content/70">
+                        <span>View All</span>
+                    </a>
                 </div>
                 
                 {% if candidate_pools %}
@@ -58,7 +61,10 @@
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">Job Openings</h2>
-                    <a href="{% url 'recruiters:job_openings_list' %}" class="text-primary hover:underline">View all</a>
+                    <!-- Styled button matching the appearance of our standard back navigation button -->
+                    <a href="{% url 'recruiters:job_openings_list' %}" class="btn btn-ghost gap-2 text-base-content/70">
+                        <span>View All</span>
+                    </a>
                 </div>
                 
                 {% if active_jobs %}
