@@ -55,7 +55,12 @@
                     </div>
                 </form>
                 <div class="text-center mt-4">
-                    <p class="text-sm">Don't have an account yet? <a href="{% url 'authentication:recruiter_signup' %}" class="link link-primary">Sign up</a></p>
+                    <p class="text-sm">Don't have an account yet?</p>
+                    <p class="text-sm">
+                        <a href="{% url 'authentication:job_seeker_signup' %}" class="link link-primary mr-2">Sign up as a job seeker</a>
+                        or
+                        <a href="{% url 'authentication:recruiter_signup' %}" class="link link-primary">Sign up as a recruiter</a>
+                    </p>
                 </div>
             </div>
         </div>
