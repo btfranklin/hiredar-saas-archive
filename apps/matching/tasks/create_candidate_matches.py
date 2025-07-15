@@ -10,8 +10,12 @@ from django.db import transaction
 
 from apps.core.utils.task_utils import IdempotentTaskManager
 from apps.matching.core.matching import match_job_to_talents
+from apps.matching.core.retrieval import get_job_section_embedding
 from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.matching.tasks.common import logger
+from apps.matching.tasks.create_job_opening_embeddings import (
+    create_job_opening_embeddings,
+)
 
 
 @shared_task(
@@ -58,6 +62,38 @@ def create_candidate_matches(
             logger.warning("Job opening %s is not active, skipping matching", job_id)
             return {"status": "skipped", "message": f"Job {job_id} is not active"}
 
+        sections_to_check = [
+            "Job Overview",
+            "Required Skills",
+            "Responsibilities",
+            "Qualifications",
+        ]
+
+        # Determine if the job currently has *any* embeddings stored in Pinecone.
+        has_any_embeddings = any(
+            get_job_section_embedding(job_id, section) is not None
+            for section in sections_to_check
+        )
+
+        if not has_any_embeddings:
+            logger.warning(
+                "No embeddings found for job %s; creating embeddings before matching.",
+                job_id,
+            )
+
+            try:
+                create_job_opening_embeddings(
+                    job_id
+                )  # Run synchronously within the worker
+            except Exception as embed_exc:
+                logger.error(
+                    "Failed to create embeddings for job %s during match creation: %s",
+                    job_id,
+                    embed_exc,
+                )
+                # Proceed; matching will produce empty results
+
+        # Run matching after ensuring embeddings exist (or re-attempted to create)
         match_results = match_job_to_talents(job_id, top_k=20)
 
         with transaction.atomic():
