@@ -108,7 +108,7 @@
 <dialog id="resume-upload-modal" class="modal">
     <div class="modal-box space-y-4">
         <h3 class="font-bold text-lg">Upload a New Resume</h3>
-        <p class="text-sm mb-2">Upload your updated PDF resume and we'll refresh your profile automatically.</p>
+        <p class="text-sm mb-2">Upload your updated resume and we'll refresh your profile automatically.</p>
 
         <form id="modal-resume-upload-form"
               method="post"
@@ -120,7 +120,7 @@
               hx-swap="innerHTML"
               class="space-y-4">
             {% csrf_token %}
-            {% include "core/components/fieldset_field.html" with label="Resume (PDF only)" id="modal_resume" name="resume" widget_type="file" widget_class="file-input file-input-bordered file-input-primary w-full" extra_attrs="accept='application/pdf'" required=True %}
+            {% include "core/components/fieldset_field.html" with label="Resume (PDF, DOCX, RTF, ODT, TXT)" id="modal_resume" name="resume" widget_type="file" widget_class="file-input file-input-bordered file-input-primary w-full" extra_attrs="accept='.pdf,.doc,.docx,.rtf,.odt,.txt'" required=True %}
             <div class="flex justify-end gap-2">
                 <button type="button" class="btn" onclick="document.getElementById('resume-upload-modal').close()">Cancel</button>
                 <button type="submit" class="btn btn-primary">

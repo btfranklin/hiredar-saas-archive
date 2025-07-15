@@ -1,6 +1,6 @@
 <!-- partials/upload_form.html -->
 <h2 class="text-2xl font-semibold mb-4">Upload Your Resume</h2>
-<p class="mb-4">Upload your resume and let our AI build your profile. We support PDF resume formats.</p>
+<p class="mb-4">Upload your resume and let our AI build your profile. We support most resume formats.</p>
 
 <!-- Initial Upload Form -->
 <form id="resume-upload-form" 
@@ -13,7 +13,7 @@
       hx-target="#profile-card .card-body"
       hx-swap="innerHTML">
     {% csrf_token %}
-    {% include "core/components/fieldset_field.html" with label="Resume (PDF only)" id="resume" name="resume" widget_type="file" widget_class="file-input file-input-bordered file-input-primary w-full" extra_attrs="accept='application/pdf'" required=True %}
+    {% include "core/components/fieldset_field.html" with label="Resume (PDF, DOCX, RTF, ODT, TXT)" id="resume" name="resume" widget_type="file" widget_class="file-input file-input-bordered file-input-primary w-full" extra_attrs="accept='.pdf,.doc,.docx,.rtf,.odt,.txt'" required=True %}
     {% if form.resume.errors %}<div class="label text-error text-sm">{{ form.resume.errors|join:", " }}</div>{% endif %}
     <div class="mt-6 flex justify-center">
         <button type="submit" class="btn btn-primary">
