@@ -25,15 +25,15 @@ Output *ONLY* valid, well-formed XML with clear hierarchy. Use this *EXACT* stru
   <analysis>
 An accurate but concise analysis covering:
 
-• Proven Results & Achievements: Highlight specific accomplishments from the candidate's background that directly relate to what this role requires. Focus on quantifiable results and concrete outcomes.
+✅ Proven Results & Achievements: Highlight specific accomplishments from the candidate's background that directly relate to what this role requires. Focus on quantifiable results and concrete outcomes.
 
-• Skills & Qualifications Alignment: Analyze how the candidate's technical skills, soft skills, and qualifications match the job requirements. Point out any standout qualifications or unique strengths.
+✅ Skills & Qualifications Alignment: Analyze how the candidate's technical skills, soft skills, and qualifications match the job requirements. Point out any standout qualifications or unique strengths.
 
-• Experience Relevance: Examine how the candidate's experience history positions them for success in this role. Look for progression, relevant industry experience, and similar responsibilities.
+✅ Experience Relevance: Examine how the candidate's experience history positions them for success in this role. Look for progression, relevant industry experience, and similar responsibilities.
 
-• Future Performance Potential: Based on past achievements and career trajectory, assess the candidate's potential to excel in this position and deliver the expected results.
+🚀 Future Performance Potential: Based on past achievements and career trajectory, assess the candidate's potential to excel in this position and deliver the expected results.
 
-• Gaps & Challenges: Call out any skill or experience gaps or other challenges or areas of concern about the candidate that could impact a hiring decision.
+⚠️ Gaps & Challenges: Call out any skill or experience gaps or other challenges or areas of concern about the candidate that could impact a hiring decision.
 
 Use specific examples from the candidate's background and reference the match scores where relevant. Be honest about both strengths and any potential areas of concern.
   </analysis>
@@ -43,7 +43,7 @@ Use specific examples from the candidate's background and reference the match sc
 CRITICAL REQUIREMENTS:
 - The summary must be under 200 characters
 - Do NOT use any nested XML elements inside <summary> or <analysis>
-- Use only plain text with bullet points (•) for formatting
+- Use only plain text with the specific emojis above (✅, 🚀, ⚠️) for formatting
 - Do NOT include any HTML tags, markdown formatting, or nested XML elements
 
 The summary should be concise but compelling - something a hiring manager could quickly read to understand the key value proposition.

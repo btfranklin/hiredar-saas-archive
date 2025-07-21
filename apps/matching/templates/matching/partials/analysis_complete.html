@@ -1,9 +1,10 @@
+{% load matching_filters %}
 <div id="match-analysis-section">
     <div class="divider my-2"></div>
     
     <div>
         <h3 class="font-semibold">At a Glance</h3>
-        <p class="text-base-content/70 mt-1">{{ candidate_match.match_summary|default:"(Pending analysis)" }}</p>
+        <p class="text-base-content/70 mt-1">{{ candidate_match.match_summary }}</p>
     </div>
     
     {% if candidate_match.match_analysis %}
@@ -12,7 +13,7 @@
     <div>
         <h3 class="font-semibold">Match Analysis</h3>
         <div class="prose max-w-none text-base-content/70 mt-1">
-            {{ candidate_match.match_analysis|linebreaks }}
+            {{ candidate_match.match_analysis|bold_analysis_headings|linebreaks|safe }}
         </div>
     </div>
     {% endif %}
