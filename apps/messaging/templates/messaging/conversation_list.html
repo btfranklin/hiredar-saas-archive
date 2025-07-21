@@ -11,39 +11,32 @@
         
         <!-- Main content -->
         <div class="w-full lg:w-3/4">
-            <h1 class="text-2xl font-bold mb-6">Conversations</h1>
-            
-            <div class="grid grid-cols-1 gap-6">
-                <!-- Conversations list -->
-                <div>
-                    <div class="bg-base-200 rounded-box p-6 shadow-md">
-                        {% if conversations %}
-                            <div class="space-y-4">
-                                {% for conversation in conversations %}
-                                    {% include 'messaging/components/conversation_summary_card.html' with conversation=conversation %}
-                                {% endfor %}
-                            </div>
+            <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                <h1 class="text-2xl font-bold mb-4">Conversations</h1>
+                {% if conversations %}
+                    <div class="space-y-4">
+                        {% for conversation in conversations %}
+                            {% include 'messaging/components/conversation_summary_card.html' with conversation=conversation %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <div class="text-5xl mb-4">💬</div>
+                        <h3 class="text-xl font-semibold mb-2">No conversations yet</h3>
+                        {% if request.user.user_type == 'recruiter' %}
+                            <p class="text-base-content/70 mb-4">
+                                Start a conversation by reaching out to potential candidates for your job openings
+                            </p>
+                            <a href="{% url 'recruiters:job_openings_list' %}" class="btn btn-primary">
+                                View My Job Openings
+                            </a>
                         {% else %}
-                            <div class="text-center py-8">
-                                <div class="text-5xl mb-4">💬</div>
-                                <h3 class="text-xl font-semibold mb-2">No conversations yet</h3>
-                                
-                                {% if request.user.user_type == 'recruiter' %}
-                                    <p class="text-base-content/70 mb-4">
-                                        Start a conversation by reaching out to potential candidates for your job openings
-                                    </p>
-                                    <a href="{% url 'recruiters:job_openings_list' %}" class="btn btn-primary">
-                                        View My Job Openings
-                                    </a>
-                                {% else %}
-                                    <p class="text-base-content/70 mb-4">
-                                        Messages from recruiters interested in your profile will appear here
-                                    </p>
-                                {% endif %}
-                            </div>
+                            <p class="text-base-content/70 mb-4">
+                                Messages from recruiters interested in your profile will appear here
+                            </p>
                         {% endif %}
                     </div>
-                </div>
+                {% endif %}
             </div>
         </div>
     </div>
