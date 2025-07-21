@@ -68,8 +68,8 @@ def upgrade_resume_content(profile: "JobSeekerProfile") -> str:
     )
     return chat_complete(
         messages=messages,
-        model=settings.JOBSEEKERS_WORKSHOP_MODEL,
-        temperature=settings.JOBSEEKERS_WORKSHOP_TEMPERATURE,
+        model=settings.JOBSEEKERS_WORKSHOP_UPGRADE_MODEL,
+        temperature=settings.JOBSEEKERS_WORKSHOP_UPGRADE_TEMPERATURE,
     )
 
 
@@ -99,8 +99,8 @@ def generate_targeted_documents(
     )
     targeted_resume = chat_complete(
         messages=messages,
-        model=settings.JOBSEEKERS_WORKSHOP_MODEL,
-        temperature=settings.JOBSEEKERS_WORKSHOP_TEMPERATURE,
+        model=settings.JOBSEEKERS_WORKSHOP_TARGETED_MODEL,
+        temperature=settings.JOBSEEKERS_WORKSHOP_TARGETED_TEMPERATURE,
     )
 
     # Cover Letter
@@ -120,8 +120,8 @@ def generate_targeted_documents(
     )
     cover_letter = chat_complete(
         messages=messages,
-        model=settings.JOBSEEKERS_WORKSHOP_MODEL,
-        temperature=settings.JOBSEEKERS_WORKSHOP_TEMPERATURE,
+        model=settings.JOBSEEKERS_WORKSHOP_TARGETED_MODEL,
+        temperature=settings.JOBSEEKERS_WORKSHOP_TARGETED_TEMPERATURE,
     )
 
     return {

@@ -9,20 +9,13 @@
     {% include 'job_seekers/components/sidebar.html' with active_page='workshop' personal_tagline=personal_tagline %}
 
     <div class="w-full lg:w-3/4">
-      {% url 'job_seekers:workshop' as workshop_url %}
-      {% include 'core/components/back_button.html' with href=workshop_url label='Back to Workshop' %}
       <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-        <h1 class="text-2xl font-bold mb-2">Upgrade My Resume</h1>
-      </div>
-
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <p class="mb-4 text-base-content/70">Generate an improved version of your resume, rewritten by AI to highlight your strengths and achievements. You can download the result or replace your current resume.</p>
-          <button id="upgrade-btn" class="btn btn-primary" hx-post="" hx-target="#upgrade-output" hx-swap="innerHTML">
-            <i class="fas fa-magic mr-2"></i>Upgrade Resume
-          </button>
-          <div id="upgrade-output" class="mt-6 prose max-w-none"></div>
-        </div>
+        <h1 class="text-2xl font-bold mb-4">Upgrade My Resume</h1>
+        <p class="mb-4 text-base-content/70">Generate an improved version of your resume, rewritten by AI to highlight your strengths and achievements. You can download the result or replace your current resume.</p>
+        <button id="upgrade-btn" class="btn btn-primary" hx-post="" hx-target="#upgrade-output" hx-swap="innerHTML">
+          <i class="fas fa-magic mr-2"></i>Upgrade Resume
+        </button>
+        <div id="upgrade-output" class="mt-6 prose max-w-none"></div>
       </div>
     </div>
   </div>
