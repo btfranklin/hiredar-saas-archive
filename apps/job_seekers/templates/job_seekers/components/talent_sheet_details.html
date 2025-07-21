@@ -5,7 +5,7 @@
         <div class="card bg-base-200 shadow-md">
             <div class="card-body">
                 <h2 class="card-title">Professional Overview</h2>
-                <p class="whitespace-pre-line">{{ talent_sheet.promotional_blurb }}</p>
+                <p class="whitespace-pre-line">{{ talent_sheet.promotional_blurb|bold_resume_labels }}</p>
             </div>
         </div>
         
@@ -13,7 +13,7 @@
         <div class="card bg-base-200 shadow-md">
             <div class="card-body">
                 <h2 class="card-title">Experience Overview</h2>
-                <p class="whitespace-pre-line">{{ talent_sheet.experience_overview }}</p>
+                <p class="whitespace-pre-line">{{ talent_sheet.experience_overview|bold_resume_labels }}</p>
             </div>
         </div>
         
@@ -38,7 +38,7 @@
         <div class="card bg-base-200 shadow-md">
             <div class="card-body">
                 <h2 class="card-title">Qualifications</h2>
-                <p class="whitespace-pre-line">{{ talent_sheet.qualifications }}</p>
+                <p class="whitespace-pre-line">{{ talent_sheet.qualifications|bold_resume_labels }}</p>
             </div>
         </div>
         {% endif %}

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load resume_tags %}
 
 {% block title %}Your Profile | Hiredar{% endblock %}
 
@@ -54,7 +55,7 @@
                 {% if job_seeker_profile.experience %}
                     <div class="card bg-base-100 shadow-sm">
                         <div class="card-body">
-                            <p>{{ job_seeker_profile.experience|linebreaks }}</p>
+                            <p>{{ job_seeker_profile.experience|bold_resume_labels|linebreaks }}</p>
                         </div>
                     </div>
                 {% else %}
@@ -72,7 +73,7 @@
                 {% if job_seeker_profile.education %}
                     <div class="card bg-base-100 shadow-sm">
                         <div class="card-body">
-                            <p>{{ job_seeker_profile.education|linebreaks }}</p>
+                            <p>{{ job_seeker_profile.education|bold_resume_labels|linebreaks }}</p>
                         </div>
                     </div>
                 {% else %}
@@ -90,7 +91,7 @@
                 {% if job_seeker_profile.certifications %}
                     <div class="card bg-base-100 shadow-sm">
                         <div class="card-body">
-                            <p>{{ job_seeker_profile.certifications|linebreaks }}</p>
+                            <p>{{ job_seeker_profile.certifications|bold_resume_labels|linebreaks }}</p>
                         </div>
                     </div>
                 {% else %}

@@ -1,3 +1,4 @@
+{% load resume_tags %}
 <div class="space-y-6">
     {% if profile.professional_summary %}
     <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
@@ -14,7 +15,7 @@
     <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
         <h2 class="text-xl font-bold mb-4">Work Experience</h2>
         <div class="prose max-w-none">
-            <p>{{ profile.experience|linebreaks }}</p>
+            <p>{{ profile.experience|bold_resume_labels|linebreaks }}</p>
         </div>
     </div>
     {% endif %}
@@ -23,7 +24,7 @@
     <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
         <h2 class="text-xl font-bold mb-4">Education</h2>
         <div class="prose max-w-none">
-            <p>{{ profile.education|linebreaks }}</p>
+            <p>{{ profile.education|bold_resume_labels|linebreaks }}</p>
         </div>
     </div>
     {% endif %}
@@ -32,7 +33,7 @@
     <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
         <h2 class="text-xl font-bold mb-4">Certifications</h2>
         <div class="prose max-w-none">
-            <p>{{ profile.certifications|linebreaks }}</p>
+            <p>{{ profile.certifications|bold_resume_labels|linebreaks }}</p>
         </div>
     </div>
     {% endif %}

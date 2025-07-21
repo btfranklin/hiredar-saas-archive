@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load matching_filters %}
+{% load resume_tags %}
 
 {% block title %}{% if job_seeker.user_owner %}{{ job_seeker.user_owner.get_full_name }}{% else %}{{ job_seeker.candidate_name }}{% endif %} | Match Details | Hiredar{% endblock %}
 
@@ -77,23 +78,23 @@
                 {% else %}
                   <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                     <h2 class="text-xl font-bold mb-4">Promotional Summary</h2>
-                    <div class="prose max-w-none">
-                      <p>{{ talent_sheet.promotional_blurb|linebreaks }}</p>
-                    </div>
+                    <p class="prose max-w-none">
+                        {{ talent_sheet.promotional_blurb|bold_resume_labels|linebreaks }}
+                    </p>
                   </div>
 
                   <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                     <h2 class="text-xl font-bold mb-4">Experience Overview</h2>
-                    <div class="prose max-w-none">
-                      <p>{{ talent_sheet.experience_overview|linebreaks }}</p>
+                    <div class="mt-2 whitespace-pre-line max-w-none">
+                        {{ talent_sheet.experience_overview|bold_resume_labels|linebreaks }}
                     </div>
                   </div>
 
                   {% if talent_sheet.qualifications %}
                   <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                     <h2 class="text-xl font-bold mb-4">Qualifications</h2>
-                    <div class="prose max-w-none">
-                      <p>{{ talent_sheet.qualifications|linebreaks }}</p>
+                    <div class="mt-2 whitespace-pre-line max-w-none">
+                        {{ talent_sheet.qualifications|bold_resume_labels|linebreaks }}
                     </div>
                   </div>
                   {% endif %}
@@ -116,23 +117,23 @@
             {% else %}
               <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Promotional Summary</h2>
-                <div class="prose max-w-none">
-                  <p>{{ talent_sheet.promotional_blurb|linebreaks }}</p>
-                </div>
+                <p class="prose max-w-none">
+                    {{ talent_sheet.promotional_blurb|bold_resume_labels|linebreaks }}
+                </p>
               </div>
 
               <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Experience Overview</h2>
-                <div class="prose max-w-none">
-                  <p>{{ talent_sheet.experience_overview|linebreaks }}</p>
+                <div class="mt-2 whitespace-pre-line max-w-none">
+                    {{ talent_sheet.experience_overview|bold_resume_labels|linebreaks }}
                 </div>
               </div>
 
               {% if talent_sheet.qualifications %}
               <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-4">Qualifications</h2>
-                <div class="prose max-w-none">
-                  <p>{{ talent_sheet.qualifications|linebreaks }}</p>
+                <div class="mt-2 whitespace-pre-line max-w-none">
+                    {{ talent_sheet.qualifications|bold_resume_labels|linebreaks }}
                 </div>
               </div>
               {% endif %}

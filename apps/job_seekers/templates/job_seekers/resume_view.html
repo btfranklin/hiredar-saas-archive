@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load resume_tags %}
 
 {% block title %}Candidate Resume | Hiredar{% endblock %}
 
@@ -164,7 +165,7 @@
                     <div class="card-body">
                         <h2 class="card-title">Work Experience</h2>
                         <div class="mt-2 whitespace-pre-line">
-                            {{ profile.experience|linebreaks }}
+                            {{ profile.experience|bold_resume_labels|linebreaks }}
                         </div>
                     </div>
                 </div>
@@ -176,7 +177,7 @@
                     <div class="card-body">
                         <h2 class="card-title">Education</h2>
                         <div class="mt-2 whitespace-pre-line">
-                            {{ profile.education|linebreaks }}
+                            {{ profile.education|bold_resume_labels|linebreaks }}
                         </div>
                     </div>
                 </div>
@@ -188,7 +189,7 @@
                     <div class="card-body">
                         <h2 class="card-title">Certifications</h2>
                         <div class="mt-2 whitespace-pre-line">
-                            {{ profile.certifications|linebreaks }}
+                            {{ profile.certifications|bold_resume_labels|linebreaks }}
                         </div>
                     </div>
                 </div>
