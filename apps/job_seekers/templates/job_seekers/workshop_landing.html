@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Workshop | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="flex flex-col lg:flex-row gap-8">
+    {% include 'job_seekers/components/sidebar.html' with active_page='workshop' personal_tagline=personal_tagline %}
+
+    <div class="w-full lg:w-3/4">
+      <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+        <h1 class="text-2xl font-bold mb-4">Workshop</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Upgrade My Resume Card -->
+          <a href="{% url 'job_seekers:workshop_upgrade_resume' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+            <div class="card-body items-center text-center p-4">
+              <i class="fas fa-magic text-primary text-3xl mb-2"></i>
+              <h3 class="card-title text-base">Upgrade My Resume</h3>
+              <p class="text-sm">Use AI to rewrite and polish your resume for maximum impact.</p>
+            </div>
+          </a>
+
+          <!-- Targeted Resume & Cover Letter Card -->
+          <a href="{% url 'job_seekers:workshop_targeted_docs' %}" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+            <div class="card-body items-center text-center p-4">
+              <i class="fas fa-bullseye text-primary text-3xl mb-2"></i>
+              <h3 class="card-title text-base">Targeted Resume & Cover Letter</h3>
+              <p class="text-sm">Generate a role-specific resume and a compelling cover letter.</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

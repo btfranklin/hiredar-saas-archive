@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Targeted Docs | Workshop{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <div class="flex flex-col lg:flex-row gap-8">
+    {% include 'job_seekers/components/sidebar.html' with active_page='workshop' personal_tagline=personal_tagline %}
+
+    <div class="w-full lg:w-3/4">
+      {% url 'job_seekers:workshop' as workshop_url %}
+      {% include 'core/components/back_button.html' with href=workshop_url label='Back to Workshop' %}
+      <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+        <h1 class="text-2xl font-bold mb-2">Targeted Resume & Cover Letter</h1>
+      </div>
+
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <p class="mb-4 text-base-content/70">Paste the job description below, then generate a tailored resume and cover letter.</p>
+          <textarea id="job-description" name="job_description" class="textarea textarea-bordered w-full" rows="8" placeholder="Paste job description here..."></textarea>
+          <button class="btn btn-secondary mt-4" hx-post="" hx-target="#targeted-output" hx-swap="innerHTML" hx-include="#job-description">
+            <i class="fas fa-file-alt mr-2"></i>Generate Documents
+          </button>
+          <div id="targeted-output" class="mt-6 prose max-w-none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -31,6 +31,9 @@
             <li><a href="{% url 'job_seekers:role_recommendations' %}" class="{% if active_page == 'role_recommendations' %}active{% endif %}">
                 <i class="fas fa-briefcase mr-2"></i>Recommended Roles
             </a></li>
+            <li><a href="{% url 'job_seekers:workshop' %}" class="{% if active_page == 'workshop' %}active{% endif %}">
+                <i class="fas fa-tools mr-2"></i>Workshop
+            </a></li>
             <li><a href="{% url 'messaging:conversations' %}" class="{% if active_page == 'messages' %}active{% endif %}">
                 <i class="fas fa-envelope mr-2"></i>Conversations
             </a></li>

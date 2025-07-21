@@ -24,6 +24,11 @@ from apps.job_seekers.views.resume_processing_views import (
     ResumeProcessingTaskProgressView,
     ResumeUploadView,
 )
+from apps.job_seekers.views.workshop_views import (
+    TargetedDocsView,
+    UpgradeResumeView,
+    WorkshopLandingView,
+)
 
 app_name = "job_seekers"
 
@@ -60,6 +65,18 @@ urlpatterns: list[URLPattern] = [
         "job-openings/<int:pk>/",
         JobOpeningDetailView.as_view(),
         name="job_opening_detail",
+    ),
+    # Workshop
+    path("workshop/", WorkshopLandingView.as_view(), name="workshop"),
+    path(
+        "workshop/upgrade-resume/",
+        UpgradeResumeView.as_view(),
+        name="workshop_upgrade_resume",
+    ),
+    path(
+        "workshop/targeted-docs/",
+        TargetedDocsView.as_view(),
+        name="workshop_targeted_docs",
     ),
     # API endpoints
     path(
