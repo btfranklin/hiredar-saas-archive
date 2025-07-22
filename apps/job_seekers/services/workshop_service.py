@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 from typing import TYPE_CHECKING
 
 from django.conf import settings
@@ -128,3 +129,84 @@ def generate_targeted_documents(
         "targeted_resume": targeted_resume,
         "cover_letter": cover_letter,
     }
+
+
+class _ParsedResumeProfile:
+    """Lightweight stand-in for :class:`JobSeekerProfile` created from markdown.
+
+    This lets us reuse existing resume detail templates that expect a model
+    instance with various text attributes and a ``skills_list`` helper.
+    """
+
+    def __init__(self, **sections: str):
+        # Store all provided sections verbatim on the instance so template code
+        # can reference ``.professional_summary`` / ``.experience`` / …
+        for key, value in sections.items():
+            setattr(self, key, value.strip())
+
+    # ------------------------------------------------------------------
+    # Template helpers expected by existing resume components
+    # ------------------------------------------------------------------
+
+    @property
+    def skills_list(self) -> list[str]:  # noqa: D401 – simple list helper
+        """Return the skills section as a list (splits on comma & newlines)."""
+
+        skills = getattr(self, "skills", "")
+        if not skills:
+            return []
+
+        # Handle either comma-separated inline lists or newline/bullet lists
+        raw_items = re.split(r"[\n,]", skills)
+        return [item.strip(" -*\t") for item in raw_items if item.strip()]
+
+
+# ---------------------------------------------------------------------------
+# Markdown parsing helpers
+# ---------------------------------------------------------------------------
+
+
+def _parse_resume_markdown(markdown_text: str) -> _ParsedResumeProfile:
+    """Very small heuristic parser that extracts common resume sections.
+
+    The upgraded resume comes back as Markdown. We slice it into sections
+    based on leading heading markers ("#", "##", etc.) and map those headings
+    onto :class:`JobSeekerProfile` field names. This is *good enough* for
+    display purposes – we are **not** trying to perform full semantic parsing
+    here.
+    """
+
+    # Build a mapping from lower-cased heading label → profile attribute
+    # These must stay in sync with the mandated headings in our LLM prompts.
+    heading_to_attr = {
+        "professional summary": "professional_summary",
+        "skills": "skills",
+        "experience": "experience",
+        "education": "education",
+        "certifications": "certifications",
+    }
+
+    # Split the markdown into (heading, block) pairs
+    pattern = re.compile(r"^\s*#+\s*(.+?)\s*$", re.MULTILINE)
+    sections: dict[str, str] = {}
+
+    headings = list(pattern.finditer(markdown_text))
+    for idx, match in enumerate(headings):
+        heading = match.group(1).strip().lower()
+        start = match.end()
+        end = (
+            headings[idx + 1].start() if idx + 1 < len(headings) else len(markdown_text)
+        )
+        body = markdown_text[start:end].strip()
+        if heading in heading_to_attr:
+            sections[heading_to_attr[heading]] = body
+
+    # Fallback: if we didn't detect headings we assume the *entire* markdown is a summary
+    if not sections and markdown_text.strip():
+        sections["professional_summary"] = markdown_text.strip()
+
+    return _ParsedResumeProfile(**sections)
+
+
+# Expose parser for external use
+parse_resume_markdown = _parse_resume_markdown

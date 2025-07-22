@@ -1,0 +1,30 @@
+{% load static %}
+<div id="upgraded-resume-content">
+  {% comment %} Reuse existing resume detail component for consistent styling {% endcomment %}
+  {% include 'job_seekers/components/resume_detail.html' with profile=profile %}
+
+  <div class="mt-8 flex gap-4">
+    <!-- Download button -->
+    <a href="{% url 'job_seekers:workshop_upgrade_resume_download' %}" class="btn btn-secondary">
+        <i class="fas fa-download mr-2"></i>Download Resume
+    </a>
+
+    <!-- Apply button -->
+    <form hx-post="{% url 'job_seekers:workshop_upgrade_resume_use' %}"
+          hx-target="body" hx-swap="none">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">
+            Use this as my Hiredar resume
+        </button>
+    </form>
+  </div>
+
+  <!-- Out-of-band swap: replace original button with "Try Again" version -->
+  <button id="upgrade-btn" hx-swap-oob="true"
+          hx-post="" hx-target="#upgrade-output" hx-swap="innerHTML"
+          class="btn btn-primary">
+      <span class="htmx-indicator hidden loading loading-spinner loading-xs mr-2"></span>
+      <i class="fas fa-sync-alt mr-2"></i>
+      <span>Try Again</span>
+  </button>
+</div> 

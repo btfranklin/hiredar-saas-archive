@@ -5,14 +5,23 @@ from __future__ import annotations
 from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseBase,
+    JsonResponse,
+)
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils.encoding import smart_str
 from django.views import View
 
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.services import ProfileManager
 from apps.job_seekers.services.workshop_service import (
     generate_targeted_documents,
+    parse_resume_markdown,
     upgrade_resume_content,
 )
 
@@ -68,17 +77,107 @@ class UpgradeResumeView(LoginRequiredMixin, View):
         }
         return render(request, self.template_name, context)
 
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:  # noqa: C901 – complexity fine for view
+        """Handle HTMX POST requests that trigger the upgrade flow.
+
+        Returns an HTML fragment that replaces the ``#upgrade-output`` element
+        on the page. The fragment shows the upgraded resume using the existing
+        resume detail component **plus** controls for downloading / applying
+        the result.
+        """
+
+        # Ensure we are dealing with a job-seeker profile
         user = cast(AuthenticatedUser, request.user)
         profile = ProfileManager.get_profile_for_user(user)
         if profile is None:
-            return JsonResponse(
-                {"status": "error", "message": "Profile not found."}, status=400
-            )
+            return HttpResponseBadRequest("Profile not found.")
+
         from apps.job_seekers.models.profile import JobSeekerProfile
 
-        content = upgrade_resume_content(cast(JobSeekerProfile, profile))
-        return JsonResponse({"status": "success", "resume": content})
+        # Call service layer (OpenAI etc.)
+        upgraded_markdown: str = upgrade_resume_content(cast(JobSeekerProfile, profile))
+
+        # Keep a copy in the session for later download / application actions
+        request.session["upgraded_resume_markdown"] = upgraded_markdown
+
+        # Parse the markdown into a very small stand-in so the existing
+        # component can render it nicely.
+        parsed_profile = parse_resume_markdown(upgraded_markdown)
+
+        # Render partial and return to HTMX caller
+        return render(
+            request,
+            "job_seekers/partials/upgraded_resume.html",
+            {
+                "profile": parsed_profile,
+                "resume_text": upgraded_markdown,
+            },
+        )
+
+
+# ---------------------------------------------------------------------------
+# Follow-up actions for the upgraded resume
+# ---------------------------------------------------------------------------
+
+
+class DownloadUpgradedResumeView(LoginRequiredMixin, View):
+    """Serve the upgraded resume as a downloadable file (PDF fallback to TXT)."""
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        resume_md: str | None = request.session.get("upgraded_resume_markdown")
+        if not resume_md:
+            return HttpResponseBadRequest(
+                "No upgraded resume available – please run the upgrade first."
+            )
+
+        # For now we provide the Markdown as a `.txt` file. Converting to PDF
+        # or DOCX can be added later.
+        filename = "upgraded_resume.txt"
+        response = HttpResponse(resume_md, content_type="text/plain")
+        response["Content-Disposition"] = f"attachment; filename={smart_str(filename)}"
+        return response
+
+
+class ApplyUpgradedResumeView(LoginRequiredMixin, View):
+    """Treat the upgraded resume *as if* the user had uploaded it."""
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        resume_md: str | None = request.session.get("upgraded_resume_markdown")
+        if not resume_md:
+            return HttpResponseBadRequest("No upgraded resume data found in session.")
+
+        user = cast(AuthenticatedUser, request.user)
+        profile = ProfileManager.get_profile_for_user(user)
+        if profile is None:
+            return HttpResponseBadRequest("Profile not found.")
+
+        # ------------------------------------------------------------------
+        # VERY lightweight: we simply parse the markdown and persist the main
+        # sections directly onto the user's profile. This mimics the intent of
+        # the regular upload pipeline without the heavy async processing.
+        # ------------------------------------------------------------------
+
+        parsed_profile = parse_resume_markdown(resume_md)
+
+        # Copy recognised attributes over to the real profile
+        for attr in (
+            "professional_summary",
+            "experience",
+            "education",
+            "certifications",
+            "skills",
+        ):
+            if hasattr(parsed_profile, attr):
+                setattr(profile, attr, getattr(parsed_profile, attr))
+
+        profile.save()
+
+        # Redirect the client to the regular profile page (HTMX redirect).
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse("job_seekers:profile")
+        return response
 
 
 class TargetedDocsView(LoginRequiredMixin, View):
