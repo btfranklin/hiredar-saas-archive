@@ -1,12 +1,19 @@
 """Views for the Job Seeker Workshop feature."""
 
+# pylint: disable=not-callable
+
 from __future__ import annotations
 
+import time
 from typing import Any, cast
+from uuid import uuid4
 
+from celery import chain
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -19,13 +26,24 @@ from django.urls import reverse
 from django.utils.encoding import smart_str
 from django.views import View
 
+from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models import TalentSheet
 from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.job_seekers.services import ProfileManager
+from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 from apps.job_seekers.services.workshop_service import (
     generate_targeted_documents,
     parse_resume_markdown,
     upgrade_resume_content,
+)
+from apps.job_seekers.tasks.post_resume_processing_tasks import (
+    resume_processing_completed,
+)
+from apps.job_seekers.views.mixins import HTMXViewMixin, ProfileAccessMixin
+from apps.resume_processing.services.resume_processor import ResumeProcessor
+from apps.resume_processing.tasks.resume_processing_tasks import (
+    handle_resume_upload_task,
 )
 
 # ---------------------------------------------------------------------------
@@ -199,44 +217,142 @@ class DownloadUpgradedResumeView(LoginRequiredMixin, View):
         return response
 
 
-class ApplyUpgradedResumeView(LoginRequiredMixin, View):
-    """Treat the upgraded resume *as if* the user had uploaded it."""
+class ApplyUpgradedResumeView(
+    LoginRequiredMixin, ProfileAccessMixin, HTMXViewMixin, View
+):
+    """Kick off the *full* resume-ingestion pipeline using the upgraded markdown.
 
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    This implementation mirrors the behaviour of :class:`ResumeUploadView` so
+    that the upgraded document travels through the exact same extraction → XML
+    conversion → profile-update flow as a regular file upload. Doing so keeps
+    all downstream features (tagline generation, talent-pool handling, etc.)
+    intact.
+    """
+
+    def post(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:  # noqa: C901 – complexity comparable to upload view
+        # ------------------------------------------------------------------
+        # Retrieve the upgraded markdown that was cached in the session after
+        # the initial LLM call.
+        # ------------------------------------------------------------------
         resume_md: str | None = request.session.get("upgraded_resume_markdown")
         if not resume_md:
             return HttpResponseBadRequest("No upgraded resume data found in session.")
 
+        # ------------------------------------------------------------------
+        # Validate access and look up the job-seeker profile (create if needed
+        # – parity with ResumeUploadView).
+        # ------------------------------------------------------------------
         user = cast(AuthenticatedUser, request.user)
-        profile = ProfileManager.get_profile_for_user(user)
-        if profile is None:
-            return HttpResponseBadRequest("Profile not found.")
+
+        # Ensure user is a job-seeker
+        error_response = self.ensure_job_seeker(request)
+        if error_response:
+            return error_response
+
+        user_model = cast(User, user)  # explicit cast for typing clarity
+
+        # Ensure a JobSeekerProfile exists
+        job_seeker_profile = ProfileManager.get_profile_for_user(user_model)
+        if job_seeker_profile is None:
+            # Lazily create one to match upload behaviour
+            job_seeker_profile = JobSeekerProfile.objects.create(user_owner=user_model)
+
+        profile_id = getattr(job_seeker_profile, "pk", None)
+        if profile_id is None:
+            return HttpResponseBadRequest("Unable to resolve profile ID.")
 
         # ------------------------------------------------------------------
-        # VERY lightweight: we simply parse the markdown and persist the main
-        # sections directly onto the user's profile. This mimics the intent of
-        # the regular upload pipeline without the heavy async processing.
+        # Immediately withdraw from the talent pool and delete any outdated
+        # talent sheet – this mirrors ResumeUploadView safeguarding steps.
         # ------------------------------------------------------------------
+        TalentPoolManager.toggle_talent_pool(user_model, join=False)
+        TalentSheet.objects.filter(job_seeker=job_seeker_profile).delete()
 
-        parsed_profile = parse_resume_markdown(resume_md)
+        # ------------------------------------------------------------------
+        # Persist the markdown to storage as a temporary text file so that the
+        # existing Celery pipeline, which expects a *file path*, can operate
+        # unchanged.
+        # ------------------------------------------------------------------
+        unique_filename = f"{uuid4()}_upgraded_resume.txt"
+        file_path = default_storage.save(
+            f"resumes/{unique_filename}", ContentFile(resume_md.encode("utf-8"))
+        )
 
-        # Copy recognised attributes over to the real profile
-        for attr in (
-            "professional_summary",
-            "experience",
-            "education",
-            "certifications",
-            "skills",
-        ):
-            if hasattr(parsed_profile, attr):
-                setattr(profile, attr, getattr(parsed_profile, attr))
+        # ------------------------------------------------------------------
+        # Create a task-tracking row and queue the Celery chain identical to
+        # the regular upload flow.
+        # ------------------------------------------------------------------
+        timestamp = int(time.time())
+        task_id = f"resume_processing_{profile_id}_{timestamp}"
 
-        profile.save()
+        task_progress = ResumeProcessor.create_processing_task(user_model, task_id)
 
-        # Redirect the client to the regular profile page (HTMX redirect).
-        response = HttpResponse()
-        response["HX-Redirect"] = reverse("job_seekers:profile")
-        return response
+        task_chain = chain(
+            handle_resume_upload_task.si(
+                file_path, profile_id, task_id=task_progress.task_id
+            ),
+            resume_processing_completed.s(),
+        )
+
+        task_chain.apply_async()  # Fire-and-forget – actual status is polled
+
+        # Mark first pipeline step as complete (parity with upload view)
+        ResumeProcessor.update_task_progress(
+            task_progress.task_id,
+            "file_path_resolved",
+            "Resume file saved and ready for processing",
+        )
+
+        # ------------------------------------------------------------------
+        # Build status/redirect URLs so the front-end progress widget can poll
+        # the task and eventually transition the user back to their profile.
+        # ------------------------------------------------------------------
+        status_url = reverse(
+            "job_seekers:task_status", kwargs={"task_id": task_progress.task_id}
+        )
+
+        # ------------------------------------------------------------------
+        # HTMX request → return the processing widget so the current page can
+        # display the progress popup. Non-HTMX callers (unlikely from the UI)
+        # fall back to JSON for completeness.
+        # ------------------------------------------------------------------
+        is_htmx = self.is_htmx_request(request)
+
+        if is_htmx:
+            progress_info: dict[str, Any] = cast(
+                dict[str, Any], task_progress.to_dict()
+            )
+            steps_list = progress_info.get("steps", [])  # type: ignore[call-arg]
+            progress_percent = progress_info.get("progress_percent", 0)  # type: ignore[call-arg]
+            current_step_name = progress_info.get("current_step_name", "Processing...")  # type: ignore[call-arg]
+            current_step_desc = progress_info.get("current_step_description", "")  # type: ignore[call-arg]
+
+            return render(
+                request,
+                "job_seekers/partials/processing.html",
+                {
+                    "task_id": task_progress.task_id,
+                    "status_url": status_url,
+                    "steps": steps_list,
+                    "progress_percent": progress_percent,
+                    "current_step_name": current_step_name,
+                    "current_step_description": current_step_desc,
+                },
+                status=202,
+            )
+
+        # Fallback: API/postman – return JSON
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Resume queued for processing.",
+                "task_id": task_progress.task_id,
+                "status_url": status_url,
+            },
+            status=202,
+        )
 
 
 class TargetedDocsView(LoginRequiredMixin, View):

@@ -9,7 +9,7 @@
     {% include 'job_seekers/components/sidebar.html' with active_page='workshop' personal_tagline=personal_tagline %}
 
     <div class="w-full lg:w-3/4">
-      <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+      <div id="upgrade-card" class="bg-base-200 rounded-box p-6 shadow-md mb-8">
         <h1 class="text-2xl font-bold mb-4">Upgrade My Resume</h1>
         <p class="mb-4 text-base-content/70">Generate an improved version of your resume, rewritten by AI to highlight your strengths and achievements. You can download the result or replace your current resume.</p>
         {% if remaining_upgrades > 0 %}

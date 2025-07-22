@@ -11,7 +11,7 @@
 
     <!-- Apply button -->
     <form hx-post="{% url 'job_seekers:workshop_upgrade_resume_use' %}"
-          hx-target="body" hx-swap="none">
+          hx-target="#upgrade-card" hx-swap="outerHTML">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary">
             Use this as my Hiredar resume
