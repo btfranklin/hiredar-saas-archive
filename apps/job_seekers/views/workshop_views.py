@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any, cast
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -18,12 +20,40 @@ from django.utils.encoding import smart_str
 from django.views import View
 
 from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.job_seekers.services import ProfileManager
 from apps.job_seekers.services.workshop_service import (
     generate_targeted_documents,
     parse_resume_markdown,
     upgrade_resume_content,
 )
+
+# ---------------------------------------------------------------------------
+# Rate-limit configuration
+# ---------------------------------------------------------------------------
+
+DAILY_LIMIT = getattr(settings, "JOBSEEKERS_WORKSHOP_DAILY_LIMIT", 10)
+TTL_SECONDS = 24 * 60 * 60  # 24 hours
+
+
+def _get_cache_key(user_id: int) -> str:
+    return f"resume_upgrade:{user_id}"
+
+
+def _increment_usage(user_id: int) -> int:
+    """Atomically increment and return today's usage counter for the user."""
+
+    key = _get_cache_key(user_id)
+    try:
+        return cache.incr(key)
+    except ValueError:
+        # Key doesn't exist yet → create with TTL
+        cache.add(key, 1, TTL_SECONDS)
+        return 1
+
+
+def _current_usage(user_id: int) -> int:
+    return cache.get(_get_cache_key(user_id), 0)
 
 
 class WorkshopLandingView(LoginRequiredMixin, View):
@@ -71,9 +101,13 @@ class UpgradeResumeView(LoginRequiredMixin, View):
         user = cast(AuthenticatedUser, request.user)
         profile = ProfileManager.get_profile_for_user(user)
         personal_tagline = getattr(profile, "personal_tagline", None) or "Job Seeker"
+        user_id: int = getattr(user, "id", 0)  # type: ignore[attr-defined]
+        usage = _current_usage(user_id)
+        remaining = max(DAILY_LIMIT - usage, 0)
         context = {
             "active_page": "workshop",
             "personal_tagline": personal_tagline,
+            "remaining_upgrades": remaining,
         }
         return render(request, self.template_name, context)
 
@@ -88,13 +122,37 @@ class UpgradeResumeView(LoginRequiredMixin, View):
         the result.
         """
 
+        # Rate-limit: ensure the user hasn't exceeded the daily quota *before*
+        # we hit the LLM.
+        user = cast(AuthenticatedUser, request.user)
+        user_id: int = getattr(user, "id", 0)  # type: ignore[attr-defined]
+        usage_before = _current_usage(user_id)
+        if usage_before >= DAILY_LIMIT:
+            # Return partial with ghost button – no further processing
+            return render(
+                request,
+                "job_seekers/partials/limit_reached.html",
+                {"remaining_upgrades": 0},
+                status=429,
+            )
+
+        # Record this attempt (atomically)
+        current_usage = _increment_usage(user_id)
+
+        if current_usage > DAILY_LIMIT:
+            # Edge-case: another request raced ahead and used the last slot
+            return render(
+                request,
+                "job_seekers/partials/limit_reached.html",
+                {"remaining_upgrades": 0},
+                status=429,
+            )
+
         # Ensure we are dealing with a job-seeker profile
         user = cast(AuthenticatedUser, request.user)
         profile = ProfileManager.get_profile_for_user(user)
         if profile is None:
             return HttpResponseBadRequest("Profile not found.")
-
-        from apps.job_seekers.models.profile import JobSeekerProfile
 
         # Call service layer (OpenAI etc.)
         upgraded_markdown: str = upgrade_resume_content(cast(JobSeekerProfile, profile))
@@ -113,6 +171,7 @@ class UpgradeResumeView(LoginRequiredMixin, View):
             {
                 "profile": parsed_profile,
                 "resume_text": upgraded_markdown,
+                "remaining_upgrades": max(DAILY_LIMIT - current_usage, 0),
             },
         )
 
@@ -208,8 +267,6 @@ class TargetedDocsView(LoginRequiredMixin, View):
             return JsonResponse(
                 {"status": "error", "message": "Profile not found."}, status=400
             )
-
-        from apps.job_seekers.models.profile import JobSeekerProfile
 
         docs = generate_targeted_documents(
             cast(JobSeekerProfile, profile), job_description

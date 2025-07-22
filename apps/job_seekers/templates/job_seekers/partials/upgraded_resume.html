@@ -19,12 +19,21 @@
     </form>
   </div>
 
-  <!-- Out-of-band swap: replace original button with "Try Again" version -->
-  <button id="upgrade-btn" hx-swap-oob="true"
-          hx-post="" hx-target="#upgrade-output" hx-swap="innerHTML"
-          class="btn btn-primary">
-      <span class="htmx-indicator hidden loading loading-spinner loading-xs mr-2"></span>
-      <i class="fas fa-sync-alt mr-2"></i>
-      <span>Try Again</span>
-  </button>
+  {% if remaining_upgrades > 0 %}
+    <!-- Out-of-band swap: replace original button with active "Try Again" version -->
+    <button id="upgrade-btn" hx-swap-oob="true"
+            hx-post="" hx-target="#upgrade-output" hx-swap="innerHTML"
+            class="btn btn-primary">
+        <span class="htmx-indicator hidden loading loading-spinner loading-xs mr-2"></span>
+        <i class="fas fa-sync-alt mr-2"></i>
+        {% if remaining_upgrades <= 2 %}Try Again ({{ remaining_upgrades }} left){% else %}Try Again{% endif %}
+    </button>
+  {% else %}
+    <!-- Out-of-band swap: ghost button when limit reached -->
+    <button id="upgrade-btn" hx-swap-oob="true" class="btn btn-disabled" disabled
+            title="Daily limit reached">
+        <i class="fas fa-ban mr-2"></i>
+        Daily limit reached
+    </button>
+  {% endif %}
 </div> 
