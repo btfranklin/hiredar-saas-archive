@@ -33,6 +33,8 @@ from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.job_seekers.services import ProfileManager
 from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 from apps.job_seekers.services.workshop_service import (
+    optimize_linkedin_content,
+    parse_linkedin_markdown,
     parse_resume_markdown,
     upgrade_resume_content,
 )
@@ -51,6 +53,11 @@ from apps.resume_processing.tasks.resume_processing_tasks import (
 
 DAILY_LIMIT = getattr(settings, "JOBSEEKERS_WORKSHOP_DAILY_LIMIT", 10)
 TTL_SECONDS = 24 * 60 * 60  # 24 hours
+
+# Separate limit for LinkedIn optimization (can map to same env var fallback)
+LINKEDIN_DAILY_LIMIT = getattr(
+    settings, "JOBSEEKERS_WORKSHOP_LINKEDIN_DAILY_LIMIT", DAILY_LIMIT
+)
 
 
 def _get_cache_key(user_id: int) -> str:
@@ -71,6 +78,28 @@ def _increment_usage(user_id: int) -> int:
 
 def _current_usage(user_id: int) -> int:
     return cache.get(_get_cache_key(user_id), 0)
+
+
+# ---------------------------------------------------------------------------
+# LinkedIn tool rate-limit helpers (separate cache key to track independently)
+# ---------------------------------------------------------------------------
+
+
+def _get_cache_key_linkedin(user_id: int) -> str:
+    return f"linkedin_optimize:{user_id}"
+
+
+def _increment_usage_linkedin(user_id: int) -> int:
+    key = _get_cache_key_linkedin(user_id)
+    try:
+        return cache.incr(key)
+    except ValueError:
+        cache.add(key, 1, TTL_SECONDS)
+        return 1
+
+
+def _current_usage_linkedin(user_id: int) -> int:
+    return cache.get(_get_cache_key_linkedin(user_id), 0)
 
 
 class WorkshopLandingView(LoginRequiredMixin, View):
@@ -189,6 +218,77 @@ class UpgradeResumeView(LoginRequiredMixin, View):
                 "profile": parsed_profile,
                 "resume_text": upgraded_markdown,
                 "remaining_upgrades": max(DAILY_LIMIT - current_usage, 0),
+            },
+        )
+
+
+# ---------------------------------------------------------------------------
+# Optimize LinkedIn View
+# ---------------------------------------------------------------------------
+
+
+class OptimizeLinkedInView(LoginRequiredMixin, View):
+    """View for creating an optimized LinkedIn headline and About section."""
+
+    template_name = "job_seekers/workshop_optimize_linkedin.html"
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        user = cast(AuthenticatedUser, request.user)
+        profile = ProfileManager.get_profile_for_user(user)
+        personal_tagline = getattr(profile, "personal_tagline", None) or "Job Seeker"
+        user_id: int = getattr(user, "id", 0)  # type: ignore[attr-defined]
+        remaining = max(LINKEDIN_DAILY_LIMIT - _current_usage_linkedin(user_id), 0)
+        context = {
+            "active_page": "workshop",
+            "personal_tagline": personal_tagline,
+            "remaining_generations": remaining,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        """Handle HTMX POST requests that generate the LinkedIn content."""
+
+        user = cast(AuthenticatedUser, request.user)
+        user_id: int = getattr(user, "id", 0)  # type: ignore[attr-defined]
+
+        usage_before = _current_usage_linkedin(user_id)
+        if usage_before >= LINKEDIN_DAILY_LIMIT:
+            return render(
+                request,
+                "job_seekers/partials/limit_reached.html",
+                {"remaining_upgrades": 0},
+                status=429,
+            )
+
+        current_usage = _increment_usage_linkedin(user_id)
+        if current_usage > LINKEDIN_DAILY_LIMIT:
+            return render(
+                request,
+                "job_seekers/partials/limit_reached.html",
+                {"remaining_upgrades": 0},
+                status=429,
+            )
+
+        profile = ProfileManager.get_profile_for_user(user)
+        if profile is None:
+            return HttpResponseBadRequest("Profile not found.")
+
+        linkedin_markdown: str = optimize_linkedin_content(
+            cast(JobSeekerProfile, profile)
+        )
+
+        # Cache for potential future use (not strictly required)
+        request.session["optimized_linkedin_markdown"] = linkedin_markdown
+
+        sections = parse_linkedin_markdown(linkedin_markdown)
+
+        return render(
+            request,
+            "job_seekers/partials/optimized_linkedin.html",
+            {
+                "headline": sections.get("headline", ""),
+                "about": sections.get("about", ""),
+                "remaining_generations": max(LINKEDIN_DAILY_LIMIT - current_usage, 0),
             },
         )
 

@@ -27,6 +27,7 @@ from apps.job_seekers.views.resume_processing_views import (
 from apps.job_seekers.views.workshop_views import (
     ApplyUpgradedResumeView,
     DownloadUpgradedResumeView,
+    OptimizeLinkedInView,
     UpgradeResumeView,
     WorkshopLandingView,
 )
@@ -83,6 +84,11 @@ urlpatterns: list[URLPattern] = [
         "workshop/upgrade-resume/use/",
         ApplyUpgradedResumeView.as_view(),
         name="workshop_upgrade_resume_use",
+    ),
+    path(
+        "workshop/optimize-linkedin/",
+        OptimizeLinkedInView.as_view(),
+        name="workshop_optimize_linkedin",
     ),
     # API endpoints
     path(

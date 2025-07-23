@@ -22,6 +22,9 @@ UPGRADE_PROMPT = os.path.join(PROMPT_DIR, "upgrade_resume.prompt.md")
 TARGETED_PROMPT = os.path.join(PROMPT_DIR, "targeted_resume.prompt.md")
 COVER_LETTER_PROMPT = os.path.join(PROMPT_DIR, "cover_letter.prompt.md")
 
+# Prompt file for LinkedIn optimization
+OPTIMIZE_LINKEDIN_PROMPT = os.path.join(PROMPT_DIR, "optimize_linkedin.prompt.md")
+
 
 def _compose_resume_text(profile: "JobSeekerProfile") -> str:
     """Return a simple plain-text resume built from stored profile fields."""
@@ -102,6 +105,61 @@ def upgrade_resume_content(profile: "JobSeekerProfile") -> str:
         messages=messages,
         model=settings.JOBSEEKERS_WORKSHOP_UPGRADE_MODEL,
         temperature=settings.JOBSEEKERS_WORKSHOP_UPGRADE_TEMPERATURE,
+    )
+
+
+# ---------------------------------------------------------------------------
+# LinkedIn Optimization
+# ---------------------------------------------------------------------------
+
+
+def optimize_linkedin_content(profile: "JobSeekerProfile") -> str:
+    """Generate an optimized LinkedIn headline and About section.
+
+    The model receives the same core resume text plus any target roles the
+    candidate expressed interest in. It returns markdown containing exactly two
+    sections: *LinkedIn Headline* and *About*.
+    """
+
+    resume_text = _compose_resume_text(profile)
+    if not resume_text:
+        raise ValueError(
+            "Profile lacks sufficient information to generate LinkedIn content."
+        )
+
+    try:
+        from apps.job_seekers.models import RoleRecommendation  # type: ignore
+    except ModuleNotFoundError:  # pragma: no cover
+        interested_roles: list[str] = []
+    else:
+        interested_roles = list(
+            RoleRecommendation.objects.filter(
+                job_seeker=profile, is_candidate_interested=True
+            ).values_list("role_title", flat=True)
+        )
+
+    target_roles = ", ".join(interested_roles)
+
+    if not os.path.exists(OPTIMIZE_LINKEDIN_PROMPT):
+        logger.error("Prompt file not found: %s", OPTIMIZE_LINKEDIN_PROMPT)
+        raise ValueError("Prompt file not found: optimize LinkedIn prompt")
+
+    structured_prompt = StructuredPrompt.from_promptdown_file(OPTIMIZE_LINKEDIN_PROMPT)
+    structured_prompt.apply_template_values(
+        {"resume_text": resume_text, "target_roles": target_roles}
+    )
+    messages = structured_prompt.to_chat_completion_messages()
+
+    logger.info(
+        "Generating LinkedIn optimization for profile_id=%s (target_roles_count=%s)",
+        getattr(profile, "id", "unknown"),
+        len(interested_roles),
+    )
+
+    return chat_complete(
+        messages=messages,
+        model=settings.JOBSEEKERS_WORKSHOP_LINKEDIN_MODEL,
+        temperature=settings.JOBSEEKERS_WORKSHOP_LINKEDIN_TEMPERATURE,
     )
 
 
@@ -241,3 +299,39 @@ def _parse_resume_markdown(markdown_text: str) -> _ParsedResumeProfile:
 
 # Expose parser for external use
 parse_resume_markdown = _parse_resume_markdown
+
+
+# ---------------------------------------------------------------------------
+# Markdown parsing helpers for LinkedIn content
+# ---------------------------------------------------------------------------
+
+
+def _parse_linkedin_markdown(markdown_text: str) -> dict[str, str]:
+    """Parse the markdown returned by the LLM into headline / about parts."""
+
+    pattern = re.compile(r"^\s*#+\s*(.+?)\s*$", re.MULTILINE)
+    sections: dict[str, str] = {}
+
+    headings = list(pattern.finditer(markdown_text))
+    for idx, match in enumerate(headings):
+        heading = match.group(1).strip().lower()
+        start = match.end()
+        end = (
+            headings[idx + 1].start() if idx + 1 < len(headings) else len(markdown_text)
+        )
+        body = markdown_text[start:end].strip()
+
+        if heading in {"linkedin headline", "headline"}:
+            sections["headline"] = body
+        elif heading in {"about", "about section"}:
+            sections["about"] = body
+
+    # Fallback: entire markdown as about if parsing failed
+    if not sections and markdown_text.strip():
+        sections["about"] = markdown_text.strip()
+
+    return sections
+
+
+# Expose parser for external use
+parse_linkedin_markdown = _parse_linkedin_markdown
