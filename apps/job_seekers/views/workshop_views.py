@@ -289,10 +289,10 @@ class ApplyUpgradedResumeView(
         task_progress = ResumeProcessor.create_processing_task(user_model, task_id)
 
         task_chain = chain(
-            handle_resume_upload_task.si(
+            handle_resume_upload_task.si(  # type: ignore[misc]
                 file_path, profile_id, task_id=task_progress.task_id
             ),
-            resume_processing_completed.s(),
+            resume_processing_completed.s(),  # type: ignore[misc]
         )
 
         task_chain.apply_async()  # Fire-and-forget – actual status is polled
