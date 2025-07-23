@@ -6,35 +6,35 @@ authors = [
     {name = "B.T. Franklin", email = "brandon.franklin@gmail.com"},
 ]
 dependencies = [
+    "celery[sqlalchemy]>=5.5.3",
+    "cryptography>=45.0.5",  # Required by django-allauth
     "django>=5.2.4",
     "django-allauth>=65.10.0",
+    "django-celery-results>=2.6.0",
     "django-htmx>=1.23.2",
+    "django-markdownify>=0.9.5",
+    "django-post-office>=3.10.0",
+    "django-storages[boto3]>=1.14.6",
+    "gunicorn>=23.0.0",
+    "lxml>=6.0.0",
+    "numpy>=2.3.1",
+    "openai>=1.97.1",
+    "pdfplumber>=0.11.7",
+    "pillow>=11.3.0",  # Required for ImageField
+    "pinecone[grpc]>=7.3.0",
+    "promptdown>=0.9.0",
+    "psycopg[binary]>=3.2.9",
+    "pyjwt>=2.10.1",  # Required by django-allauth
     "pymupdf>=1.26.3",  # For PDF parsing
     "python-dotenv>=1.1.1",
-    "requests>=2.32.4",  # Required by django-allauth
-    "pyjwt>=2.10.1",  # Required by django-allauth
-    "cryptography>=45.0.5",  # Required by django-allauth
-    "pillow>=11.3.0",  # Required for ImageField
-    "celery[sqlalchemy]>=5.5.3",
-    "django-celery-results>=2.6.0",
-    "pdfplumber>=0.11.7",
-    "promptdown>=0.9.0",
-    "openai>=1.97.1",
-    "tenacity>=9.1.2",
-    "pinecone[grpc]>=7.3.0",
-    "unstructured[all-docs]>=0.18.9",
-    "numpy>=2.3.1",
-    "whitenoise>=6.9.0",
     "python-magic>=0.4.27",
-    "django-storages[boto3]>=1.14.6",
-    "psycopg[binary]>=3.2.9",
-    "stripe>=12.3.0",
-    "lxml>=6.0.0",
     "quickemailverification>=1.0.4",
-    "gunicorn>=23.0.0",
+    "requests>=2.32.4",  # Required by django-allauth
+    "stripe>=12.3.0",
+    "tenacity>=9.1.2",
+    "unstructured[all-docs]>=0.18.9",
     "WeasyPrint>=65.1",
-    "django-post-office>=3.10.0",
-    "django-markdownify>=0.9.5",
+    "whitenoise>=6.9.0",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
@@ -43,11 +43,11 @@ license = {text = "MIT"}
 
 [dependency-groups]
 dev = [
+    "django-stubs>=5.2.2",
+    "django-stubs-ext>=5.2.2",
+    "mypy>=1.17.0",
     "pylint>=3.3.7",
     "pylint-django>=2.6.1",
-    "django-stubs>=5.2.1",
-    "django-stubs-ext>=5.2.1",
-    "mypy>=1.16.1",
     "pytest>=8.4.1",
     "pytest-django>=4.11.1",
 ]
