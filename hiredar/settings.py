@@ -140,6 +140,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "django_htmx",
+    "markdownify",
     "django_celery_results",
     "storages",  # django-storages for S3 support
     # Project apps
@@ -154,6 +155,46 @@ INSTALLED_APPS = [
     "apps.resume_processing.apps.ResumeProcessingConfig",
     "post_office",
 ]
+
+# ---------------------------------------------------------------------------
+#  django-markdownify configuration
+# ---------------------------------------------------------------------------
+
+# Convert single newlines to HTML <br> tags so resume sections that contain
+# line-separated items display line breaks even when there are no blank lines
+# between them.  We keep built-in sanitisation via Bleach and extend the
+# allowed tag list to include <br> explicitly.
+
+MARKDOWNIFY = {
+    "default": {
+        "BLEACH": True,
+        "STRIP": True,
+        # Add <br> so the nl2br extension’s output isn’t stripped.
+        "WHITELIST_TAGS": [
+            "a",
+            "abbr",
+            "acronym",
+            "b",
+            "blockquote",
+            "code",
+            "em",
+            "i",
+            "li",
+            "ol",
+            "strong",
+            "ul",
+            "p",
+            "br",
+            "h1",
+            "h2",
+            "h3",
+        ],
+        # Use fully-qualified paths so the Python-Markdown loader can find them.
+        "MARKDOWN_EXTENSIONS": [
+            "markdown.extensions.sane_lists",  # better list handling
+        ],
+    }
+}
 
 # ---------------------------------------------------------------------------
 #  Celery
