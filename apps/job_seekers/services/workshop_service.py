@@ -49,23 +49,54 @@ def _compose_resume_text(profile: "JobSeekerProfile") -> str:
 
 
 def upgrade_resume_content(profile: "JobSeekerProfile") -> str:
-    """Generate an upgraded version of the job seeker's resume."""
+    """Generate an upgraded version of the job seeker's resume.
+
+    If the candidate has marked specific role recommendations as "interested", we
+    pass those target roles into the prompt so the language model can tailor the
+    rewrite accordingly.  When no such roles exist we fall back to the original
+    behavior (the placeholder will be an empty string, which the prompt treats
+    as "no target roles provided").
+    """
 
     resume_text = _compose_resume_text(profile)
     if not resume_text:
         raise ValueError("Profile lacks sufficient information to generate a resume.")
+
+    # ------------------------------------------------------------------
+    # Collect any roles the user is actively interested in – these will be
+    # injected into the prompt so the LLM can subtly bias achievements and
+    # phrasing towards those positions.
+    # ------------------------------------------------------------------
+    try:
+        # Local import to avoid circular dependencies during Django app setup
+        from apps.job_seekers.models import RoleRecommendation  # type: ignore
+    except ModuleNotFoundError:  # pragma: no cover – defensive in case of migrations
+        interested_roles: list[str] = []
+    else:
+        interested_roles = list(
+            RoleRecommendation.objects.filter(
+                job_seeker=profile, is_candidate_interested=True
+            ).values_list("role_title", flat=True)
+        )
+
+    # Join into a simple comma-separated string that the prompt can inject as a
+    # single variable. An empty string signals "no target roles".
+    target_roles = ", ".join(interested_roles)
 
     if not os.path.exists(UPGRADE_PROMPT):
         logger.error("Prompt file not found: %s", UPGRADE_PROMPT)
         raise ValueError("Prompt file not found: upgrade resume prompt")
 
     structured_prompt = StructuredPrompt.from_promptdown_file(UPGRADE_PROMPT)
-    structured_prompt.apply_template_values({"resume_text": resume_text})
+    structured_prompt.apply_template_values(
+        {"resume_text": resume_text, "target_roles": target_roles}
+    )
     messages = structured_prompt.to_chat_completion_messages()
 
     logger.info(
-        "Generating upgraded resume for profile_id=%s",
+        "Generating upgraded resume for profile_id=%s (target_roles_count=%s)",
         getattr(profile, "id", "unknown"),
+        len(interested_roles),
     )
     return chat_complete(
         messages=messages,
