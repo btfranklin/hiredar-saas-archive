@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:c1cbb945deb25b1c3aa80a59475ed7ac649d74f4fca097d584ce34db8811f007"
+content_hash = "sha256:ae62c075dc328ad9ff01e6afb70ba1c4d642c68afc1b89431c9b9035ca9a1329"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -673,8 +673,23 @@ files = [
 ]
 
 [[package]]
+name = "django-markdownify"
+version = "0.9.5"
+summary = "Markdown template filter for Django."
+groups = ["default", "dev"]
+dependencies = [
+    "Django",
+    "bleach[css]>=5.0.0",
+    "markdown",
+]
+files = [
+    {file = "django_markdownify-0.9.5-py3-none-any.whl", hash = "sha256:2c4ae44e386c209453caf5e9ea1b74f64535985d338ad2d5ad5e7089cc94be86"},
+    {file = "django_markdownify-0.9.5.tar.gz", hash = "sha256:34c34eba4a797282a5c5bd97b13cec84d6a4c0673ad47ce1c1d000d74dd8d4ab"},
+]
+
+[[package]]
 name = "django-post-office"
-version = "3.9.1"
+version = "3.10.0"
 requires_python = ">=3.9"
 summary = "A Django app to monitor and send mail asynchronously, complete with template support."
 groups = ["default", "dev"]
@@ -683,8 +698,8 @@ dependencies = [
     "django>=4.2",
 ]
 files = [
-    {file = "django-post_office-3.9.1.tar.gz", hash = "sha256:3d8f502f7829e4cf83e830d9efd6909bb44690af6bc41c7e4fc5a85d7b04df10"},
-    {file = "django_post_office-3.9.1-py3-none-any.whl", hash = "sha256:0082c4dd17854f66077ef457cf868c9bc5b6247de99d5755c45ddea1c518ed6f"},
+    {file = "django_post_office-3.10.0-py3-none-any.whl", hash = "sha256:bc0d3e40305486b729c4b7a79eafdeb468a245b9e9a3acaa12014ef84af1ac8b"},
+    {file = "django_post_office-3.10.0.tar.gz", hash = "sha256:95047f8d12e6544629a3ff979d527fdc3b538fa418c3fa4a0af8b5e665fb029e"},
 ]
 
 [[package]]
@@ -719,25 +734,25 @@ files = [
 
 [[package]]
 name = "django-stubs"
-version = "5.2.1"
+version = "5.2.2"
 requires_python = ">=3.10"
 summary = "Mypy stubs for Django"
 groups = ["dev"]
 dependencies = [
     "django",
-    "django-stubs-ext>=5.2.1",
+    "django-stubs-ext>=5.2.2",
     "tomli; python_version < \"3.11\"",
     "types-pyyaml",
     "typing-extensions>=4.11.0",
 ]
 files = [
-    {file = "django_stubs-5.2.1-py3-none-any.whl", hash = "sha256:c0e170d70329c27e737a5b80c5518fb6161d0c4792321d11a4a93dcda120f4ef"},
-    {file = "django_stubs-5.2.1.tar.gz", hash = "sha256:e58260958e58f7b6a8da6bba56d6b31d16c0414079a4aa6baa01c668bd08d39d"},
+    {file = "django_stubs-5.2.2-py3-none-any.whl", hash = "sha256:79bd0fdbc78958a8f63e0b062bd9d03f1de539664476c0be62ade5f063c9e41e"},
+    {file = "django_stubs-5.2.2.tar.gz", hash = "sha256:2a04b510c7a812f88223fd7e6d87fb4ea98717f19c8e5c8b59691d83ad40a8a6"},
 ]
 
 [[package]]
 name = "django-stubs-ext"
-version = "5.2.1"
+version = "5.2.2"
 requires_python = ">=3.10"
 summary = "Monkey-patching and extensions for django-stubs"
 groups = ["dev"]
@@ -746,8 +761,8 @@ dependencies = [
     "typing-extensions",
 ]
 files = [
-    {file = "django_stubs_ext-5.2.1-py3-none-any.whl", hash = "sha256:98fb0646f1a1ef07708eec5f6f7d27523f12c0c8714abae8db981571ff957588"},
-    {file = "django_stubs_ext-5.2.1.tar.gz", hash = "sha256:fc0582cb3289306c43ce4a0a15af86922ce1dbec3c19eab80980ee70c04e0392"},
+    {file = "django_stubs_ext-5.2.2-py3-none-any.whl", hash = "sha256:8833bbe32405a2a0ce168d3f75a87168f61bd16939caf0e8bf173bccbd8a44c5"},
+    {file = "django_stubs_ext-5.2.2.tar.gz", hash = "sha256:d9d151b919fe2438760f5bd938f03e1cb08c84d0651f9e5917f1313907e42683"},
 ]
 
 [[package]]
@@ -1435,8 +1450,23 @@ files = [
 ]
 
 [[package]]
+name = "msoffcrypto-tool"
+version = "5.4.2"
+requires_python = "<4.0,>=3.8"
+summary = "Python tool and library for decrypting and encrypting MS Office files using a password or other keys"
+groups = ["default", "dev"]
+dependencies = [
+    "cryptography>=39.0",
+    "olefile>=0.46",
+]
+files = [
+    {file = "msoffcrypto_tool-5.4.2-py3-none-any.whl", hash = "sha256:274fe2181702d1e5a107ec1b68a4c9fea997a44972ae1cc9ae0cb4f6a50fef0e"},
+    {file = "msoffcrypto_tool-5.4.2.tar.gz", hash = "sha256:44b545adba0407564a0cc3d6dde6ca36b7c0fdf352b85bca51618fa1d4817370"},
+]
+
+[[package]]
 name = "mypy"
-version = "1.16.1"
+version = "1.17.0"
 requires_python = ">=3.9"
 summary = "Optional static typing for Python"
 groups = ["dev"]
@@ -1447,14 +1477,14 @@ dependencies = [
     "typing-extensions>=4.6.0",
 ]
 files = [
-    {file = "mypy-1.16.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:af4792433f09575d9eeca5c63d7d90ca4aeceda9d8355e136f80f8967639183d"},
-    {file = "mypy-1.16.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:66df38405fd8466ce3517eda1f6640611a0b8e70895e2a9462d1d4323c5eb4b9"},
-    {file = "mypy-1.16.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:44e7acddb3c48bd2713994d098729494117803616e116032af192871aed80b79"},
-    {file = "mypy-1.16.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0ab5eca37b50188163fa7c1b73c685ac66c4e9bdee4a85c9adac0e91d8895e15"},
-    {file = "mypy-1.16.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:dedb6229b2c9086247e21a83c309754b9058b438704ad2f6807f0d8227f6ebdd"},
-    {file = "mypy-1.16.1-cp312-cp312-win_amd64.whl", hash = "sha256:1f0435cf920e287ff68af3d10a118a73f212deb2ce087619eb4e648116d1fe9b"},
-    {file = "mypy-1.16.1-py3-none-any.whl", hash = "sha256:5fc2ac4027d0ef28d6ba69a0343737a23c4d1b83672bf38d1fe237bdc0643b37"},
-    {file = "mypy-1.16.1.tar.gz", hash = "sha256:6bd00a0a2094841c5e47e7374bb42b83d64c527a502e3334e1173a0c24437bab"},
+    {file = "mypy-1.17.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:f986f1cab8dbec39ba6e0eaa42d4d3ac6686516a5d3dccd64be095db05ebc6bb"},
+    {file = "mypy-1.17.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:51e455a54d199dd6e931cd7ea987d061c2afbaf0960f7f66deef47c90d1b304d"},
+    {file = "mypy-1.17.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3204d773bab5ff4ebbd1f8efa11b498027cd57017c003ae970f310e5b96be8d8"},
+    {file = "mypy-1.17.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1051df7ec0886fa246a530ae917c473491e9a0ba6938cfd0ec2abc1076495c3e"},
+    {file = "mypy-1.17.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:f773c6d14dcc108a5b141b4456b0871df638eb411a89cd1c0c001fc4a9d08fc8"},
+    {file = "mypy-1.17.0-cp312-cp312-win_amd64.whl", hash = "sha256:1619a485fd0e9c959b943c7b519ed26b712de3002d7de43154a489a2d0fd817d"},
+    {file = "mypy-1.17.0-py3-none-any.whl", hash = "sha256:15d9d0018237ab058e5de3d8fce61b6fa72cc59cc78fd91f1b474bce12abf496"},
+    {file = "mypy-1.17.0.tar.gz", hash = "sha256:e5d7ccc08ba089c06e2f5629c660388ef1fee708444f1dee0b9203fa031dee03"},
 ]
 
 [[package]]
@@ -1806,7 +1836,7 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.95.1"
+version = "1.97.1"
 requires_python = ">=3.8"
 summary = "The official Python library for the openai API"
 groups = ["default", "dev"]
@@ -1821,8 +1851,8 @@ dependencies = [
     "typing-extensions<5,>=4.11",
 ]
 files = [
-    {file = "openai-1.95.1-py3-none-any.whl", hash = "sha256:8bbdfeceef231b1ddfabbc232b179d79f8b849aab5a7da131178f8d10e0f162f"},
-    {file = "openai-1.95.1.tar.gz", hash = "sha256:f089b605282e2a2b6776090b4b46563ac1da77f56402a222597d591e2dcc1086"},
+    {file = "openai-1.97.1-py3-none-any.whl", hash = "sha256:4e96bbdf672ec3d44968c9ea39d2c375891db1acc1794668d8149d5fa6000606"},
+    {file = "openai-1.97.1.tar.gz", hash = "sha256:a744b27ae624e3d4135225da9b1c89c107a2a7e5bc4c93e5b7b5214772ce7a4e"},
 ]
 
 [[package]]
@@ -2450,31 +2480,32 @@ groups = ["dev"]
 dependencies = [
     "WeasyPrint>=65.1",
     "celery[sqlalchemy]>=5.5.3",
-    "cryptography>=45.0.4",
-    "django-allauth>=65.9.0",
+    "cryptography>=45.0.5",
+    "django-allauth>=65.10.0",
     "django-celery-results>=2.6.0",
     "django-htmx>=1.23.2",
+    "django-markdownify>=0.9.5",
     "django-post-office>=3.9.1",
     "django-storages[boto3]>=1.14.6",
-    "django>=5.2.3",
+    "django>=5.2.4",
     "gunicorn>=23.0.0",
     "lxml>=6.0.0",
     "numpy>=2.3.1",
-    "openai>=1.93.0",
+    "openai>=1.95.1",
     "pdfplumber>=0.11.7",
     "pillow>=11.3.0",
     "pinecone[grpc]>=7.3.0",
     "promptdown>=0.9.0",
     "psycopg[binary]>=3.2.9",
     "pyjwt>=2.10.1",
-    "pymupdf>=1.26.1",
+    "pymupdf>=1.26.3",
     "python-dotenv>=1.1.1",
     "python-magic>=0.4.27",
     "quickemailverification>=1.0.4",
     "requests>=2.32.4",
     "stripe>=12.3.0",
     "tenacity>=9.1.2",
-    "unstructured[all-docs]>=0.18.2",
+    "unstructured[all-docs]>=0.18.5",
     "whitenoise>=6.9.0",
 ]
 
@@ -3287,7 +3318,7 @@ files = [
 
 [[package]]
 name = "unstructured"
-version = "0.18.5"
+version = "0.18.9"
 requires_python = ">=3.10.0"
 summary = "A library that prepares raw documents for downstream ML tasks."
 groups = ["default", "dev"]
@@ -3315,8 +3346,8 @@ dependencies = [
     "wrapt",
 ]
 files = [
-    {file = "unstructured-0.18.5-py3-none-any.whl", hash = "sha256:d8827e00bb2d7a5bcf55a60caae61ec45fe3da969f94db52335da8b7a050655c"},
-    {file = "unstructured-0.18.5.tar.gz", hash = "sha256:371f74e7f6c969a71cb6a2b04e4f72b7091c16a66eec6b971303b7f9d3f2cf43"},
+    {file = "unstructured-0.18.9-py3-none-any.whl", hash = "sha256:15fd47a491546ba8e6b70d990c09ca2624170009d67fa6a6421c8f5d5888aef3"},
+    {file = "unstructured-0.18.9.tar.gz", hash = "sha256:1e0df6f01248a05d31dc6b23ca7c99d17fd0e123438a0e0b6c95d4626b133871"},
 ]
 
 [[package]]
@@ -3385,7 +3416,7 @@ files = [
 
 [[package]]
 name = "unstructured"
-version = "0.18.5"
+version = "0.18.9"
 extras = ["all-docs"]
 requires_python = ">=3.10.0"
 summary = "A library that prepares raw documents for downstream ML tasks."
@@ -3394,6 +3425,7 @@ dependencies = [
     "effdet",
     "google-cloud-vision",
     "markdown",
+    "msoffcrypto-tool",
     "networkx",
     "onnx>=1.17.0",
     "onnxruntime>=1.19.0",
@@ -3409,12 +3441,12 @@ dependencies = [
     "python-pptx>=1.0.1",
     "unstructured-inference>=1.0.5",
     "unstructured-pytesseract>=0.3.12",
-    "unstructured==0.18.5",
+    "unstructured==0.18.9",
     "xlrd",
 ]
 files = [
-    {file = "unstructured-0.18.5-py3-none-any.whl", hash = "sha256:d8827e00bb2d7a5bcf55a60caae61ec45fe3da969f94db52335da8b7a050655c"},
-    {file = "unstructured-0.18.5.tar.gz", hash = "sha256:371f74e7f6c969a71cb6a2b04e4f72b7091c16a66eec6b971303b7f9d3f2cf43"},
+    {file = "unstructured-0.18.9-py3-none-any.whl", hash = "sha256:15fd47a491546ba8e6b70d990c09ca2624170009d67fa6a6421c8f5d5888aef3"},
+    {file = "unstructured-0.18.9.tar.gz", hash = "sha256:1e0df6f01248a05d31dc6b23ca7c99d17fd0e123438a0e0b6c95d4626b133871"},
 ]
 
 [[package]]
