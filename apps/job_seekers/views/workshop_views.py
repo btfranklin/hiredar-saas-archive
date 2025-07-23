@@ -33,7 +33,6 @@ from apps.job_seekers.models.profile import JobSeekerProfile
 from apps.job_seekers.services import ProfileManager
 from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
 from apps.job_seekers.services.workshop_service import (
-    generate_targeted_documents,
     parse_resume_markdown,
     upgrade_resume_content,
 )
@@ -353,38 +352,3 @@ class ApplyUpgradedResumeView(
             },
             status=202,
         )
-
-
-class TargetedDocsView(LoginRequiredMixin, View):
-    """View for generating targeted resume and cover letter."""
-
-    template_name = "job_seekers/workshop_targeted_docs.html"
-
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        user = cast(AuthenticatedUser, request.user)
-        profile = ProfileManager.get_profile_for_user(user)
-        personal_tagline = getattr(profile, "personal_tagline", None) or "Job Seeker"
-        context = {
-            "active_page": "workshop",
-            "personal_tagline": personal_tagline,
-        }
-        return render(request, self.template_name, context)
-
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        job_description = request.POST.get("job_description", "")
-        if not job_description:
-            return JsonResponse(
-                {"status": "error", "message": "Job description required."}, status=400
-            )
-
-        user = cast(AuthenticatedUser, request.user)
-        profile = ProfileManager.get_profile_for_user(user)
-        if profile is None:
-            return JsonResponse(
-                {"status": "error", "message": "Profile not found."}, status=400
-            )
-
-        docs = generate_targeted_documents(
-            cast(JobSeekerProfile, profile), job_description
-        )
-        return JsonResponse({"status": "success", **docs})
