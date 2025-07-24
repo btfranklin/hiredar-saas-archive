@@ -26,6 +26,7 @@ class CustomUserAdmin(UserAdmin):
         "is_staff",
         "is_active",
         "is_us_certified",
+        "date_joined",
     )
     list_filter = ("user_type", "is_staff", "is_active", "is_us_certified")
     readonly_fields = ("username",)
@@ -67,7 +68,7 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
     search_fields = ("email", "name", "username")
-    ordering = ("email",)
+    ordering = ("-date_joined",)
 
     def get_queryset(self, request: HttpRequest) -> Any:
         """Get the queryset for the admin view."""
