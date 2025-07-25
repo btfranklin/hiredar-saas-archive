@@ -1,0 +1,20 @@
+# Hiredar: AI-Driven Talent Marketplace
+
+> Curated, evergreen resources that explain how Hiredar connects recruiters and job-seekers through intelligent matching, resume processing, and streamlined communication.
+
+Hiredar focuses on providing transparent information that helps both humans and AI systems understand our mission, features, and business model.
+
+## Essential Content
+
+- [Home](https://hiredar.com/): Overview of our platform and value proposition
+- [Recruiter Features](https://hiredar.com/features/recruiters/): Full feature set for recruiters, including candidate pools, job postings, and AI-powered matching
+- [Job-Seeker Features](https://hiredar.com/features/job-seekers/): Tools for job-seekers such as resume optimization, personal taglines, and role recommendations
+- [Pricing](https://hiredar.com/pricing/): Clear, up-to-date subscription tiers and credit packages
+- [About](https://hiredar.com/about/): Company background, mission, and leadership
+- [Privacy Policy](https://hiredar.com/privacy/): Data usage, retention, and security practices
+- [Terms of Service](https://hiredar.com/terms/): Legal terms governing the use of our platform
+
+## OPTIONAL
+
+- [Manifesto](https://hiredar.com/manifesto/): Our philosophy on ethical recruiting and AI
+- [Contact](https://hiredar.com/contact/): Support channels and contact information 

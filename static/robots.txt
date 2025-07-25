@@ -1,0 +1,20 @@
+User-agent: *
+Disallow: /admin/
+Allow: /
+
+# Provide crawl-delay if necessary (set to 10 seconds between requests)
+# Crawl-delay: 10
+
+# Sitemap location
+Sitemap: /sitemap.xml
+
+# --- BEGIN SITE METADATA (commented JSON for AI agents) ---
+# {
+#   "site_name": "Hiredar",
+#   "description": "Hiredar is an AI-driven talent marketplace that connects job seekers and recruiters through intelligent matching, resume processing, and communication tools.",
+#   "homepage": "https://hiredar.com",
+#   "contact_email": "support@hiredar.com",
+#   "documentation": "https://hiredar.com/docs",
+#   "repository": "https://github.com/yourorg/hiredar"
+# }
+# --- END SITE METADATA --- 

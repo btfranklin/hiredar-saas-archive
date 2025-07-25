@@ -55,6 +55,28 @@ urlpatterns = [
             permanent=True,
         ),
     ),
+    path(
+        "sitemap.xml",
+        RedirectView.as_view(
+            url=f"{settings.STATIC_URL.rstrip('/')}/sitemap.xml",
+            permanent=True,
+        ),
+    ),
+    # Well-known plaintext files
+    path(
+        "robots.txt",
+        RedirectView.as_view(
+            url=f"{settings.STATIC_URL.rstrip('/')}/robots.txt",
+            permanent=True,
+        ),
+    ),
+    path(
+        "llms.txt",
+        RedirectView.as_view(
+            url=f"{settings.STATIC_URL.rstrip('/')}/llms.txt",
+            permanent=True,
+        ),
+    ),
 ]
 
 # Serve media files in development
