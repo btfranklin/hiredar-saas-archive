@@ -7,7 +7,7 @@
   default: true;  /* keep this as default light theme */
 
   /* Lavender Mist instead of pure white */
-  --color-base-100: #f4f1f8;
+  --color-base-100: #e6e6fa;
   /* Optionally tweak slightly darker layers for consistency */
   --color-base-200: #ebe6f0;
   --color-base-300: #dad1e5;
