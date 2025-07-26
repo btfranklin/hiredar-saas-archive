@@ -26,7 +26,7 @@ class CustomUserAdmin(UserAdmin):
         "is_staff",
         "is_active",
         "is_us_certified",
-        "date_joined",
+        "date_joined_iso",
     )
     list_filter = ("user_type", "is_staff", "is_active", "is_us_certified")
     readonly_fields = ("username",)
@@ -69,6 +69,21 @@ class CustomUserAdmin(UserAdmin):
     )
     search_fields = ("email", "name", "username")
     ordering = ("-date_joined",)
+
+    # ---------------------------------------------------------------------
+    # Custom column helpers
+    # ---------------------------------------------------------------------
+
+    @admin.display(description="Date joined", ordering="date_joined")
+    def date_joined_iso(self, obj: User):
+        """Render the user's join date in an ISO-sortable format (YYYY-MM-DD)."""
+        # Display the timestamp in the local timezone so it matches the rest of
+        # the Django admin UI, but use an ISO string so that lexical ordering
+        # and human reading are both intuitive.
+        from django.utils import timezone
+
+        local_dt = timezone.localtime(obj.date_joined)
+        return local_dt.strftime("%Y-%m-%d %H:%M")
 
     def get_queryset(self, request: HttpRequest) -> Any:
         """Get the queryset for the admin view."""
