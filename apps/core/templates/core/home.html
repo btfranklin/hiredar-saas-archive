@@ -4,7 +4,7 @@
 {% block title %}Hiredar | AI-Powered Hiring & Job Discovery{% endblock %}
 
 {% block content %}
-<section class="hero-gradient text-white">
+<section class="hero-gradient text-white relative">
   <div class="mx-auto max-w-5xl py-24 px-6 flex flex-col md:flex-row items-center gap-12">
     <!-- Text / CTA column -->
     <div class="flex-1 text-center md:text-left">
@@ -24,6 +24,13 @@
         <img src="{% static 'img/hero-image.png' %}" alt="Hiredar mascot, Ping, waving" class="rounded-lg w-full h-auto">
       </picture>
     </div>
+  </div>
+  <!-- City Focus Callout -->
+  <div class="absolute inset-x-0 bottom-0 bg-base-100/20 backdrop-blur-sm py-3">
+    <p class="text-center font-semibold">
+      Now serving Austin, TX.<br>
+      <span class="font-normal">Expanding to more cities soon!</span>
+    </p>
   </div>
 </section>
 
