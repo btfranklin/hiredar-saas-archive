@@ -4,10 +4,14 @@ Mixins for job_seekers views.
 These mixins provide reusable functionality across multiple views.
 """
 
-from typing import Any
+from typing import Any, cast
 
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
+from django.shortcuts import redirect, render
+
+from apps.authentication.types import AuthenticatedUser
+from apps.job_seekers.services import ProfileManager
 
 
 class HTMXViewMixin:
@@ -97,3 +101,35 @@ class ProfileAccessMixin:
                     },
                     status=403,
                 )
+
+
+class JobSeekerRequiredMixin(LoginRequiredMixin):
+    """Mixin that restricts access to authenticated *job-seeker* users only.
+
+    It combines the standard login check with two additional guards:
+    1. ``user.user_type`` must equal ``"job_seeker"``.
+    2. A related ``JobSeekerProfile`` must already exist; if not, the user
+       is redirected to the profile-creation flow.
+    """
+
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:  # type: ignore[override]
+        # Let ``LoginRequiredMixin`` short-circuit unauthenticated users.
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        user = cast(AuthenticatedUser, request.user)
+
+        # Ensure the authenticated user is actually a job seeker.
+        if getattr(user, "user_type", None) != "job_seeker":
+            return redirect("core:home")
+
+        # Ensure the job-seeker profile exists; otherwise, send them to create it.
+        try:
+            ProfileManager.get_profile_for_user(user)
+        except Exception:  # Broad but fine: we redirect on *any* lookup failure.
+            return redirect("job_seekers:profile_create")
+
+        # All checks passed – continue with normal dispatch chain.
+        return super().dispatch(request, *args, **kwargs)
