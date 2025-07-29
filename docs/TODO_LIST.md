@@ -2,7 +2,6 @@
 
 ## Job Seeker Enhancements
 
-- Add a resume improvement tool
 - Add a 'career coach' that builds on role recommendations
 - Update the "How it works" on the homepage to show new features
 

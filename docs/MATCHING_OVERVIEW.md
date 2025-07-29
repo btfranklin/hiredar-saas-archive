@@ -129,7 +129,3 @@ The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
 | **Pinecone Namespace** | Logical bucket inside the index (`job_openings`, `talent_sheets`) |
 | **Vector ID** | Predictable identifier (`job_12_job_overview`) that lets us fetch/delete embeddings quickly |
 | **Perspective** | One of Holistic, Skills, Relevant Experience, Wildcard, Qualifications |
-
----
-
-Happy matching! 🎯 
