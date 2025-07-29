@@ -2,11 +2,10 @@
 
 > **Scope** This document is a high-level, developer-friendly map of _exactly_ what text is fed into the embedding system, how vectors are generated, and how those vectors are compared to create the `CandidateMatch` rows that power recruiter UIs.
 >
-> If you need the nitty-gritty implementation details, also see:
->
-> * `apps/matching/docs/MATCHING_IMPLEMENTATION.md` – deep dive into code
-> * `apps/matching/docs/JOB_OPENING_EMBEDDING.md` – field-by-field job guide
-> * `apps/matching/docs/TALENT_SHEET_EMBEDDING.md` – field-by-field talent guide
+> For deeper implementation details, refer directly to the source code in `apps/matching/`, especially:
+> * `tasks/create_job_opening_embeddings.py`
+> * `tasks/create_talent_sheet_embeddings.py`
+> * `core/matching.py`
 
 ---
 
@@ -98,10 +97,6 @@ The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
 
 ## 5. Querying & Debugging
 
-* Ad-hoc analysis:
-  ```bash
-  python manage.py analyze_job_match "Alexis Morrison" "Chief Medical Research Scientist"
-  ```
 * Programmatic check in the shell:
   ```python
   from apps.matching.models import CandidateMatch
@@ -115,7 +110,7 @@ The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
 
 ## 6. Updating the Pipeline
 
-* **New Sections?** Add them to the `fields` dict in the corresponding task module (`job_opening_tasks.py` or `talent_sheet_tasks.py`) and update this doc.
+* **New Sections?** Add them to the `fields` dict in the corresponding task module (`create_job_opening_embeddings.py` or `create_talent_sheet_embeddings.py`) and update this doc.
 * **Weighting** Adjust `average_vectors` or introduce weighting before calculating the holistic vector.
 * **Thresholds** Change score cut-offs in `create_candidate_matches` if you want stricter/looser matching.
 
