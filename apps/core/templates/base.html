@@ -206,20 +206,20 @@
                         <a href="{% url 'core:manifesto' %}" class="{% if request.resolver_match.url_name == 'manifesto' %}active{% endif %}">Manifesto</a>
                     </li>
 
-                    <li tabindex="0">
+                    <li tabindex="0" class="dropdown dropdown-hover">
                         <details>
                             <summary>Features</summary>
-                            <ul class="p-2 bg-base-100">
+                            <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
                                 <li><a href="{% url 'core:features_recruiters' %}">for Recruiters</a></li>
                                 <li><a href="{% url 'core:features_job_seekers' %}">for Job Seekers</a></li>
                             </ul>
                         </details>
                     </li>
 
-                    <li tabindex="0">
+                    <li tabindex="0" class="dropdown dropdown-hover">
                         <details>
                             <summary>Sign&nbsp;Up</summary>
-                            <ul class="p-2 bg-base-100">
+                            <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
                                 <li><a href="{% url 'authentication:recruiter_signup' %}">as Recruiter</a></li>
                                 <li><a href="{% url 'authentication:job_seeker_signup' %}">as Job Seeker</a></li>
                             </ul>
