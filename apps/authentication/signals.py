@@ -11,6 +11,7 @@ from typing import Any, Type
 from django.contrib.auth.hashers import is_password_usable
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User
 
@@ -70,10 +71,10 @@ def check_proper_user_creation(sender, instance, **kwargs):
             else:
                 caller = "unknown location"
 
-            warnings.warn(
-                f"Potential improper User creation detected from {caller}. "
-                "The password does not appear to be properly hashed. "
-                "Use User.objects.create_user() to ensure proper user creation.",
-                UserWarning,
-                stacklevel=2,
-            )
+                warnings.warn(
+                    f"Potential improper User creation detected from {caller}. "
+                    "The password does not appear to be properly hashed. "
+                    "Use User.objects.create_user() to ensure proper user creation.",
+                    UserWarning,
+                    stacklevel=2,
+                )

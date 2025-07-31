@@ -417,8 +417,8 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
 ACCOUNT_USERNAME_BLACKLIST = []
 
 # Email and Social Account Verification Settings
-# Require email confirmation for all accounts
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# Email confirmation is optional; users can log in without verifying
+ACCOUNT_EMAIL_VERIFICATION = "optional"
 
 # ---------------------------------------------------------------------------
 #  Email backend configuration (via django-post-office)

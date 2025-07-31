@@ -6,10 +6,12 @@ from allauth.account.adapter import get_adapter
 from allauth.account.utils import has_verified_email
 from allauth.account.views import SignupView
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.forms import (
     CustomAuthenticationForm,
@@ -88,6 +90,16 @@ class CustomLoginView(SuccessMessageMixin, LoginView):
                 get_adapter(self.request).send_confirmation_mail(
                     self.request, user, signup=False
                 )
+
+                # Inform the user to check their spam or junk folder
+                messages.info(
+                    self.request,
+                    _(
+                        "We've sent you a new confirmation email. "
+                        "If you don't see it in your inbox, please check your spam or junk folder."
+                    ),
+                )
+
                 return HttpResponseRedirect(reverse("account_email_verification_sent"))
 
         # Proceed with normal login

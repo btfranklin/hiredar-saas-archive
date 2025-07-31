@@ -56,6 +56,32 @@ class AccountAdapter(DefaultAccountAdapter):
             return reverse("recruiters:dashboard")
         return reverse("job_seekers:profile_create")
 
+    # --------------------------------------------------
+    # E-mail Confirmation Flow
+    # --------------------------------------------------
+    def get_email_confirmation_redirect_url(self, request: HttpRequest) -> str:  # type: ignore[override]
+        """Redirect after a successful e-mail confirmation.
+
+        We also flash a success toast so the user sees immediate feedback even
+        though e-mail verification is now optional.
+        """
+        if request is not None:
+            messages.success(
+                request,
+                "Your email address has been confirmed. Thank you!",
+                fail_silently=True,
+            )
+
+        # Delegate to the existing login-redirect logic (user is logged in at
+        # this point because ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION=True).
+        try:
+            return self.get_login_redirect_url(request)
+        except Exception:
+            # Fallback to core home when for some reason the user is not yet
+            # authenticated (e.g. confirmation link hit long after account
+            # deletion).
+            return reverse("core:home")
+
     def populate_username(self, request, user):
         """
         Override username generation to use email as base.
