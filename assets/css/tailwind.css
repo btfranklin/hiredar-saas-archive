@@ -8,9 +8,9 @@
 
   /* Lavender Mist instead of pure white */
   --color-base-100: #e6e6fa;
-  /* Optionally tweak slightly darker layers for consistency */
-  --color-base-200: #ebe6f0;
-  --color-base-300: #dad1e5;
+  /* Slightly darker lavender shades for alternate backgrounds */
+  --color-base-200: #d8d8f4;
+  --color-base-300: #c6c6e8;
 }
 
 /* Matching lens color utilities */
