@@ -15,6 +15,5 @@ Sitemap: /sitemap.xml
 #   "homepage": "https://hiredar.com",
 #   "contact_email": "support@hiredar.com",
 #   "documentation": "https://hiredar.com/docs",
-#   "repository": "https://github.com/yourorg/hiredar"
 # }
 # --- END SITE METADATA --- 
