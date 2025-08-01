@@ -2,6 +2,7 @@
 
 from typing import Any, cast
 
+from allauth.account.models import EmailAddress
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.http import HttpRequest
@@ -25,10 +26,10 @@ class CustomUserAdmin(UserAdmin):
         "user_type",
         "is_staff",
         "is_active",
-        "is_us_certified",
+        "is_email_verified",
         "date_joined_iso",
     )
-    list_filter = ("user_type", "is_staff", "is_active", "is_us_certified")
+    list_filter = ("user_type", "is_staff", "is_active")
     readonly_fields = ("username",)
     fieldsets = (
         (None, {"fields": ("email", "password")}),
@@ -84,6 +85,11 @@ class CustomUserAdmin(UserAdmin):
 
         local_dt = timezone.localtime(obj.date_joined)
         return local_dt.strftime("%Y-%m-%d %H:%M")
+
+    @admin.display(boolean=True, description="Email verified")
+    def is_email_verified(self, obj: User) -> bool:
+        """Return True if the user's primary email address is verified."""
+        return EmailAddress.objects.filter(user=obj, verified=True).exists()
 
     def get_queryset(self, request: HttpRequest) -> Any:
         """Get the queryset for the admin view."""
