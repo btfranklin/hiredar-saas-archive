@@ -6,6 +6,7 @@ This module contains views for updating account information and changing passwor
 
 from typing import Any, cast
 
+from allauth.account.models import EmailAddress
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
@@ -36,7 +37,12 @@ class UpdateAccountView(LoginRequiredMixin, View):
         """Handle GET requests to display the settings page."""
         user = cast(AuthenticatedUser, request.user)
         template_name = self.get_template_name(user)
-        return render(request, template_name, {"user": user})
+        email_verified = EmailAddress.objects.filter(
+            user=user, email=user.email, verified=True
+        ).exists()
+        return render(
+            request, template_name, {"user": user, "email_verified": email_verified}
+        )
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle POST requests for updating account information."""
@@ -44,7 +50,6 @@ class UpdateAccountView(LoginRequiredMixin, View):
             # Update User model fields
             user = cast(AuthenticatedUser, request.user)
             user.name = request.POST.get("name", "")
-            user.email = request.POST.get("email", "")
             user.save()
 
             # Handle job seeker specific fields

@@ -13,6 +13,7 @@ from apps.authentication.views.auth_views import (
     JobSeekerSignupView,
     RecruiterSignupView,
 )
+from apps.authentication.views.email_actions import SendVerificationEmailView
 from apps.authentication.views.email_verification import QuickEmailVerificationView
 
 app_name = "authentication"
@@ -27,4 +28,9 @@ urlpatterns: list[URLPattern] = [
     # Settings URLs
     path("settings/", UpdateAccountView.as_view(), name="settings"),
     path("settings/password/", ChangePasswordView.as_view(), name="change_password"),
+    path(
+        "settings/send-verification-email/",
+        SendVerificationEmailView.as_view(),
+        name="send_verification_email",
+    ),
 ]

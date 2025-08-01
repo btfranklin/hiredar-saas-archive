@@ -15,6 +15,19 @@
             <!-- Account Info Form -->
             <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                 <h2 class="text-xl font-bold mb-6">Account Information</h2>
+
+                {% if not email_verified %}
+                <div class="alert alert-warning flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+                    <div class="flex items-center mb-2 sm:mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6 mr-2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>Your email address has not been verified.</span>
+                    </div>
+                    <form method="post" action="{% url 'authentication:send_verification_email' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-primary">Send verification email</button>
+                    </form>
+                </div>
+                {% endif %}
                 
                 {% if messages %}
                     {% for message in messages %}
@@ -29,7 +42,12 @@
                     {% csrf_token %}
                     
                     {% include 'core/components/fieldset_field.html' with label='Full Name' id='name' name='name' widget_type='text' widget_class='input input-bordered' value=user.name required=True %}
-                    {% include 'core/components/fieldset_field.html' with label='Email Address' id='email' name='email' widget_type='email' widget_class='input input-bordered' value=user.email required=True %}
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold">Email Address</span>
+                        </label>
+                        <input type="email" class="input input-bordered" value="{{ user.email }}" disabled readonly />
+                    </div>
                     
                     <div class="mt-6">
                         <button type="submit" class="btn btn-primary">

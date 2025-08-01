@@ -2,6 +2,7 @@
 
 from typing import Any, cast
 
+from allauth.account.models import EmailAddress
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponseBase
@@ -147,5 +148,8 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         # Add job_seeker_profile to context using ProfileManager
         user = cast(AuthenticatedUser, self.request.user)
         context["job_seeker_profile"] = ProfileManager.get_profile_for_user(user)
+        context["email_verified"] = EmailAddress.objects.filter(
+            user=user, email=user.email, verified=True
+        ).exists()
 
         return context
