@@ -138,3 +138,35 @@ class RoleInterestToggleTests(TestCase):
         )
 
         self.assertIsNone(result)
+
+
+class RoleInterestNoSheetTests(TestCase):
+    """Verify that no update is attempted when a TalentSheet does not yet exist."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(  # type: ignore[attr-defined]
+            email="nosheet@example.com",
+            password="pw",
+            user_type="job_seeker",
+            name="No Sheet User",
+        )
+        self.profile = JobSeekerProfile.objects.get(user_owner=self.user)
+        self.rec = RoleRecommendation.objects.create(
+            job_seeker=self.profile,
+            role_title="Platform Engineer",
+            description="Desc",
+        )
+
+    @patch(
+        "apps.job_seekers.services.talent_pool_manager.TalentSheetService.safe_update_ideal_roles"
+    )
+    def test_toggle_interest_when_no_sheet_skips_update(self, mock_safe_update):
+        # Express interest – profile has no TalentSheet
+        TalentPoolManager.toggle_role_interest(self.rec.id, interested=True)  # type: ignore[attr-defined]
+
+        # Flag should be set
+        self.rec.refresh_from_db()
+        self.assertTrue(self.rec.is_candidate_interested)
+
+        # Ensure we never attempted to update ideal roles because sheet is absent
+        mock_safe_update.assert_not_called()

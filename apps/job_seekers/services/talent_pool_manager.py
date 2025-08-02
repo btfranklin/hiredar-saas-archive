@@ -223,22 +223,25 @@ class TalentPoolManager:
         role.is_candidate_interested = interested
         role.save(update_fields=["is_candidate_interested"])
 
-        # If showing interest, update the ideal roles on the talent sheet
+        # If showing interest, update the ideal roles on the talent sheet (only if a sheet exists)
         if interested:
             profile = role.job_seeker
-            try:
-                # Get all roles the candidate is interested in
-                interested_roles = RoleRecommendation.objects.filter(
-                    job_seeker=profile, is_candidate_interested=True
-                ).values_list("role_title", flat=True)
 
-                # Update talent sheet ideal roles using the service
-                TalentSheetService.safe_update_ideal_roles(
-                    profile.pk, ", ".join(interested_roles)
-                )
-            except Exception:
-                # If there's no talent sheet or other error, just continue
-                pass
+            # Proceed only if the candidate already has a TalentSheet
+            if TalentSheet.objects.filter(job_seeker=profile).exists():
+                try:
+                    # Get all roles the candidate is interested in
+                    interested_roles = RoleRecommendation.objects.filter(
+                        job_seeker=profile, is_candidate_interested=True
+                    ).values_list("role_title", flat=True)
+
+                    # Update talent sheet ideal roles using the service
+                    TalentSheetService.safe_update_ideal_roles(
+                        profile.pk, ", ".join(interested_roles)
+                    )
+                except Exception:
+                    # Silently ignore any issues updating the talent sheet
+                    pass
 
         return role
 
@@ -258,6 +261,12 @@ class TalentPoolManager:
         """
         talent_sheet, created = TalentSheetService.safe_upsert_talent_sheet(
             job_seeker_id=profile.id, talent_sheet_data=talent_sheet_data
+        )
+
+        logger.debug(
+            "%s TalentSheet for job seeker %s",  # noqa: G003
+            "Created" if created else "Updated",
+            profile.id,
         )
 
         return talent_sheet
