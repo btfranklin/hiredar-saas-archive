@@ -15,6 +15,6 @@ class CoreViewsTests(TestCase):
 
     def test_healthcheck_endpoint(self) -> None:
         """Test healthcheck middleware returns '200 OK'."""
-        response = self.client.get("/hc")
+        response = self.client.get("/health-check/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode().strip(), "200 OK")

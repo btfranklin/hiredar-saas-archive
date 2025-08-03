@@ -48,9 +48,7 @@ if DEBUG and "testserver" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("testserver")
 
 # URL(s) that the lb_health_check middleware will respond to.
-# Keep both the old "/hc" endpoint and the new "/health-check/" so we can
-# migrate load-balancer config without downtime.
-ALIVENESS_URL: list[str] = ["/hc", "/health-check/"]
+ALIVENESS_URL: list[str] = ["/health-check/"]
 
 
 # Trust the X-Forwarded-Proto header from the load balancer so Django knows it's HTTPS
