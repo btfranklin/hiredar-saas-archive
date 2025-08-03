@@ -8,7 +8,6 @@ including the home page and test endpoints.
 from django.http import HttpRequest, HttpResponse
 from django.urls import path
 
-from apps.core.views.healthcheck import healthcheck
 from apps.core.views.index import HomeView
 from apps.core.views.info import (
     AboutView,
@@ -56,5 +55,4 @@ urlpatterns = [
     path("manifesto/", ManifestoView.as_view(), name="manifesto"),
     path("terms/", TermsOfServiceView.as_view(), name="terms"),
     path("test/", test_view, name="test"),
-    path("hc", healthcheck, name="healthcheck"),
 ]

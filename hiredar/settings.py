@@ -47,6 +47,12 @@ ALLOWED_HOSTS = [
 if DEBUG and "testserver" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("testserver")
 
+# URL(s) that the lb_health_check middleware will respond to.
+# Keep both the old "/hc" endpoint and the new "/health-check/" so we can
+# migrate load-balancer config without downtime.
+ALIVENESS_URL: list[str] = ["/hc", "/health-check/"]
+
+
 # Trust the X-Forwarded-Proto header from the load balancer so Django knows it's HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -58,7 +64,7 @@ USE_X_FORWARDED_PORT = True
 CSRF_TRUSTED_ORIGINS = [
     f"https://{host}"
     for host in ALLOWED_HOSTS
-    if host not in ("localhost", "127.0.0.1")
+    if isinstance(host, str) and host not in ("localhost", "127.0.0.1")
 ]
 
 #
@@ -255,6 +261,7 @@ if apps_path not in sys.path:
     sys.path.insert(0, apps_path)
 
 MIDDLEWARE = [
+    "lb_health_check.middleware.AliveCheck",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
