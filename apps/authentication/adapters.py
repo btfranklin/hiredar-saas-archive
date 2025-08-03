@@ -59,28 +59,21 @@ class AccountAdapter(DefaultAccountAdapter):
     # --------------------------------------------------
     # E-mail Confirmation Flow
     # --------------------------------------------------
-    def get_email_confirmation_redirect_url(self, request: HttpRequest) -> str:  # type: ignore[override]
-        """Redirect after a successful e-mail confirmation.
-
-        We also flash a success toast so the user sees immediate feedback even
-        though e-mail verification is now optional.
-        """
-        if request is not None:
-            messages.success(
-                request,
-                "Your email address has been confirmed. Thank you!",
-                fail_silently=True,
-            )
-
-        # Delegate to the existing login-redirect logic (user is logged in at
-        # this point because ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION=True).
-        try:
-            return self.get_login_redirect_url(request)
-        except Exception:
-            # Fallback to core home when for some reason the user is not yet
-            # authenticated (e.g. confirmation link hit long after account
-            # deletion).
-            return reverse("core:home")
+    def get_email_verification_redirect_url(  # type: ignore[override]
+        self,
+        email_address,  # allauth.account.models.EmailAddress
+    ) -> str:
+        """Return the URL to redirect to after an e-mail verification."""
+        user = getattr(email_address, "user", None)
+        if user is not None:
+            if getattr(user, "user_type", None) == "admin" or getattr(
+                user, "is_staff", False
+            ):
+                return reverse("admin:index")
+            if getattr(user, "user_type", None) == "recruiter":
+                return reverse("recruiters:dashboard")
+        # Default: job-seeker dashboard
+        return reverse("job_seekers:dashboard")
 
     def populate_username(self, request, user):
         """
