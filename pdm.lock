@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:ef49bc94eaffc0bcd1715a7da06edfd1955a12739dc3a7fe1f5343b3db51d5d6"
+content_hash = "sha256:b2971873dcc60c166007e3161f5a47a366034476866bdcda5de0bc84fe9131c6"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -670,6 +670,20 @@ dependencies = [
 files = [
     {file = "django_htmx-1.23.2-py3-none-any.whl", hash = "sha256:c288fe92bdcfa7c2ed9665d6d23cc55c6693a7cc8d22cf0a01e1e38318874030"},
     {file = "django_htmx-1.23.2.tar.gz", hash = "sha256:65a8c8825fcae983b94aedce26af96a70717ab185d55cdb8a7a4bb68863ab079"},
+]
+
+[[package]]
+name = "django-lb-health-check"
+version = "1.0.1"
+requires_python = ">=3.6.2"
+summary = "Middleware based health check for Django"
+groups = ["default"]
+dependencies = [
+    "Django>=2.2",
+]
+files = [
+    {file = "django-lb-health-check-1.0.1.tar.gz", hash = "sha256:44a93c37db22c3e27a0404c7e3881007d2b846a2f441626d22a96f28349b332e"},
+    {file = "django_lb_health_check-1.0.1-py3-none-any.whl", hash = "sha256:6ef16e2965a302853eb644006e16e972fb6ff8399c6b468c59a534002bf533df"},
 ]
 
 [[package]]

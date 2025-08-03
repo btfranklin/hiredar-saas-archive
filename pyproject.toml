@@ -35,6 +35,7 @@ dependencies = [
     "unstructured[all-docs]>=0.18.9",
     "WeasyPrint>=65.1",
     "whitenoise>=6.9.0",
+    "django-lb-health-check>=1.0.1",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
