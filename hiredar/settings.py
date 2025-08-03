@@ -50,6 +50,10 @@ if DEBUG and "testserver" not in ALLOWED_HOSTS:
 # Trust the X-Forwarded-Proto header from the load balancer so Django knows it's HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Honor X-Forwarded-Host/Port so Django builds correct URLs behind a proxy
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
 # Allow CSRF for our custom domain(s)
 CSRF_TRUSTED_ORIGINS = [
     f"https://{host}"
