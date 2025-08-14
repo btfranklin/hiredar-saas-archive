@@ -3,7 +3,7 @@
 ## Job Seeker Enhancements
 
 - Add a 'career coach' that builds on role recommendations
-- Update the "How it works" on the homepage to show new features
+- Update the "How it works" on the homepage to explain novel technical concepts and differentiators
 
 ## New Features
 
