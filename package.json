@@ -24,8 +24,8 @@
   },
   "homepage": "https://github.com/btfranklin/hiredar#readme",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.6",
-    "daisyui": "^5.0.35",
-    "tailwindcss": "^4.1.6"
+    "@tailwindcss/cli": "^4.1.11",
+    "daisyui": "^5.0.50",
+    "tailwindcss": "^4.1.11"
   }
 }

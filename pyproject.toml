@@ -7,18 +7,19 @@ authors = [
 ]
 dependencies = [
     "celery[sqlalchemy]>=5.5.3",
-    "cryptography>=45.0.5",  # Required by django-allauth
-    "django>=5.2.4",
+    "cryptography>=45.0.6",  # Required by django-allauth
+    "django>=5.2.5",
     "django-allauth>=65.10.0",
     "django-celery-results>=2.6.0",
     "django-htmx>=1.23.2",
+    "django-lb-health-check>=1.0.1",
     "django-markdownify>=0.9.5",
-    "django-post-office>=3.10.0",
+    "django-post-office>=3.10.1",
     "django-storages[boto3]>=1.14.6",
     "gunicorn>=23.0.0",
     "lxml>=6.0.0",
     "numpy>=2.3.1",
-    "openai>=1.97.1",
+    "openai>=1.99.9",
     "pdfplumber>=0.11.7",
     "pillow>=11.3.0",  # Required for ImageField
     "pinecone[grpc]>=7.3.0",
@@ -35,7 +36,6 @@ dependencies = [
     "unstructured[all-docs]>=0.18.9",
     "WeasyPrint>=65.1",
     "whitenoise>=6.9.0",
-    "django-lb-health-check>=1.0.1",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
@@ -44,10 +44,10 @@ license = {text = "proprietary - not open source"}
 
 [dependency-groups]
 dev = [
-    "django-stubs>=5.2.2",
-    "django-stubs-ext>=5.2.2",
-    "mypy>=1.17.0",
-    "pylint>=3.3.7",
+    "django-stubs>=5.2.5",
+    "django-stubs-ext>=5.2.5",
+    "mypy>=1.17.1",
+    "pylint>=3.3.8",
     "pylint-django>=2.6.1",
     "pytest>=8.4.1",
     "pytest-django>=4.11.1",
