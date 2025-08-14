@@ -62,6 +62,12 @@ COPY --from=assets /app/static/css/tailwind.css /app/static/css/tailwind.css
 # Collect static files (they will be served by Whitenoise)
 RUN python manage.py collectstatic --noinput
 
+# ----------------------------------------------------------------------------
+# Drop root privileges: create an unprivileged user and switch to it
+# ----------------------------------------------------------------------------
+RUN useradd -m -u 10001 appuser && chown -R appuser:appuser /app
+USER appuser
+
 # Expose the port Sevalla provides via $PORT
 EXPOSE 8000
 

@@ -224,6 +224,14 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # Enable extended result attributes including task names, args, kwargs, etc.
 CELERY_RESULT_EXTENDED = True
 
+# Worker reliability and fairness under restarts/resource pressure
+# - Late ack ensures tasks are re-queued if a worker dies mid-execution
+# - Reject on worker lost signals the broker to redeliver in-flight tasks
+# - Prefetch multiplier 1 prevents a single worker from hoarding tasks
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
 # Default queue / priorities.  Additional queues can be declared through
 # environment variables or the Django settings override mechanism.
 
