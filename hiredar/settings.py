@@ -579,28 +579,48 @@ LOGGING = {
             "style": "{",
         },
     },
+    "filters": {
+        "ignore_disallowed_host": {
+            "()": "apps.core.logging.IgnoreDisallowedHostFilter",
+        }
+    },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "simple",
+            "filters": ["ignore_disallowed_host"],
         },
         "file": {
             "level": "INFO",
             "class": "logging.FileHandler",
             "filename": os.path.join(BASE_DIR, "logs", "hiredar.log"),
             "formatter": "simple",
+            "filters": ["ignore_disallowed_host"],
         },
         "console_simple": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "simple",
+            "filters": ["ignore_disallowed_host"],
         },
     },
     "loggers": {
         "django": {
             "handlers": ["console", "file"],
             "level": "INFO",
+            "propagate": True,
+        },
+        # Silence noisy DisallowedHost tracebacks while keeping a concise log line
+        "django.security.DisallowedHost": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        # Apply the same filtering to request logger in case DisallowedHost bubbles there
+        "django.request": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
             "propagate": True,
         },
         "apps.job_seekers": {
