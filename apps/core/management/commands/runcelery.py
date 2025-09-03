@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 
@@ -28,27 +29,37 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Execute the command."""
         # The exact command parameters the user requested
+        # Build Celery command with proper option ordering: global opts before subcommand
         celery_command = [
             "pdm",
             "run",
             "celery",
             "--app",
             "hiredar",
-            "worker",
-            "--beat",
-            "--loglevel",
-            "info",
-            "--queues",
-            "default,high",
-            "--concurrency",
-            os.getenv("CELERY_CONCURRENCY", "2"),
-            "--optimization",
-            "fair",
-            "--max-tasks-per-child",
-            os.getenv("CELERY_MAX_TASKS_PER_CHILD", "20"),
-            "--without-gossip",
-            "--without-mingle",
         ]
+
+        # Ensure the worker uses the exact broker URL from Django settings (global option)
+        broker_url = getattr(settings, "CELERY_BROKER_URL", None)
+        if broker_url:
+            celery_command.extend(["--broker", broker_url])
+
+        # Subcommand and worker options
+        celery_command.extend(
+            [
+                "worker",
+                "--beat",
+                "--loglevel",
+                "info",
+                "--queues",
+                "default,high",
+                "--concurrency",
+                os.getenv("CELERY_CONCURRENCY", "2"),
+                "--optimization",
+                "fair",
+                "--max-tasks-per-child",
+                os.getenv("CELERY_MAX_TASKS_PER_CHILD", "20"),
+            ]
+        )
 
         if options["dry_run"]:
             self.stdout.write(
