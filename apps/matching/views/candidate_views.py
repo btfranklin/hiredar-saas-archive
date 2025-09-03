@@ -5,6 +5,7 @@ This module contains views for viewing and managing candidate matches for job op
 including viewing candidate details and managing candidate interactions.
 """
 
+import logging
 from typing import Any, cast
 
 from django.contrib.auth.decorators import login_required
@@ -23,6 +24,8 @@ from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.matching.tasks.analyze_candidate_match import analyze_candidate_match
 from apps.messaging.models import Conversation, Notification
 from apps.recruiters.models import JobOpening, RecruiterProfile
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(login_required, name="dispatch")  # type: ignore
@@ -373,12 +376,31 @@ def candidate_match_analysis_status(
         # We use a predictable task name to avoid duplicate tasks
         task_name = f"analyze_match_{candidate_match.pk}"
 
-        # Trigger the analysis task
-        safe_async_task(
-            analyze_candidate_match,
-            candidate_match.pk,
-            task_name=task_name,
-        )
+        # Trigger the analysis task with debug logging
+        try:
+            task_id = safe_async_task(
+                analyze_candidate_match,
+                candidate_match.pk,
+                task_name=task_name,
+            )
+            if task_id:
+                logger.info(
+                    "Enqueued analyze_candidate_match | task_id=%s candidate_match_id=%s queue=default",
+                    task_id,
+                    candidate_match.pk,
+                )
+            else:
+                logger.info(
+                    "No task enqueued (possibly already running) | candidate_match_id=%s",
+                    candidate_match.pk,
+                )
+        except Exception as e:  # pragma: no cover – defensive logging
+            logger.error(
+                "Failed to enqueue analyze_candidate_match | candidate_match_id=%s error=%s",
+                candidate_match.pk,
+                str(e),
+                exc_info=True,
+            )
 
         return render(
             request,

@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from promptdown import StructuredPrompt
 
 from apps.resume_processing.utils.xml_error_reporting import log_xml_error
-from hiredar.llm import chat_complete
+from hiredar.llm import get_llm_response
 from hiredar.llm.xml_utils import sanitize_xml_response
 
 # Load environment variables
@@ -53,17 +53,21 @@ def convert_text_to_xml(resume_text: str) -> str:
             "resume_text": resume_text,
         }
     )
-    messages = structured_prompt.to_chat_completion_messages()
+    response_input = structured_prompt.to_responses_input()
 
     # Call OpenAI via shared wrapper
     logger.info("Sending resume text to LLM for XML conversion")
     logger.debug("Resume text length: %d characters", len(resume_text))
 
     try:
-        xml_content = chat_complete(
-            messages=cast(list[dict[str, Any]], messages),
+        xml_content = get_llm_response(
+            response_input=response_input,
             model=settings.JOBSEEKERS_RESUME_PROCESSING_MODEL,
-            temperature=settings.JOBSEEKERS_RESUME_PROCESSING_TEMPERATURE,
+            reasoning_effort=getattr(
+                settings,
+                "JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT",
+                "medium",
+            ),
         )
 
         # Perform basic validation

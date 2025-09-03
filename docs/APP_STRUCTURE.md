@@ -540,7 +540,7 @@ Recruiters use credits to access premium features such as resume processing. Cre
 Although not a Django *app*, the `hiredar.llm` package contains code that is shared across multiple apps when interacting with Large Language Models and processing their XML output.
 
 - **client.py** – Singleton OpenAI client plus high-level helpers:
-  - `chat_complete(...)` – chat completion with built-in timeout + exponential back-off (powered by `tenacity`).
+  - `get_llm_response(...)` – Responses API text generation with built-in timeout + exponential back-off (powered by `tenacity`).
   - `embed(...)` – embedding helper.
 - **xml_utils.py** – Sanitisation and parsing helpers used throughout the codebase (previously duplicated in several apps).
 - **prompts.py** – Tiny wrapper around Promptdown for loading templated prompts.

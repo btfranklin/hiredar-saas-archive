@@ -19,7 +19,7 @@ from apps.job_seekers.services.recommendation.xml_parser import (
     parse_role_recommendations_xml,
     parse_talent_sheet_xml,
 )
-from hiredar.llm import chat_complete
+from hiredar.llm import get_llm_response
 
 # Load environment variables
 load_dotenv()
@@ -86,8 +86,8 @@ def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
             }
         )
 
-        # Get messages for the API call
-        messages = structured_prompt.to_chat_completion_messages()
+        # Build Responses API input
+        response_input = structured_prompt.to_responses_input()
 
     except Exception as e:
         logger.error("Error preparing prompt: %s", str(e))
@@ -95,10 +95,14 @@ def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
             f"Unable to generate role recommendations: Error preparing prompt: {str(e)}"
         ) from e
 
-    response_content = chat_complete(
-        messages=cast(list[dict[str, Any]], messages),
+    response_content = get_llm_response(
+        response_input=response_input,
         model=settings.JOBSEEKERS_ROLE_RECOMMENDATION_MODEL,
-        temperature=settings.JOBSEEKERS_RECOMMENDATION_TEMPERATURE,
+        reasoning_effort=getattr(
+            settings,
+            "JOBSEEKERS_RECOMMENDATION_REASONING_EFFORT",
+            "medium",
+        ),
     )
 
     # Perform basic validation
@@ -164,18 +168,22 @@ def generate_personal_tagline(resume_xml: str) -> str:
             }
         )
 
-        # Get messages for the API call
-        messages = structured_prompt.to_chat_completion_messages()
+        # Build Responses API input
+        response_input = structured_prompt.to_responses_input()
 
     except Exception as e:
         logger.error("Error preparing prompt: %s", str(e))
         return f"Unable to generate tagline: Error preparing prompt: {str(e)}"
 
-    tagline = chat_complete(
-        messages=cast(list[dict[str, Any]], messages),
+    tagline = get_llm_response(
+        response_input=response_input,
         model=settings.JOBSEEKERS_TAGLINE_GENERATION_MODEL,
-        temperature=settings.JOBSEEKERS_TAGLINE_TEMPERATURE,
         max_tokens=settings.JOBSEEKERS_TAGLINE_MAX_TOKENS,
+        reasoning_effort=getattr(
+            settings,
+            "JOBSEEKERS_TAGLINE_REASONING_EFFORT",
+            "medium",
+        ),
     )
 
     # Perform basic validation
@@ -248,15 +256,19 @@ def generate_talent_sheet(
             }
         )
 
-        # Get messages for the API call
-        messages = structured_prompt.to_chat_completion_messages()
+        # Build Responses API input
+        response_input = structured_prompt.to_responses_input()
 
         # Call the OpenAI API
-        xml_response = chat_complete(
-            messages=cast(list[dict[str, Any]], messages),
+        xml_response = get_llm_response(
+            response_input=response_input,
             model=settings.JOBSEEKERS_TALENT_SHEET_MODEL,
-            temperature=settings.JOBSEEKERS_TALENT_SHEET_TEMPERATURE,
             timeout=60,
+            reasoning_effort=getattr(
+                settings,
+                "JOBSEEKERS_TALENT_SHEET_REASONING_EFFORT",
+                "medium",
+            ),
         )
 
         # Extract talent sheet XML from response

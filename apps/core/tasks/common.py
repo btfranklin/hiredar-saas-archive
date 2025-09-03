@@ -8,9 +8,15 @@ This module exposes the main helper:
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Callable, Final
 
 from celery import current_app as celery_app
+from django.conf import settings  # type: ignore
+
+from apps.core.utils.task_utils import IdempotentTaskManager  # type: ignore
+
+# from apps.core.utils.task_utils import IdempotentTaskManager  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +45,13 @@ def _split_kwargs(kwargs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any
     """Return *(clean_kwargs, scheduler_kwargs)* by stripping reserved keys."""
 
     scheduler_kwargs: dict[str, Any] = {}
-    for key in list(kwargs.keys()):
+    clean_kwargs: dict[str, Any] = {}
+    for key, value in kwargs.items():
         if key in _RESERVED_KEYS:
-            scheduler_kwargs[key] = kwargs.pop(key)
-    return kwargs, scheduler_kwargs
+            scheduler_kwargs[key] = value
+        else:
+            clean_kwargs[key] = value
+    return clean_kwargs, scheduler_kwargs
 
 
 # ---------------------------------------------------------------------------
@@ -73,9 +82,45 @@ def safe_async_task(
 
     clean_kwargs, scheduler_kwargs = _split_kwargs(kwargs)
 
+    is_eager = bool(
+        getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False)
+        or os.getenv("PYTEST_CURRENT_TEST")
+    )
+
+    # If a task callable is provided and we're in eager mode or idempotent requested,
+    # execute via apply_async (respects eager) optionally with idempotency.
+    if callable(path_or_callable):
+        if scheduler_kwargs.get("idempotent"):
+            deterministic_name = scheduler_kwargs.get("task_name") or task_name
+            return IdempotentTaskManager.safe_task_execution(
+                path_or_callable,
+                str(deterministic_name),
+                *args,
+                **clean_kwargs,
+            )
+
+        if is_eager:
+            result = path_or_callable.apply_async(  # type: ignore[attr-defined]
+                args=args,
+                kwargs=clean_kwargs,
+                queue=queue,
+                priority=priority,
+            )
+            return getattr(result, "id", None)
+
+    # If only a task name was provided, try to resolve it to a task when eager
+    # so apply_async runs inline; otherwise publish via broker.
+    if not callable(path_or_callable) and is_eager:
+        task_map = getattr(celery_app, "tasks", {})
+        task = task_map[task_name] if task_name in task_map else None  # type: ignore[index]
+        if task is not None:
+            result = task.apply_async(args=args, kwargs=clean_kwargs, queue=queue, priority=priority)  # type: ignore[call-arg]
+            return getattr(result, "id", None)
+
+    # Default: route by task name through the broker
     return celery_app.send_task(
         name=task_name,
-        args=args,
+        args=list(args),
         kwargs=clean_kwargs,
         queue=queue,
         priority=priority,

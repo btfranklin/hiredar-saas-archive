@@ -5,7 +5,7 @@ Tests for race condition fixes in matching operations.
 import threading
 from unittest.mock import patch
 
-from django.db import transaction
+from django.db import close_old_connections, transaction
 from django.test import TestCase, TransactionTestCase
 
 from apps.authentication.models import User
@@ -66,6 +66,7 @@ class RaceConditionTests(TransactionTestCase):
         def create_match():
             """Create a candidate match in a separate thread."""
             try:
+                close_old_connections()
                 with transaction.atomic():
                     match, created = CandidateMatchService.safe_upsert_candidate_match(
                         job_opening_id=self.job_opening.id,
@@ -121,6 +122,7 @@ class RaceConditionTests(TransactionTestCase):
         def create_talent_sheet():
             """Create a talent sheet in a separate thread."""
             try:
+                close_old_connections()
                 with transaction.atomic():
                     sheet, created = TalentSheetService.safe_upsert_talent_sheet(
                         job_seeker_id=self.job_seeker_profile.id,

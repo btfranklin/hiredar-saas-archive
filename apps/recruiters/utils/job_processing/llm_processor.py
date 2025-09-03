@@ -15,7 +15,7 @@ from django.conf import settings
 from dotenv import load_dotenv
 from promptdown import StructuredPrompt
 
-from hiredar.llm import chat_complete
+from hiredar.llm import get_llm_response
 from hiredar.llm.xml_utils import sanitize_xml_response
 
 # Load environment variables
@@ -54,7 +54,7 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
             "job_description": job_description,
         }
     )
-    messages = structured_prompt.to_chat_completion_messages()
+    response_input = structured_prompt.to_responses_input()
 
     # Call via shared helper
     logger.info("Sending job description to LLM for XML conversion")
@@ -62,10 +62,14 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
     logger.debug("Job description length: %d characters", len(job_description))
 
     try:
-        xml_content = chat_complete(
-            messages=cast(list[dict[str, Any]], messages),
+        xml_content = get_llm_response(
+            response_input=response_input,
             model=settings.RECRUITERS_JOB_PROCESSING_MODEL,
-            temperature=settings.RECRUITERS_JOB_PROCESSING_TEMPERATURE,
+            reasoning_effort=getattr(
+                settings,
+                "RECRUITERS_JOB_PROCESSING_REASONING_EFFORT",
+                "medium",
+            ),
         )
 
         # Perform basic validation

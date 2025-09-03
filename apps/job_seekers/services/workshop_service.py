@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from django.conf import settings
 from promptdown import StructuredPrompt
 
-from hiredar.llm import chat_complete
+from hiredar.llm import get_llm_response
 
 if TYPE_CHECKING:  # pragma: no cover
     from apps.job_seekers.models.profile import JobSeekerProfile
@@ -90,17 +90,21 @@ def upgrade_resume_content(profile: "JobSeekerProfile") -> str:
     structured_prompt.apply_template_values(
         {"resume_text": resume_text, "target_roles": target_roles}
     )
-    messages = structured_prompt.to_chat_completion_messages()
+    response_input = structured_prompt.to_responses_input()
 
     logger.info(
         "Generating upgraded resume for profile_id=%s (target_roles_count=%s)",
         getattr(profile, "id", "unknown"),
         len(interested_roles),
     )
-    return chat_complete(
-        messages=messages,
-        model=settings.JOBSEEKERS_WORKSHOP_UPGRADE_MODEL,
-        temperature=settings.JOBSEEKERS_WORKSHOP_UPGRADE_TEMPERATURE,
+    return get_llm_response(
+        response_input=response_input,
+        model=settings.JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_MODEL,
+        reasoning_effort=getattr(
+            settings,
+            "JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_REASONING_EFFORT",
+            "medium",
+        ),
     )
 
 
@@ -144,7 +148,7 @@ def optimize_linkedin_content(profile: "JobSeekerProfile") -> str:
     structured_prompt.apply_template_values(
         {"resume_text": resume_text, "target_roles": target_roles}
     )
-    messages = structured_prompt.to_chat_completion_messages()
+    response_input = structured_prompt.to_responses_input()
 
     logger.info(
         "Generating LinkedIn optimization for profile_id=%s (target_roles_count=%s)",
@@ -152,10 +156,14 @@ def optimize_linkedin_content(profile: "JobSeekerProfile") -> str:
         len(interested_roles),
     )
 
-    return chat_complete(
-        messages=messages,
+    return get_llm_response(
+        response_input=response_input,
         model=settings.JOBSEEKERS_WORKSHOP_LINKEDIN_MODEL,
-        temperature=settings.JOBSEEKERS_WORKSHOP_LINKEDIN_TEMPERATURE,
+        reasoning_effort=getattr(
+            settings,
+            "JOBSEEKERS_WORKSHOP_LINKEDIN_REASONING_EFFORT",
+            "medium",
+        ),
     )
 
 

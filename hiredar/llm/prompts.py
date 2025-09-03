@@ -5,16 +5,17 @@ Utility helpers for working with Promptdown prompt files.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from promptdown import StructuredPrompt
+from promptdown.types import ResponsesMessage  # type: ignore
 
 
 def load_structured_prompt(
     path: str | Path,
     variables: Mapping[str, Any] | None = None,
-) -> list[dict[str, Any]]:
-    """Load a Promptdown file and apply template variables, returning messages."""
+) -> Sequence[ResponsesMessage]:
+    """Load a Promptdown file and apply template variables, returning Responses input."""
 
     prompt_path = Path(path)
     if not prompt_path.exists():
@@ -24,4 +25,4 @@ def load_structured_prompt(
     if variables:
         structured.apply_template_values(dict(variables))
 
-    return structured.to_chat_completion_messages()
+    return structured.to_responses_input()

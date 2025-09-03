@@ -1,4 +1,4 @@
-from .client import chat_complete, embed, get_client  # type: ignore
+from .client import embed, get_client, get_llm_response  # type: ignore
 from .xml_utils import (  # type: ignore
     element_to_dict,
     safe_parse,
@@ -6,7 +6,7 @@ from .xml_utils import (  # type: ignore
 )
 
 __all__ = [
-    "chat_complete",
+    "get_llm_response",
     "embed",
     "get_client",
     "sanitize_xml_response",

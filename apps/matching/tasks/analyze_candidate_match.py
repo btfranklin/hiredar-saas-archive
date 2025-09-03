@@ -6,7 +6,8 @@ of why a candidate is a good match for a job opening.
 """
 
 import logging
-from typing import Any, Iterable, cast
+import os
+from typing import Any, cast
 
 from celery import shared_task
 from django.apps import apps
@@ -15,6 +16,7 @@ from promptdown import StructuredPrompt
 
 from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.matching.tasks.common import get_openai_client
+from hiredar.llm import get_llm_response
 from hiredar.llm.xml_utils import extract_element_text, parse_llm_xml_response
 
 logger = logging.getLogger(__name__)
@@ -73,8 +75,6 @@ def analyze_candidate_match(candidate_match_id: int) -> dict[str, Any]:
             }
 
         # Load the prompt
-        import os
-
         prompt_path = os.path.join(
             os.path.dirname(__file__),
             "..",
@@ -154,8 +154,8 @@ Salary Expectation: ${talent_sheet.salary_min or 0:,.0f} minimum
                 }
             )
 
-            # Get messages for the API call
-            messages = structured_prompt.to_chat_completion_messages()
+            # Build Responses API input
+            response_input = structured_prompt.to_responses_input()
 
         except Exception as e:
             logger.error("Error preparing prompt: %s", str(e))
@@ -165,18 +165,18 @@ Salary Expectation: ${talent_sheet.salary_min or 0:,.0f} minimum
                 "candidate_match_id": candidate_match_id,
             }
 
-        # Call OpenAI API
+        # Call OpenAI API via shared wrapper
         try:
             logger.info("Sending candidate match data to LLM for analysis")
 
-            response = client.chat.completions.create(
+            response_content = get_llm_response(
+                response_input=response_input,
                 model=settings.MATCHING_ANALYSIS_MODEL,
-                messages=cast(Iterable[Any], messages),
                 timeout=60,
+                reasoning_effort=getattr(
+                    settings, "MATCHING_ANALYSIS_REASONING_EFFORT", "medium"
+                ),
             )
-
-            # Extract response content
-            response_content = response.choices[0].message.content
             if not response_content:
                 raise ValueError("Empty response from LLM")
 
