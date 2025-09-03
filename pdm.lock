@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:b79f5cfe734d99a3227f964f084987d8891f722c2ba7b81d7c7164fb388ada30"
+content_hash = "sha256:aec8c6d6b128a982b3d084e03fb0de6fab81809cfb71960aae5c82eff61a076d"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -2163,13 +2163,13 @@ files = [
 
 [[package]]
 name = "promptdown"
-version = "0.9.0"
+version = "0.10.0"
 requires_python = ">=3.10"
 summary = "A package for loading promptdown files, which are a special type of markdown file for defining structured LLM prompts"
 groups = ["default", "dev"]
 files = [
-    {file = "promptdown-0.9.0-py3-none-any.whl", hash = "sha256:9ebd7044517217d00f61966dfe8297ee06328d11a6ca52d1b48c96739e5fc01a"},
-    {file = "promptdown-0.9.0.tar.gz", hash = "sha256:5727cf275a62f0feb6754fec4182b4a240a7e2bd2615e2381498d75d386c4087"},
+    {file = "promptdown-0.10.0-py3-none-any.whl", hash = "sha256:be81feefb2175f2dd04a7f66f4797a805494a59e46a769643eeeac43f238210b"},
+    {file = "promptdown-0.10.0.tar.gz", hash = "sha256:262f6641de625195dfbaefc682e2e7b4e8a83a427cc614f51489c293e3e973b4"},
 ]
 
 [[package]]
@@ -2483,10 +2483,10 @@ path = "."
 summary = "AI-powered job matching platform"
 groups = ["dev"]
 dependencies = [
-    "WeasyPrint>=65.1",
+    "WeasyPrint>=66.0",
     "celery[sqlalchemy]>=5.5.3",
-    "cryptography>=45.0.6",
-    "django-allauth>=65.10.0",
+    "cryptography>=45.0.7",
+    "django-allauth>=65.11.1",
     "django-celery-results>=2.6.0",
     "django-htmx>=1.23.2",
     "django-lb-health-check>=1.0.1",
@@ -2495,23 +2495,23 @@ dependencies = [
     "django-storages[boto3]>=1.14.6",
     "django>=5.2.5",
     "gunicorn>=23.0.0",
-    "lxml>=6.0.0",
-    "numpy>=2.3.1",
-    "openai>=1.99.9",
+    "lxml>=6.0.1",
+    "numpy>=2.3.2",
+    "openai>=1.104.2",
     "pdfplumber>=0.11.7",
     "pillow>=11.3.0",
     "pinecone[grpc]>=7.3.0",
-    "promptdown>=0.9.0",
+    "promptdown>=0.10.0",
     "psycopg[binary]>=3.2.9",
     "pyjwt>=2.10.1",
-    "pymupdf>=1.26.3",
+    "pymupdf>=1.26.4",
     "python-dotenv>=1.1.1",
     "python-magic>=0.4.27",
     "quickemailverification>=1.0.4",
-    "requests>=2.32.4",
-    "stripe>=12.3.0",
+    "requests>=2.32.5",
+    "stripe>=12.5.0",
     "tenacity>=9.1.2",
-    "unstructured[all-docs]>=0.18.9",
+    "unstructured[all-docs]>=0.18.14",
     "whitenoise>=6.9.0",
 ]
 
