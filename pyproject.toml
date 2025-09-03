@@ -44,8 +44,8 @@ license = {text = "proprietary - not open source"}
 
 [dependency-groups]
 dev = [
-    "django-stubs>=5.2.5",
-    "django-stubs-ext>=5.2.5",
+    "django-stubs>=5,<6",
+    "django-stubs-ext>=5,<6",
     "mypy>=1.17.1",
     "pylint>=3.3.8",
     "pylint-django>=2.6.1",
