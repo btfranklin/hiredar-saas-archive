@@ -100,11 +100,7 @@ def upgrade_resume_content(profile: "JobSeekerProfile") -> str:
     return get_llm_response(
         response_input=response_input,
         model=settings.JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_MODEL,
-        reasoning_effort=getattr(
-            settings,
-            "JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_REASONING_EFFORT",
-            "medium",
-        ),
+        reasoning_effort=settings.JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_REASONING_EFFORT,
     )
 
 

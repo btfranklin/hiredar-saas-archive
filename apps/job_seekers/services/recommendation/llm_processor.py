@@ -7,7 +7,6 @@ and processing the responses to generate recommendations.
 
 import logging
 import os
-from typing import Any, cast
 
 import requests
 from django.conf import settings  # Import Django settings
@@ -98,11 +97,7 @@ def generate_role_recommendations(resume_xml: str) -> list[RoleRecommendation]:
     response_content = get_llm_response(
         response_input=response_input,
         model=settings.JOBSEEKERS_ROLE_RECOMMENDATION_MODEL,
-        reasoning_effort=getattr(
-            settings,
-            "JOBSEEKERS_RECOMMENDATION_REASONING_EFFORT",
-            "medium",
-        ),
+        reasoning_effort=settings.JOBSEEKERS_ROLE_RECOMMENDATION_REASONING_EFFORT,
     )
 
     # Perform basic validation
@@ -181,7 +176,7 @@ def generate_personal_tagline(resume_xml: str) -> str:
         max_tokens=settings.JOBSEEKERS_TAGLINE_MAX_TOKENS,
         reasoning_effort=getattr(
             settings,
-            "JOBSEEKERS_TAGLINE_REASONING_EFFORT",
+            "JOBSEEKERS_TAGLINE_GENERATION_REASONING_EFFORT",
             "medium",
         ),
     )

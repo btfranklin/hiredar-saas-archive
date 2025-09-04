@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
+from django.conf import settings
 from django.test import Client
 from django.urls import reverse
 
 from apps.authentication.models import User
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation
+from apps.job_seekers.services.recommendation import llm_processor
 
 
 @pytest.mark.django_db
@@ -89,3 +93,50 @@ class TestToggleRoleInterestView:
         # Confirm persistence
         role.refresh_from_db()
         assert role.is_candidate_interested is True
+
+
+@pytest.mark.django_db
+def test_role_recommendations_reasoning_effort_setting():
+    # Arrange a fake client that records arguments to Responses API
+    class _FakeResponse:
+        def __init__(self):
+            self.output_text = "<role_recommendations></role_recommendations>"
+
+    class _Responses:
+        def __init__(self, outer):
+            self._outer = outer
+
+        def create(self, **kwargs):
+            self._outer.called_with = kwargs
+            return _FakeResponse()
+
+    class _FakeClient:
+        def __init__(self):
+            self.called_with = None
+            self.responses = _Responses(self)
+
+        def with_options(self, **_):
+            return self
+
+    # Create minimal profile with resume_xml so generation runs
+    user = User.objects.create_user(  # type: ignore[arg-type]
+        email="js2@example.com",
+        password="pass1234",
+        user_type="job_seeker",
+        name="Jane Seeker 2",
+    )
+    profile = JobSeekerProfile.objects.get(user_owner=user)
+    profile.resume_xml = "<resume />"
+    profile.save(update_fields=["resume_xml"])
+
+    fake = _FakeClient()
+    with patch("hiredar.llm.client.get_client", return_value=fake):
+        _ = llm_processor.generate_role_recommendations(profile.resume_xml)
+
+    # Assert reasoning was forwarded with the configured key name
+    assert fake.called_with is not None
+    reasoning = fake.called_with.get("reasoning", {})
+    assert (
+        reasoning.get("effort")
+        == settings.JOBSEEKERS_ROLE_RECOMMENDATION_REASONING_EFFORT
+    )
