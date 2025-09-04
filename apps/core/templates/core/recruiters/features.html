@@ -21,7 +21,7 @@
   <div class="container mx-auto px-4 max-w-4xl">
     <h2 class="text-3xl font-bold mb-6">See Hiredar in Action</h2>
     <p class="text-lg opacity-80 mb-10">Watch a quick walkthrough of how recruiters can upload résumés, review AI-scored matches, and build shortlists in minutes.</p>
-    <button class="btn btn-secondary btn-lg" onclick="videoModal.showModal()">Watch&nbsp;Video&nbsp;Demo</button>
+    <button class="btn btn-secondary btn-lg" onclick="document.getElementById('videoModal').showModal()">Watch&nbsp;Video&nbsp;Demo</button>
   </div>
 </section>
 
@@ -29,15 +29,20 @@
 <dialog id="videoModal" class="modal">
   <div class="modal-box w-11/12 max-w-5xl p-0 bg-base-100 relative">
     <!-- Close icon -->
-    <button class="btn btn-sm btn-circle absolute right-3 top-3" aria-label="Close" onclick="videoModal.close()">✕</button>
+    <button class="btn btn-sm btn-circle absolute right-3 top-3" aria-label="Close" onclick="document.getElementById('videoModal').close()">✕</button>
 
     <iframe
       id="videoIframe"
-      src="https://www.youtube.com/embed/V5_H6p6rv-E?rel=0"
+      src="https://www.youtube-nocookie.com/embed/V5_H6p6rv-E?rel=0&modestbranding=1&playsinline=1&origin={{ request.scheme }}://{{ request.get_host }}"
       title="Hiredar Recruiter Demo"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowfullscreen
+      loading="lazy"
+      referrerpolicy="strict-origin-when-cross-origin"
       class="w-full h-[70vh] rounded-t-lg"></iframe>
+    <div class="p-3 text-sm text-base-content/70">
+      If the player does not load, <a href="https://www.youtube.com/watch?v=V5_H6p6rv-E" target="_blank" rel="noopener noreferrer" class="link link-primary">watch on YouTube</a>.
+    </div>
   </div>
 </dialog>
 
@@ -139,17 +144,23 @@
 {% block extra_scripts %}
 {{ block.super }}
 <script>
-  // Stop video playback when modal closes by resetting the iframe source
-  const videoModal = document.getElementById('videoModal');
-  const videoIframe = document.getElementById('videoIframe');
-  if (videoModal && videoIframe) {
-    const originalSrc = videoIframe.src;
-    videoModal.addEventListener('close', () => {
-      videoIframe.src = '';
+  // Stop video playback when modal closes by resetting the iframe source.
+  // Wrapped and guarded to avoid duplicate initialization if scripts are re-inserted.
+  (function initHiredarVideoModalOnce() {
+    if (window.__hiredarVideoModalInit) return;
+    window.__hiredarVideoModalInit = true;
+
+    const videoModalElement = document.getElementById('videoModal');
+    const videoIframeElement = document.getElementById('videoIframe');
+    if (!videoModalElement || !videoIframeElement) return;
+
+    const originalSrc = videoIframeElement.src;
+    videoModalElement.addEventListener('close', function () {
+      videoIframeElement.src = '';
       // Restore the source after a brief moment so replay works next time
-      setTimeout(() => { videoIframe.src = originalSrc; }, 100);
+      setTimeout(function () { videoIframeElement.src = originalSrc; }, 100);
     });
-  }
+  })();
 </script>
 {% endblock %}
 
