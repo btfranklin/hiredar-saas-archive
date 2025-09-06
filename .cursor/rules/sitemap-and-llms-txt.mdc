@@ -1,0 +1,7 @@
+---
+description: Rules for updating sitemap.xml and llms.txt
+globs:
+alwaysApply: false
+---
+
+- Any structural changes made in the `core` app should be captured in the `sitemap.xml` and `llms.txt` files located in the `static` folder
