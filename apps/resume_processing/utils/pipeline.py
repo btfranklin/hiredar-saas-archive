@@ -61,6 +61,7 @@ def process_resume(
     xml_content: str | None = None
     parsed_data: dict[str, Any] | None = None
     start_time = time.time()
+    temp_artifacts: list[str] = []
 
     # Get a profile identifier that works for logging
     if profile.user_owner:
@@ -130,6 +131,7 @@ def process_resume(
                 ) as tmp:
                     tmp.write(stored_file.read())
                     abs_file_path = tmp.name
+                    temp_artifacts.append(tmp.name)
 
         logger.info("Resolved file path: %s", abs_file_path)
         pipeline_steps.append("file_path_resolved")
@@ -189,6 +191,8 @@ def process_resume(
             diagnostic_path = save_diagnostic_xml(
                 e, xml_content, abs_file_path, "parsing"
             )
+            if diagnostic_path:
+                temp_artifacts.append(diagnostic_path)
 
             error_msg = f"Error parsing XML: {str(e)}"
             if progress_tracker:
@@ -299,3 +303,15 @@ def process_resume(
             "pipeline_steps": pipeline_steps,
             "exception": str(e),
         }
+    finally:
+        if temp_artifacts:
+            for artifact in {path for path in temp_artifacts if path}:
+                try:
+                    if os.path.exists(artifact):
+                        os.remove(artifact)
+                except OSError as cleanup_err:
+                    logger.warning(
+                        "Failed to remove temporary artifact %s: %s",
+                        artifact,
+                        cleanup_err,
+                    )
