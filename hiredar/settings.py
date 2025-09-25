@@ -399,6 +399,7 @@ if "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules:
     CELERY_RESULT_BACKEND = "cache+memory://"
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
+    CELERY_TASK_STORE_EAGER_RESULT = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
