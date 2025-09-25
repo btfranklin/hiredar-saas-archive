@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from django.contrib.messages import constants as messages
+from django.core.management.utils import get_random_secret_key
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -29,22 +30,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-s%4$@=b$!wh_0r8w-l^l0l)qippjy4y=kja%y-2033#l%_r%yx"
-)
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = os.getenv("DEBUG", "False").strip().lower() in {"1", "true", "yes", "on"}
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    # In development or during tests, generate a temporary key so the app can start
+    if DEBUG or "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules:
+        SECRET_KEY = get_random_secret_key()
+    else:
+        raise RuntimeError(
+            "SECRET_KEY is not set. Provide it via environment variables."
+        )
 
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 ]
 
-# Include Django's default test host when running in DEBUG mode so the
-# test-suite can issue requests without triggering DisallowedHost errors.
-if DEBUG and "testserver" not in ALLOWED_HOSTS:
+# Include Django's default test host in development and during pytest runs
+# so the test-suite can issue requests without triggering DisallowedHost errors.
+if (
+    DEBUG or "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules
+) and "testserver" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("testserver")
 
 # URL(s) that the lb_health_check middleware will respond to.
@@ -506,6 +515,11 @@ ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 # - Uses portion of email before @ symbol
 # - Adds a random suffix for uniqueness
 def custom_username_from_email(email):
+    """Create a unique username from an e-mail address.
+
+    Uses the local part of the e-mail (before the '@') and appends an
+    8-character random hexadecimal suffix to reduce collisions.
+    """
     base = email.split("@")[0]
     random_suffix = uuid4().hex[:8]
     return f"{base}_{random_suffix}"
