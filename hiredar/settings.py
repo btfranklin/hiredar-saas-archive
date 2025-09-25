@@ -78,10 +78,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Storage configuration
 #
 
-# 1) Tell Django what the "default" file-storage backend is
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
-# 2) Cloudflare-R2 / S3 options
+## Cloudflare-R2 / S3 options
 AWS_S3_ENDPOINT_URL = os.getenv("SEVALLA_S3_ENDPOINT")
 AWS_ACCESS_KEY_ID = os.getenv("SEVALLA_S3_KEY")
 AWS_SECRET_ACCESS_KEY = os.getenv("SEVALLA_S3_SECRET")
@@ -92,11 +89,30 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_ADDRESSING_STYLE = "virtual"
 AWS_S3_USE_SSL = True
 
-# 3) Staticfiles / media storages
+## Staticfiles / media storages
+
+# Determine storage backend based on environment. In tests or local development
+# without S3 credentials, use the filesystem. In production, require S3 to be
+# configured and fail fast with a clear error if not provided.
+RUNNING_TESTS = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules
+S3_CONFIGURED = bool(
+    AWS_STORAGE_BUCKET_NAME and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+)
+
+if RUNNING_TESTS or (DEBUG and not S3_CONFIGURED):
+    DEFAULT_STORAGE_BACKEND = "django.core.files.storage.FileSystemStorage"
+elif not S3_CONFIGURED:
+    raise RuntimeError(
+        "S3 storage configuration is required in production. Set SEVALLA_S3_BUCKET, "
+        "SEVALLA_S3_KEY, SEVALLA_S3_SECRET, and SEVALLA_S3_ENDPOINT, or enable DEBUG "
+        "for local development."
+    )
+else:
+    DEFAULT_STORAGE_BACKEND = "storages.backends.s3boto3.S3Boto3Storage"
 
 # Django 5+ uses the STORAGES setting. Configure both the default storage
 # (for uploaded media) and the staticfiles storage explicitly so that
-# `django.core.files.storage.default_storage` resolves to our S3 backend and
+# `django.core.files.storage.default_storage` resolves to the selected backend and
 # Whitenoise continues to serve compressed static assets locally.
 #
 # See: https://docs.djangoproject.com/en/5.1/ref/settings/#std-setting-STORAGES
@@ -105,9 +121,10 @@ AWS_S3_USE_SSL = True
 # up, while the "staticfiles" alias is used by Django's staticfiles app.
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "BACKEND": DEFAULT_STORAGE_BACKEND,
         # No OPTIONS are required because the S3 credentials are provided via
-        # the various AWS_* settings declared above.
+        # the various AWS_* settings declared above (when using S3). The file
+        # system backend uses MEDIA_ROOT by default and requires no options.
         "OPTIONS": {},
     },
     "staticfiles": {
@@ -123,6 +140,9 @@ if DEBUG:
     STORAGES["staticfiles"][
         "BACKEND"
     ] = "whitenoise.storage.CompressedStaticFilesStorage"
+
+# Keep legacy setting in sync for compatibility
+DEFAULT_FILE_STORAGE = STORAGES["default"]["BACKEND"]
 
 
 # Static files (CSS, JavaScript, Images)
