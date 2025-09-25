@@ -33,11 +33,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").strip().lower() in {"1", "true", "yes", "on"}
 
+# Detect if we are running the collectstatic management command (e.g. during
+# container image builds). This allows us to generate a temporary SECRET_KEY and
+# relax storage requirements so builds do not fail, while keeping production strict.
+IS_COLLECTSTATIC = "collectstatic" in sys.argv
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    # In development or during tests, generate a temporary key so the app can start
-    if DEBUG or "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules:
+    # In development, tests, or during collectstatic builds, generate a temporary key
+    # so the app can start and build steps can proceed.
+    if (
+        DEBUG
+        or "PYTEST_CURRENT_TEST" in os.environ
+        or "pytest" in sys.modules
+        or IS_COLLECTSTATIC
+    ):
         SECRET_KEY = get_random_secret_key()
     else:
         raise RuntimeError(
@@ -99,7 +110,7 @@ S3_CONFIGURED = bool(
     AWS_STORAGE_BUCKET_NAME and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 )
 
-if RUNNING_TESTS or (DEBUG and not S3_CONFIGURED):
+if RUNNING_TESTS or IS_COLLECTSTATIC or (DEBUG and not S3_CONFIGURED):
     DEFAULT_STORAGE_BACKEND = "django.core.files.storage.FileSystemStorage"
 elif not S3_CONFIGURED:
     raise RuntimeError(
