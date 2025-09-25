@@ -7,7 +7,7 @@ Tests the CSV and PDF generation functionality for shortlisted candidates.
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet
+from apps.job_seekers.models import CandidatePool, JobSeekerProfile, TalentSheet
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.recruiters.models import JobOpening, RecruiterProfile
 from apps.reports.services import generate_csv, generate_pdf, get_export_filename
@@ -184,9 +184,6 @@ class ReportsServiceTests(TestCase):
         pool_recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
             user=pool_recruiter_user
         )
-
-        # Create a candidate pool
-        from apps.job_seekers.models import CandidatePool
 
         candidate_pool = CandidatePool.objects.create(
             recruiter=pool_recruiter_user,  # Use the User, not the Profile
