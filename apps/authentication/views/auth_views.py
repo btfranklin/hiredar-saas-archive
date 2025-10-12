@@ -13,29 +13,9 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.forms import (
-    CustomAuthenticationForm,
-    JobSeekerSignupForm,
-    RecruiterSignupForm,
-)
+from apps.authentication.forms import CustomAuthenticationForm, RecruiterSignupForm
 from apps.authentication.models import User
 from apps.authentication.types import AuthenticatedUser
-
-
-class JobSeekerSignupView(SignupView):
-    """
-    View for job seeker signup process.
-
-    This view extends allauth's SignupView to handle job seeker registrations.
-    It uses the JobSeekerSignupForm to properly set the user_type and name.
-    """
-
-    template_name = "job_seekers/signup.html"
-    form_class = JobSeekerSignupForm
-
-    def get_success_url(self) -> str:
-        """Return the profile creation URL after successful signup."""
-        return reverse("job_seekers:profile_create")
 
 
 class RecruiterSignupView(SignupView):
@@ -74,9 +54,7 @@ class CustomLoginView(SuccessMessageMixin, LoginView):
         if user.user_type == "admin" or user.is_staff:
             return reverse("admin:index")
 
-        if user.user_type == "recruiter":
-            return reverse("recruiters:dashboard")
-        return reverse("job_seekers:dashboard")
+        return reverse("recruiters:dashboard")
 
     def form_valid(self, form: CustomAuthenticationForm) -> HttpResponseRedirect:
         """Process the form if it is valid, enforcing email verification."""
@@ -101,6 +79,17 @@ class CustomLoginView(SuccessMessageMixin, LoginView):
                 )
 
                 return HttpResponseRedirect(reverse("account_email_verification_sent"))
+
+        authenticated_user = cast(User, form.get_user())
+        if getattr(authenticated_user, "user_type", None) not in {"recruiter", "admin"}:
+            form.add_error(
+                None,
+                _(
+                    "This account type is no longer supported. "
+                    "Please contact support if you believe this is an error."
+                ),
+            )
+            return self.form_invalid(form)
 
         # Proceed with normal login
         result = super().form_valid(form)

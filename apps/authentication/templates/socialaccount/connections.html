@@ -87,11 +87,7 @@
         </div>
         
         <div class="text-center mt-8">
-            {% if user.user_type == 'job_seeker' %}
-                <a href="{% url 'job_seekers:settings' %}" class="btn btn-primary">{% trans "Back to Settings" %}</a>
-            {% else %}
-                <a href="{% url 'recruiters:settings' %}" class="btn btn-primary">{% trans "Back to Settings" %}</a>
-            {% endif %}
+            <a href="{% url 'recruiters:settings' %}" class="btn btn-primary">{% trans "Back to Settings" %}</a>
         </div>
     </div>
 </div>

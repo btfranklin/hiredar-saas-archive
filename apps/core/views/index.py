@@ -24,8 +24,6 @@ class HomeView(TemplateView):
             user = cast(AuthenticatedUser, request.user)
             if user.user_type == "recruiter":
                 return redirect("recruiters:dashboard")
-            elif user.user_type == "job_seeker":
-                return redirect("job_seekers:dashboard")
-            elif user.user_type == "admin":
+            if user.user_type == "admin":
                 return redirect("/admin/")
         return super().dispatch(request, *args, **kwargs)

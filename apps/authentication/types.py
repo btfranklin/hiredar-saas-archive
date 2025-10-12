@@ -8,7 +8,7 @@ class UserType(TypedDict):
 
     email: str
     name: str
-    user_type: Literal["job_seeker", "recruiter"]
+    user_type: Literal["job_seeker", "recruiter", "admin"]
 
 
 class AuthenticatedUser(Protocol):

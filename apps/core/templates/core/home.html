@@ -6,146 +6,124 @@
 {% block content %}
 <section class="hero-gradient text-white relative">
   <div class="mx-auto max-w-5xl py-24 px-6 flex flex-col md:flex-row items-center gap-12">
-    <!-- Text / CTA column -->
     <div class="flex-1 text-center md:text-left">
       <h1 class="text-6xl font-extrabold mb-4 tracking-tight">
-        The Job Search is Broken.<br>
-        <span class="opacity-80">Let's Fix It.</span>
+        Recruit faster with AI you can trust.
       </h1>
       <p class="text-2xl md:text-3xl mb-10 max-w-3xl md:mx-0 mx-auto">
-        Hiredar is on a mission to end the frustration. Less searching, less ghosting, more genuine connection—powered by ethical AI.
+        Hiredar ingests every résumé, scores the best matches, and surfaces candidates worth your time—without adding busywork for your team.
       </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+        <a href="{% url 'authentication:signup' %}" class="btn btn-secondary btn-lg">Create&nbsp;My&nbsp;Recruiter&nbsp;Account</a>
+        <a href="{% url 'core:features_recruiters' %}" class="btn btn-primary btn-lg">See&nbsp;How&nbsp;It&nbsp;Works</a>
+      </div>
     </div>
-
-    <!-- Mascot image column -->
     <div class="hidden md:block flex-none md:w-72 lg:w-80">
       <picture>
         <source srcset="{% static 'img/hero-image.webp' %}" type="image/webp">
-        <img src="{% static 'img/hero-image.png' %}" alt="Hiredar mascot, Ping, waving" class="rounded-lg w-full h-auto">
+        <img src="{% static 'img/hero-image.png' %}" alt="Hiredar mascot presenting analytics" class="rounded-lg w-full h-auto">
       </picture>
     </div>
   </div>
 </section>
 
-<!-- Audience Overview -->
 <section class="py-20 bg-base-100">
-  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12">
-    <!-- Recruiter Column -->
-    <div class="space-y-6 text-center md:text-left">
-      <h2 class="text-4xl font-bold">Recruiters: Stop Chasing Unicorns</h2>
-      <p class="text-lg opacity-80">
-        Bulk-upload résumés, instantly get realistic, AI-powered matches, and build shortlists that hiring managers trust.
+  <div class="container mx-auto px-4">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <h2 class="text-4xl font-bold">Everything you need to build better shortlists</h2>
+      <p class="text-lg opacity-80 mt-4">
+        Upload your backlog of résumés and let Hiredar’s recruiter co-pilot clean, score, and package the talent you already have.
       </p>
-      <ul class="list-disc list-inside text-left space-y-2">
-        <li>Bulk PDF/DOCX uploads</li>
-        <li>Instant AI-scored matches</li>
-        <li>Shareable candidate reports</li>
-      </ul>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-        <a href="{% url 'core:features_recruiters' %}" class="btn btn-outline btn-secondary">Learn&nbsp;More</a>
-        <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary">Sign&nbsp;Up&nbsp;—&nbsp;100&nbsp;Free&nbsp;Credits&nbsp;($30&nbsp;value)</a>
-      </div>
     </div>
-
-    <!-- Job Seeker Column -->
-    <div class="space-y-6 text-center md:text-left">
-      <h2 class="text-4xl font-bold">Job Seekers: Enough Applications Already</h2>
-      <p class="text-lg opacity-80">
-        Create your AI-enhanced profile and let recruiters come to you. No ghost jobs, no résumé black holes—just real opportunities.
-      </p>
-      <ul class="list-disc list-inside text-left space-y-2">
-        <li>AI-generated personal tagline &amp; profile</li>
-        <li>Personalized role recommendations</li>
-        <li>Direct messaging with recruiters</li>
-        <li>Free AI résumé &amp; LinkedIn optimization tools</li>
-      </ul>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-        <a href="{% url 'core:features_job_seekers' %}" class="btn btn-outline btn-primary">Learn&nbsp;More</a>
-        <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary">Sign&nbsp;Up&nbsp;Free</a>
+    <div class="grid gap-8 md:grid-cols-3">
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">Bulk ingestion</h3>
+          <p>Drop ZIPs or folders of resumes and watch structured profiles appear automatically—no manual data entry.</p>
+        </div>
+      </div>
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">AI scoring that makes sense</h3>
+          <p>Our matching engine blends semantic search with recruiter-calibrated heuristics so the best-fit candidates float to the top.</p>
+        </div>
+      </div>
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">Shareable insights</h3>
+          <p>Generate talent sheets, shortlist decks, and reports instantly—perfect for updates with hiring managers.</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FAQ Section -->
 <section class="py-20 bg-base-200">
+  <div class="container mx-auto px-4 max-w-5xl">
+    <div class="grid gap-12 md:grid-cols-3">
+      <div>
+        <span class="badge badge-primary badge-lg mb-4">Step 1</span>
+        <h3 class="text-2xl font-semibold mb-2">Upload résumés or import a pool</h3>
+        <p class="opacity-80">Hiredar parses every document, normalizes skills, and builds candidate records tied to your team.</p>
+      </div>
+      <div>
+        <span class="badge badge-primary badge-lg mb-4">Step 2</span>
+        <h3 class="text-2xl font-semibold mb-2">Review ranked matches</h3>
+        <p class="opacity-80">Similarity scores, experience summaries, and AI-generated blurbs help you triage in minutes, not days.</p>
+      </div>
+      <div>
+        <span class="badge badge-primary badge-lg mb-4">Step 3</span>
+        <h3 class="text-2xl font-semibold mb-2">Share &amp; act</h3>
+        <p class="opacity-80">Send shortlist PDFs, export CSVs, or hand off next steps to hiring managers once you’re ready to move.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 bg-base-100">
   <div class="container mx-auto px-4 max-w-4xl">
     <h2 class="text-4xl font-bold text-center mb-10">Frequently Asked Questions</h2>
     <div class="space-y-4">
-      <div class="collapse collapse-plus bg-base-100">
+      <div class="collapse collapse-plus bg-base-200">
         <input type="checkbox" class="peer" />
         <div class="collapse-title text-lg font-medium">
-          Is Hiredar really free for job seekers?
+          What’s included in the free recruiter account?
         </div>
         <div class="collapse-content">
-          <p>Absolutely. Job seekers will never pay to create a profile, receive role recommendations, or message with recruiters on Hiredar. We fund the platform through recruiter credits only.</p>
+          <p>Every new recruiter gets 100 credits to process resumes, generate talent sheets, and contact candidates. No credit card required.</p>
         </div>
       </div>
 
-      <div class="collapse collapse-plus bg-base-100">
+      <div class="collapse collapse-plus bg-base-200">
         <input type="checkbox" class="peer" />
         <div class="collapse-title text-lg font-medium">
-          What counts as a credit for recruiters?
+          How are credits consumed?
         </div>
         <div class="collapse-content">
-          <p>Credits are used for: résumé processing (1 credit), contacting candidates (2 credits), and exporting shortlists (5 credits). Browsing candidates and viewing matches are free.</p>
+          <p>Processing a resume costs 1 credit, and exporting a shortlist costs 5. Browsing candidates and reviewing matches are free.</p>
         </div>
       </div>
 
-      <div class="collapse collapse-plus bg-base-100">
+      <div class="collapse collapse-plus bg-base-200">
         <input type="checkbox" class="peer" />
         <div class="collapse-title text-lg font-medium">
-          Do my free or purchased credits ever expire?
+          Do you integrate with existing ATS tools?
         </div>
         <div class="collapse-content">
-          <p>No. Credits stay in your account until you decide to use them—no monthly minimums or “use-it-or-lose-it” deadlines.</p>
-        </div>
-      </div>
-
-      <div class="collapse collapse-plus bg-base-100">
-        <input type="checkbox" class="peer" />
-        <div class="collapse-title text-lg font-medium">
-          How does Hiredar generate AI-scored matches?
-        </div>
-        <div class="collapse-content">
-          <p>We combine large-language-model embeddings with domain-specific heuristics to compare résumé content to your job requirements across skills, experience, qualifications, and seniority.</p>
-        </div>
-      </div>
-
-      <div class="collapse collapse-plus bg-base-100">
-        <input type="checkbox" class="peer" />
-        <div class="collapse-title text-lg font-medium">
-          Is my data secure and private?
-        </div>
-        <div class="collapse-content">
-          <p>We implement administrative, technical, and physical safeguards to protect your information. Job seeker profiles are only visible to registered recruiters. See our Privacy Policy for complete details.</p>
-        </div>
-      </div>
-
-      <div class="collapse collapse-plus bg-base-100">
-        <input type="checkbox" class="peer" />
-        <div class="collapse-title text-lg font-medium">
-          Can I integrate Hiredar with my existing ATS?
-        </div>
-        <div class="collapse-content">
-          <p>Export matched candidates as CSV or PDF at any time. We are also working on direct integrations—contact us to discuss your specific ATS needs.</p>
+          <p>We support CSV/PDF exports today and have API integrations on the roadmap. Let us know what system you use and we can prioritize it.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Shared CTA -->
 <section class="py-20 bg-base-100">
   <div class="container mx-auto px-4 text-center max-w-3xl">
-    <h2 class="text-4xl font-bold mb-6">Ready to Change the Game?</h2>
+    <h2 class="text-4xl font-bold mb-6">Spin up your recruiter workspace in minutes</h2>
     <p class="text-xl mb-8 opacity-80">
-      Whether you're hiring or job hunting, Hiredar is your partner in fixing what's broken.
+      Upload a batch of résumés today and deliver a shortlist tomorrow. Hiredar handles the parsing, scoring, and presentation for you.
     </p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="{% url 'authentication:recruiter_signup' %}" class="btn btn-secondary btn-lg">Recruiter&nbsp;Signup</a>
-      <a href="{% url 'authentication:job_seeker_signup' %}" class="btn btn-primary btn-lg">Job&nbsp;Seeker&nbsp;Signup</a>
-    </div>
+    <a href="{% url 'authentication:signup' %}" class="btn btn-secondary btn-lg">Start&nbsp;For&nbsp;Free</a>
   </div>
 </section>
 

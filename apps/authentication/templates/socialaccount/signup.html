@@ -46,19 +46,17 @@
                     {% endif %}
                     
                     {% include 'core/components/fieldset_field.html' with label='Full Name' id='id_name' name='name' widget_type='text' widget_class='input input-bordered' placeholder='John Doe' %}
-                    
-                    <div class="mt-4">
-                        <div class="flex gap-4">
-                            <label class="label cursor-pointer justify-start gap-2">
-                                <input type="radio" name="user_type" value="job_seeker" class="radio radio-primary" {% if request.GET.user_type == 'job_seeker' %}checked{% endif %} />
-                                <span class="label-text">Job Seeker</span>
-                            </label>
-                            <label class="label cursor-pointer justify-start gap-2">
-                                <input type="radio" name="user_type" value="recruiter" class="radio radio-primary" {% if request.GET.user_type == 'recruiter' %}checked{% endif %} />
-                                <span class="label-text">Recruiter</span>
-                            </label>
-                        </div>
-                    </div>
+                    <input type="hidden" name="user_type" value="recruiter" />
+
+                    <label class="label cursor-pointer justify-start gap-2 mt-4">
+                        <input type="checkbox" name="us_only_certification" class="checkbox checkbox-primary" required />
+                        <span class="label-text text-sm text-left">
+                            I confirm that I am physically located in the United States and will use Hiredar exclusively for US-based recruiting activities.
+                        </span>
+                    </label>
+                    {% if form.us_only_certification.errors %}
+                        <div class="label text-error text-sm">{{ form.us_only_certification.errors|join:", " }}</div>
+                    {% endif %}
                     
                     {% if redirect_field_value %}
                         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />

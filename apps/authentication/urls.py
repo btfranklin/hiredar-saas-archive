@@ -10,7 +10,6 @@ from apps.authentication.views.account_views import (
 from apps.authentication.views.auth_views import (
     CustomLoginView,
     CustomLogoutView,
-    JobSeekerSignupView,
     RecruiterSignupView,
 )
 from apps.authentication.views.email_actions import SendVerificationEmailView
@@ -23,8 +22,7 @@ urlpatterns: list[URLPattern] = [
     path("login/", CustomLoginView.as_view(), name="login"),
     path("logout/", CustomLogoutView.as_view(), name="logout"),
     path("verify-email/", QuickEmailVerificationView.as_view(), name="verify_email"),
-    path("signup/job-seeker/", JobSeekerSignupView.as_view(), name="job_seeker_signup"),
-    path("signup/recruiter/", RecruiterSignupView.as_view(), name="recruiter_signup"),
+    path("signup/", RecruiterSignupView.as_view(), name="signup"),
     # Settings URLs
     path("settings/", UpdateAccountView.as_view(), name="settings"),
     path("settings/password/", ChangePasswordView.as_view(), name="change_password"),

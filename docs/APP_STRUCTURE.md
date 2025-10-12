@@ -4,7 +4,7 @@ This document describes the structure and organization of the Hiredar applicatio
 
 ## Overview
 
-Hiredar is a job matching platform that connects job seekers with recruiters using AI-powered matching algorithms. The application follows a modular Django architecture with separate apps for different functional areas. This document provides an overview of the codebase organization to help you navigate and understand the application.
+Hiredar is a recruiter-focused talent platform that ingests candidate résumés, generates structured profiles, and uses AI-powered matching to surface the strongest fits for open roles. The application follows a modular Django architecture with separate apps for different functional areas. This document provides an overview of the codebase organization to help you navigate and understand the application.
 
 > **Quick orientation for LLMs** – If you are a language model reading this file, start with the bullet-point "Cheat Sheet" below; then dive into the per-app sections only as needed.  Human readers may wish to do the same.
 
@@ -12,7 +12,7 @@ Hiredar is a job matching platform that connects job seekers with recruiters usi
 
 - **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, `messaging`, **new** `resume_processing` (background parsing of resumes).
 - **Shared LLM utilities**: `hiredar.llm` package (centralized OpenAI wrapper with retries, and XML sanitization/parsing helpers).
-- **Primary user types**: *job seeker* and *recruiter* (custom `User.user_type`).
+- **Primary user types**: *recruiter* (self-service) and administrative staff. Job seeker data now lives solely as recruiter-managed candidate records (no direct login).
 - **Key models**: `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
 - **Async engine**: Celery; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
 - **Front-end stack**: Tailwind + DaisyUI, HTMX for interactivity.
@@ -57,8 +57,7 @@ Handles user authentication, user types, and base user profile:
   - `UserManager`: Custom manager for user creation and management
 - **Views**:
   - `auth_views.py`:
-    - `JobSeekerSignupView`: Handles job seeker registration
-    - `RecruiterSignupView`: Handles recruiter registration
+    - `RecruiterSignupView`: Handles recruiter registration (only self-service flow)
     - `CustomLoginView`: Handles user login with email
     - `CustomLogoutView`: Handles user logout
   - `account_views.py`: Account management views
@@ -72,22 +71,21 @@ Handles user authentication, user types, and base user profile:
 - **URLs**:
   - `/auth/login/`: User login
   - `/auth/logout/`: User logout
-  - `/auth/signup/job-seeker/`: Job seeker registration
-  - `/auth/signup/recruiter/`: Recruiter registration
+  - `/auth/signup/`: Recruiter registration
 
 ### Job Seekers App (`apps/job_seekers`)
 
-Manages job seeker–specific functionality:
+Stores and enriches candidate records generated from recruiter uploads:
 
 - **Models**:
-  - `JobSeekerProfile`: Extended profile for job seekers including skills, experience, education, certifications, contact information, and social media links
-  - `RoleRecommendation`: Career recommendations for job seekers based on their skills and experience
-  - `TalentSheet`: AI-generated talent sheet for job seekers in the talent pool
+  - `JobSeekerProfile`: Structured candidate profile including skills, experience, education, certifications, and contact information
+  - `RoleRecommendation`: AI-generated role recommendations associated with a candidate profile
+  - `TalentSheet`: AI-generated talent sheet used for recruiter sharing and matching
   - `UploadedResumePool`: Represents a batch of resumes uploaded by a recruiter for a specific job opening
 - **Views**:
   - Organized in subdirectories for maintainability:
-    - `dashboard_views.py`: Dashboard and role recommendation views
-    - `job_seeker_profile_views.py`: Profile, resume view, and settings
+    - `dashboard_views.py`: Legacy job seeker dashboard views (retained for backend reuse)
+    - `job_seeker_profile_views.py`: Resume detail views leveraged by recruiters
     - `resume_processing_views.py`: Resume upload and processing views (`ResumeUploadView`, `ResumeProcessingTaskProgressView`, `ProfileCreateView`)
     - `api_views.py`: API endpoints for HTMX and JSON responses (`ToggleRoleInterestView`, `ToggleTalentPoolView`, `TalentPoolStatusView`)
     - `mixins.py`: Reusable mixins (`HTMXViewMixin`, `ProfileAccessMixin`)
@@ -106,14 +104,14 @@ Manages job seeker–specific functionality:
     - `talent_sheet_tasks.py`: Tasks for generating talent sheets
     - Imports from `apps.resume_processing.tasks`: `cleanup_resume_processing_progress` (now scheduled via Celery Beat), `save_resume_file`, `handle_resume_upload_task`
 - **Templates**:
-  - Job seeker–specific templates for signup, profiles, dashboards, and HTMX partials
+  - Candidate resume/talent sheet partials (consumed by recruiter surfaces); legacy job seeker templates remain for now
 - **Signals**:
-  - Signal handlers for job seeker–specific actions
+  - Signal handlers for job seeker record lifecycle hooks
 - **URLs**:
-  - `/job-seekers/profile/`, `/job-seekers/profile/create/`, `/job-seekers/dashboard/`, `/job-seekers/settings/`
   - `/job-seekers/resume/<pk>/`, `/job-seekers/resume-upload/`, `/job-seekers/task-status/<task_id>/`
   - `/job-seekers/recommendations/`, `/job-seekers/talent-sheet/`
   - API endpoints under `/job-seekers/api/`
+  - Legacy dashboard/settings/profile routes exist but are no longer reachable after the recruiter-only shift
 
 ### Recruiters App (`apps/recruiters`)
 
@@ -261,7 +259,7 @@ The service layer pattern separates business logic from presentation logic. Key 
 
 Example services in the job_seekers app:
 
-- `ProfileManager`: Handles job seeker profile operations
+- `ProfileManager`: Handles candidate profile operations
 - `ResumeProcessor`: Manages resume processing tasks
 - `TalentPoolManager`: Handles talent pool and role recommendation operations
 
@@ -270,7 +268,7 @@ Example services in the job_seekers app:
 Mixins provide reusable functionality that can be applied to multiple views:
 
 - **HTMXViewMixin**: Handles HTMX-specific request detection and response rendering
-- **ProfileAccessMixin**: Controls access permissions for job seekers
+- **ProfileAccessMixin**: Legacy helper that enforces candidate-facing permissions (largely unused post recruiter-only shift)
 - **Benefits**:
   - Avoids code duplication
   - Promotes consistent behavior across views
@@ -298,13 +296,13 @@ The application uses HTMX for dynamic interactions without writing custom JavaSc
 
 The authentication system uses Django's built-in authentication combined with django-allauth for social authentication:
 
-1. **Registration**: Users can sign up as either job seekers or recruiters through custom forms extending allauth's `SignupForm`.
+1. **Registration**: Only recruiters can sign up through a custom form extending allauth's `SignupForm`.
 2. **Email Authentication**: The system uses email for authentication instead of usernames, though usernames are auto-generated from email addresses in the format `emailprefix_randomsuffix`.
-3. **Profile Creation**: After signup, users are directed to create their profile based on their user type.
-4. **Social Authentication**: Users can authenticate using social accounts (Google, LinkedIn) with user type specified in the URL.
+3. **Profile Creation**: After signup, recruiters land directly on their dashboard.
+4. **Social Authentication**: Recruiters can authenticate using social accounts (Google, LinkedIn); user type is forced to recruiter regardless of URL parameters.
 5. **Username Generation**: Usernames are automatically generated from email addresses using allauth's `populate_username` hook.
-6. **User Type Assignment**: Social logins capture the user type from URL parameters, hidden form fields, or session data.
-7. **Dashboard Redirection**: After login, users are redirected to their appropriate dashboard based on their user type.
+6. **User Type Assignment**: Social logins default user type to recruiter when creating a new account.
+7. **Dashboard Redirection**: After login, recruiters are redirected to the recruiter dashboard; admins go to Django admin.
 
 The auth flow uses the following custom adapters:
 
@@ -331,19 +329,19 @@ The application integrates with django-allauth but also uses custom authenticati
 The job matching process is one of the key features of the application:
 
 1. **Job Creation**: Recruiters create job openings with required skills and details.
-2. **Resume Upload**: Job seekers upload their resumes, which are processed by the system.
+2. **Resume Upload**: Recruiters upload individual resumes or bulk ZIP archives, which are processed by the system.
 3. **Resume Processing Pipeline**:
    - Text extraction from PDF files
    - Conversion to structured XML using LLM integration
    - Parsing XML to extract key information
    - Updating JobSeekerProfile with extracted information
 4. **Talent Sheet Generation**:
-   - When job seekers join the talent pool, a basic placeholder talent sheet is created immediately
+   - When a candidate is added to a talent pool, a basic placeholder talent sheet is created immediately
    - An asynchronous task then enhances this talent sheet using LLM with a structured prompt
    - The LLM-generated talent sheet includes a promotional blurb, skill overview, and ideal roles
-   - For job seekers who have shown interest in role recommendations, these are incorporated into the talent sheet
+   - Recruiter-specified candidate preferences (e.g., role interests) are incorporated into the talent sheet when available
 5. **Vector Generation**: The system creates embeddings for both jobs and talent sheets.
-6. **Matching Algorithm**: Vector similarity is used to match job seekers to job openings based on skills, experience, and other factors.
+6. **Matching Algorithm**: Vector similarity is used to match candidate profiles to job openings based on skills, experience, and other factors.
 7. **Match Presentation**: Recruiters are shown matching candidates for their job openings with rating scores out of 10.
 8. **Match Analysis**: AI analyzes why a match is suitable and provides detailed summaries.
 
@@ -353,7 +351,7 @@ The application uses namespaced URLs for each app:
 
 - `/`: Home page and core functionality (`core` namespace)
 - `/auth/`: User authentication and account management (`authentication` namespace)
-- `/job-seekers/`: Job seeker-specific functionality (`job_seekers` namespace)
+- `/job-seekers/`: Candidate record functionality (resume views, processing endpoints) (`job_seekers` namespace)
 - `/recruiters/`: Recruiter-specific functionality, including job opening management (`recruiters` namespace)
 - `/matching/`: Candidate matching functionality (`matching` namespace)
 - `/messaging/`: Conversations and notifications (`messaging` namespace)
@@ -424,22 +422,24 @@ user = User.objects.create_user(
     email="example@example.com",
     password="password",
     name="Full Name",
-    user_type="job_seeker"
+    user_type="recruiter"
 )
 ```
 
 ## Working with Profiles
 
-Job seeker and recruiter profiles are automatically created through signals:
+Job seeker records are now managed by recruiters. Recruiter profiles remain tied to user accounts:
 
 ```python
-# Accessing a job seeker profile
-user = User.objects.get(email="jobseeker@example.com")
-profile = user.job_seeker_profile
-
 # Accessing a recruiter profile
 user = User.objects.get(email="recruiter@example.com")
-profile = user.recruiter_profile
+recruiter_profile = user.recruiter_profile
+
+# Accessing a candidate profile from a pool
+from apps.job_seekers.models import CandidatePool, JobSeekerProfile
+
+pool = CandidatePool.objects.first()
+candidate_profile = JobSeekerProfile.objects.filter(candidate_pool=pool).first()
 ```
 
 ## Using Service Classes
@@ -450,18 +450,18 @@ Service classes encapsulate business logic separately from views:
 # Using a service class
 from apps.job_seekers.services import ProfileManager, ResumeProcessor, TalentPoolManager
 
-# Get a profile
-profile = ProfileManager.get_profile(user)
+# Get a candidate profile using a pool or recruiter-owned record
+candidate_profile = ProfileManager.get_profile(pool)
 
-# Update a profile
-updated_profile = ProfileManager.create_or_update_profile(user, profile_data)
+# Update the candidate profile with new data
+updated_profile = ProfileManager.create_or_update_profile(pool, profile_data)
 
 # Process a resume (using the pipeline)
 from apps.job_seekers.utils.resume_processing.pipeline import process_resume
-result = process_resume(file_path, profile, task_id)
+result = process_resume(file_path, candidate_profile, task_id)
 
 # Manage talent pool
-talent_sheet = TalentPoolManager.create_or_update_talent_sheet(profile, talent_sheet_data)
+talent_sheet = TalentPoolManager.create_or_update_talent_sheet(candidate_profile, talent_sheet_data)
 ```
 
 ## Project Configuration
@@ -498,7 +498,7 @@ Security is a critical aspect of the application. Here are key security consider
 
 - User authentication is handled through Django's authentication system and django-allauth
 - Email verification is required for new accounts
-- User permissions are based on user types (job seeker or recruiter)
+- User permissions are based on user types (recruiter or admin)
 - Sensitive views are protected with LoginRequiredMixin
 
 ### Data Protection

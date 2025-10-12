@@ -129,7 +129,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             ("recruiter", "Recruiter"),
             ("admin", "Administrator"),
         ],
-        default="job_seeker",
+        default="recruiter",
     )
     is_staff = models.BooleanField(
         _("staff status"),

@@ -37,10 +37,8 @@ class AccountAdapter(DefaultAccountAdapter):
         if user.user_type == "admin" or user.is_staff:
             return reverse("admin:index")
 
-        # Otherwise redirect based on user type
-        if user.user_type == "recruiter":
-            return reverse("recruiters:dashboard")
-        return reverse("job_seekers:dashboard")
+        # Otherwise redirect recruiters to their dashboard
+        return reverse("recruiters:dashboard")
 
     def get_signup_redirect_url(self, request: HttpRequest) -> str:
         """Return the appropriate profile creation URL based on user type."""
@@ -51,10 +49,8 @@ class AccountAdapter(DefaultAccountAdapter):
         if user.user_type == "admin" or user.is_staff:
             return reverse("admin:index")
 
-        if user.user_type == "recruiter":
-            # Redirect recruiters to their dashboard (no standalone profile page exists)
-            return reverse("recruiters:dashboard")
-        return reverse("job_seekers:profile_create")
+        # Redirect recruiters to their dashboard (no standalone profile page exists)
+        return reverse("recruiters:dashboard")
 
     # --------------------------------------------------
     # E-mail Confirmation Flow
@@ -72,8 +68,8 @@ class AccountAdapter(DefaultAccountAdapter):
                 return reverse("admin:index")
             if getattr(user, "user_type", None) == "recruiter":
                 return reverse("recruiters:dashboard")
-        # Default: job-seeker dashboard
-        return reverse("job_seekers:dashboard")
+        # Default: recruiter dashboard
+        return reverse("recruiters:dashboard")
 
     def populate_username(self, request, user):
         """
@@ -101,12 +97,8 @@ class AccountAdapter(DefaultAccountAdapter):
             AuthenticatedUser, super().save_user(request, user, form, commit=False)
         )
 
-        # Get user type from the form
-        user_type = request.POST.get("user_type")
-        if user_type == "recruiter":
-            user.user_type = "recruiter"  # type: ignore
-        elif user_type == "job_seeker":
-            user.user_type = "job_seeker"  # type: ignore
+        # All self-service accounts are recruiters
+        user.user_type = "recruiter"  # type: ignore
 
         if commit:
             user.save()
@@ -267,15 +259,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
 
         # If this is a new user (about to be created), set default fields
         if not sociallogin.is_existing:
-            # Get any user_type from session or POST data
-            user_type = self._get_user_type(request)
-
-            # Set default user type if specified
-            if user_type in ["recruiter", "job_seeker"]:
-                sociallogin.user.user_type = user_type
-            else:
-                # Always default to recruiter if not specified
-                sociallogin.user.user_type = "recruiter"
+            sociallogin.user.user_type = "recruiter"
 
             # Set name from social account if available
             if not sociallogin.user.name or sociallogin.user.name == "New User":
@@ -370,32 +354,3 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
     def get_connect_redirect_url(self, request: HttpRequest, socialaccount: Any) -> str:
         """Handle redirect after connecting a social account to an existing user."""
         return reverse("authentication:settings")
-
-    def _get_user_type(self, request: HttpRequest) -> str | None:
-        """
-        Get the user type from various sources.
-
-        Order of precedence:
-        1. POST data
-        2. Session
-        3. URL parameters
-        4. Default to None (will be handled elsewhere)
-        """
-        # Try to get from POST data
-        user_type = request.POST.get("user_type")
-        if user_type in ["recruiter", "job_seeker"]:
-            return user_type
-
-        # Try to get from session (if available)
-        session = getattr(request, "session", None)
-        if session:
-            user_type = session.get("user_type")
-            if user_type in ["recruiter", "job_seeker"]:
-                return user_type
-
-        # Try to get from URL parameters
-        user_type = request.GET.get("user_type")
-        if user_type in ["recruiter", "job_seeker"]:
-            return user_type
-
-        return None

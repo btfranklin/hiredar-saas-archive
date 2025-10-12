@@ -12,7 +12,6 @@ from apps.core.views.index import HomeView
 from apps.core.views.info import (
     AboutView,
     ContactView,
-    JobSeekerFeaturesView,
     ManifestoView,
     PrivacyPolicyView,
     RecruiterFeaturesView,
@@ -42,11 +41,6 @@ urlpatterns = [
         "features/recruiters/",
         RecruiterFeaturesView.as_view(),
         name="features_recruiters",
-    ),
-    path(
-        "features/job-seekers/",
-        JobSeekerFeaturesView.as_view(),
-        name="features_job_seekers",
     ),
     path("pricing/", RecruiterPricingSignupView.as_view(), name="pricing"),
     path("about/", AboutView.as_view(), name="about"),

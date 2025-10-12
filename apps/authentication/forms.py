@@ -34,7 +34,7 @@ class CustomUserCreationForm(UserCreationForm):
 
         user_type = cleaned_data.get("user_type")
 
-        if user_type not in ["job_seeker", "recruiter"]:
+        if user_type not in ["recruiter", "admin"]:
             raise forms.ValidationError("Invalid user type")
 
         return cleaned_data
@@ -91,51 +91,14 @@ class CustomSignupForm(forms.Form):
 
     name = forms.CharField(max_length=255, required=False)
     email = forms.EmailField(required=True)
-    user_type = forms.ChoiceField(
-        choices=[("job_seeker", "Job Seeker"), ("recruiter", "Recruiter")],
-        required=True,
-        widget=forms.RadioSelect,
-    )
 
     def signup(self, request: Any, user: User) -> User:
         """Save the user's signup data."""
         if self.cleaned_data.get("name"):
             user.name = self.cleaned_data["name"]
         user.email = self.cleaned_data["email"]
-        user.user_type = cast(str, self.cleaned_data["user_type"])
+        user.user_type = "recruiter"
         user.save(update_fields=["name", "email", "user_type"])
-        return user
-
-
-class JobSeekerSignupForm(AllAuthSignupForm):
-    """
-    Custom signup form for job seekers.
-
-    This form extends allauth's SignupForm to support job seeker-specific behavior.
-    """
-
-    us_only_certification = forms.BooleanField(
-        required=True,
-        label=(
-            "I confirm that I am physically located in the United States and will "
-            "use Hiredar exclusively for US-based employment purposes."
-        ),
-    )
-
-    def save(self, request: HttpRequest) -> User:
-        """Save the user with job seeker user type."""
-        # First save the user using allauth's parent method
-        user = super().save(request)  # type: ignore
-        assert isinstance(user, User), "Expected a User instance"
-
-        # Set job seeker specific fields
-        user.user_type = "job_seeker"
-        user.name = "New User"  # Default name until resume is parsed
-
-        # Mark the user as having certified US-only usage
-        user.is_us_certified = True
-        user.save()
-
         return user
 
 
@@ -201,15 +164,6 @@ class SocialAccountSignupForm(SocialSignupForm):
         widget=forms.TextInput(attrs={"placeholder": "Your full name"}),
     )
 
-    user_type = forms.ChoiceField(
-        choices=[
-            ("job_seeker", "Job Seeker"),
-            ("recruiter", "Recruiter"),
-        ],
-        widget=forms.RadioSelect,
-        initial="job_seeker",
-    )
-
     us_only_certification = forms.BooleanField(
         required=True,
         label=(
@@ -223,8 +177,7 @@ class SocialAccountSignupForm(SocialSignupForm):
         user = super().save(request)
 
         # Set user type
-        user_type = self.cleaned_data.get("user_type", "job_seeker")
-        user.user_type = user_type
+        user.user_type = "recruiter"
 
         # Set name if provided
         if self.cleaned_data.get("name"):

@@ -37,7 +37,4 @@ class SendVerificationEmailView(LoginRequiredMixin, View):
                 "Verification e-mail sent! Check your inbox (or spam folder).",
             )
 
-        # Redirect back to the appropriate settings page.
-        if user.user_type == "job_seeker":
-            return redirect("job_seekers:settings")
         return redirect("recruiters:settings")

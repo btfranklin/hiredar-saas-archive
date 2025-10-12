@@ -179,14 +179,10 @@
         <div class="navbar container mx-auto">
             <div class="navbar-start">
                 {% if user.is_authenticated %}
-                    {% if user.user_type == 'recruiter' %}
-                        <a href="{% url 'recruiters:dashboard' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
-                    {% elif user.user_type == 'job_seeker' %}
-                        <a href="{% url 'job_seekers:dashboard' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
-                    {% elif user.user_type == 'admin' %}
+                    {% if user.user_type == 'admin' or user.is_staff %}
                         <a href="/admin/" class="font-bold text-3xl tracking-tight">Hiredar</a>
                     {% else %}
-                        <a href="{% url 'core:home' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
+                        <a href="{% url 'recruiters:dashboard' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
                     {% endif %}
                 {% else %}
                     <a href="{% url 'core:home' %}" class="font-bold text-3xl tracking-tight">Hiredar</a>
@@ -206,24 +202,12 @@
                         <a href="{% url 'core:manifesto' %}" class="{% if request.resolver_match.url_name == 'manifesto' %}active{% endif %}">Manifesto</a>
                     </li>
 
-                    <li tabindex="0" class="dropdown dropdown-hover">
-                        <details>
-                            <summary>Features</summary>
-                            <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                                <li><a href="{% url 'core:features_recruiters' %}">for Recruiters</a></li>
-                                <li><a href="{% url 'core:features_job_seekers' %}">for Job Seekers</a></li>
-                            </ul>
-                        </details>
+                    <li>
+                        <a href="{% url 'core:features_recruiters' %}" class="{% if request.resolver_match.url_name == 'features_recruiters' %}active{% endif %}">Features</a>
                     </li>
 
-                    <li tabindex="0" class="dropdown dropdown-hover">
-                        <details>
-                            <summary>Sign&nbsp;Up</summary>
-                            <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                                <li><a href="{% url 'authentication:recruiter_signup' %}">as Recruiter</a></li>
-                                <li><a href="{% url 'authentication:job_seeker_signup' %}">as Job Seeker</a></li>
-                            </ul>
-                        </details>
+                    <li>
+                        <a href="{% url 'authentication:signup' %}" class="{% if request.resolver_match.url_name == 'signup' %}active{% endif %}">Sign&nbsp;Up</a>
                     </li>
 
                     <li>
@@ -317,17 +301,13 @@
                             </div>
                         </div>
                         <ul tabindex="0" class="dropdown-content menu menu-sm mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                            {% if user.user_type == 'job_seeker' %}
-                                <li><a href="{% url 'job_seekers:profile' %}">Profile</a></li>
-                            {% endif %}
-                            {% comment %}
-                            <li><a href="{% url 'messaging:conversations' %}">Messages</a></li>
-                            {% endcomment %}
-                            {% if user.user_type == 'job_seeker' %}
-                                <li><a href="{% url 'job_seekers:settings' %}">Settings</a></li>
-                            {% else %}
-                                <li><a href="{% url 'recruiters:settings' %}">Settings</a></li>
-                            {% endif %}
+                            <li>
+                                {% if user.user_type == 'admin' or user.is_staff %}
+                                    <a href="/admin/">Admin</a>
+                                {% else %}
+                                    <a href="{% url 'recruiters:settings' %}">Settings</a>
+                                {% endif %}
+                            </li>
                             <li><a href="{% url 'authentication:logout' %}">Logout</a></li>
                         </ul>
                     </div>
