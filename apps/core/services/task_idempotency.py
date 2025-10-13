@@ -1,5 +1,5 @@
 """
-Utilities for idempotent task management.
+Service helpers for idempotent task management.
 """
 
 import hashlib

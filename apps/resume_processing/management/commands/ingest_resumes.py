@@ -15,7 +15,7 @@ from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
-from apps.resume_processing.utils.pipeline import process_resume as run_resume_pipeline
+from apps.resume_processing.services.pipeline import process_resume as run_resume_pipeline
 
 # Define a timeout for waiting for the task (e.g., 5 minutes)
 TASK_WAIT_TIMEOUT = 300  # seconds

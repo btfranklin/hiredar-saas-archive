@@ -115,7 +115,7 @@ def parse_llm_xml_response(
     except ET.ParseError as exc:
         # Import lazily to avoid heavy dependency / cycles
         try:
-            from apps.resume_processing.utils.xml_error_reporting import (
+            from apps.resume_processing.services.xml_error_reporting import (
                 log_xml_error,  # type: ignore
             )
         except ImportError:

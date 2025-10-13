@@ -9,7 +9,7 @@ from django.db import close_old_connections, transaction
 from django.test import TestCase, TransactionTestCase
 
 from apps.authentication.models import User
-from apps.core.utils.task_utils import IdempotentTaskManager
+from apps.core.services.task_idempotency import IdempotentTaskManager
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet
 from apps.job_seekers.services.talent_sheet_service import TalentSheetService
 from apps.matching.models import CandidateMatch
@@ -190,7 +190,7 @@ class IdempotentTaskTests(TestCase):
         self.assertTrue(task_id_1.startswith("test_task_"))
         self.assertLess(len(task_id_1), 50)
 
-    @patch("apps.core.utils.task_utils.cache")
+    @patch("apps.core.services.task_idempotency.cache")
     def test_task_running_markers(self, mock_cache):
         """Test task running marker functionality."""
         mock_cache.add.return_value = True
@@ -207,7 +207,7 @@ class IdempotentTaskTests(TestCase):
         IdempotentTaskManager.unmark_task_running(task_id)
         mock_cache.delete.assert_called_with(f"task_running:{task_id}")
 
-    @patch("apps.core.utils.task_utils.cache")
+    @patch("apps.core.services.task_idempotency.cache")
     def test_task_already_running_prevention(self, mock_cache):
         """Test that already running tasks are prevented."""
         mock_cache.add.return_value = False  # Simulate task already running
@@ -218,7 +218,7 @@ class IdempotentTaskTests(TestCase):
         result = IdempotentTaskManager.mark_task_running(task_id)
         self.assertFalse(result)
 
-    @patch("apps.core.utils.task_utils.AsyncResult")
+    @patch("apps.core.services.task_idempotency.AsyncResult")
     def test_task_status_checking(self, mock_async_result):
         """Test task status checking functionality."""
         mock_result = mock_async_result.return_value
@@ -233,7 +233,7 @@ class IdempotentTaskTests(TestCase):
         is_running = IdempotentTaskManager.is_task_running("test_task_123")
         self.assertFalse(is_running)
 
-    @patch("apps.core.utils.task_utils.cache")
+    @patch("apps.core.services.task_idempotency.cache")
     def test_safe_task_execution_prevents_duplicates(self, mock_cache):
         """Test that safe task execution prevents duplicate runs."""
         mock_cache.add.return_value = False  # Simulate task already running
@@ -247,8 +247,8 @@ class IdempotentTaskTests(TestCase):
         )
         self.assertIsNone(result)
 
-    @patch("apps.core.utils.task_utils.cache")
-    @patch("apps.core.utils.task_utils.AsyncResult")
+    @patch("apps.core.services.task_idempotency.cache")
+    @patch("apps.core.services.task_idempotency.AsyncResult")
     def test_safe_task_execution_starts_new_task(self, mock_async_result, mock_cache):
         """Test that safe task execution starts new tasks when none running."""
         mock_cache.add.return_value = True  # Simulate no task running

@@ -1,4 +1,4 @@
-# This package aggregates the job_seekers models split into submodules
+"""Re-export commonly used job seeker models for convenience."""
 from .profile import CandidatePool, JobSeekerProfile
 from .talent import RoleRecommendation, TalentSheet
 

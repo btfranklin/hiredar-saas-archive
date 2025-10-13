@@ -8,7 +8,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 
 from apps.core.tasks import safe_async_task
-from apps.core.utils.task_utils import IdempotentTaskManager
+from apps.core.services.task_idempotency import IdempotentTaskManager
 from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.job_seekers.services.talent_sheet_service import TalentSheetService

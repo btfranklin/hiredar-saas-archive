@@ -14,8 +14,8 @@ from apps.recruiters.models import (
     JobOpeningProcessingTask,
     RecruiterProfile,
 )
-from apps.recruiters.utils.job_processing.llm_processor import convert_text_to_xml
-from apps.recruiters.utils.job_processing.xml_parser import create_job_opening_from_xml
+from apps.recruiters.services.job_processing.llm_processor import convert_text_to_xml
+from apps.recruiters.services.job_processing.xml_parser import create_job_opening_from_xml
 
 # Setup logging
 logger = logging.getLogger(__name__)

@@ -12,7 +12,7 @@ from apps.matching.services.talent_sheet_embeddings import (
     upsert_talent_embeddings,
 )
 from apps.matching.tasks.common import get_embedding, logger
-from apps.resume_processing.utils.xml_parser import extract_personal_details
+from apps.resume_processing.services.xml_parser import extract_personal_details
 
 
 @shared_task(name="apps.matching.tasks.create_talent_sheet_embeddings")

@@ -66,7 +66,7 @@ def _get_mime(
 # ---------------------------------------------------------------------------
 
 # Keep the full list in sync with *unstructured* integration layer
-from apps.resume_processing.utils.extraction import SUPPORTED_RESUME_EXTENSIONS
+from apps.resume_processing.services.extraction import SUPPORTED_RESUME_EXTENSIONS
 
 _EXT_TO_ALLOWED_MIME: dict[str, set[str]] = {
     ".pdf": {"application/pdf"},

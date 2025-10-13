@@ -43,7 +43,7 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
         Exception: For any other processing errors
     """
     prompt_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
+        os.path.dirname(__file__),
         "prompts",
         "convert_job_description_to_xml.prompt.md",
     )

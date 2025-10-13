@@ -47,7 +47,7 @@ def process_resume_for_pool(
 
         # Run the resume-processing pipeline
         # Deferred import to avoid circular import
-        from apps.resume_processing.utils.pipeline import process_resume
+        from apps.resume_processing.services.pipeline import process_resume
 
         result = process_resume(file_path, temp_profile, None)
 

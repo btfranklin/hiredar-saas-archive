@@ -10,7 +10,7 @@ from django.apps import apps
 from django.conf import settings
 from django.db import transaction
 
-from apps.core.utils.task_utils import IdempotentTaskManager
+from apps.core.services.task_idempotency import IdempotentTaskManager
 from apps.matching.core.matching import match_job_to_talents
 from apps.matching.core.retrieval import get_job_section_embedding
 from apps.matching.services.candidate_match_service import CandidateMatchService

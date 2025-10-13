@@ -20,7 +20,7 @@ from apps.job_seekers.tasks.pool_tasks import (
     process_resume_for_pool,
 )
 from apps.recruiters.models import BulkResumeUpload, ResumeFile
-from apps.resume_processing.utils.extraction import (
+from apps.resume_processing.services.extraction import (
     SUPPORTED_RESUME_EXTENSIONS,  # local import to avoid cycles
 )
 

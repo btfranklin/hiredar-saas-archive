@@ -14,9 +14,9 @@ from typing import Any, Callable, Final
 from celery import current_app as celery_app
 from django.conf import settings  # type: ignore
 
-from apps.core.utils.task_utils import IdempotentTaskManager  # type: ignore
+from apps.core.services.task_idempotency import IdempotentTaskManager  # type: ignore
 
-# from apps.core.utils.task_utils import IdempotentTaskManager  # type: ignore
+# from apps.core.services.task_idempotency import IdempotentTaskManager  # type: ignore
 
 logger = logging.getLogger(__name__)
 

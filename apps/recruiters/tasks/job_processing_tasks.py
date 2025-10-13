@@ -11,7 +11,7 @@ from typing import Any
 
 from celery import shared_task
 from apps.recruiters.models import RecruiterProfile
-from apps.recruiters.utils.job_processing.pipeline import process_job_description
+from apps.recruiters.services.job_processing.pipeline import process_job_description
 
 # Setup logging
 logger = logging.getLogger(__name__)

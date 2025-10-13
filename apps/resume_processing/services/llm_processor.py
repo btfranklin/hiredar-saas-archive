@@ -15,7 +15,7 @@ from django.conf import settings
 from dotenv import load_dotenv
 from promptdown import StructuredPrompt
 
-from apps.resume_processing.utils.xml_error_reporting import log_xml_error
+from apps.resume_processing.services.xml_error_reporting import log_xml_error
 from hiredar.llm import get_llm_response
 from hiredar.llm.xml_utils import sanitize_xml_response
 

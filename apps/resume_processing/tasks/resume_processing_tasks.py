@@ -75,7 +75,7 @@ def handle_resume_upload_task(
 
         # Process the resume with progress tracking
         # Deferred import to avoid circular import
-        from apps.resume_processing.utils.pipeline import process_resume
+        from apps.resume_processing.services.pipeline import process_resume
 
         result = process_resume(uploaded_file_path, profile, task_id=task_id)
 
