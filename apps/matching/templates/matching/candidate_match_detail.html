@@ -27,7 +27,7 @@
         </div>
         {% if request.user.user_type == 'recruiter' %}
             <div class="flex flex-wrap gap-2">
-                {% include 'matching/partials/contact_controls.html' with job_seeker_id=job_seeker.id show_contact=show_contact %}
+                {% include 'matching/partials/contact_controls.html' with job_seeker_id=job_seeker.id %}
             </div>
         {% endif %}
     </div>
@@ -194,72 +194,4 @@
     </div>
 </div>
 
-<!-- Withdraw Interest Confirmation Modal -->
-<dialog id="confirm-withdraw-modal" class="modal">
-  <div class="modal-box">
-    <h3 class="font-bold text-lg">Withdraw Your Interest?</h3>
-    <p class="py-4">
-      Do you want to withdraw your interest in {% if job_seeker.user_owner %}{{ job_seeker.user_owner.get_full_name }}{% else %}{{ job_seeker.candidate_name }}{% endif %} for this job?
-      <br><br>
-      This will remove your message and the candidate will not be notified.
-    </p>
-    <div class="modal-action">
-      <form method="dialog">
-        <button class="btn btn-ghost">Cancel</button>
-      </form>
-      <form id="withdraw-form" 
-            hx-post="{% url 'matching:withdraw_interest' job_opening.id job_seeker.id %}" 
-            hx-target="#contact-shortlist-container">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-error">
-          <span class="htmx-indicator loading loading-spinner loading-xs mr-2"></span>
-          Yes, withdraw
-        </button>
-      </form>
-    </div>
-  </div>
-</dialog>
-
-<dialog id="confirm-interest-modal" class="modal">
-  <div class="modal-box">
-    <h3 class="font-bold text-lg">Ask Candidate About Interest</h3>
-    <p class="py-4">
-      You're about to let {% if job_seeker.user_owner %}{{ job_seeker.user_owner.get_full_name }}{% else %}this candidate{% endif %} know that you believe they might be a fit for the <strong>{{ job_opening.title }}</strong> role.
-      They can respond with a single click. If they accept, you'll be able to chat freely and view their full resume.
-    </p>
-    <div class="modal-action">
-      <form method="dialog">
-        <button class="btn btn-ghost">Cancel</button>
-      </form>
-      <form id="interest-form" 
-            hx-post="{% url 'messaging:conversation_create' job_opening.id job_seeker.id %}"
-            hx-target="#contact-shortlist-container"
-            hx-swap="outerHTML">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">
-          <span class="htmx-indicator loading loading-spinner loading-xs mr-2"></span>
-          Send Request
-        </button>
-      </form>
-    </div>
-  </div>
-</dialog>
-
-<!-- Recruiter Contact / Interest Status Buttons -->
-{% if request.user.user_type == 'recruiter' %}
-  <script>
-    // Auto-open modal if server instructs via HX-Trigger (optional future)
-  </script>
-{% endif %}
-
-<script>
-  // Add a listener for the closeModal event from HX-Trigger
-  document.addEventListener('closeModal', function(event) {
-    if (event.detail && event.detail.id) {
-      document.getElementById(event.detail.id).close();
-    }
-  });
-
-  // Close modal when HX-Trigger sent
-</script>
-{% endblock %} 
+{% endblock %}

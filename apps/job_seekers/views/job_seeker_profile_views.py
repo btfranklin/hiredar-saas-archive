@@ -12,7 +12,6 @@ from django.views.generic import DetailView, TemplateView
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import JobSeekerProfile
 from apps.job_seekers.services import ProfileManager
-from apps.messaging.models import Conversation
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -79,50 +78,19 @@ class ResumeView(LoginRequiredMixin, DetailView):
         if profile.candidate_pool and profile.candidate_pool.recruiter == user:
             return super().dispatch(request, *args, **kwargs)
 
-        job_seeker = profile.user_owner
-
-        # Check if there's a conversation where the job seeker has expressed interest
-        conversation = (
-            Conversation.objects.filter(participants=user)
-            .filter(participants=job_seeker)
-            .first()
+        messages.error(
+            request,
+            "This resume is not available outside of your candidate pools.",
         )
-
-        if conversation and conversation.status not in [
-            "candidate_interested",
-            "active",
-        ]:
-            conversation = None
-
-        if not conversation:
-            messages.error(
-                request,
-                "You can only view resumes of candidates who have expressed interest in your job openings.",
-            )
-            return redirect("recruiters:dashboard")
-
-        return super().dispatch(request, *args, **kwargs)
+        return redirect("recruiters:dashboard")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add conversation to context."""
         context = super().get_context_data(**kwargs)
         profile = self.get_object()
 
-        # Get the conversation for context
-        conversation = (
-            Conversation.objects.filter(participants=self.request.user)
-            .filter(participants=profile.user_owner)
-            .first()
-        )
-
-        if conversation and conversation.status not in [
-            "candidate_interested",
-            "active",
-        ]:
-            conversation = None
-
-        context["conversation"] = conversation
-        context["job_opening"] = conversation.job_opening if conversation else None
+        context["conversation"] = None
+        context["job_opening"] = None
 
         return context
 

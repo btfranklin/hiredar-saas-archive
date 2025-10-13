@@ -9,14 +9,9 @@
         <!-- Header with navigation and candidate info -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                {% if conversation %}
-                {% url 'messaging:conversation_detail' conversation.id as back_url %}
-                {% include 'core/components/back_button.html' with href=back_url label='Back to Conversation' %}
-                {% else %}
                 {% url 'recruiters:dashboard' as back_url %}
                 {% include 'core/components/back_button.html' with href=back_url label='Back to Dashboard' %}
-                {% endif %}
-                
+
                 <h1 class="text-3xl font-bold">Candidate Resume</h1>
                 <p class="text-lg text-base-content/70">
                     {% if profile.user_owner %}
@@ -196,13 +191,7 @@
                 {% endif %}
                 
                 <!-- Action buttons -->
-                <div class="flex justify-end mt-4">
-                    {% if conversation %}
-                    <a href="{% url 'messaging:conversation_detail' conversation.id %}" class="btn btn-primary">
-                        Continue Conversation
-                    </a>
-                    {% endif %}
-                </div>
+                <div class="flex justify-end mt-4"></div>
             </div>
         </div>
     </div>

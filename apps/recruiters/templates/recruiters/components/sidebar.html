@@ -14,7 +14,6 @@
             
             <h1 class="text-xl font-bold">{{ user.get_full_name }}</h1>
             <p class="text-sm text-base-content/70">{{ user.email }}</p>
-            <div class="badge badge-accent mt-2">Recruiter</div>
             
             {% with rec_profile=user.recruiter_profile %}
                 {% if rec_profile %}
@@ -37,11 +36,6 @@
             <li><a href="{% url 'recruiters:job_openings_list' %}" class="{% if active_page == 'jobs' %}active{% endif %}">
                 <i class="fas fa-briefcase mr-2"></i> My Job Openings
             </a></li>
-            {% comment %}
-            <li><a href="{% url 'messaging:conversations' %}" class="{% if active_page == 'messages' %}active{% endif %}">
-                <i class="fas fa-envelope mr-2"></i> Messages
-            </a></li>
-            {% endcomment %}
             <li><a href="{% url 'recruiters:credits' %}" class="{% if active_page == 'credits' %}active{% endif %}">
                 <i class="fas fa-credit-card mr-2"></i> Credits
             </a></li>

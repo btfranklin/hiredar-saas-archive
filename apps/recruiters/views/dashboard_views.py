@@ -15,7 +15,6 @@ from django.views.generic import TemplateView
 from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models.profile import CandidatePool
 from apps.matching.models import CandidateMatch
-from apps.messaging.models import Notification
 from apps.recruiters.models import JobOpening
 
 
@@ -72,12 +71,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             .annotate(match_type=Value("holistic", output_field=CharField()))
             .order_by("-holistic_score")[:5]
         )
-
-        # Get unread notifications
-        context["notifications"] = Notification.objects.filter(
-            user=cast(Any, user),
-            is_read=False,
-        ).order_by("-created_at")[:5]
 
         return context
 

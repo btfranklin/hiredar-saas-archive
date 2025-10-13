@@ -13,7 +13,6 @@ from apps.job_seekers.models import RoleRecommendation, TalentSheet
 from apps.job_seekers.services import ProfileManager
 from apps.job_seekers.views.mixins import JobSeekerRequiredMixin
 from apps.matching.models import CandidateMatch
-from apps.messaging.models import Conversation, Message, Notification
 
 
 class DashboardView(JobSeekerRequiredMixin, TemplateView):
@@ -36,13 +35,6 @@ class DashboardView(JobSeekerRequiredMixin, TemplateView):
             status="pending",
         ).order_by("-created_at")[:5]
 
-        # Get unread notifications
-        context["notifications"] = Notification.objects.filter(
-            user=cast(
-                Any, user
-            ),  # Cast to Any to avoid type incompatibility with the model field
-            is_read=False,
-        ).order_by("-created_at")[:5]
 
         # Get role recommendations
         # First, get roles the user is interested in
@@ -71,29 +63,6 @@ class DashboardView(JobSeekerRequiredMixin, TemplateView):
         context["personal_tagline"] = (
             getattr(profile, "personal_tagline", None) or "Job Seeker"
         )
-
-        # ---------------------------------------------------
-        # Recent Conversations Panel
-        # ---------------------------------------------------
-
-        # Fetch the five most recently updated conversations for the current user
-        recent_conversations = (
-            Conversation.objects.filter(participants=user)
-            .order_by("-updated_at")
-            .distinct()[:5]
-        )
-
-        # Attach helper attributes that the template expects (mirrors conversation list view)
-        for conv in recent_conversations:
-            conv.display_other_participant = conv.get_other_participant(cast(Any, user))  # type: ignore[attr-defined]
-            conv.unread_count = (  # type: ignore[attr-defined]
-                Message.objects.filter(conversation=conv, is_read=False)
-                .exclude(sender=user)
-                .count()
-            )
-            conv.message_count = conv.messages.count()  # type: ignore[attr-defined]
-
-        context["recent_conversations"] = recent_conversations
 
         return context
 

@@ -58,7 +58,7 @@
                         <li>Presenting your talent sheet to interested recruiters</li>
                         <li>Prioritizing roles similar to those you've marked as interesting</li>
                     </ul>
-                    <p class="mt-3 text-sm">Recruiters are now able to discover your profile when searching for candidates with your skills. If they're interested, they'll reach out via our messaging system. Check back regularly for new matches and messages.</p>
+                    <p class="mt-3 text-sm">Recruiters are now able to discover your profile when searching for candidates with your skills. If they're interested, they'll reach out using the contact details you provide. Check back regularly for new matches.</p>
                     {% else %}
                     <h3 class="text-lg font-semibold mb-2 text-primary">How Our AI Talent Agent Works</h3>
                     <p class="mb-2">When you enable job matching, our AI talent agent will:</p>
@@ -68,7 +68,7 @@
                         <li>Present your qualifications in the best light</li>
                         <li>Prioritize roles you've marked as interesting</li>
                     </ul>
-                    <p class="mt-3 text-sm">Recruiters can view your profile and may reach out via our messaging system if they're interested. You can disable job matching at any time.</p>
+                    <p class="mt-3 text-sm">Recruiters can view your profile and may reach out directly if they're interested. You can disable job matching at any time.</p>
                     {% endif %}
                 </div>
             </div>
@@ -76,29 +76,7 @@
             <!-- Recommended Roles (dynamically replaceable) -->
             {% include 'job_seekers/partials/recommended_roles.html' %}
             
-            <!-- Recent Conversations -->
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">Recent Conversations</h2>
-                    <!-- Styled button matching the appearance of our standard back navigation button -->
-                    <a href="{% url 'messaging:conversations' %}" class="btn btn-outline btn-primary btn-sm">
-                        <span>View All</span>
-                    </a>
-                </div>
-                
-                {% if recent_conversations %}
-                    <div class="space-y-4">
-                        {% for conversation in recent_conversations %}
-                            {% include 'messaging/components/conversation_summary_card.html' with conversation=conversation %}
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <span>You have no messages yet.</span>
-                    </div>
-                {% endif %}
-            </div>
+            <!-- Recent Conversations removed -->
         </div>
     </div>
 </div>

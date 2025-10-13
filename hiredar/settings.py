@@ -196,7 +196,6 @@ INSTALLED_APPS = [
     "apps.job_seekers.apps.JobSeekersConfig",
     "apps.recruiters.apps.RecruitersConfig",
     "apps.matching.apps.MatchingConfig",
-    "apps.messaging.apps.MessagingConfig",
     "apps.core.apps.CoreConfig",
     "apps.reports.apps.ReportsConfig",
     # Resume processing subsystem
@@ -726,17 +725,19 @@ MATCHING_EMBEDDING_MODEL = os.getenv(
 )
 
 # Job Opening Processing
-RECRUITERS_JOB_PROCESSING_MODEL = os.getenv("RECRUITERS_JOB_PROCESSING_MODEL", "gpt-5")
+RECRUITERS_JOB_PROCESSING_MODEL = os.getenv(
+    "RECRUITERS_JOB_PROCESSING_MODEL", "gpt-5-mini"
+)
 RECRUITERS_JOB_PROCESSING_REASONING_EFFORT = os.getenv(
-    "RECRUITERS_JOB_PROCESSING_REASONING_EFFORT", "medium"
+    "RECRUITERS_JOB_PROCESSING_REASONING_EFFORT", "minimal"
 )
 
 # Resume Processing
 JOBSEEKERS_RESUME_PROCESSING_MODEL = os.getenv(
-    "JOBSEEKERS_RESUME_PROCESSING_MODEL", "gpt-5"
+    "JOBSEEKERS_RESUME_PROCESSING_MODEL", "gpt-5-mini"
 )
 JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT = os.getenv(
-    "JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT", "medium"
+    "JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT", "minimal"
 )
 
 # Job Seeker Role Recommendations

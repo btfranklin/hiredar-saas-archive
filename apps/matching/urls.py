@@ -11,7 +11,6 @@ from apps.matching.views.candidate_views import (
     add_to_shortlist,
     candidate_match_analysis_status,
     remove_from_shortlist,
-    withdraw_interest,
 )
 from apps.matching.views.matching_views import match_job_api, match_talent_api
 
@@ -28,11 +27,6 @@ urlpatterns = [
         "<int:job_id>/candidates/<int:candidate_id>/analysis-status/",
         candidate_match_analysis_status,
         name="candidate_match_analysis_status",
-    ),
-    path(
-        "<int:job_id>/candidates/<int:candidate_id>/withdraw-interest/",
-        withdraw_interest,
-        name="withdraw_interest",
     ),
     path(
         "<int:job_id>/candidates/<int:candidate_id>/shortlist/",

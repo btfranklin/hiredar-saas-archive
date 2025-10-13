@@ -10,7 +10,7 @@ Hiredar is a recruiter-focused talent platform that ingests candidate résumés,
 
 ## Cheat Sheet (TL;DR)
 
-- **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, `messaging`, **new** `resume_processing` (background parsing of resumes).
+- **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, **new** `resume_processing` (background parsing of resumes).
 - **Shared LLM utilities**: `hiredar.llm` package (centralized OpenAI wrapper with retries, and XML sanitization/parsing helpers).
 - **Primary user types**: *recruiter* (self-service) and administrative staff. Job seeker data now lives solely as recruiter-managed candidate records (no direct login).
 - **Key models**: `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
@@ -188,25 +188,6 @@ Manages candidate matching and embedding generation/storage:
 - **URLs**:
   - `/matching/`: URL patterns for candidate matching views and APIs
 
-### Messaging App (`apps/messaging`)
-
-Handles conversations and notifications between users:
-
-- **Models**:
-  - `Conversation`: Conversation between users
-  - `Message`: Individual messages in conversations
-  - `Notification`: Notifications for users
-- **Views**:
-  - Organized in subdirectories for conversation and notification management
-- **Templates**:
-  - Messaging-related templates for conversations and notifications
-- **Admin**:
-  - Custom admin interfaces for messaging models
-- **URLs**:
-  - `/messaging/conversations/`: List of conversations
-  - `/messaging/conversations/<id>/`: Specific conversation
-  - `/messaging/notifications/`: User notifications
-
 ### Resume Processing App (`apps/resume_processing`)
 
 Dedicated background processing pipeline for PDF resumes.
@@ -354,7 +335,6 @@ The application uses namespaced URLs for each app:
 - `/job-seekers/`: Candidate record functionality (resume views, processing endpoints) (`job_seekers` namespace)
 - `/recruiters/`: Recruiter-specific functionality, including job opening management (`recruiters` namespace)
 - `/matching/`: Candidate matching functionality (`matching` namespace)
-- `/messaging/`: Conversations and notifications (`messaging` namespace)
 
 ## Python 3.12 Compatibility
 

@@ -28,7 +28,6 @@ urlpatterns = [
     # App URLs
     path("auth/", include("apps.authentication.urls", namespace="authentication")),
     path("matching/", include("apps.matching.urls", namespace="matching")),
-    path("messaging/", include("apps.messaging.urls", namespace="messaging")),
     path("job-seekers/", include("apps.job_seekers.urls", namespace="job_seekers")),
     path("recruiters/", include("apps.recruiters.urls", namespace="recruiters")),
     path("reports/", include("apps.reports.urls", namespace="reports")),

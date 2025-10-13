@@ -245,54 +245,6 @@
                 </button>
                 
                 {% if user.is_authenticated and not hide_user_menu %}
-                    <!-- Notification Icon -->
-                    <div class="dropdown dropdown-end mr-2">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-                            <div class="indicator">
-                                <i class="fas fa-bell text-lg"></i>
-                                {% with unread_count=user.get_unread_notifications_count %}
-                                    {% if unread_count > 0 %}
-                                        <span class="badge badge-error badge-sm indicator-item">{{ unread_count }}</span>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
-                        </div>
-                        <div tabindex="0" class="dropdown-content card card-sm w-64 p-2 shadow bg-base-100 z-[1]">
-                            <div class="card-body">
-                                <h3 class="font-bold text-lg">Notifications</h3>
-                                <div class="divider my-0"></div>
-                                {% with recent_notifications=user.get_recent_notifications %}
-                                    {% if recent_notifications %}
-                                        <ul class="menu bg-base-100 w-full">
-                                            {% for notification in recent_notifications %}
-                                                <li>
-                                                    <a href="{{ notification.link }}" class="flex justify-between items-start py-2">
-                                                        <div>
-                                                            <p class="text-sm {% if not notification.is_read %}font-semibold{% endif %}">
-                                                                {{ notification.content }}
-                                                            </p>
-                                                            <p class="text-xs text-base-content/60">{{ notification.created_at|timesince }} ago</p>
-                                                        </div>
-                                                        {% if not notification.is_read %}
-                                                            <span class="badge badge-primary badge-xs"></span>
-                                                        {% endif %}
-                                                    </a>
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                        <div class="card-actions mt-2">
-                                            {% comment %}
-                                            <a href="{% url 'messaging:notifications' %}" class="btn btn-primary btn-sm btn-block">View All</a>
-                                            {% endcomment %}
-                                        </div>
-                                    {% else %}
-                                        <p class="text-center py-2 text-base-content/70">No new notifications</p>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- User Menu -->
                     <div class="dropdown dropdown-end">
                         <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar avatar-placeholder">

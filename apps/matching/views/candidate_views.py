@@ -19,10 +19,8 @@ from django.views.generic import DetailView
 
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models import JobSeekerProfile as JobSeeker
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.matching.tasks.analyze_candidate_match import analyze_candidate_match
-from apps.messaging.models import Conversation, Notification
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
 logger = logging.getLogger(__name__)
@@ -110,134 +108,10 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
             job_opening=self.job_opening, candidate_match=self.object
         ).exists()
 
-        # Attempt to fetch an existing conversation, if any, between recruiter
-        # and candidate for this job opening.  Regardless of whether it exists
-        # or not, ensure the local variable `conversation` is defined so later
-        # logic doesn't raise UnboundLocalError.
-
-        conversation = None
-        try:
-            conversation = (
-                Conversation.objects.filter(
-                    job_opening=self.job_opening, participants=self.request.user
-                )
-                .filter(participants=self.object.talent_sheet.job_seeker.user_owner)
-                .get()
-            )
-        except Conversation.DoesNotExist:
-            pass
-
-        context["candidate_conversation"] = conversation
-
-        # Determine if recruiter is allowed to initiate contact. Candidates who
-        # originate from recruiter-uploaded pools have no `user_owner`; those
-        # should *not* expose a "Contact Candidate" button.
-        job_seeker_obj = context["job_seeker"]
-        context["show_contact"] = bool(getattr(job_seeker_obj, "user_owner", None))
-
-        # Hide shortlist button any time the candidate has explicitly declined
-        # interest (status == candidate_not_interested).
-        context["show_shortlist"] = not (
-            conversation is not None
-            and conversation.status == "candidate_not_interested"
-        )
+        context["candidate_conversation"] = None
+        context["show_shortlist"] = True
 
         return context
-
-
-def withdraw_interest(request, job_id, candidate_id):
-    """
-    API endpoint to withdraw interest in a candidate
-    """
-    if request.method != "POST":
-        return JsonResponse(
-            {"status": "error", "message": "Method not allowed"}, status=405
-        )
-
-    # Get the job opening and ensure the user has access to it
-    job_opening = get_object_or_404(JobOpening, id=job_id)
-
-    # Check if the current user has access to this job opening
-    user = cast(AuthenticatedUser, request.user)
-    if job_opening.recruiter.user.pk != user.pk:
-        return JsonResponse(
-            {"status": "error", "message": "Permission denied"}, status=403
-        )
-
-    # Get the job seeker
-    job_seeker = get_object_or_404(JobSeeker, id=candidate_id)
-
-    # Find and delete the conversation
-    try:
-        # Use filter with multiple conditions instead of repeating parameters
-        conversation = (
-            Conversation.objects.filter(job_opening=job_opening, participants=user)
-            .filter(
-                participants=job_seeker.user_owner,
-                status="interest_requested",  # Only delete if status is interest_requested
-            )
-            .get()
-        )
-
-        # Capture link before deleting the conversation so we can clean up
-        conv_link = reverse(
-            "messaging:conversation_detail", kwargs={"pk": conversation.pk}
-        )
-
-        # Remove conversation and any messages
-        conversation.delete()
-
-        # Delete notifications for *any* user that reference this conversation.
-        # (Normally only the candidate has one, but this is future-proof.)
-        Notification.objects.filter(link=conv_link).delete()
-
-        # Check if this is an HTMX request
-        is_htmx = "HX-Request" in request.headers
-
-        if is_htmx:
-            from django.template.loader import render_to_string
-
-            # Determine shortlist status after deletion
-            is_shortlisted = ShortlistedMatch.objects.filter(
-                job_opening=job_opening,
-                candidate_match__talent_sheet__job_seeker=job_seeker,
-            ).exists()
-
-            # Determine if contact should be shown (only if job_seeker has a
-            # public account)
-            show_contact = bool(job_seeker.user_owner)
-
-            html = render_to_string(
-                "matching/partials/contact_controls.html",
-                {
-                    "candidate_conversation": None,
-                    "is_shortlisted": is_shortlisted,
-                    "job_opening": job_opening,
-                    "job_seeker_id": job_seeker.pk,
-                    "show_contact": show_contact,
-                    "show_shortlist": True,
-                },
-                request=request,
-            )
-
-            response = HttpResponse(html, headers={"HX-Reswap": "outerHTML"})
-            response["HX-Trigger"] = '{"closeModal": {"id": "confirm-withdraw-modal"}}'
-            return response
-        else:
-            # For non-HTMX requests, return JSON
-            return JsonResponse({"status": "success"})
-
-    except Conversation.DoesNotExist:
-        if "HX-Request" in request.headers:
-            return HttpResponse(
-                '<div class="alert alert-error">No active interest request found</div>',
-                status=404,
-            )
-        else:
-            return JsonResponse(
-                {"status": "error", "message": "No active interest request found"},
-                status=404,
-            )
 
 
 def add_to_shortlist(request: HttpRequest, job_id: int, candidate_id: int):

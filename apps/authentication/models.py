@@ -249,11 +249,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_unread_notifications_count(self) -> int:
         """Return the number of unread notifications for this user."""
-        from apps.messaging.models import (
-            Notification,  # local import to avoid circular dependency
-        )
-
-        return Notification.objects.filter(user=self, is_read=False).count()
+        return 0
 
     def get_recent_notifications(self, limit: int = 5):
         """Return the most recent notifications for this user.
@@ -261,12 +257,5 @@ class User(AbstractBaseUser, PermissionsMixin):
         Args:
             limit: Maximum number of notifications to return.
         """
-        from apps.messaging.models import (
-            Notification,  # local import to avoid circular dependency
-        )
 
-        # Return only *unread* notifications so already-acted-on items do not
-        # clutter the bell menu.
-        return Notification.objects.filter(user=self, is_read=False).order_by(
-            "-created_at"
-        )[:limit]
+        return []

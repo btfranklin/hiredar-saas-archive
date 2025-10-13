@@ -6,7 +6,7 @@ from django.db.models import F
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView
-from stripe.error import StripeError  # type: ignore
+from stripe import StripeError
 
 # Recruiter credit pricing constants
 from apps.recruiters.constants import (

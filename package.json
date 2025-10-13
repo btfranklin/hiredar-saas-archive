@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -i ./assets/css/tailwind.css -o ./static/css/tailwind.css --minify",
+    "build:css": "tailwindcss -i ./assets/css/tailwind.css -o ./static/css/tailwind.css && node scripts/minify-css.js ./static/css/tailwind.css",
     "postinstall": "npx update-browserslist-db@latest --update-db"
   },
   "repository": {
