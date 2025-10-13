@@ -149,6 +149,48 @@ class JobSeekerProfile(models.Model):
         except Exception:
             return False
 
+    @staticmethod
+    def _initials_from_text(value: str | None) -> str:
+        """Return uppercase initials for the provided text."""
+        if not value:
+            return ""
+
+        parts = [part for part in value.split() if part]
+        if len(parts) >= 2:
+            return f"{parts[0][0]}{parts[-1][0]}".upper()
+        if parts:
+            return parts[0][0].upper()
+        return ""
+
+    @property
+    def display_name(self) -> str:
+        """Return the most appropriate display name for the profile."""
+        if self.user_owner and self.user_owner.name:
+            return self.user_owner.name
+        if self.candidate_name:
+            return self.candidate_name
+        if self.most_recent_title:
+            return self.most_recent_title
+        if self.pk:
+            return f"Candidate {self.pk}"
+        return "Candidate"
+
+    @property
+    def avatar_initials(self) -> str:
+        """Return initials suitable for avatar placeholders."""
+        if self.user_owner:
+            return self.user_owner.get_initials()
+
+        candidate_initials = self._initials_from_text(self.candidate_name)
+        if candidate_initials:
+            return candidate_initials
+
+        title_initials = self._initials_from_text(self.most_recent_title)
+        if title_initials:
+            return title_initials
+
+        return "JS"
+
     class Meta:
         constraints = [
             models.CheckConstraint(

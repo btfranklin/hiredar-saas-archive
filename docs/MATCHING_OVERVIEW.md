@@ -112,7 +112,7 @@ The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
 
 * **New Sections?** Add them to the `fields` dict in the corresponding task module (`create_job_opening_embeddings.py` or `create_talent_sheet_embeddings.py`) and update this doc.
 * **Weighting** Adjust `average_vectors` or introduce weighting before calculating the holistic vector.
-* **Thresholds** Change score cut-offs in `create_candidate_matches` if you want stricter/looser matching.
+* **Thresholds** Matches are kept when any score ≥ `MATCHING_MIN_SCORE` (default `0.5`, configurable via env). Adjust it in `create_candidate_matches` / `match_talent_to_active_jobs` if you need stricter/looser matching.
 
 ---
 

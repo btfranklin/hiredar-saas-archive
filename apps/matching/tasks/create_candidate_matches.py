@@ -2,10 +2,12 @@
 Task for creating candidate matches for a job opening.
 """
 
+from collections import defaultdict
 from typing import Any
 
 from celery import shared_task
 from django.apps import apps
+from django.conf import settings
 from django.db import transaction
 
 from apps.core.utils.task_utils import IdempotentTaskManager
@@ -37,17 +39,29 @@ def create_candidate_matches(
     """
     # Handle different input types
     if isinstance(result, dict):
-        job_id = result.get("job_opening_id")
-        if not job_id:
+        raw_job_id = result.get("job_opening_id")
+        if raw_job_id is None:
             logger.error("No job_opening_id found in result dict: %s", result)
             return {"status": "error", "message": "No job_opening_id in result"}
     elif isinstance(result, int):
-        job_id = result
+        raw_job_id = result
     else:
         logger.error(
             "Invalid input type for create_candidate_matches: %s", type(result)
         )
         return {"status": "error", "message": f"Invalid input type: {type(result)}"}
+
+    try:
+        job_id = int(raw_job_id)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        try:
+            job_id = int(float(raw_job_id))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            logger.error("Unable to coerce job_opening_id=%s to int", raw_job_id)
+            return {
+                "status": "error",
+                "message": f"Invalid job_opening_id: {raw_job_id}",
+            }
 
     try:
         # Clean up the running marker when task completes
@@ -105,22 +119,47 @@ def create_candidate_matches(
                 "qualifications_matches": "qualifications",
             }
 
-            all_matches_by_talent: dict[int, dict[str, float]] = {}
+            all_matches_by_talent: dict[int, dict[str, float]] = defaultdict(dict)
 
             for result_key, match_type in match_type_mapping.items():
                 matches = match_results.get(result_key, [])
 
                 for match in matches:
-                    talent_sheet_id = match["metadata"]["talent_sheet_id"]
-                    score = match["score"]
+                    raw_talent_sheet_id = match["metadata"].get("talent_sheet_id")
+                    try:
+                        talent_sheet_id = int(raw_talent_sheet_id)  # type: ignore[arg-type]
+                    except (TypeError, ValueError):
+                        try:
+                            talent_sheet_id = int(float(raw_talent_sheet_id))  # type: ignore[arg-type]
+                        except (TypeError, ValueError):
+                            logger.warning(
+                                "Skipping match with invalid talent_sheet_id=%s",
+                                raw_talent_sheet_id,
+                            )
+                            continue
 
-                    if talent_sheet_id not in all_matches_by_talent:
-                        all_matches_by_talent[talent_sheet_id] = {}
+                    score = match["score"]
 
                     all_matches_by_talent[talent_sheet_id][match_type] = score
 
+            TalentSheet = apps.get_model("job_seekers", "TalentSheet")
+            valid_talent_ids = set(
+                TalentSheet.objects.filter(
+                    id__in=all_matches_by_talent.keys()
+                ).values_list("id", flat=True)
+            )
+
+            min_match_score = getattr(settings, "MATCHING_MIN_SCORE", 0.5)
+
             for talent_sheet_id, talent_scores in all_matches_by_talent.items():
-                if all(score < 0.5 for score in talent_scores.values()):
+                if talent_sheet_id not in valid_talent_ids:
+                    logger.warning(
+                        "Skipping match creation for missing TalentSheet %s",
+                        talent_sheet_id,
+                    )
+                    continue
+
+                if max(talent_scores.values(), default=0) < min_match_score:
                     continue
 
                 try:

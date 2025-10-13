@@ -80,7 +80,7 @@ def generate_and_save_personal_tagline(
             profile.personal_tagline = tagline
             logger.info("Personal tagline generated: %s", tagline)
         except Exception as e:
-            logger.error("Error generating personal tagline: %s", str(e))
+            logger.warning("Error generating personal tagline: %s", str(e))
             # Fallback to most recent title or generic
             if parsed_data.get("most_recent_title"):
                 profile.personal_tagline = (
@@ -113,51 +113,51 @@ def _update_profile_fields(profile: JobSeekerProfile, data: dict[str, Any]) -> N
     """
 
     # Update skills as a pipe-separated list
-    if "skills" in data:
+    if "skills" in data and data["skills"] is not None:
         profile.skills = data["skills"]
 
     # Update experience fields
-    if "experience" in data:
+    if "experience" in data and data["experience"] is not None:
         profile.experience = data["experience"]
 
     # Update education
-    if "education" in data:
+    if "education" in data and data["education"] is not None:
         profile.education = data["education"]
 
     # Update certifications
-    if "certifications" in data:
+    if "certifications" in data and data["certifications"] is not None:
         profile.certifications = data["certifications"]
 
     # Update years of experience
-    if "years_of_experience" in data:
+    if "years_of_experience" in data and data["years_of_experience"] is not None:
         profile.years_of_experience = data["years_of_experience"]
 
     # Update most recent job title
-    if "most_recent_title" in data:
+    if "most_recent_title" in data and data["most_recent_title"] is not None:
         profile.most_recent_title = data["most_recent_title"]
 
     # Update professional summary
-    if "professional_summary" in data:
+    if "professional_summary" in data and data["professional_summary"] is not None:
         profile.professional_summary = data["professional_summary"]
 
     # Update personal details
-    if "personal_details" in data:
+    if "personal_details" in data and data["personal_details"] is not None:
         personal_details = data["personal_details"]
 
         # Update location
-        if "location" in personal_details:
+        if "location" in personal_details and personal_details["location"] is not None:
             profile.location = personal_details["location"]
 
         # Update phone
-        if "phone" in personal_details:
+        if "phone" in personal_details and personal_details["phone"] is not None:
             profile.phone = personal_details["phone"]
 
         # Update the candidate name, for both user-owned and pool-owned profiles
-        if "name" in personal_details:
+        if "name" in personal_details and personal_details["name"] is not None:
             profile.candidate_name = personal_details["name"]
 
         # For user-owned profiles, update the user's name
-        if profile.user_owner and "name" in personal_details:
+        if profile.user_owner and "name" in personal_details and personal_details["name"] is not None:
             profile.user_owner.name = personal_details["name"]
             profile.user_owner.save()
 

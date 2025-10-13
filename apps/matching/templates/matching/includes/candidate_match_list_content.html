@@ -22,19 +22,31 @@
 <div class="card bg-base-200 shadow-md mb-6">
   <div class="card-body p-4">
     {% if not candidate_matches %}
-        {# Automatically poll for new matches every 5 seconds while matching is in progress #}
+        {# Automatically poll for new matches once while background tasks run #}
         <div id="matches-loading"
+             {% if should_poll_for_matches %}
              hx-get="{% url 'recruiters:job_openings_detail' job_opening.id %}?tab=candidates&pool_id={{ candidate_pool_id }}&section={{ section }}"
              hx-trigger="every 5s"
              hx-target="#tab-content"
-             hx-swap="innerHTML">
+             hx-swap="innerHTML"
+             {% endif %}>
             <div class="flex flex-col items-center text-center py-8">
-                <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
-                <h3 class="text-xl font-semibold mb-2">Generating Matches…</h3>
-                <p class="text-base-content/70 max-w-md">
-                    We're currently matching candidates from this pool to your job opening. This usually takes a minute or two.
-                    The list will update automatically when matches are found.
-                </p>
+                {% if should_poll_for_matches %}
+                    <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
+                    <h3 class="text-xl font-semibold mb-2">Generating Matches…</h3>
+                    <p class="text-base-content/70 max-w-md">
+                        We're currently matching candidates from this pool to your job opening. This usually takes a minute or two.
+                        The list will update automatically when matches are found.
+                    </p>
+                {% else %}
+                    <div class="text-4xl mb-4">
+                        <i class="fas fa-user-slash text-base-content/30"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">No strong matches found</h3>
+                    <p class="text-base-content/70 max-w-md">
+                        We didn't find any good matches in this candidate pool. Try another pool or adjust the job requirements to see different results.
+                    </p>
+                {% endif %}
             </div>
         </div>
     {% else %}

@@ -6,6 +6,7 @@ from typing import Any
 
 from celery import shared_task
 from django.apps import apps
+from django.conf import settings
 from django.db import transaction
 
 from apps.matching.core.matching import match_job_to_talents
@@ -29,17 +30,29 @@ def match_talent_to_active_jobs(
     """
     # Handle different input types
     if isinstance(result, dict):
-        talent_id = result.get("talent_sheet_id")
-        if not talent_id:
+        raw_talent_id = result.get("talent_sheet_id")
+        if raw_talent_id is None:
             logger.error("No talent_sheet_id found in result dict: %s", result)
             return {"status": "error", "message": "No talent_sheet_id in result"}
     elif isinstance(result, int):
-        talent_id = result
+        raw_talent_id = result
     else:
         logger.error(
             "Invalid input type for match_talent_to_active_jobs: %s", type(result)
         )
         return {"status": "error", "message": f"Invalid input type: {type(result)}"}
+
+    try:
+        talent_id = int(raw_talent_id)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        try:
+            talent_id = int(float(raw_talent_id))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            logger.error("Unable to coerce talent_sheet_id=%s to int", raw_talent_id)
+            return {
+                "status": "error",
+                "message": f"Invalid talent_sheet_id: {raw_talent_id}",
+            }
 
     try:
         JobOpening = apps.get_model("recruiters", "JobOpening")
@@ -85,15 +98,31 @@ def match_talent_to_active_jobs(
                         matches = match_results.get(result_key, [])
 
                         for match in matches:
-                            if str(match["metadata"]["talent_sheet_id"]) != str(
-                                talent_id
-                            ):
+                            raw_match_talent_id = match["metadata"].get(
+                                "talent_sheet_id"
+                            )
+                            try:
+                                match_talent_id = int(raw_match_talent_id)  # type: ignore[arg-type]
+                            except (TypeError, ValueError):
+                                try:
+                                    match_talent_id = int(
+                                        float(raw_match_talent_id)
+                                    )  # type: ignore[arg-type]
+                                except (TypeError, ValueError):
+                                    logger.warning(
+                                        "Skipping match with invalid talent_sheet_id=%s",
+                                        raw_match_talent_id,
+                                    )
+                                    continue
+
+                            if match_talent_id != talent_id:
                                 continue
 
                             score = match["score"]
                             talent_scores[match_type] = score
 
-                    if all(score < 0.5 for score in talent_scores.values()):
+                    min_match_score = getattr(settings, "MATCHING_MIN_SCORE", 0.5)
+                    if max(talent_scores.values(), default=0) < min_match_score:
                         continue
 
                     try:

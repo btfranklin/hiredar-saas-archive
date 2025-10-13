@@ -14,12 +14,11 @@
 
                 <h1 class="text-3xl font-bold">Candidate Resume</h1>
                 <p class="text-lg text-base-content/70">
-                    {% if profile.user_owner %}
-                        {{ profile.user_owner.name }}
-                    {% elif profile.candidate_pool %}
-                        Candidate from {{ profile.candidate_pool.name }}
-                    {% else %}
-                        Candidate
+                    {{ profile.display_name }}
+                    {% if profile.candidate_pool %}
+                        <span class="block text-sm text-base-content/60 md:inline md:ml-2">
+                            Candidate from {{ profile.candidate_pool.name }}
+                        </span>
                     {% endif %}
                 </p>
             </div>
@@ -49,26 +48,16 @@
                         <div class="flex items-center gap-4 mb-4">
                             <div class="avatar avatar-placeholder">
                                 <div class="bg-neutral text-neutral-content rounded-full w-16">
-                                    <span class="text-xl">
-                                        {% if profile.user_owner %}
-                                            {{ profile.user_owner.get_initials }}
-                                        {% else %}
-                                            JS
-                                        {% endif %}
-                                    </span>
+                                    <span class="text-xl">{{ profile.avatar_initials }}</span>
                                 </div>
                             </div>
                             <div>
-                                <h2 class="card-title">
-                                    {% if profile.user_owner %}
-                                        {{ profile.user_owner.name }}
-                                    {% elif profile.most_recent_title %}
-                                        {{ profile.most_recent_title }}
-                                    {% else %}
-                                        Job Seeker
+                                {% with display_name=profile.display_name job_title=profile.most_recent_title %}
+                                    <h2 class="card-title">{{ display_name }}</h2>
+                                    {% if job_title and job_title != display_name %}
+                                        <p class="text-sm">{{ job_title }}</p>
                                     {% endif %}
-                                </h2>
-                                <p class="text-sm">{{ profile.most_recent_title }}</p>
+                                {% endwith %}
                             </div>
                         </div>
                         

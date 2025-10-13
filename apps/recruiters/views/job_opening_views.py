@@ -215,9 +215,30 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                     recruiter=self.request.user
                 )
                 # Determine selected pool (from query param or stored value)
-                selected_pool_id = int(
-                    self.request.GET.get("pool_id", job_opening.candidate_pool_id)
+                available_pool_ids = set(
+                    context["candidate_pools"].values_list("id", flat=True)
                 )
+                requested_pool = self.request.GET.get("pool_id")
+                try:
+                    requested_pool_id = int(requested_pool) if requested_pool else None
+                except ValueError:
+                    requested_pool_id = None
+
+                default_pool_id = (
+                    job_opening.candidate_pool_id
+                    if job_opening.candidate_pool_id in available_pool_ids
+                    or job_opening.candidate_pool_id == 0
+                    else 0
+                )
+                selected_pool_id = (
+                    requested_pool_id
+                    if requested_pool_id is not None
+                    else default_pool_id
+                )
+
+                if selected_pool_id not in available_pool_ids and selected_pool_id != 0:
+                    selected_pool_id = 0
+
                 # Persist any change to the job opening
                 if selected_pool_id != job_opening.candidate_pool_id:
                     job_opening.candidate_pool_id = selected_pool_id
@@ -226,18 +247,14 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 # ------------------------------------------------------------------
                 # Build the base queryset for matches on this job opening.
                 # ``candidate_pool_id`` semantics:
-                #   • 0  ⇒  Global pool = *all* user-owned profiles (candidate_pool IS NULL)
-                #   • n>0 ⇒  A specific CandidatePool uploaded by the recruiter
+                #   • 0  ⇒  Aggregate matches from every pool owned by the recruiter
+                #   • n>0 ⇒  Restrict to a specific CandidatePool uploaded by the recruiter
                 # ------------------------------------------------------------------
-                matches = CandidateMatch.objects.filter(job_opening=job_opening)
+                matches = CandidateMatch.objects.filter(job_opening=job_opening).filter(
+                    talent_sheet__job_seeker__candidate_pool__recruiter=user
+                )
 
-                if selected_pool_id == 0:
-                    # Global pool – only job seekers that are **not** part of any
-                    # recruiter-owned CandidatePool (i.e. user-created profiles)
-                    matches = matches.filter(
-                        talent_sheet__job_seeker__candidate_pool__isnull=True
-                    )
-                else:
+                if selected_pool_id > 0:
                     # Specific candidate pool – restrict to that pool ID
                     matches = matches.filter(
                         talent_sheet__job_seeker__candidate_pool_id=selected_pool_id
@@ -246,7 +263,7 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 section = context["section"]
 
                 if section == "wildcard":
-                    context["candidate_matches"] = (
+                    candidate_matches_qs = (
                         matches.filter(wildcard_score__gt=0)
                         .annotate(
                             match_type=Value("wildcard", output_field=CharField())
@@ -254,13 +271,13 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                         .order_by("-wildcard_score")
                     )
                 elif section == "skills":
-                    context["candidate_matches"] = (
+                    candidate_matches_qs = (
                         matches.filter(skills_score__gt=0)
                         .annotate(match_type=Value("skills", output_field=CharField()))
                         .order_by("-skills_score")
                     )
                 elif section == "experience":
-                    context["candidate_matches"] = (
+                    candidate_matches_qs = (
                         matches.filter(experience_score__gt=0)
                         .annotate(
                             match_type=Value("experience", output_field=CharField())
@@ -268,7 +285,7 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                         .order_by("-experience_score")
                     )
                 elif section == "qualifications":
-                    context["candidate_matches"] = (
+                    candidate_matches_qs = (
                         matches.filter(qualifications_score__gt=0)
                         .annotate(
                             match_type=Value("qualifications", output_field=CharField())
@@ -276,13 +293,16 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                         .order_by("-qualifications_score")
                     )
                 else:
-                    context["candidate_matches"] = (
+                    candidate_matches_qs = (
                         matches.filter(holistic_score__gt=0)
                         .annotate(
                             match_type=Value("holistic", output_field=CharField())
                         )
                         .order_by("-holistic_score")
                     )
+
+                context["candidate_matches"] = candidate_matches_qs
+                context["has_candidate_matches"] = candidate_matches_qs.exists()
                 # Compute counts (for tabs)
                 context["holistic_count"] = matches.filter(holistic_score__gt=0).count()
                 context["skills_count"] = matches.filter(skills_score__gt=0).count()
@@ -293,6 +313,12 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 context["qualifications_count"] = matches.filter(
                     qualifications_score__gt=0
                 ).count()
+                is_htmx_request = (
+                    self.request.headers.get("HX-Request", "").lower() == "true"
+                )
+                context["should_poll_for_matches"] = (
+                    not context["has_candidate_matches"] and not is_htmx_request
+                )
 
                 # --- Shortlist -----------------------------------------------------------------
                 shortlist_qs = job_opening.shortlisted_matches.select_related(

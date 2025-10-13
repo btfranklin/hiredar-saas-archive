@@ -72,6 +72,45 @@ class JobSeekerProfileModelTests(TestCase):
         # The profile's __str__ should reference the pool label
         self.assertIn("March Batch", str(pool_profile))
 
+    def test_display_name_and_initials_for_user_owned_profile(self):
+        """display_name and avatar_initials should use the owner's details."""
+
+        self.assertEqual(self.profile.display_name, self.user.name)
+        self.assertEqual(self.profile.avatar_initials, "JS")
+
+    def test_display_name_and_initials_for_pool_owned_profile(self):
+        """Pool-owned profiles should use candidate_name when present."""
+
+        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
+            email="poolrecruiter@example.com",
+            password="recruiter_pw",
+            name="Pool Recruiter",
+            user_type="recruiter",
+        )
+
+        candidate_pool = CandidatePool.objects.create(
+            recruiter=recruiter,
+            name="April Batch",
+        )
+
+        pool_profile = JobSeekerProfile.objects.create(
+            candidate_pool=candidate_pool,
+            candidate_name="Brandy Stevenson",
+            most_recent_title="Chief Medical Physicist",
+        )
+
+        self.assertEqual(pool_profile.display_name, "Brandy Stevenson")
+        self.assertEqual(pool_profile.avatar_initials, "BS")
+
+        # If candidate_name is missing we should fall back to title initials.
+        pool_profile.candidate_name = ""
+        pool_profile.save(update_fields=["candidate_name"])
+        self.assertEqual(pool_profile.display_name, "Chief Medical Physicist")
+        self.assertEqual(
+            pool_profile.avatar_initials,
+            "CP",
+        )
+
 
 class RoleRecommendationModelTests(TestCase):
     """Test helper methods on RoleRecommendation model."""

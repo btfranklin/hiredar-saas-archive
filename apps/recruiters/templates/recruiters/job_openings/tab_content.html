@@ -82,7 +82,7 @@
                 <select id="candidate-pool-selector"
                         name="pool_id"
                         class="select select-bordered w-full max-w-xs">
-                  <option value="0" {% if candidate_pool_id == 0 %}selected{% endif %}>All Hiredar Users</option>
+                  <option value="0" {% if candidate_pool_id == 0 %}selected{% endif %}>All My Candidate Pools</option>
                   {% for pool in candidate_pools %}
                     <option value="{{ pool.id }}" {% if pool.id == candidate_pool_id %}selected{% endif %}>{{ pool.name }}</option>
                   {% endfor %}
