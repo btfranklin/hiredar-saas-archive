@@ -18,16 +18,16 @@ from apps.authentication.models import User
 
 @receiver(post_save, sender=User)
 def user_post_save(
-    _sender: Type[User], _instance: User, _created: bool, **_kwargs: Any
-) -> None:
+    sender: Type[User], instance: User, created: bool, **kwargs: Any
+) -> None:  # pylint: disable=unused-argument
     """Placeholder hook for user post-save logic."""
     return
 
 
 @receiver(pre_save, sender=User)
 def enforce_staff_privileges(
-    _sender: Type[User], instance: User, **_kwargs: Any
-) -> None:
+    sender: Type[User], instance: User, **kwargs: Any
+) -> None:  # pylint: disable=unused-argument
     """
     Enforce rules for staff privileges.
 
@@ -40,8 +40,8 @@ def enforce_staff_privileges(
 
 @receiver(pre_save, sender=User)
 def check_proper_user_creation(
-    _sender: Type[User], instance: User, **_kwargs: Any
-) -> None:
+    sender: Type[User], instance: User, **kwargs: Any
+) -> None:  # pylint: disable=unused-argument
     """
     Check if a user is being created with a usable password.
 
