@@ -89,7 +89,7 @@ class CustomLoginView(SuccessMessageMixin, LoginView):
                     "Please contact support if you believe this is an error."
                 ),
             )
-            return self.form_invalid(form)
+            return self.form_invalid(form)  # type: ignore
 
         # Proceed with normal login
         result = super().form_valid(form)
