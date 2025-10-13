@@ -1,3 +1,7 @@
+"""Regression tests for credit deduction when exporting shortlists."""
+
+# pylint: disable=missing-function-docstring
+
 from __future__ import annotations
 
 from django.test import Client, TestCase

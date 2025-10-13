@@ -8,6 +8,7 @@ based on candidate matches for job openings.
 import csv
 import io
 from datetime import datetime
+from typing import Any
 
 from django.template.loader import render_to_string
 from weasyprint import HTML
@@ -68,7 +69,7 @@ def generate_csv(job: JobOpening, limit: int | None = None) -> bytes:
     )
 
     # Write data rows
-    for rank, shortlisted_match in enumerate(shortlisted_matches, 1):
+    for shortlisted_match in shortlisted_matches:
         match = shortlisted_match.candidate_match
         talent_sheet = match.talent_sheet
         job_seeker = talent_sheet.job_seeker
@@ -114,6 +115,63 @@ def generate_csv(job: JobOpening, limit: int | None = None) -> bytes:
     return buffer.getvalue().encode("utf-8")
 
 
+def _build_candidate_entry(
+    job: JobOpening, shortlisted_match: ShortlistedMatch, rank: int
+) -> dict[str, Any]:
+    """Construct the candidate payload used by the PDF export."""
+    match = shortlisted_match.candidate_match
+    talent_sheet = match.talent_sheet
+    job_seeker = talent_sheet.job_seeker
+    user = job_seeker.user_owner
+
+    if user:
+        full_name = user.get_full_name()
+        email = user.email
+    else:
+        full_name = job_seeker.candidate_name or f"Candidate {job_seeker.pk}"
+        email = ""
+
+    skills_list: list[str] = []
+    if talent_sheet.skills:
+        skills_list = [
+            skill.strip() for skill in talent_sheet.skills.splitlines() if skill.strip()
+        ]
+
+    required_skills = list(job.required_skills_list)
+    skills_matrix = [
+        {
+            "skill": req_skill,
+            "has_skill": any(
+                req_skill.lower() in candidate_skill.lower()
+                for candidate_skill in skills_list
+            ),
+        }
+        for req_skill in required_skills
+    ]
+
+    return {
+        "rank": rank,
+        "name": full_name,
+        "email": email,
+        "phone": job_seeker.phone or "",
+        "current_title": job_seeker.most_recent_title or "",
+        "location": job_seeker.location or "",
+        "years_experience": job_seeker.years_of_experience or "",
+        "holistic_score": match.holistic_rating,
+        "skills_score": match.skills_rating,
+        "experience_score": match.experience_rating,
+        "qualifications_score": match.qualifications_rating,
+        "wildcard_score": match.wildcard_rating,
+        "tagline": match.match_summary or talent_sheet.personal_tagline or "",
+        "promotional_blurb": talent_sheet.promotional_blurb,
+        "experience_overview": talent_sheet.experience_overview,
+        "qualifications": talent_sheet.qualifications,
+        "skills_list": skills_list,
+        "skills_matrix": skills_matrix,
+        "match_analysis": match.match_analysis or "",
+    }
+
+
 def generate_pdf(job: JobOpening, limit: int | None = None) -> bytes:
     """
     Generate a PDF report of shortlisted candidate matches for a job opening.
@@ -141,62 +199,10 @@ def generate_pdf(job: JobOpening, limit: int | None = None) -> bytes:
         shortlisted_matches = shortlisted_matches[:limit]
 
     # Prepare context data for template
-    candidates = []
-    for rank, shortlisted_match in enumerate(shortlisted_matches, 1):
-        match = shortlisted_match.candidate_match
-        talent_sheet = match.talent_sheet
-        job_seeker = talent_sheet.job_seeker
-        user = job_seeker.user_owner
-
-        # Get candidate name using the same logic as the UI
-        if user:
-            full_name = user.get_full_name()
-            email = user.email
-        else:
-            # For pool-owned candidates, use the parsed candidate_name
-            full_name = job_seeker.candidate_name or f"Candidate {job_seeker.pk}"
-            email = ""
-
-        # Parse skills into a list
-        skills_list = []
-        if talent_sheet.skills:
-            skills_list = [
-                s.strip() for s in talent_sheet.skills.splitlines() if s.strip()
-            ]
-
-        # Create skills matrix comparing job requirements to candidate skills
-        required_skills = job.required_skills_list
-        skills_matrix = []
-        for req_skill in required_skills:
-            has_skill = any(
-                req_skill.lower() in candidate_skill.lower()
-                for candidate_skill in skills_list
-            )
-            skills_matrix.append({"skill": req_skill, "has_skill": has_skill})
-
-        candidates.append(
-            {
-                "rank": rank,
-                "name": full_name,
-                "email": email,
-                "phone": job_seeker.phone or "",
-                "current_title": job_seeker.most_recent_title or "",
-                "location": job_seeker.location or "",
-                "years_experience": job_seeker.years_of_experience or "",
-                "holistic_score": match.holistic_rating,
-                "skills_score": match.skills_rating,
-                "experience_score": match.experience_rating,
-                "qualifications_score": match.qualifications_rating,
-                "wildcard_score": match.wildcard_rating,
-                "tagline": match.match_summary or talent_sheet.personal_tagline or "",
-                "promotional_blurb": talent_sheet.promotional_blurb,
-                "experience_overview": talent_sheet.experience_overview,
-                "qualifications": talent_sheet.qualifications,
-                "skills_list": skills_list,
-                "skills_matrix": skills_matrix,
-                "match_analysis": match.match_analysis or "",
-            }
-        )
+    candidates = [
+        _build_candidate_entry(job, shortlisted_match, rank)
+        for rank, shortlisted_match in enumerate(shortlisted_matches, 1)
+    ]
 
     context = {
         "job": job,

@@ -13,7 +13,7 @@ from apps.recruiters.models import JobOpening, RecruiterProfile
 from apps.reports.services import generate_csv, generate_pdf, get_export_filename
 
 
-class ReportsServiceTests(TestCase):
+class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attributes
     """Test the reports service functions."""
 
     def setUp(self):
@@ -185,7 +185,7 @@ class ReportsServiceTests(TestCase):
             user_type="recruiter",
             name="Pool Recruiter",
         )
-        pool_recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
+        _pool_recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
             user=pool_recruiter_user
         )
 
