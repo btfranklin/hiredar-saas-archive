@@ -11,7 +11,8 @@ from apps.job_seekers.services.recommendation.xml_parser import (
 class RoleRecommendationXMLParserTests(SimpleTestCase):
     """Pure function tests – no database interaction required."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Provide a canonical XML payload for role recommendations."""
         self.valid_xml = (
             "<role_recommendations>"
             "<role_recommendation>"
@@ -25,17 +26,20 @@ class RoleRecommendationXMLParserTests(SimpleTestCase):
             "</role_recommendations>"
         )
 
-    def test_parse_valid_xml(self):
+    def test_parse_valid_xml(self) -> None:
+        """Return parsed role recommendations when XML is valid."""
         recommendations = parse_role_recommendations_xml(self.valid_xml)
         self.assertEqual(len(recommendations), 2)
         self.assertEqual(recommendations[0].role_title, "Software Engineer")
         self.assertEqual(recommendations[1].description, "Manage infrastructure")
 
-    def test_missing_tags_raise_error(self):
+    def test_missing_tags_raise_error(self) -> None:
+        """Raise ValueError when expected tags are missing."""
         with self.assertRaises(ValueError):
             parse_role_recommendations_xml("<nope></nope>")
 
-    def test_control_chars_and_ampersands_are_handled(self):
+    def test_control_chars_and_ampersands_are_handled(self) -> None:
+        """Sanitise control characters and preserve escaped ampersands."""
         # Control chars should be stripped and ampersands escaped, preserving text
         xml = (
             "<role_recommendations>"
@@ -50,7 +54,8 @@ class RoleRecommendationXMLParserTests(SimpleTestCase):
         self.assertEqual(recommendations[0].role_title, "AT&TExample")
         self.assertEqual(recommendations[0].description, "Test & More")
 
-    def test_malformed_xml_returns_empty_list(self):
+    def test_malformed_xml_returns_empty_list(self) -> None:
+        """Return an empty list when the payload cannot be parsed."""
         # Missing closing envelope should not raise, but return empty list
         xml = (
             "<role_recommendations>"
@@ -67,7 +72,8 @@ class RoleRecommendationXMLParserTests(SimpleTestCase):
 class TalentSheetXMLParserTests(SimpleTestCase):
     """Tests for talent sheet XML parsing."""
 
-    def test_parse_valid_xml(self):
+    def test_parse_valid_xml(self) -> None:
+        """Parse a valid talent sheet payload into an object."""
         xml = (
             "<talent_sheet>"
             "<promotional_blurb>Amazing candidate</promotional_blurb>"
@@ -88,7 +94,8 @@ class TalentSheetXMLParserTests(SimpleTestCase):
         # salary_min is stored as a float by the parser; assert approximate equality
         self.assertAlmostEqual(float(sheet.salary_min), 95000.0)
 
-    def test_missing_required_fields_raise(self):
+    def test_missing_required_fields_raise(self) -> None:
+        """Raise when required fields such as promotional_blurb are absent."""
         # No promotional_blurb
         xml = (
             "<talent_sheet>"
@@ -98,6 +105,7 @@ class TalentSheetXMLParserTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             parse_talent_sheet_xml(xml)
 
-    def test_missing_xml_envelope_raises(self):
+    def test_missing_xml_envelope_raises(self) -> None:
+        """Raise when the talent sheet root element is missing."""
         with self.assertRaises(ValueError):
             parse_talent_sheet_xml("<foo></foo>")

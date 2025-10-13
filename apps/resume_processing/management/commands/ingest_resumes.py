@@ -1,8 +1,11 @@
+"""Management command to batch ingest resume PDFs for local testing."""
+
 import os
 import time
 import traceback
 import uuid
 from pathlib import Path
+from typing import Any
 
 from celery.result import AsyncResult
 from django.conf import settings
@@ -12,14 +15,16 @@ from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
 from apps.job_seekers.models import JobSeekerProfile
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
-from apps.resume_processing.utils.pipeline import process_resume
+from apps.resume_processing.utils.pipeline import process_resume as run_resume_pipeline
 
 # Define a timeout for waiting for the task (e.g., 5 minutes)
 TASK_WAIT_TIMEOUT = 300  # seconds
 TASK_POLL_INTERVAL = 2  # seconds
+TEMP_RESUME_DIR = "resumes"
 
 
 class Command(BaseCommand):
+    """Command to ingest batches of resumes for development workflows."""
     help = "Batch ingest resume PDFs into the Hiredar system for testing purposes"
 
     def add_arguments(self, parser):
@@ -43,6 +48,90 @@ class Command(BaseCommand):
             type=int,
             help="Limit the number of resumes to process",
         )
+
+    def _profile_email(self, profile: JobSeekerProfile) -> str:
+        """Return a user email for logging while handling missing relationships."""
+        owner: User | None = getattr(profile, "user_owner", None)
+        return owner.email if owner else "unknown@example.com"
+
+    def _persist_temp_resume(self, file_content: bytes) -> Path:
+        """Write resume bytes to disk for downstream processing."""
+        media_temp_dir = Path(settings.MEDIA_ROOT) / TEMP_RESUME_DIR
+        media_temp_dir.mkdir(parents=True, exist_ok=True)
+
+        temp_path = media_temp_dir / f"temp_{uuid.uuid4().hex}.pdf"
+        temp_path.write_bytes(file_content)
+        return temp_path
+
+    def _cleanup_temp_file(self, saved_path: Path | None) -> None:
+        """Remove temporary resume file if it exists."""
+        if saved_path is None:
+            return
+
+        try:
+            if saved_path.exists():
+                saved_path.unlink()
+        except OSError:
+            # Best-effort cleanup is enough for a development command.
+            pass
+
+    def _infer_failed_step(self, pipeline_steps: Any) -> str:
+        """Infer the pipeline stage that failed from mixed return formats."""
+        if isinstance(pipeline_steps, dict):
+            for step, completed in pipeline_steps.items():
+                if not completed:
+                    return step.replace("_", " ")
+        if isinstance(pipeline_steps, list) and pipeline_steps:
+            return pipeline_steps[-1].replace("_", " ")
+        return "unknown step"
+
+    def _log_pipeline_failure(self, result: dict[str, Any], verbosity: int) -> None:
+        """Log diagnostics for failed resume processing."""
+        error_msg = result.get("message", "Unknown error")
+        failed_at = self._infer_failed_step(result.get("pipeline_steps"))
+        self.stdout.write(self.style.ERROR(f"  - ERROR in {failed_at}: {error_msg}"))
+
+        if verbosity >= 2 and "exception" in result:
+            self.stdout.write(self.style.ERROR(f"  - Exception: {result['exception']}"))
+
+    def _log_pipeline_success(self, result: dict[str, Any], verbosity: int) -> None:
+        """Emit verbose details for completed resume processing."""
+        if verbosity < 2:
+            return
+
+        pipeline_steps = result.get("pipeline_steps", {})
+        if isinstance(pipeline_steps, dict):
+            for step, completed in pipeline_steps.items():
+                step_label = step.replace("_", " ")
+                status = "✓" if completed else "✗"
+                self.stdout.write(f"  - {step_label}: {status}")
+        elif isinstance(pipeline_steps, list):
+            for step in pipeline_steps:
+                step_label = step.replace("_", " ")
+                self.stdout.write(f"  - {step_label}: ✓")
+
+        processing_time = result.get("processing_time")
+        if processing_time:
+            self.stdout.write(f"  - Processing time: {processing_time:.2f}s")
+
+    def _extract_task_error(self, result_obj: AsyncResult | None) -> str:
+        """Best-effort extraction of an error message from an async task."""
+        if result_obj is None:
+            return "Task could not be fetched after scheduling."
+
+        try:
+            task_result = result_obj.result
+        except Exception:  # pylint: disable=broad-except
+            info = getattr(result_obj, "info", None)
+            return str(info) if info else "Task failed without returning a result."
+
+        if isinstance(task_result, dict):
+            return task_result.get("message", "Task failed without specific message")
+
+        if task_result:
+            return str(task_result)
+
+        return "Task failed without returning a result."
 
     def handle(self, *args, **options):
         # Check if the OpenAI API key is set
@@ -145,9 +234,7 @@ class Command(BaseCommand):
                 continue
 
             # Process the resume and update the profile
-            success = self.process_resume(str(resume_file), profile, verbosity)
-
-            if success:
+            if self.process_resume(str(resume_file), profile, verbosity):
                 success_count += 1
                 if verbosity >= 1:
                     self.stdout.write(
@@ -164,10 +251,8 @@ class Command(BaseCommand):
                     )
 
                 # If requested, add the job seeker to the talent pool
-                if join_talent_pool:
-                    talent_sheet_created = self.add_to_talent_pool(profile, verbosity)
-                    if talent_sheet_created:
-                        talent_sheet_count += 1
+                if join_talent_pool and self.add_to_talent_pool(profile, verbosity):
+                    talent_sheet_count += 1
             else:
                 failure_count += 1
                 self.stdout.write(
@@ -236,14 +321,10 @@ class Command(BaseCommand):
         Returns:
             True if talent sheet was created successfully, False otherwise
         """
-        task_id = None
+        task_id: str | None = None
         try:
+            email = self._profile_email(profile)
             if verbosity >= 1:
-                email = (
-                    profile.user_owner.email
-                    if profile.user_owner
-                    else "unknown@example.com"
-                )
                 self.stdout.write(f"  - Scheduling talent sheet generation for {email}")
 
             # Schedule the talent sheet generation task to run asynchronously
@@ -278,7 +359,8 @@ class Command(BaseCommand):
                     )
 
                 time.sleep(TASK_POLL_INTERVAL)
-            else:
+
+            if result_obj is None or result_obj.state not in {"SUCCESS", "FAILURE"}:
                 self.stdout.write(
                     self.style.ERROR(
                         f"  - Timeout: Task {task_id} did not complete within {TASK_WAIT_TIMEOUT}s"
@@ -286,42 +368,18 @@ class Command(BaseCommand):
                 )
                 return False
 
-            # Evaluate task outcome
-            if result_obj and result_obj.successful():
+            if result_obj.successful():
                 if verbosity >= 1:
-                    email = (
-                        profile.user_owner.email
-                        if profile.user_owner
-                        else "unknown@example.com"
-                    )
                     self.stdout.write(
                         self.style.SUCCESS(f"  - Created talent sheet for {email}")
                     )
                 return True
-            else:
-                # Task failed or wasn't fetched correctly
-                error_message = "Unknown error"
-                if task:
-                    # Try to get the error message from the task result if it failed
-                    if isinstance(task.result, dict):
-                        error_message = task.result.get(
-                            "message", "Task failed without specific message"
-                        )
-                    elif (
-                        task.result
-                    ):  # If result is not None/dict, use its string representation
-                        error_message = str(task.result)
-                    else:
-                        error_message = "Task failed without returning a result."
-                else:
-                    error_message = "Task could not be fetched after scheduling."
 
-                self.stdout.write(
-                    self.style.ERROR(
-                        f"  - Failed to create talent sheet: {error_message}"
-                    )
-                )
-                return False
+            error_message = self._extract_task_error(result_obj)
+            self.stdout.write(
+                self.style.ERROR(f"  - Failed to create talent sheet: {error_message}")
+            )
+            return False
 
         except Exception as e:
             self.stdout.write(
@@ -346,80 +404,33 @@ class Command(BaseCommand):
         Returns:
             True if processing was successful, False otherwise
         """
-        saved_path = None
-
+        saved_path: Path | None = None
         try:
-            # Step 1: Read the PDF file
             try:
-                with open(resume_path, "rb") as f:
-                    file_content = f.read()
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"  - ERROR reading file: {str(e)}"))
+                file_content = Path(resume_path).read_bytes()
+            except OSError as exc:
+                self.stdout.write(self.style.ERROR(f"  - ERROR reading file: {exc}"))
                 return False
 
-            # Step 2: Save the resume temporarily
-            temp_dir = "resumes"
-            # Make sure the directory exists in MEDIA_ROOT
-            media_temp_dir = os.path.join(settings.MEDIA_ROOT, temp_dir)
-            os.makedirs(media_temp_dir, exist_ok=True)
+            try:
+                saved_path = self._persist_temp_resume(file_content)
+            except OSError as exc:
+                self.stdout.write(
+                    self.style.ERROR(f"  - ERROR creating temp resume: {exc}")
+                )
+                return False
 
-            # Create a unique filename
-            temp_filename = f"temp_{uuid.uuid4().hex}.pdf"
-            temp_rel_path = f"{temp_dir}/{temp_filename}"
-            temp_abs_path = os.path.join(settings.MEDIA_ROOT, temp_rel_path)
-
-            # Save the file directly to the filesystem
-            with open(temp_abs_path, "wb") as f:
-                f.write(file_content)
-
-            # Keep track of the path for cleanup
-            saved_path = temp_abs_path
-
-            self.stdout.write(f"Processing resume: {os.path.basename(resume_path)}")
+            self.stdout.write(f"Processing resume: {Path(resume_path).name}")
 
             if verbosity >= 2:
-                self.stdout.write(f"  - Using temporary file: {temp_abs_path}")
+                self.stdout.write(f"  - Using temporary file: {saved_path}")
                 self.stdout.write("  - Processing resume through pipeline...")
 
             # Use the unified pipeline to process the resume with the absolute path
-            result = process_resume(temp_abs_path, profile)
+            result = run_resume_pipeline(str(saved_path), profile)
 
-            if not result["success"]:
-                # Display detailed error information
-                error_msg = result.get("message", "Unknown error")
-
-                # Show which step failed
-                pipeline_steps = result.get("pipeline_steps", {})
-                failed_at = "unknown step"
-
-                # Handle both dict and list formats for backward compatibility
-                if isinstance(pipeline_steps, dict):
-                    for step, completed in pipeline_steps.items():
-                        if not completed:
-                            failed_at = step.replace("_", " ")
-                            break
-                elif isinstance(pipeline_steps, list) and len(pipeline_steps) > 0:
-                    # If it's a list, assume the last item is where it failed
-                    # This is a best guess since we don't have completion flags
-                    failed_at = pipeline_steps[-1].replace("_", " ")
-
-                self.stdout.write(
-                    self.style.ERROR(f"  - ERROR in {failed_at}: {error_msg}")
-                )
-
-                # Show detailed exception information at higher verbosity
-                if verbosity >= 2 and "exception" in result:
-                    self.stdout.write(
-                        self.style.ERROR(f"  - Exception: {result['exception']}")
-                    )
-
-                # Always clean up temporary file if it exists
-                if saved_path and os.path.exists(saved_path):
-                    try:
-                        os.remove(saved_path)
-                    except Exception:
-                        pass
-
+            if not result.get("success"):
+                self._log_pipeline_failure(result, verbosity)
                 return False
 
             if verbosity >= 1:
@@ -427,35 +438,7 @@ class Command(BaseCommand):
                     self.style.SUCCESS("  - SUCCESS: Profile updated successfully")
                 )
 
-            # Show detailed processing information at higher verbosity levels
-            if verbosity >= 2:
-                # Show pipeline steps completion
-                pipeline_steps = result.get("pipeline_steps", {})
-                # Handle both dict and list formats for backward compatibility
-                if isinstance(pipeline_steps, dict):
-                    for step, completed in pipeline_steps.items():
-                        step_name = step.replace("_", " ")
-                        self.stdout.write(
-                            f"  - {step_name}: {'✓' if completed else '✗'}"
-                        )
-                elif isinstance(pipeline_steps, list):
-                    for step in pipeline_steps:
-                        step_name = step.replace("_", " ")
-                        self.stdout.write(f"  - {step_name}: ✓")
-
-                # Show processing time if available
-                if result.get("processing_time"):
-                    self.stdout.write(
-                        f"  - Processing time: {result['processing_time']:.2f}s"
-                    )
-
-            # Clean up temporary file if it exists
-            if saved_path and os.path.exists(saved_path):
-                try:
-                    os.remove(saved_path)
-                except Exception:
-                    pass
-
+            self._log_pipeline_success(result, verbosity)
             return True
 
         except Exception as e:
@@ -464,12 +447,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR("  - Traceback:"))
                 for line in traceback.format_exc().splitlines():
                     self.stdout.write(self.style.ERROR(f"    {line}"))
-
-            # Always clean up temporary file if it exists
-            if saved_path and os.path.exists(saved_path):
-                try:
-                    os.remove(saved_path)
-                except Exception:
-                    pass
-
             return False
+        finally:
+            self._cleanup_temp_file(saved_path)

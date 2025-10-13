@@ -10,7 +10,8 @@ from apps.job_seekers.services.profile_manager import ProfileManager
 class ProfileManagerUtilityTests(TestCase):
     """Tests for helper utility functions (format/parse skills, completeness)."""
 
-    def test_format_and_parse_skills_are_inverse_operations(self):
+    def test_format_and_parse_skills_are_inverse_operations(self) -> None:
+        """Ensure formatting then parsing returns the original skills list."""
         skills_input = ["Python", "  Django  ", "React"]
 
         formatted = ProfileManager.format_skills(skills_input)
@@ -20,13 +21,16 @@ class ProfileManagerUtilityTests(TestCase):
         parsed = ProfileManager.parse_skills(formatted)
         self.assertEqual(parsed, ["Python", "Django", "React"])
 
-    def test_parse_skills_handles_empty_string(self):
+    def test_parse_skills_handles_empty_string(self) -> None:
+        """Return an empty list when parse_skills receives a blank string."""
         self.assertEqual(ProfileManager.parse_skills(""), [])
 
-    def test_format_skills_handles_empty_list(self):
+    def test_format_skills_handles_empty_list(self) -> None:
+        """Return an empty string when formatting an empty skill list."""
         self.assertEqual(ProfileManager.format_skills([]), "")
 
-    def test_is_profile_complete(self):
+    def test_is_profile_complete(self) -> None:
+        """Detect when a profile has all required fields populated."""
         # Create a dummy profile with no data
         profile = JobSeekerProfile()
         self.assertFalse(ProfileManager.is_profile_complete(profile))
@@ -47,14 +51,16 @@ class ProfileManagerUtilityTests(TestCase):
 class ProfileManagerDatabaseTests(TestCase):
     """Tests hitting the DB to ensure create_or_update_profile works."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Create a job seeker user used throughout database tests."""
         self.user = User.objects.create_user(  # type: ignore[attr-defined]
             email="pmgr@example.com",
             password="pw",
             user_type="job_seeker",
         )
 
-    def test_create_profile_for_user(self):
+    def test_create_profile_for_user(self) -> None:
+        """Create a profile from scratch when one does not already exist."""
         # Delete the existing profile created by signal to test creation path
         JobSeekerProfile.objects.filter(user_owner=self.user).delete()
 
@@ -69,7 +75,8 @@ class ProfileManagerDatabaseTests(TestCase):
         self.assertEqual(profile.skills, "Python")
         self.assertEqual(profile.user_owner, self.user)
 
-    def test_update_existing_profile(self):
+    def test_update_existing_profile(self) -> None:
+        """Update an existing profile with new field values."""
         # Fetch the existing profile created by signal
         profile = ProfileManager.get_profile(self.user)
         self.assertIsNotNone(profile)
@@ -79,7 +86,8 @@ class ProfileManagerDatabaseTests(TestCase):
 
         self.assertEqual(updated.professional_summary, "Updated summary")
 
-    def test_create_profile_for_candidate_pool(self):
+    def test_create_profile_for_candidate_pool(self) -> None:
+        """Create a profile anchored to a candidate pool instead of a user."""
         recruiter = User.objects.create_user(  # type: ignore[attr-defined]
             email="recruit@example.com",
             password="rpw",

@@ -7,7 +7,9 @@ from typing import Any, cast
 
 import pytest
 
-from hiredar.llm import embed, get_llm_response
+from hiredar.llm import client as llm_client, embed, get_llm_response
+
+# pylint: disable=missing-function-docstring, too-few-public-methods
 
 
 class _FakeChoice(SimpleNamespace):
@@ -58,8 +60,6 @@ class _FakeClient:
 
 @pytest.fixture(autouse=True)
 def patch_client(monkeypatch):
-    from hiredar.llm import client as llm_client
-
     fake_client = _FakeClient()
     monkeypatch.setattr(llm_client, "get_client", lambda: fake_client)
     yield
@@ -85,8 +85,6 @@ def test_chat_complete_passes_reasoning_effort():
         reasoning_effort="medium",
     )
 
-    from hiredar.llm import client as llm_client
-
     fake = cast(Any, llm_client.get_client())
     assert isinstance(fake.called_with, dict)  # pylint: disable=no-member
     reasoning = fake.called_with.get("reasoning")  # pylint: disable=no-member
@@ -103,8 +101,6 @@ def test_chat_complete_maps_max_tokens_to_max_output_tokens():
         max_tokens=77,
     )
 
-    from hiredar.llm import client as llm_client
-
     fake = cast(Any, llm_client.get_client())
     assert isinstance(fake.called_with, dict)  # pylint: disable=no-member
     assert fake.called_with.get("max_output_tokens") == 77  # pylint: disable=no-member
@@ -113,8 +109,6 @@ def test_chat_complete_maps_max_tokens_to_max_output_tokens():
 
 def test_embed_applies_timeout_via_with_options():
     _ = embed(["text"], model="embed-test", timeout=123)
-
-    from hiredar.llm import client as llm_client
 
     fake = cast(Any, llm_client.get_client())
     assert fake.timeout == 123  # pylint: disable=no-member
