@@ -65,16 +65,18 @@ class ReportsServiceTests(TestCase):
             is_published=True,
         )
 
-        # Create candidate match
-        self.candidate_match = CandidateMatch.objects.create(
+        # Ensure a candidate match exists (background tasks may create one already).
+        self.candidate_match, _ = CandidateMatch.objects.update_or_create(
             job_opening=self.job_opening,
             talent_sheet=self.talent_sheet,
-            holistic_score=0.85,
-            skills_score=0.90,
-            experience_score=0.80,
-            qualifications_score=0.75,
-            wildcard_score=0.70,
-            match_summary="Strong Python and Django skills",
+            defaults={
+                "holistic_score": 0.85,
+                "skills_score": 0.90,
+                "experience_score": 0.80,
+                "qualifications_score": 0.75,
+                "wildcard_score": 0.70,
+                "match_summary": "Strong Python and Django skills",
+            },
         )
 
         # Create shortlisted match
@@ -118,10 +120,12 @@ class ReportsServiceTests(TestCase):
             experience_overview="Lots of experience",
             is_published=True,
         )
-        match_2 = CandidateMatch.objects.create(
+        match_2, _ = CandidateMatch.objects.update_or_create(
             job_opening=self.job_opening,
             talent_sheet=talent_sheet_2,
-            holistic_score=0.75,
+            defaults={
+                "holistic_score": 0.75,
+            },
         )
         ShortlistedMatch.objects.create(
             job_opening=self.job_opening, candidate_match=match_2
@@ -202,10 +206,12 @@ class ReportsServiceTests(TestCase):
             promotional_blurb="Pool candidate with parsed name",
             is_published=True,
         )
-        match_pool = CandidateMatch.objects.create(
+        match_pool, _ = CandidateMatch.objects.update_or_create(
             job_opening=self.job_opening,
             talent_sheet=talent_sheet_pool,
-            holistic_score=0.75,
+            defaults={
+                "holistic_score": 0.75,
+            },
         )
         ShortlistedMatch.objects.create(
             job_opening=self.job_opening, candidate_match=match_pool

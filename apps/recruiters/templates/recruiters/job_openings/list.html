@@ -102,17 +102,10 @@
                 {% else %}
                     <div class="flex flex-col items-center justify-center py-12 text-center">
                         <i class="fas fa-briefcase text-5xl text-base-content/30 mb-4"></i>
-                        
-                        {% if request.user.user_type == 'recruiter' %}
-                            <h3 class="text-xl font-semibold mb-2">No job openings yet</h3>
-                            <p class="text-base-content/70">Create your first job opening using the button in the top-right corner</p>
-                        {% else %}
-                            <h3 class="text-xl font-semibold mb-2">No available jobs at the moment</h3>
-                            <p class="text-base-content/70 mb-6">Check back later or update your profile to get better job recommendations</p>
-                            <a href="{% url 'job_seekers:role_recommendations' %}" class="btn btn-primary">
-                                View Recommended Roles
-                            </a>
-                        {% endif %}
+                        <h3 class="text-xl font-semibold mb-2">No job openings yet</h3>
+                        <p class="text-base-content/70">
+                            Create your first job opening using the button in the top-right corner.
+                        </p>
                     </div>
                 {% endif %}
             </div>

@@ -83,12 +83,7 @@ Stores and enriches candidate records generated from recruiter uploads:
   - `TalentSheet`: AI-generated talent sheet used for recruiter sharing and matching
   - `UploadedResumePool`: Represents a batch of resumes uploaded by a recruiter for a specific job opening
 - **Views**:
-  - Organized in subdirectories for maintainability:
-    - `dashboard_views.py`: Legacy job seeker dashboard views (retained for backend reuse)
-    - `job_seeker_profile_views.py`: Resume detail views leveraged by recruiters
-    - `resume_processing_views.py`: Resume upload and processing views (`ResumeUploadView`, `ResumeProcessingTaskProgressView`, `ProfileCreateView`)
-    - `api_views.py`: API endpoints for HTMX and JSON responses (`ToggleRoleInterestView`, `ToggleTalentPoolView`, `TalentPoolStatusView`)
-    - `mixins.py`: Reusable mixins (`HTMXViewMixin`, `ProfileAccessMixin`)
+  - `job_seeker_profile_views.py`: Recruiter-only resume detail view (`ResumeView`)
 - **Services**:
   - Business logic encapsulated in services:
     - `profile_manager.py`: Services for job seeker profile operations
@@ -104,14 +99,11 @@ Stores and enriches candidate records generated from recruiter uploads:
     - `talent_sheet_tasks.py`: Tasks for generating talent sheets
     - Imports from `apps.resume_processing.tasks`: `cleanup_resume_processing_progress` (now scheduled via Celery Beat), `save_resume_file`, `handle_resume_upload_task`
 - **Templates**:
-  - Candidate resume/talent sheet partials (consumed by recruiter surfaces); legacy job seeker templates remain for now
+  - Candidate resume/talent sheet partials consumed by recruiter and matching surfaces
 - **Signals**:
   - Signal handlers for job seeker record lifecycle hooks
 - **URLs**:
-  - `/job-seekers/resume/<pk>/`, `/job-seekers/resume-upload/`, `/job-seekers/task-status/<task_id>/`
-  - `/job-seekers/recommendations/`, `/job-seekers/talent-sheet/`
-  - API endpoints under `/job-seekers/api/`
-  - Legacy dashboard/settings/profile routes exist but are no longer reachable after the recruiter-only shift
+  - `/job-seekers/resume/<pk>/` – recruiter access to candidate resumes
 
 ### Recruiters App (`apps/recruiters`)
 
@@ -246,14 +238,7 @@ Example services in the job_seekers app:
 
 ### Mixin Pattern
 
-Mixins provide reusable functionality that can be applied to multiple views:
-
-- **HTMXViewMixin**: Handles HTMX-specific request detection and response rendering
-- **ProfileAccessMixin**: Legacy helper that enforces candidate-facing permissions (largely unused post recruiter-only shift)
-- **Benefits**:
-  - Avoids code duplication
-  - Promotes consistent behavior across views
-  - Simplifies view classes by moving common functionality to mixins
+Mixins remain an available technique for sharing view behavior, though the job seeker–specific mixins were retired alongside the legacy UI. When new shared logic emerges, add lightweight mixins within the owning app to keep views focused and reusable.
 
 ## Frontend Structure
 
@@ -268,7 +253,6 @@ The application uses a modern frontend approach:
 
 The application uses HTMX for dynamic interactions without writing custom JavaScript:
 
-- **HTMXViewMixin**: Provides helper methods to detect HTMX requests and render appropriate responses
 - **Response Headers**: Uses special HTMX response headers (HX-Redirect, HX-Trigger, etc.)
 - **Partial Templates**: Many templates have partial versions for HTMX requests that return just the HTML fragment needed
 - **Progressive Enhancement**: Fallbacks to standard form submissions when JavaScript is disabled

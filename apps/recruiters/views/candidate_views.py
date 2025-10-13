@@ -1,4 +1,4 @@
-"""Recruiter-facing views for candidate profiles."""
+"""Views for recruiter interactions with candidate profiles."""
 
 from typing import Any, cast
 
@@ -12,42 +12,31 @@ from apps.authentication.types import AuthenticatedUser
 from apps.job_seekers.models import JobSeekerProfile
 
 
-class ResumeView(LoginRequiredMixin, DetailView):
+class CandidateResumeView(LoginRequiredMixin, DetailView):
     """
-    View for recruiters to view a job seeker's full resume.
+    Allow recruiters to view the full resume for a candidate profile.
 
-    Access is only granted if:
-    1. The user is a recruiter
-    2. There's a conversation between the recruiter and job seeker
-    3. The conversation status is 'candidate_interested'
+    Access is granted when:
+    1. The requesting user is a recruiter.
+    2. The profile belongs to one of the recruiter's candidate pools.
     """
 
     model = JobSeekerProfile
-    template_name = "job_seekers/resume_view.html"
+    template_name = "recruiters/candidate_resume.html"
     context_object_name = "profile"
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponseBase:
-        """
-        Check permissions before allowing access to the resume.
-
-        Ensures that:
-        1. The user is a recruiter
-        2. There's a conversation with the job seeker
-        3. The job seeker has expressed interest
-        """
+        """Restrict access to recruiters who own the candidate pool."""
         user = cast(AuthenticatedUser, request.user)
 
-        # Only recruiters can view resumes
         if user.user_type != "recruiter":
             messages.error(request, "Only recruiters can view candidate resumes.")
             return redirect("core:home")
 
-        # Get the job seeker profile
         profile = self.get_object()
 
-        # Allow recruiters to view resumes from pools they own
         if profile.candidate_pool and profile.candidate_pool.recruiter == user:
             return super().dispatch(request, *args, **kwargs)
 
@@ -58,11 +47,8 @@ class ResumeView(LoginRequiredMixin, DetailView):
         return redirect("recruiters:dashboard")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        """Add conversation to context."""
+        """Add related conversation/job opening placeholders to the context."""
         context = super().get_context_data(**kwargs)
-        profile = self.get_object()
-
-        context["conversation"] = None
-        context["job_opening"] = None
-
+        context.setdefault("conversation", None)
+        context.setdefault("job_opening", None)
         return context

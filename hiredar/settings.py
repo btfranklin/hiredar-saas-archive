@@ -313,7 +313,6 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "apps.job_seekers.middleware.resume_upload_required.ResumeUploadRequiredMiddleware",
     "apps.core.middleware.timezone_middleware.UserTimezoneMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -334,7 +333,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "apps.job_seekers.context_processors.personal_tagline",
             ],
         },
     },
@@ -760,30 +758,6 @@ JOBSEEKERS_TAGLINE_MAX_ATTEMPTS = int(os.getenv("JOBSEEKERS_TAGLINE_MAX_ATTEMPTS
 JOBSEEKERS_TALENT_SHEET_MODEL = os.getenv("JOBSEEKERS_TALENT_SHEET_MODEL", "gpt-5")
 JOBSEEKERS_TALENT_SHEET_REASONING_EFFORT = os.getenv(
     "JOBSEEKERS_TALENT_SHEET_REASONING_EFFORT", "low"
-)
-
-### Job Seeker Workshop (tool-specific) settings ###
-
-# Resume upgrade tool
-JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_MODEL = os.getenv(
-    "JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_MODEL", "gpt-5"
-)
-JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_REASONING_EFFORT = os.getenv(
-    "JOBSEEKERS_WORKSHOP_RESUME_UPGRADE_REASONING_EFFORT", "medium"
-)
-JOBSEEKERS_WORKSHOP_DAILY_LIMIT = int(
-    os.getenv("JOBSEEKERS_WORKSHOP_DAILY_LIMIT", "10")
-)
-
-# LinkedIn optimization tool
-JOBSEEKERS_WORKSHOP_LINKEDIN_MODEL = os.getenv(
-    "JOBSEEKERS_WORKSHOP_LINKEDIN_MODEL", "gpt-5"
-)
-JOBSEEKERS_WORKSHOP_LINKEDIN_REASONING_EFFORT = os.getenv(
-    "JOBSEEKERS_WORKSHOP_LINKEDIN_REASONING_EFFORT", "medium"
-)
-JOBSEEKERS_WORKSHOP_LINKEDIN_DAILY_LIMIT = int(
-    os.getenv("JOBSEEKERS_WORKSHOP_LINKEDIN_DAILY_LIMIT", "10")
 )
 
 # Matching Analysis

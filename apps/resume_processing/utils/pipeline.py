@@ -80,7 +80,7 @@ def process_resume(
     progress_tracker = None
     if task_id:
         try:
-            # The tracking record is created in ResumeUploadView before the task is queued
+            # The task should already have a tracking record from the orchestration layer
             progress_tracker = ResumeProcessingTaskProgress.objects.get(task_id=task_id)
             # Update status to running if not already
             if progress_tracker.status == "pending":
