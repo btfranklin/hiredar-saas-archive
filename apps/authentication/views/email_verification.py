@@ -1,6 +1,9 @@
-import logging
+"""Views for real-time e-mail verification feedback."""
 
-from django.http import HttpRequest
+import logging
+from typing import Any
+
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views import View
 
@@ -15,7 +18,10 @@ class QuickEmailVerificationView(View):
     Renders the _email_verification.html snippet with success or error context.
     """
 
-    def get(self, request: HttpRequest, *args, **kwargs):
+    def get(
+        self, request: HttpRequest, *_args: Any, **_kwargs: Any
+    ) -> HttpResponse:
+        """Render verification result snippet for the provided e-mail."""
         email = request.GET.get("email", "").strip()
         if not email:
             return render(

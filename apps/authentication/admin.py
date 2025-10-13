@@ -5,7 +5,9 @@ from typing import Any, cast
 from allauth.account.models import EmailAddress
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.db.models import QuerySet
 from django.http import HttpRequest
+from django.utils import timezone
 
 from apps.authentication.forms import CustomUserChangeForm, CustomUserCreationForm
 from apps.authentication.models import User
@@ -76,13 +78,11 @@ class CustomUserAdmin(UserAdmin):
     # ---------------------------------------------------------------------
 
     @admin.display(description="Date joined", ordering="date_joined")
-    def date_joined_iso(self, obj: User):
+    def date_joined_iso(self, obj: User) -> str:
         """Render the user's join date in an ISO-sortable format (YYYY-MM-DD)."""
         # Display the timestamp in the local timezone so it matches the rest of
         # the Django admin UI, but use an ISO string so that lexical ordering
         # and human reading are both intuitive.
-        from django.utils import timezone
-
         local_dt = timezone.localtime(obj.date_joined)
         return local_dt.strftime("%Y-%m-%d %H:%M")
 
@@ -91,7 +91,7 @@ class CustomUserAdmin(UserAdmin):
         """Return True if the user's primary email address is verified."""
         return EmailAddress.objects.filter(user=obj, verified=True).exists()
 
-    def get_queryset(self, request: HttpRequest) -> Any:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[User]:
         """Get the queryset for the admin view."""
         queryset = super().get_queryset(request)
         user = cast(AuthenticatedUser, request.user)

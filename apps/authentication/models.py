@@ -215,7 +215,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         parts = self.name.split()
         if len(parts) >= 2:
             return f"{parts[0][0]}{parts[-1][0]}".upper()
-        elif len(parts) == 1 and parts[0]:
+        if len(parts) == 1 and parts[0]:
             return parts[0][0].upper()
         return "U"  # Default for users with no name parts
 
@@ -251,11 +251,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Return the number of unread notifications for this user."""
         return 0
 
-    def get_recent_notifications(self, limit: int = 5):
+    def get_recent_notifications(self, _limit: int = 5):
         """Return the most recent notifications for this user.
 
         Args:
-            limit: Maximum number of notifications to return.
+            _limit: Maximum number of notifications to return (currently unused).
         """
 
         return []

@@ -12,6 +12,7 @@ from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage, EmailMultiAlternatives
@@ -51,6 +52,58 @@ class AccountAdapter(DefaultAccountAdapter):
 
         # Redirect recruiters to their dashboard (no standalone profile page exists)
         return reverse("recruiters:dashboard")
+
+    def get_phone(self, user: Any) -> tuple[str, bool] | None:
+        """Return the stored phone information if the user model provides it."""
+        phone = getattr(user, "phone", None)
+        if not phone:
+            return None
+        verified = bool(getattr(user, "phone_verified", False))
+        return str(phone), verified
+
+    def get_user_by_phone(self, phone: str) -> AuthenticatedUser | None:
+        """Look up a user by phone number if the model exposes that field."""
+        if not phone:
+            return None
+        user_model = get_user_model()
+        if not hasattr(user_model, "phone"):
+            return None
+        return cast(
+            AuthenticatedUser,
+            user_model.objects.filter(phone=phone).first(),
+        )
+
+    def send_verification_code_sms(
+        self, _user: Any, _phone: str, _code: str, **_kwargs: Any
+    ) -> None:
+        """Raise to signal that SMS-based verification is not configured."""
+        raise NotImplementedError(
+            "Phone verification is not configured for this project."
+        )
+
+    def set_phone(self, user: Any, phone: str, verified: bool) -> None:
+        """Persist the user's phone number if the attribute exists."""
+        if not hasattr(user, "phone"):
+            raise NotImplementedError(
+                "The user model does not define a phone field."
+            )
+        user.phone = phone  # type: ignore[attr-defined]
+        update_fields = ["phone"]
+        if hasattr(user, "phone_verified"):
+            user.phone_verified = verified  # type: ignore[attr-defined]
+            update_fields.append("phone_verified")
+        user.save(update_fields=update_fields)
+
+    def set_phone_verified(self, user: Any, phone: str) -> None:
+        """Mark the phone number as verified when phone support is available."""
+        if not hasattr(user, "phone") or not hasattr(user, "phone_verified"):
+            raise NotImplementedError(
+                "The user model does not define phone verification fields."
+            )
+        if getattr(user, "phone") != phone:
+            raise ValidationError("Provided phone number does not match the user.")
+        user.phone_verified = True  # type: ignore[attr-defined]
+        user.save(update_fields=["phone_verified"])
 
     # --------------------------------------------------
     # E-mail Confirmation Flow

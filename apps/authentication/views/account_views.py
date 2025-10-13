@@ -18,6 +18,7 @@ from django.views.generic import View
 
 from apps.authentication.types import AuthenticatedUser
 
+
 class UpdateAccountView(LoginRequiredMixin, View):
     """
     View for managing user settings.
@@ -25,11 +26,13 @@ class UpdateAccountView(LoginRequiredMixin, View):
     Displays and handles updates to user account information.
     """
 
-    def get_template_name(self, user: AuthenticatedUser) -> str:
+    def get_template_name(self, _user: AuthenticatedUser) -> str:
         """Get the appropriate template based on user type."""
         return "recruiters/settings.html"
 
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *_args: Any, **_kwargs: Any
+    ) -> HttpResponse:
         """Handle GET requests to display the settings page."""
         user = cast(AuthenticatedUser, request.user)
         template_name = self.get_template_name(user)
@@ -40,7 +43,9 @@ class UpdateAccountView(LoginRequiredMixin, View):
             request, template_name, {"user": user, "email_verified": email_verified}
         )
 
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, *_args: Any, **_kwargs: Any
+    ) -> HttpResponse:
         """Handle POST requests for updating account information."""
         try:
             # Update User model fields
@@ -64,7 +69,9 @@ class ChangePasswordView(LoginRequiredMixin, View):
     Uses Django's built-in PasswordChangeForm to validate and change passwords.
     """
 
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, *_args: Any, **_kwargs: Any
+    ) -> HttpResponse:
         """Handle POST requests for changing passwords."""
         # Using Django's built-in password change form for validation
         user = cast(AuthenticatedUser, request.user)

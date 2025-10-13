@@ -1,6 +1,6 @@
 """Forms for user authentication and registration."""
 
-from typing import Any, cast
+from typing import Any
 
 from allauth.account.forms import SignupForm as AllAuthSignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
@@ -16,7 +16,7 @@ from django.http import HttpRequest
 from apps.authentication.models import User
 
 
-class CustomUserCreationForm(UserCreationForm):
+class CustomUserCreationForm(UserCreationForm):  # pylint: disable=too-many-ancestors
     """Form for creating new users."""
 
     class Meta:
@@ -50,7 +50,7 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ("email", "name")
 
 
-class CustomAuthenticationForm(AuthenticationForm):
+class CustomAuthenticationForm(AuthenticationForm):  # pylint: disable=too-many-ancestors
     """
     Custom authentication form that uses email for authentication.
     """
@@ -80,8 +80,7 @@ class CustomAuthenticationForm(AuthenticationForm):
                     code="invalid_login",
                     params={"username": self.fields["username"].label},
                 )
-            else:
-                self.confirm_login_allowed(self.user_cache)
+            self.confirm_login_allowed(self.user_cache)
 
         return self.cleaned_data
 

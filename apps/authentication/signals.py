@@ -18,23 +18,15 @@ from apps.authentication.models import User
 
 @receiver(post_save, sender=User)
 def user_post_save(
-    sender: Type[User], instance: User, created: bool, **kwargs: dict[str, Any]
+    _sender: Type[User], _instance: User, _created: bool, **_kwargs: Any
 ) -> None:
-    """
-    Handle post-save signal for User model.
-
-    Args:
-        sender: The model class (User)
-        instance: The actual instance being saved
-        created: Boolean; True if a new record was created
-        **kwargs: Additional keyword arguments
-    """
-    # Currently no post-save actions needed for User model
+    """Placeholder hook for user post-save logic."""
+    return
 
 
 @receiver(pre_save, sender=User)
 def enforce_staff_privileges(
-    sender: Type[User], instance: User, **kwargs: dict[str, Any]
+    _sender: Type[User], instance: User, **_kwargs: Any
 ) -> None:
     """
     Enforce rules for staff privileges.
@@ -47,7 +39,9 @@ def enforce_staff_privileges(
 
 
 @receiver(pre_save, sender=User)
-def check_proper_user_creation(sender, instance, **kwargs):
+def check_proper_user_creation(
+    _sender: Type[User], instance: User, **_kwargs: Any
+) -> None:
     """
     Check if a user is being created with a usable password.
 
@@ -55,7 +49,7 @@ def check_proper_user_creation(sender, instance, **kwargs):
     using User.objects.create_user().
     """
     # Only run this check during creation (not updates)
-    if instance._state.adding:
+    if instance._state.adding:  # pylint: disable=protected-access
         # Check if the password is properly hashed
         if instance.password and not is_password_usable(instance.password):
             # Get the calling frame for better error messages
@@ -71,10 +65,10 @@ def check_proper_user_creation(sender, instance, **kwargs):
             else:
                 caller = "unknown location"
 
-                warnings.warn(
-                    f"Potential improper User creation detected from {caller}. "
-                    "The password does not appear to be properly hashed. "
-                    "Use User.objects.create_user() to ensure proper user creation.",
-                    UserWarning,
-                    stacklevel=2,
-                )
+            warnings.warn(
+                f"Potential improper User creation detected from {caller}. "
+                "The password does not appear to be properly hashed. "
+                "Use User.objects.create_user() to ensure proper user creation.",
+                UserWarning,
+                stacklevel=2,
+            )

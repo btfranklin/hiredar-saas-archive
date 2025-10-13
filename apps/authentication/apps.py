@@ -20,10 +20,10 @@ class AuthenticationConfig(AppConfig):
     name = "apps.authentication"
     verbose_name = "Authentication"
 
-    def ready(self):
+    def ready(self) -> None:
         """
         Initialize app when Django starts.
 
         Imports signals to ensure they are registered when the app is ready.
         """
-        import apps.authentication.signals  # type: ignore # noqa
+        import apps.authentication.signals  # pylint: disable=import-outside-toplevel, unused-import
