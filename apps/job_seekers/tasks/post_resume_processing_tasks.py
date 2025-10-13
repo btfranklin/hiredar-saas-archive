@@ -11,7 +11,7 @@ from typing import Any
 from celery import shared_task
 
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models.profile import JobSeekerProfile
+from apps.job_seekers.models import JobSeekerProfile
 from apps.job_seekers.tasks.recommendation_tasks import generate_role_recommendations
 from apps.resume_processing.models import ResumeProcessingJob
 from apps.resume_processing.tasks.cleanup_tasks import (

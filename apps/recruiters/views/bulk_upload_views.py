@@ -17,8 +17,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models.profile import CandidatePool, JobSeekerProfile
-from apps.job_seekers.models.talent import TalentSheet
+from apps.job_seekers.models import CandidatePool, JobSeekerProfile, TalentSheet
 from apps.recruiters.constants import RESUME_PROCESSING_CREDIT_COST
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload

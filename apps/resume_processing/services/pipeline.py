@@ -15,7 +15,7 @@ from typing import Any
 from django.conf import settings
 from django.core.files.storage import default_storage
 
-from apps.job_seekers.models.profile import JobSeekerProfile
+from apps.job_seekers.models import JobSeekerProfile
 from apps.resume_processing.models import ResumeProcessingTaskProgress
 from apps.resume_processing.services.extraction import extract_text
 from apps.resume_processing.services.llm_processor import convert_text_to_xml

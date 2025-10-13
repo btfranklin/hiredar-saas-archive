@@ -13,7 +13,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 
-from apps.job_seekers.models.profile import JobSeekerProfile
+from apps.job_seekers.models import JobSeekerProfile
 
 # Removed top-level import to avoid circular dependency; import in function to defer loading
 

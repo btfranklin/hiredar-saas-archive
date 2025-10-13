@@ -1,0 +1,57 @@
+"""Recruiter profile model."""
+
+from __future__ import annotations
+
+from django.db import models
+
+from apps.authentication.models import User
+
+
+class RecruiterProfile(models.Model):
+    """Extended profile for recruiters."""
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="recruiter_profile",
+        limit_choices_to={"user_type": "recruiter"},
+    )
+    credits_total = models.IntegerField(
+        default=100,
+        help_text="Total resume processing credits for the recruiter",
+    )
+    credits_available = models.IntegerField(
+        default=100,
+        help_text="Remaining resume processing credits available",
+    )
+    total_resumes_processed = models.PositiveIntegerField(
+        default=0,
+        help_text="Total resumes ever processed",
+    )
+    total_bulk_uploads_performed = models.PositiveIntegerField(
+        default=0,
+        help_text="Total bulk resume uploads performed",
+    )
+    total_candidates_shortlisted = models.PositiveIntegerField(
+        default=0,
+        help_text="Total candidates shortlisted",
+    )
+    total_shortlist_csvs_generated = models.PositiveIntegerField(
+        default=0,
+        help_text="Total shortlist CSVs generated",
+    )
+    total_shortlist_pdfs_generated = models.PositiveIntegerField(
+        default=0,
+        help_text="Total shortlist PDFs generated",
+    )
+    total_interest_requests_sent = models.PositiveIntegerField(
+        default=0,
+        help_text="Total initial interest requests (new conversations) sent to candidates",
+    )
+    total_messages_sent = models.PositiveIntegerField(
+        default=0,
+        help_text="Total chat messages sent by the recruiter",
+    )
+
+    def __str__(self) -> str:
+        return f"Recruiter: {self.user.email}"

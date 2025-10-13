@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.authentication.models import User
-from apps.job_seekers.models.profile import JobSeekerProfile
+from apps.job_seekers.models import JobSeekerProfile
 
 
 class ResumeProcessingJob(models.Model):

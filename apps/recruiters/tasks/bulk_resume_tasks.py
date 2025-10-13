@@ -14,7 +14,7 @@ from django.core.files.base import ContentFile
 
 from apps.core.models import TaskMeta
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models.profile import CandidatePool
+from apps.job_seekers.models import CandidatePool
 from apps.job_seekers.tasks.pool_tasks import (
     cleanup_temp_resume_file,
     process_resume_for_pool,

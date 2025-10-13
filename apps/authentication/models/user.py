@@ -1,4 +1,6 @@
-"""Models for the authentication app."""
+"""Authentication models."""
+
+from __future__ import annotations
 
 import inspect
 import uuid
@@ -25,19 +27,7 @@ class UserManager(BaseUserManager[T]):
     def create_user(
         self, email: str, password: str | None = None, **extra_fields: Any
     ) -> T:
-        """Create and save a regular user.
-
-        The project relies on password‑based authentication (or social
-        back‑ends that set their own unusable password afterwards). Allowing
-        ``password=None`` would create *active* users that might later be able
-        to request a password‑reset token and gain access without any prior
-        credential. To avoid that ambiguity we *require* an explicit password
-        value. Callers that intentionally want a login‑less account should
-        instead set an unusable password via
-
-        ``user.set_unusable_password()`` **after** creating the user.
-        """
-
+        """Create and save a regular user."""
         if password is None:
             raise ValueError("A password must be provided when creating users.")
         if not email:
@@ -80,17 +70,10 @@ class UserManager(BaseUserManager[T]):
         return self.create_user(email, password, **extra_fields)
 
     def create(self, **kwargs: Any) -> T:
-        """
-        Override the default create method to discourage direct User creation.
-
-        Direct User.objects.create() calls bypass username generation and password hashing.
-        Always use User.objects.create_user() instead.
-        """
-
-        # Get the calling frame
+        """Discourage direct User.objects.create() calls."""
         frame = inspect.currentframe()
         if frame:
-            frame = frame.f_back  # Get the frame that called this method
+            frame = frame.f_back
             if frame:
                 filename = frame.f_code.co_filename
                 lineno = frame.f_lineno
@@ -107,12 +90,11 @@ class UserManager(BaseUserManager[T]):
             UserWarning,
             stacklevel=2,
         )
-
-        # If you want to make this a hard error instead of a warning, uncomment the following:
-        # raise ValueError("Direct User creation is not allowed. Use User.objects.create_user() instead.")
-
-        # Still allow the creation to proceed (but with a warning)
         return super().create(**kwargs)
+
+    # The native BaseUserManager.create_superuser will call full_clean and
+    # trigger the AUTH_PASSWORD_VALIDATORS settings which we do not want
+    # for programmatic superuser creation. Keep the base behaviour.
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -145,8 +127,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         ),
     )
     date_joined = models.DateTimeField(_("date joined"), auto_now_add=True)
-
-    # Olson timezone string (e.g. "America/Los_Angeles") for per-user localization
     timezone = models.CharField(
         _("timezone"),
         max_length=50,
@@ -155,11 +135,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             "Preferred IANA timezone name for this user (e.g. 'Europe/Paris')."
         ),
     )
-
-    # Field to record if the user has certified they are located in the US and will
-    # only use Hiredar for US-based recruiting and employment activity. This helps us
-    # limit our user base geographically for GDPR and other non-US regulatory
-    # considerations.
     is_us_certified = models.BooleanField(
         _("US certified"),
         default=False,
@@ -173,13 +148,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = (
-        []
-    )  # Email is already the USERNAME_FIELD, no need for additional required fields
+    REQUIRED_FIELDS: list[str] = []
 
     class Meta:
-        """Meta class for User model."""
-
         verbose_name = _("user")
         verbose_name_plural = _("users")
         indexes = [
@@ -191,19 +162,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         ]
 
     def __str__(self) -> str:
-        """Return string representation of the user."""
         return self.email
 
     def get_full_name(self) -> str:
-        """Return the user's full name."""
         return self.name
 
     def get_short_name(self) -> str:
-        """Return the user's name."""
         return self.name
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert user instance to a dictionary."""
         return {
             "email": self.email,
             "name": self.name,
@@ -211,51 +178,34 @@ class User(AbstractBaseUser, PermissionsMixin):
         }
 
     def get_initials(self) -> str:
-        """Get user initials for avatar display"""
         parts = self.name.split()
         if len(parts) >= 2:
             return f"{parts[0][0]}{parts[-1][0]}".upper()
         if len(parts) == 1 and parts[0]:
             return parts[0][0].upper()
-        return "U"  # Default for users with no name parts
+        return "U"
 
     def get_absolute_url(self) -> str:
-        """Get the absolute URL for this user"""
         return reverse("accounts:profile")
 
     def clean(self) -> None:
-        """
-        Validate the user object before saving.
-
-        Ensures that only users with user_type 'admin' can have is_staff=True.
-        """
         super().clean()
         if self.is_staff and self.user_type != "admin":
             raise ValidationError(
                 {"is_staff": "Only administrators can have staff privileges."}
             )
-
-        # Enforce that any user classified as an administrator must also
-        # possess superuser privileges. This prevents the accidental creation
-        # of "limbo" admin accounts that are flagged as administrators in our
-        # business logic but do not actually have the elevated permissions
-        # granted by Django's `is_superuser` flag.
         if self.user_type == "admin" and not self.is_superuser:
             raise ValidationError(
                 {
-                    "is_superuser": "Administrator accounts must have superuser privileges (is_superuser=True)."
+                    "is_superuser": (
+                        "Administrator accounts must have superuser privileges "
+                        "(is_superuser=True)."
+                    )
                 }
             )
 
     def get_unread_notifications_count(self) -> int:
-        """Return the number of unread notifications for this user."""
         return 0
 
     def get_recent_notifications(self, _limit: int = 5):
-        """Return the most recent notifications for this user.
-
-        Args:
-            _limit: Maximum number of notifications to return (currently unused).
-        """
-
         return []
