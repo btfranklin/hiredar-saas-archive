@@ -184,19 +184,23 @@ class TalentSheetSignalTests(TestCase):
         self.TalentSheet = apps.get_model("job_seekers", "TalentSheet")
         self.User = apps.get_model("authentication", "User")
         self.JobSeekerProfile = apps.get_model("job_seekers", "JobSeekerProfile")
+        self.CandidatePool = apps.get_model("candidates", "CandidatePool")
 
-        # Create a test user with job_seeker type
-        self.test_user = self.User.objects.create_user(
-            username="test_jobseeker",
-            email="jobseeker@example.com",
+        # Pool-owned job seeker profiles now represent all candidates.
+        pool_recruiter = self.User.objects.create_user(
+            username="pool_recruiter",
+            email="poolrecruiter@example.com",
             password="password123",
-            user_type="job_seeker",
-            name="Test Job Seeker",
+            user_type="recruiter",
+            name="Pool Recruiter",
         )
-
-        # Get the JobSeekerProfile that was automatically created via signal
-        self.test_job_seeker = self.JobSeekerProfile.objects.get(
-            user_owner=self.test_user
+        candidate_pool = self.CandidatePool.objects.create(
+            recruiter=pool_recruiter,
+            name="Signal Pool",
+        )
+        self.test_job_seeker = self.JobSeekerProfile.objects.create(
+            candidate_pool=candidate_pool,
+            candidate_name="Signal Candidate",
         )
 
     @patch("apps.matching.signals.chain")

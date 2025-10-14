@@ -22,10 +22,13 @@ class ShortlistCountersTests(TestCase):
             title="Test Job",
             description="Test description",
         )
-        # Create job seeker and talent sheet
-        self.seeker_user = User.objects.create_user(email="seeker@example.com", password="pass", user_type="job_seeker")  # type: ignore[attr-defined]
+        # Create pool-owned candidate and talent sheet
+        candidate_pool = CandidatePool.objects.create(
+            recruiter=self.recruiter_user, name="Shortlist Pool"
+        )
         self.job_seeker_profile = JobSeekerProfile.objects.create(
-            user_owner=self.seeker_user
+            candidate_pool=candidate_pool,
+            candidate_name="Shortlist Candidate",
         )
         self.talent_sheet = TalentSheet.objects.create(
             job_seeker=self.job_seeker_profile,

@@ -6,6 +6,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.authentication.models import User
+from apps.candidates.models import CandidatePool
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.recruiters.models import JobOpening, RecruiterProfile
@@ -25,9 +26,15 @@ class ExportCountersTests(TestCase):
             title="Reporting Job",
             description="Description for reports",
         )
-        # Create job seeker and match to shortlist some candidates
-        seeker_user = User.objects.create_user(email="seeker2@example.com", password="pass", user_type="job_seeker")  # type: ignore[attr-defined]
-        job_seeker_profile = JobSeekerProfile.objects.create(user_owner=seeker_user)
+        # Create a pool-owned candidate profile and shortlist entry
+        candidate_pool = CandidatePool.objects.create(
+            recruiter=self.rec_user, name="Reporting Pool"
+        )
+        job_seeker_profile = JobSeekerProfile.objects.create(
+            candidate_pool=candidate_pool,
+            candidate_name="Reporting Candidate",
+            most_recent_title="Data Analyst",
+        )
         talent_sheet = TalentSheet.objects.create(
             job_seeker=job_seeker_profile,
             promotional_blurb="",
@@ -35,7 +42,6 @@ class ExportCountersTests(TestCase):
             ideal_roles="",
             skills="",
             personal_tagline="",
-            salary_min=None,
             is_published=False,
             qualifications="",
         )

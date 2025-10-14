@@ -39,21 +39,18 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
             status="active",
         )
 
-        # Create job seeker
-        self.job_seeker_user = User.objects.create_user(
-            email="jobseeker@test.com",
-            password="testpass123",
-            user_type="job_seeker",
-            name="Test Candidate",
+        # Create pool-owned candidate profile representing an ingested resume
+        self.candidate_pool = CandidatePool.objects.create(
+            recruiter=self.recruiter_user,
+            name="Primary Pool",
         )
-        self.job_seeker_profile, _ = JobSeekerProfile.objects.get_or_create(
-            user_owner=self.job_seeker_user,
-            defaults={
-                "most_recent_title": "Python Developer",
-                "location": "San Francisco, CA",
-                "years_of_experience": 5,
-                "phone": "555-123-4567",
-            },
+        self.job_seeker_profile = JobSeekerProfile.objects.create(
+            candidate_pool=self.candidate_pool,
+            candidate_name="Test Candidate",
+            most_recent_title="Python Developer",
+            location="San Francisco, CA",
+            years_of_experience=5,
+            phone="555-123-4567",
         )
 
         # Create talent sheet
@@ -95,9 +92,8 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
         self.assertIn("full_name", csv_string)
         self.assertIn("match_score_overall", csv_string)
 
-        # Check candidate data is present
+        # Check candidate data is present (pool-owned candidates use candidate_name)
         self.assertIn("Test Candidate", csv_string)
-        self.assertIn("jobseeker@test.com", csv_string)
         self.assertIn("85.0%", csv_string)  # holistic score
         self.assertIn("Python, Django, PostgreSQL, React", csv_string)  # skills
         # Note: phone and title might be empty due to get_or_create defaults
@@ -105,15 +101,10 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
     def test_generate_csv_with_limit(self):
         """Test CSV generation respects limit parameter."""
         # Create another shortlisted candidate
-        job_seeker_2_user = User.objects.create_user(
-            email="candidate2@test.com",
-            password="testpass123",
-            user_type="job_seeker",
-            name="Second Candidate",
-        )
-        job_seeker_2, _ = JobSeekerProfile.objects.get_or_create(
-            user_owner=job_seeker_2_user,
-            defaults={"most_recent_title": "Senior Developer"},
+        job_seeker_2 = JobSeekerProfile.objects.create(
+            candidate_pool=self.candidate_pool,
+            candidate_name="Second Candidate",
+            most_recent_title="Senior Developer",
         )
         talent_sheet_2 = TalentSheet.objects.create(
             job_seeker=job_seeker_2,

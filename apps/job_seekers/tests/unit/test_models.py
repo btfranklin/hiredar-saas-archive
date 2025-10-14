@@ -15,17 +15,23 @@ class JobSeekerProfileModelTests(TestCase):
     """Test helper properties on JobSeekerProfile."""
 
     def setUp(self):
-        # Create a user who will own the profile
-        self.user = User.objects.create_user(  # type: ignore[attr-defined]
-            email="jsmith@example.com",
+        # Resume ingestion now owns candidate profiles via recruiter pools.
+        self.recruiter = User.objects.create_user(  # type: ignore[attr-defined]
+            email="recruiter@example.com",
             password="password123",
-            name="John Smith",
-            user_type="job_seeker",
+            name="Recruiter Owner",
+            user_type="recruiter",
+        )
+        self.candidate_pool = CandidatePool.objects.create(
+            recruiter=self.recruiter, name="Imported Résumés"
         )
 
-        # Fetch the automatically created profile via user_owner foreign key
-        self.profile: JobSeekerProfile = JobSeekerProfile.objects.get(
-            user_owner=self.user
+        # Create a pool-owned profile with parsed resume details.
+        self.profile = JobSeekerProfile.objects.create(
+            candidate_pool=self.candidate_pool,
+            candidate_name="John Smith",
+            most_recent_title="Senior Platform Engineer",
+            professional_summary="Seasoned engineer with focus on infrastructure.",
         )
 
         # Populate some skills so we can test skills_list
@@ -40,72 +46,24 @@ class JobSeekerProfileModelTests(TestCase):
         expected = ["Python", "Django", "React"]
         self.assertEqual(self.profile.skills_list, expected)
 
-    def test_str_for_user_owned_profile(self):
-        """__str__ should include user email when owned by a User instance."""
+    def test_str_for_pool_owned_profile(self):
+        """__str__ should reflect the owning candidate pool."""
 
-        self.assertIn(self.user.email, str(self.profile))
-
-    def test_str_for_candidate_pool_owned_profile(self):
-        """When the profile owner is a resume pool, __str__ should reflect that."""
-
-        # Create a recruiter and a resume pool which will own a new profile.
-        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
-            email="recruiter@example.com",
-            password="recruiter_pw",
-            name="Recruiter",
-            user_type="recruiter",
+        self.assertEqual(
+            str(self.profile), f"Job Seeker (Pool: {self.candidate_pool.name})"
         )
-
-        candidate_pool = CandidatePool.objects.create(
-            recruiter=recruiter,
-            name="March Batch",
-        )
-
-        # Create a profile owned by the resume pool using candidate_pool field
-        pool_profile = JobSeekerProfile.objects.create(candidate_pool=candidate_pool)
-
-        self.assertIn("Candidate Pool: March Batch", str(candidate_pool))
-        # The profile's __str__ should reference the pool label
-        self.assertIn("March Batch", str(pool_profile))
-
-    def test_display_name_and_initials_for_user_owned_profile(self):
-        """display_name and avatar_initials should use the owner's details."""
-
-        self.assertEqual(self.profile.display_name, self.user.name)
-        self.assertEqual(self.profile.avatar_initials, "JS")
 
     def test_display_name_and_initials_for_pool_owned_profile(self):
         """Pool-owned profiles should use candidate_name when present."""
 
-        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
-            email="poolrecruiter@example.com",
-            password="recruiter_pw",
-            name="Pool Recruiter",
-            user_type="recruiter",
-        )
-
-        candidate_pool = CandidatePool.objects.create(
-            recruiter=recruiter,
-            name="April Batch",
-        )
-
-        pool_profile = JobSeekerProfile.objects.create(
-            candidate_pool=candidate_pool,
-            candidate_name="Brandy Stevenson",
-            most_recent_title="Chief Medical Physicist",
-        )
-
-        self.assertEqual(pool_profile.display_name, "Brandy Stevenson")
-        self.assertEqual(pool_profile.avatar_initials, "BS")
+        self.assertEqual(self.profile.display_name, "John Smith")
+        self.assertEqual(self.profile.avatar_initials, "JS")
 
         # If candidate_name is missing we should fall back to title initials.
-        pool_profile.candidate_name = ""
-        pool_profile.save(update_fields=["candidate_name"])
-        self.assertEqual(pool_profile.display_name, "Chief Medical Physicist")
-        self.assertEqual(
-            pool_profile.avatar_initials,
-            "CP",
-        )
+        self.profile.candidate_name = ""
+        self.profile.save(update_fields=["candidate_name"])
+        self.assertEqual(self.profile.display_name, "Senior Platform Engineer")
+        self.assertEqual(self.profile.avatar_initials, "SE")
 
 
 class RoleRecommendationModelTests(TestCase):
@@ -139,17 +97,18 @@ class RoleRecommendationModelTests(TestCase):
         self.assertEqual(rec.candidate_pool, candidate_pool)
 
     def test_str_contains_role_and_user(self):
-        """__str__ should combine role title and job seeker identity."""
-
-        user = User.objects.create_user(  # type: ignore[attr-defined]
-            email="alice@example.com",
+        """Pool-owned profiles should fall back to the profile identifier."""
+        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
+            email="recs@example.com",
             password="pw",
-            user_type="job_seeker",
-            name="Alice Example",
+            user_type="recruiter",
+            name="Rec",
         )
-
-        # Fetch the profile created by signal via user_owner foreign key
-        profile = JobSeekerProfile.objects.get(user_owner=user)
+        candidate_pool = CandidatePool.objects.create(
+            recruiter=recruiter,
+            name="Summer Uploads",
+        )
+        profile = JobSeekerProfile.objects.create(candidate_pool=candidate_pool)
 
         rec = RoleRecommendation.objects.create(
             job_seeker=profile,
@@ -159,23 +118,30 @@ class RoleRecommendationModelTests(TestCase):
 
         stringified = str(rec)
         self.assertIn("Data Analyst", stringified)
-        self.assertIn("Alice Example", stringified)
+        self.assertIn(f"Profile {profile.pk}", stringified)
 
 
 class TalentSheetModelTests(TestCase):
     """Tests for TalentSheet helper properties."""
 
     def setUp(self):
-        # Create a job seeker
-        self.user = User.objects.create_user(  # type: ignore[attr-defined]
-            email="talent@example.com",
+        recruiter = User.objects.create_user(  # type: ignore[attr-defined]
+            email="talentrecruiter@example.com",
             password="pw",
-            user_type="job_seeker",
-            name="Tal En T",
+            user_type="recruiter",
+            name="Talent Recruiter",
         )
 
-        # Fetch the profile created by signal
-        self.profile = JobSeekerProfile.objects.get(user_owner=self.user)
+        self.candidate_pool = CandidatePool.objects.create(
+            recruiter=recruiter,
+            name="Talent Batch",
+        )
+
+        # Pool-owned profile used for talent sheet generation
+        self.profile = JobSeekerProfile.objects.create(
+            candidate_pool=self.candidate_pool,
+            candidate_name="Tal En T",
+        )
 
         self.talent_sheet = TalentSheet.objects.create(
             job_seeker=self.profile,
@@ -191,7 +157,7 @@ class TalentSheetModelTests(TestCase):
         expected = ["Backend Dev", "API Engineer"]
         self.assertEqual(self.talent_sheet.ideal_roles_list, expected)
 
-    def test_candidate_pool_none_for_user_owned(self):
-        """User‑owned profiles should yield None for candidate_pool."""
+    def test_candidate_pool_property_for_pool_owned_sheet(self):
+        """Pool-owned profiles should yield their candidate pool."""
 
-        self.assertIsNone(self.talent_sheet.candidate_pool)
+        self.assertEqual(self.talent_sheet.candidate_pool, self.candidate_pool)

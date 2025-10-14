@@ -9,6 +9,7 @@ from django.db import close_old_connections, transaction
 from django.test import TestCase, TransactionTestCase
 
 from apps.authentication.models import User
+from apps.candidates.models import CandidatePool
 from apps.core.services.task_idempotency import IdempotentTaskManager
 from apps.job_seekers.models import JobSeekerProfile, TalentSheet
 from apps.job_seekers.services.talent_sheet_service import TalentSheetService
@@ -39,15 +40,13 @@ class RaceConditionTests(TransactionTestCase):
             status="active",
         )
 
-        # Create job seeker
-        self.job_seeker_user = User.objects.create_user(
-            email="seeker@test.com",
-            password="testpass",
-            user_type="job_seeker",
-            name="Test Seeker",
+        # Create pool-owned candidate profile
+        candidate_pool = CandidatePool.objects.create(
+            recruiter=self.recruiter_user, name="Race Condition Pool"
         )
-        self.job_seeker_profile = JobSeekerProfile.objects.get(
-            user_owner=self.job_seeker_user
+        self.job_seeker_profile = JobSeekerProfile.objects.create(
+            candidate_pool=candidate_pool,
+            candidate_name="Race Condition Candidate",
         )
 
         # Create talent sheet
