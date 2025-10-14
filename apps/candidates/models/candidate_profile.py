@@ -102,13 +102,6 @@ class CandidateProfile(models.Model):
         blank=True,
         help_text="Combined education and certifications summary for matching",
     )
-    salary_min = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Minimum salary expectation if available",
-    )
     is_published = models.BooleanField(
         default=False,
         help_text="Whether this profile is eligible for matching workflows",
