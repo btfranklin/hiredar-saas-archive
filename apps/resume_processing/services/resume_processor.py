@@ -9,13 +9,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from django.db import transaction
 # Celery result backend
 from celery.result import AsyncResult
 
 from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.services.profile_manager import ProfileManager
 from apps.resume_processing.models import ResumeProcessingTaskProgress
 
 __all__ = [
@@ -130,37 +128,3 @@ class ResumeProcessor:  # noqa: D401 – Service class, not data‑class
         task.message = error_message
         task.save(update_fields=["status", "message"])
         return task
-
-    # ------------------------------------------------------------------
-    # Profile helpers
-    # ------------------------------------------------------------------
-    @staticmethod
-    @transaction.atomic
-    def update_profile_from_resume_data(user: User, resume_data: dict):
-        profile = ProfileManager.get_profile(
-            user
-        ) or ProfileManager.create_or_update_profile(user, {})
-
-        field_mapping = {
-            "skills": "skills",
-            "experience": "experience",
-            "education": "education",
-            "certifications": "certifications",
-            "years_of_experience": "years_of_experience",
-            "current_title": "most_recent_title",
-            "summary": "professional_summary",
-            "phone": "phone",
-            "location": "location",
-            "resume_xml": "resume_xml",
-        }
-
-        for resume_field, profile_field in field_mapping.items():
-            value = resume_data.get(resume_field)
-            if not value:
-                continue
-            if resume_field == "skills" and isinstance(value, list):
-                value = "\n".join(skill.strip() for skill in value if skill.strip())
-            setattr(profile, profile_field, value)
-
-        profile.save()
-        return profile

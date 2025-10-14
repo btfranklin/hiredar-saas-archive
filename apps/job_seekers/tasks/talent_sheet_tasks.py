@@ -9,7 +9,7 @@ from celery import shared_task
 
 from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 from apps.job_seekers.services.recommendation.llm_processor import generate_talent_sheet
-from apps.job_seekers.services.talent_pool_manager import TalentPoolManager
+from apps.job_seekers.services.talent_sheet_service import TalentSheetService
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -105,9 +105,9 @@ def generate_talent_sheet_task(job_seeker_profile_id: int) -> dict[str, Any]:
         qualifications = "\n\n".join(qualifications_parts)
 
         # Create or update the talent sheet with the LLM-generated content
-        saved_talent_sheet = TalentPoolManager.create_or_update_talent_sheet(
-            profile,
-            {
+        saved_talent_sheet, _ = TalentSheetService.safe_upsert_talent_sheet(
+            job_seeker_id=profile.pk,
+            talent_sheet_data={
                 "promotional_blurb": talent_sheet.promotional_blurb,
                 "experience_overview": talent_sheet.experience_overview,
                 "ideal_roles": talent_sheet.ideal_roles,

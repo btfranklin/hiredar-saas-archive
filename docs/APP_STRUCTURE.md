@@ -99,8 +99,7 @@ Stores and enriches candidate records generated from recruiter uploads:
   - `job_seeker_profile_views.py`: Recruiter-only resume detail view (`ResumeView`)
 - **Services**:
   - Business logic encapsulated in services:
-    - `profile_manager.py`: Services for job seeker profile operations
-    - `talent_pool_manager.py`: Services for talent pool management
+    - `talent_sheet_service.py`: Safe creation/update helpers for AI-generated talent sheets
     - `recommendation/`: LLM-based recommendation processing (`llm_processor.py`, `xml_parser.py`)
     - `prompts/`: AI prompt templates
 - **Tasks**:
@@ -245,9 +244,8 @@ The service layer pattern separates business logic from presentation logic. Key 
 
 Example services in the job_seekers app:
 
-- `ProfileManager`: Handles candidate profile operations
-- `ResumeProcessor`: Manages resume processing tasks
-- `TalentPoolManager`: Handles talent pool and role recommendation operations
+- `ResumeProcessor`: Orchestrates background resume-processing jobs and exposes task helpers.
+- `TalentSheetService`: Provides safe create/update helpers that guard against concurrent talent-sheet writes.
 
 ### Mixin Pattern
 
@@ -426,20 +424,20 @@ Service classes encapsulate business logic separately from views:
 
 ```python
 # Using a service class
-from apps.job_seekers.services import ProfileManager, ResumeProcessor, TalentPoolManager
+from apps.job_seekers.services.talent_sheet_service import TalentSheetService
 
-# Get a candidate profile using a pool or recruiter-owned record
-candidate_profile = ProfileManager.get_profile(pool)
-
-# Update the candidate profile with new data
-updated_profile = ProfileManager.create_or_update_profile(pool, profile_data)
-
-# Process a resume (using the pipeline)
-from apps.job_seekers.utils.resume_processing.pipeline import process_resume
-result = process_resume(file_path, candidate_profile, task_id)
-
-# Manage talent pool
-talent_sheet = TalentPoolManager.create_or_update_talent_sheet(candidate_profile, talent_sheet_data)
+# Safely upsert an AI-authored talent sheet for a parsed resume profile
+talent_sheet, created = TalentSheetService.safe_upsert_talent_sheet(
+    job_seeker_id=profile.id,
+    talent_sheet_data={
+        "promotional_blurb": generated.promotional_blurb,
+        "experience_overview": generated.experience_overview,
+        "ideal_roles": generated.ideal_roles,
+        "skills": profile.skills,
+        "qualifications": generated.qualifications,
+        "is_published": True,
+    },
+)
 ```
 
 ## Project Configuration
