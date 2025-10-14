@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
 
-from apps.job_seekers.models import CandidatePool
+from apps.candidates.models import CandidatePool
 
 
 class CandidatePoolStatusView(LoginRequiredMixin, TemplateView):

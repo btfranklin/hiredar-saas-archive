@@ -48,7 +48,7 @@ def active_tasks_for_pool(pool_id: int) -> list[TaskMeta]:
     Internally maps the legacy arguments to the generic ownership fields.
     """
 
-    from apps.job_seekers.models import (
+    from apps.candidates.models import (
         CandidatePool,  # local import to avoid hard dependency
     )
 

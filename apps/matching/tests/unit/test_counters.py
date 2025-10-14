@@ -2,7 +2,8 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.authentication.models import User
-from apps.job_seekers.models import CandidatePool, JobSeekerProfile, TalentSheet
+from apps.candidates.models import CandidatePool
+from apps.job_seekers.models import JobSeekerProfile, TalentSheet
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.recruiters.models import JobOpening, RecruiterProfile
 

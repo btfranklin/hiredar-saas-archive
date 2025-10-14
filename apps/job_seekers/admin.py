@@ -2,12 +2,8 @@ from django.contrib import admin, messages
 from django.db.models import Q
 
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models import (
-    CandidatePool,
-    JobSeekerProfile,
-    RoleRecommendation,
-    TalentSheet,
-)
+from apps.candidates.models import CandidatePool
+from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 from apps.job_seekers.services.talent_sheet_service import TalentSheetService
 from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 

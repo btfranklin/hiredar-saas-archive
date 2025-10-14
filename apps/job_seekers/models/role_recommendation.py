@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from django.db import models
 
 if TYPE_CHECKING:  # pragma: no cover - used for typing only
-    from .candidate_pool import CandidatePool
+    from apps.candidates.models import CandidatePool
 
 
 class RoleRecommendation(models.Model):

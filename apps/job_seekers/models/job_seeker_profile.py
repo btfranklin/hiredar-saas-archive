@@ -17,7 +17,7 @@ class JobSeekerProfile(models.Model):
         related_name="job_seeker_profiles",
     )
     candidate_pool = models.ForeignKey(
-        "job_seekers.CandidatePool",
+        "candidates.CandidatePool",
         on_delete=models.CASCADE,
         null=True,
         blank=True,

@@ -6,7 +6,8 @@ from django.db.models import F
 
 from apps.core.models import TaskMeta
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models import CandidatePool, JobSeekerProfile
+from apps.candidates.models import CandidatePool
+from apps.job_seekers.models import JobSeekerProfile
 from apps.recruiters.models import BulkResumeUpload, RecruiterProfile
 
 # Alias for decoupled task queue

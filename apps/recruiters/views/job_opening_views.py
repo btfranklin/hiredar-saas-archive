@@ -27,7 +27,7 @@ from django.views.generic import (
 )
 
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.models import CandidatePool
+from apps.candidates.models import CandidatePool
 from apps.matching.models import CandidateMatch
 from apps.recruiters.models import JobOpening
 

@@ -3,7 +3,8 @@
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.job_seekers.models import CandidatePool, JobSeekerProfile
+from apps.candidates.models import CandidatePool
+from apps.job_seekers.models import JobSeekerProfile
 from apps.job_seekers.services.profile_manager import ProfileManager
 
 

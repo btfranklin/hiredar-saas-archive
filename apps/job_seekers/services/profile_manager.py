@@ -5,7 +5,8 @@ Service for managing job seeker profiles.
 from django.db import transaction
 
 from apps.authentication.models import User
-from apps.job_seekers.models import CandidatePool, JobSeekerProfile
+from apps.candidates.models import CandidatePool
+from apps.job_seekers.models import JobSeekerProfile
 
 
 class ProfileManager:

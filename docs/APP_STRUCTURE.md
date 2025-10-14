@@ -10,10 +10,10 @@ Hiredar is a recruiter-focused talent platform that ingests candidate résumés,
 
 ## Cheat Sheet (TL;DR)
 
-- **Core Django apps**: `authentication`, `job_seekers`, `recruiters`, `matching`, **new** `resume_processing` (background parsing of resumes).
+- **Core Django apps**: `authentication`, `candidates`, `job_seekers`, `recruiters`, `matching`, **new** `resume_processing` (background parsing of resumes).
 - **Shared LLM utilities**: `hiredar.llm` package (centralized OpenAI wrapper with retries, and XML sanitization/parsing helpers).
 - **Primary user types**: *recruiter* (self-service) and administrative staff. Job seeker data now lives solely as recruiter-managed candidate records (no direct login).
-- **Key models**: `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
+- **Key models**: `CandidatePool`, `CandidateProfile`, `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
 - **Async engine**: Celery; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
 - **Front-end stack**: Tailwind + DaisyUI, HTMX for interactivity.
 - **Python 3.12 typing conventions**: built-ins (`list`, `dict`) and `| None` instead of `Optional`.
@@ -73,6 +73,19 @@ Handles user authentication, user types, and base user profile:
   - `/auth/logout/`: User logout
   - `/auth/signup/`: Recruiter registration
 
+### Candidates App (`apps/candidates`)
+
+Owns recruiter-managed candidate records and supporting metadata:
+
+- **Models**:
+  - `CandidatePool`: Groups of resumes uploaded together or curated by a recruiter; tasks attach via a `GenericRelation` for processing status.
+  - `CandidateProfile`: Unified candidate representation that merges parsed resume facts with AI-generated presentation content (currently staged for future adoption).
+- **Migrations**:
+  - `0001_initial`: Imports the legacy `CandidatePool` table without recreating it.
+  - `0002_candidateprofile`: Introduces the new consolidated candidate profile table.
+- **Future wiring**:
+  - Existing resume-processing flows still populate `JobSeekerProfile`; forthcoming phases will pivot to the new `CandidateProfile` once compatibility layers are in place.
+
 ### Job Seekers App (`apps/job_seekers`)
 
 Stores and enriches candidate records generated from recruiter uploads:
@@ -81,7 +94,7 @@ Stores and enriches candidate records generated from recruiter uploads:
   - `JobSeekerProfile`: Structured candidate profile including skills, experience, education, certifications, and contact information
   - `RoleRecommendation`: AI-generated role recommendations associated with a candidate profile
   - `TalentSheet`: AI-generated talent sheet used for recruiter sharing and matching
-  - `UploadedResumePool`: Represents a batch of resumes uploaded by a recruiter for a specific job opening
+  - *(References)* `CandidatePool` from the `candidates` app via a foreign key; future work will transition these profiles to the new `CandidateProfile`.
 - **Views**:
   - `job_seeker_profile_views.py`: Recruiter-only resume detail view (`ResumeView`)
 - **Services**:
@@ -400,7 +413,8 @@ user = User.objects.get(email="recruiter@example.com")
 recruiter_profile = user.recruiter_profile
 
 # Accessing a candidate profile from a pool
-from apps.job_seekers.models import CandidatePool, JobSeekerProfile
+from apps.candidates.models import CandidatePool
+from apps.job_seekers.models import JobSeekerProfile
 
 pool = CandidatePool.objects.first()
 candidate_profile = JobSeekerProfile.objects.filter(candidate_pool=pool).first()

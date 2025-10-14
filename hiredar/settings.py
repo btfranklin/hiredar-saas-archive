@@ -193,6 +193,7 @@ INSTALLED_APPS = [
     "storages",  # django-storages for S3 support
     # Project apps
     "apps.authentication.apps.AuthenticationConfig",
+    "apps.candidates.apps.CandidatesConfig",
     "apps.job_seekers.apps.JobSeekersConfig",
     "apps.recruiters.apps.RecruitersConfig",
     "apps.matching.apps.MatchingConfig",

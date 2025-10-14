@@ -7,12 +7,8 @@ they can run without any heavy external dependencies.
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.job_seekers.models import (
-    CandidatePool,
-    JobSeekerProfile,
-    RoleRecommendation,
-    TalentSheet,
-)
+from apps.candidates.models import CandidatePool
+from apps.job_seekers.models import JobSeekerProfile, RoleRecommendation, TalentSheet
 
 
 class JobSeekerProfileModelTests(TestCase):

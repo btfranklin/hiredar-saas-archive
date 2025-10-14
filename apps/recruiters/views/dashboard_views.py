@@ -13,7 +13,7 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.models import CandidatePool
+from apps.candidates.models import CandidatePool
 from apps.matching.models import CandidateMatch
 from apps.recruiters.models import JobOpening
 

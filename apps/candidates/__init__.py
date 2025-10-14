@@ -1,0 +1,2 @@
+"""Candidates app package initialisation."""
+

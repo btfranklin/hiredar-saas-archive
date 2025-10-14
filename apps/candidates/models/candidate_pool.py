@@ -1,4 +1,4 @@
-"""Candidate pool model."""
+"""Candidate pool model moved to the candidates app."""
 
 from __future__ import annotations
 
@@ -10,8 +10,11 @@ from apps.core.models import TaskMeta
 
 class CandidatePool(models.Model):
     """
-    Represents a pool of candidates. These may have been uploaded by a recruiter,
-    or may represent the "global" pool of candidates.
+    Represents a pool of candidates uploaded and managed by a recruiter.
+
+    This model was previously part of the job_seekers app; we keep the original
+    database table name so existing data remains intact while we transition to
+    the new candidates domain.
     """
 
     recruiter = models.ForeignKey(
@@ -55,3 +58,7 @@ class CandidatePool(models.Model):
 
     def __str__(self) -> str:
         return f"Candidate Pool: {self.name} ({self.recruiter.email})"
+
+    class Meta:
+        db_table = "job_seekers_candidatepool"
+
