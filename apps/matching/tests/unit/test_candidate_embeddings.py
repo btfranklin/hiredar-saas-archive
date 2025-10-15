@@ -91,9 +91,19 @@ class CandidateEmbeddingTests(TestCase):
         mock_stats.namespaces = {"candidate_profiles": {}}
         mock_index.describe_index_stats.return_value = mock_stats
 
+        query_response = MagicMock()
+        query_response.matches = [
+            MagicMock(id="candidate_123_promotional_blurb"),
+            MagicMock(id="candidate_123_experience_overview"),
+        ]
+        mock_index.query.return_value = query_response
+
         remove_candidate_embeddings(123)
 
-        mock_index.delete.assert_called_once()
-        args, kwargs = mock_index.delete.call_args
-        self.assertEqual(kwargs["namespace"], "candidate_profiles")
-        self.assertTrue(all("candidate_123_" in vid for vid in kwargs["ids"]))
+        mock_index.delete.assert_called_once_with(
+            ids=[
+                "candidate_123_promotional_blurb",
+                "candidate_123_experience_overview",
+            ],
+            namespace="candidate_profiles",
+        )

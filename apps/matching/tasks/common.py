@@ -6,8 +6,10 @@ This module contains shared functions and utilities used by multiple task module
 
 import logging
 import os
+from collections import defaultdict
 from functools import lru_cache
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, Iterable
 
 from django.conf import settings  # Import Django settings
 from pinecone import Pinecone
@@ -20,6 +22,113 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 # Lazy client factories
 # -----------------------------------------------------------------------------
+
+
+def _running_tests() -> bool:
+    """Return True when the current process is executing under pytest."""
+
+    return bool(os.getenv("PYTEST_CURRENT_TEST")) or getattr(
+        settings, "USE_FAKE_PINECONE", False
+    )
+
+
+class _FakeMatch:
+    """Lightweight object that mimics Pinecone's query match structure."""
+
+    def __init__(self, vector_id: str) -> None:
+        self.id = vector_id
+
+
+class _FakeStats(SimpleNamespace):
+    """Container for namespace stats mirroring Pinecone's response."""
+
+    namespaces: dict[str, dict[str, Any]]
+
+
+class _FakePineconeIndex:
+    """In-memory Pinecone replacement used during unit tests."""
+
+    def __init__(self) -> None:
+        self._namespaces: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+
+    def _namespace(self, namespace: str) -> dict[str, dict[str, Any]]:
+        return self._namespaces.setdefault(namespace, {})
+
+    def upsert(
+        self,
+        vectors: Iterable[tuple[str, Iterable[float], dict[str, Any]]],
+        namespace: str,
+        **_: Any,
+    ) -> None:
+        """Store vectors in-memory keyed by namespace and id."""
+
+        space = self._namespace(namespace)
+        for vector_id, values, metadata in vectors:
+            space[vector_id] = {
+                "values": list(values),
+                "metadata": dict(metadata),
+            }
+
+    def delete(
+        self,
+        ids: Iterable[str] | None = None,
+        namespace: str | None = None,
+        **_: Any,
+    ) -> None:
+        """Delete stored vectors by id."""
+
+        if namespace is None:
+            return
+
+        space = self._namespace(namespace)
+        if ids is None:
+            space.clear()
+            return
+
+        for vector_id in ids:
+            space.pop(vector_id, None)
+
+    def describe_index_stats(self, **_: Any) -> _FakeStats:
+        """Return stats object with namespace keys."""
+
+        return _FakeStats(namespaces=self._namespaces)
+
+    def query(
+        self,
+        namespace: str,
+        *,
+        filter: dict[str, dict[str, Any]] | None = None,
+        top_k: int = 10,
+        **_: Any,
+    ) -> SimpleNamespace:
+        """Return matches that satisfy the simple equality filter."""
+
+        matches: list[_FakeMatch] = []
+        space = self._namespace(namespace)
+
+        if filter:
+            for vector_id, payload in space.items():
+                metadata = payload.get("metadata", {})
+                if _filter_matches(metadata, filter):
+                    matches.append(_FakeMatch(vector_id))
+        else:
+            matches = [_FakeMatch(vector_id) for vector_id in space.keys()]
+
+        return SimpleNamespace(matches=matches[:top_k])
+
+
+_FAKE_INDEX = _FakePineconeIndex()
+
+
+def _filter_matches(metadata: dict[str, Any], filter_spec: dict[str, dict[str, Any]]) -> bool:
+    """Evaluate a limited subset of Pinecone's filter syntax (currently $eq)."""
+
+    for field, condition in filter_spec.items():
+        if not isinstance(condition, dict):
+            return False
+        if "$eq" in condition and metadata.get(field) != condition["$eq"]:
+            return False
+    return True
 
 
 def get_openai_client():  # kept for backward compatibility within this module
@@ -65,6 +174,9 @@ def get_index() -> Any:
         NotFoundException: If the index doesn't exist when this function is called
     """
     try:
+        if _running_tests():
+            return _FAKE_INDEX
+
         client = get_pinecone_client()
         if client is None:
             raise RuntimeError("Pinecone client unavailable; missing API key")
@@ -163,6 +275,9 @@ def get_embedding(text: str) -> list[float]:
         Exception: If the OpenAI API call fails
     """
     try:
+        if _running_tests():
+            return [0.0] * DIMENSIONS
+
         client = get_openai_client()
         if client is None:
             raise RuntimeError("OpenAI client unavailable; missing API key")

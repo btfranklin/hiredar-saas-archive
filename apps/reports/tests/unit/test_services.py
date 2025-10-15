@@ -9,7 +9,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.candidates.models import CandidatePool
+from apps.candidates.models import CandidatePool, CandidateProfile
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.recruiters.models import JobOpening, RecruiterProfile
 from apps.reports.services import generate_csv, generate_pdf, get_export_filename

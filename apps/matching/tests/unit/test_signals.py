@@ -71,8 +71,8 @@ class JobOpeningSignalTests(TestCase):
         args = mock_chain.call_args[0]
         self.assertEqual(len(args), 2)  # Should have 2 tasks in chain
         create_sig, match_sig = args
-        self.assertEqual(create_sig.task, "apps.matching.tasks.create_candidate_embeddings")
-        self.assertEqual(match_sig.task, "apps.matching.tasks.match_candidate_to_active_jobs")
+        self.assertEqual(create_sig.task, "apps.matching.tasks.create_job_opening_embeddings")
+        self.assertEqual(match_sig.task, "apps.matching.tasks.create_candidate_matches")
 
         # Verify apply_async was called
         mock_chain_instance.apply_async.assert_called_once()
