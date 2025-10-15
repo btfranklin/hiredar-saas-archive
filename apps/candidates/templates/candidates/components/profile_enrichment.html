@@ -1,0 +1,56 @@
+{% load resume_tags %}
+{% if profile.is_published %}
+<div class="py-2 space-y-5">
+    {% if profile.promotional_blurb %}
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Professional Overview</h2>
+                <p class="whitespace-pre-line">{{ profile.promotional_blurb|bold_resume_labels }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if profile.experience_overview %}
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Experience Overview</h2>
+                <p class="whitespace-pre-line">{{ profile.experience_overview|bold_resume_labels }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    {% include 'candidates/components/skills_list.html' with skills_list=profile.skills_list %}
+
+    {% if profile.ideal_roles %}
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Ideal Roles</h2>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    {% for role in profile.ideal_roles_list %}
+                        <span class="badge badge-primary">{{ role }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if profile.qualifications %}
+        <div class="card bg-base-200 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Qualifications</h2>
+                <p class="whitespace-pre-line">{{ profile.qualifications|bold_resume_labels }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% else %}
+<div class="py-3">
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <p>This candidate has not been published yet. Publish the profile to generate recruiter-facing content.</p>
+        </div>
+    </div>
+</div>
+{% endif %}

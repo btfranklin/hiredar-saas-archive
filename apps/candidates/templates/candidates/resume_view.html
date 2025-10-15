@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load resume_tags %}
+
+{% block title %}Candidate Resume | Hiredar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col gap-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                {% url 'recruiters:dashboard' as back_url %}
+                {% include 'core/components/back_button.html' with href=back_url label='Back to Dashboard' %}
+
+                <h1 class="text-3xl font-bold">Candidate Resume</h1>
+                <p class="text-lg text-base-content/70">
+                    {{ profile.display_name }}
+                    {% if profile.pool %}
+                        <span class="block text-sm text-base-content/60 md:inline md:ml-2">
+                            Candidate from {{ profile.pool.name }}
+                        </span>
+                    {% endif %}
+                </p>
+            </div>
+
+            {% if job_opening %}
+            <div class="card bg-base-200 p-4 max-w-sm">
+                <div>
+                    <div class="badge badge-primary mb-1">Related Job</div>
+                    <h2 class="card-title text-lg">{{ job_opening.title }}</h2>
+                </div>
+                <p class="text-sm text-base-content/70">{{ job_opening.company }}</p>
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'recruiters:job_openings_detail' job_opening.id %}" class="btn btn-sm btn-outline">
+                        View Job
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-1">
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="avatar avatar-placeholder">
+                                <div class="bg-neutral text-neutral-content rounded-full w-16">
+                                    <span class="text-xl">{{ profile.avatar_initials }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h2 class="card-title">{{ profile.display_name }}</h2>
+                                {% if profile.most_recent_title and profile.most_recent_title != profile.display_name %}
+                                    <p class="text-sm">{{ profile.most_recent_title }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <h3 class="text-lg font-semibold mb-2">Contact Information</h3>
+                        <ul class="space-y-2">
+                            {% if profile.phone %}
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-phone text-primary"></i>
+                                <span>{{ profile.phone }}</span>
+                            </li>
+                            {% endif %}
+                            {% if profile.location %}
+                            <li class="flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                <span>{{ profile.location }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+
+                        {% if profile.linkedin_url or profile.github_url or profile.portfolio_url %}
+                        <div class="divider"></div>
+                        <h3 class="text-lg font-semibold mb-2">Social Links</h3>
+                        <ul class="space-y-2">
+                            {% if profile.linkedin_url %}
+                            <li>
+                                <a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener" class="flex items-center gap-2 link link-hover">
+                                    <i class="fab fa-linkedin text-primary"></i>
+                                    <span>LinkedIn Profile</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if profile.github_url %}
+                            <li>
+                                <a href="{{ profile.github_url }}" target="_blank" rel="noopener" class="flex items-center gap-2 link link-hover">
+                                    <i class="fab fa-github text-primary"></i>
+                                    <span>GitHub Profile</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if profile.portfolio_url %}
+                            <li>
+                                <a href="{{ profile.portfolio_url }}" target="_blank" rel="noopener" class="flex items-center gap-2 link link-hover">
+                                    <i class="fas fa-globe text-primary"></i>
+                                    <span>Portfolio Website</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+
+                        {% if profile.years_of_experience %}
+                        <div class="divider"></div>
+                        <div class="stat">
+                            <div class="stat-title">Years of Experience</div>
+                            <div class="stat-value text-primary">{{ profile.years_of_experience }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 space-y-6">
+                {% if profile.professional_summary %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Professional Summary</h2>
+                        <p class="whitespace-pre-line">{{ profile.professional_summary }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% include 'candidates/components/skills_list.html' with skills_list=profile.skills_list %}
+
+                {% if profile.experience %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Work Experience</h2>
+                        <div class="mt-2 whitespace-pre-line">
+                            {{ profile.experience|bold_resume_labels|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if profile.education %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Education</h2>
+                        <div class="mt-2 whitespace-pre-line">
+                            {{ profile.education|bold_resume_labels|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if profile.certifications %}
+                <div class="card bg-base-200 shadow-md">
+                    <div class="card-body">
+                        <h2 class="card-title">Certifications</h2>
+                        <div class="mt-2 whitespace-pre-line">
+                            {{ profile.certifications|bold_resume_labels|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% include 'candidates/components/profile_enrichment.html' with profile=profile %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
