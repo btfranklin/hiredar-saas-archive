@@ -4,6 +4,8 @@ Unit tests for the reports app services.
 Tests the CSV and PDF generation functionality for shortlisted candidates.
 """
 
+from unittest.mock import patch
+
 from django.test import TestCase
 
 from apps.authentication.models import User
@@ -14,25 +16,26 @@ from apps.recruiters.models import JobOpening, RecruiterProfile
 from apps.reports.services import generate_csv, generate_pdf, get_export_filename
 
 
-class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attributes
+class ReportsServiceTests(TestCase):
     """Test the reports service functions."""
 
-    def setUp(self):
-        """Set up test data."""
+    @classmethod
+    def setUpTestData(cls):
+        """Set up shared test data once for the entire test case."""
         # Create recruiter
-        self.recruiter_user = User.objects.create_user(
+        cls.recruiter_user = User.objects.create_user(
             email="recruiter@test.com",
             password="testpass123",
             user_type="recruiter",
             name="Test Recruiter",
         )
-        self.recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
-            user=self.recruiter_user
+        cls.recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
+            user=cls.recruiter_user
         )
 
         # Create job opening
-        self.job_opening = JobOpening.objects.create(
-            recruiter=self.recruiter_profile,
+        cls.job_opening = JobOpening.objects.create(
+            recruiter=cls.recruiter_profile,
             title="Senior Python Developer",
             description="Looking for a senior Python developer",
             required_skills="Python\nDjango\nPostgreSQL",
@@ -40,12 +43,12 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
         )
 
         # Create pool-owned candidate profile representing an ingested resume
-        self.candidate_pool = CandidatePool.objects.create(
-            recruiter=self.recruiter_user,
+        cls.candidate_pool = CandidatePool.objects.create(
+            recruiter=cls.recruiter_user,
             name="Primary Pool",
         )
-        self.job_seeker_profile = JobSeekerProfile.objects.create(
-            candidate_pool=self.candidate_pool,
+        cls.job_seeker_profile = JobSeekerProfile.objects.create(
+            candidate_pool=cls.candidate_pool,
             candidate_name="Test Candidate",
             most_recent_title="Python Developer",
             location="San Francisco, CA",
@@ -54,8 +57,8 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
         )
 
         # Create talent sheet
-        self.talent_sheet = TalentSheet.objects.create(
-            job_seeker=self.job_seeker_profile,
+        cls.talent_sheet = TalentSheet.objects.create(
+            job_seeker=cls.job_seeker_profile,
             promotional_blurb="Experienced Python developer with Django expertise",
             experience_overview="5 years of Python development experience",
             skills="Python\nDjango\nPostgreSQL\nReact",
@@ -64,9 +67,9 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
         )
 
         # Ensure a candidate match exists (background tasks may create one already).
-        self.candidate_match, _ = CandidateMatch.objects.update_or_create(
-            job_opening=self.job_opening,
-            talent_sheet=self.talent_sheet,
+        cls.candidate_match, _ = CandidateMatch.objects.update_or_create(
+            job_opening=cls.job_opening,
+            talent_sheet=cls.talent_sheet,
             defaults={
                 "holistic_score": 0.85,
                 "skills_score": 0.90,
@@ -78,8 +81,8 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
         )
 
         # Create shortlisted match
-        self.shortlisted_match = ShortlistedMatch.objects.create(
-            job_opening=self.job_opening, candidate_match=self.candidate_match
+        cls.shortlisted_match = ShortlistedMatch.objects.create(
+            job_opening=cls.job_opening, candidate_match=cls.candidate_match
         )
 
     def test_generate_csv_with_shortlisted_candidates(self):
@@ -131,8 +134,11 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
         lines = csv_string.strip().split("\n")
         self.assertEqual(len(lines), 2)
 
-    def test_generate_pdf_with_shortlisted_candidates(self):
+    @patch("apps.reports.services.HTML")
+    def test_generate_pdf_with_shortlisted_candidates(self, mock_html):
         """Test PDF generation includes shortlisted candidates."""
+        mock_html.return_value.write_pdf.return_value = b"%PDF-FAKE"
+
         pdf_data = generate_pdf(self.job_opening)
 
         # Check that PDF data is generated
@@ -141,6 +147,8 @@ class ReportsServiceTests(TestCase):  # pylint: disable=too-many-instance-attrib
 
         # PDF should start with PDF header
         self.assertTrue(pdf_data.startswith(b"%PDF"))
+        mock_html.assert_called_once()
+        mock_html.return_value.write_pdf.assert_called_once_with()
 
     def test_get_export_filename(self):
         """Test filename generation."""

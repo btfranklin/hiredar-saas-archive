@@ -4,6 +4,8 @@ Unit tests for the reports app views.
 Tests the CSV and PDF export views.
 """
 
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -14,22 +16,23 @@ from apps.recruiters.models import JobOpening, RecruiterProfile
 class ReportsViewTests(TestCase):
     """Test the reports views."""
 
-    def setUp(self):
-        """Set up test data."""
+    @classmethod
+    def setUpTestData(cls):
+        """Set up shared test data."""
         # Create recruiter
-        self.recruiter_user = User.objects.create_user(
+        cls.recruiter_user = User.objects.create_user(
             email="recruiter@test.com",
             password="testpass123",
             user_type="recruiter",
             name="Test Recruiter",
         )
-        self.recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
-            user=self.recruiter_user
+        cls.recruiter_profile, _ = RecruiterProfile.objects.get_or_create(
+            user=cls.recruiter_user
         )
 
         # Create job opening
-        self.job_opening = JobOpening.objects.create(
-            recruiter=self.recruiter_profile,
+        cls.job_opening = JobOpening.objects.create(
+            recruiter=cls.recruiter_profile,
             title="Test Job",
             description="Test description",
             status="active",
@@ -57,7 +60,8 @@ class ReportsViewTests(TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertIn("attachment", response["Content-Disposition"])
 
-    def test_export_pdf_success(self):
+    @patch("apps.reports.views.generate_pdf", return_value=b"%PDF-FAKE")
+    def test_export_pdf_success(self, _mock_generate_pdf):
         """Test successful PDF export."""
         self.client.force_login(self.recruiter_user)
         url = reverse("reports:export_pdf", kwargs={"job_id": self.job_opening.id})
