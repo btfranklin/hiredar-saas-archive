@@ -10,10 +10,10 @@ Hiredar is a recruiter-focused talent platform that ingests candidate résumés,
 
 ## Cheat Sheet (TL;DR)
 
-- **Core Django apps**: `authentication`, `candidates`, `recruiters`, `matching`, **new** `resume_processing` (background parsing of resumes), plus the legacy `job_seekers` app (migrations only).
+- **Core Django apps**: `authentication`, `candidates`, `recruiters`, `matching`, **new** `resume_processing` (background parsing of resumes).
 - **Shared LLM utilities**: `hiredar.llm` package (centralized OpenAI wrapper with retries, and XML sanitization/parsing helpers).
 - **Primary user types**: *recruiter* (self-service) and administrative staff. Job seeker data now lives solely as recruiter-managed candidate records (no direct login).
-- **Key models**: `CandidatePool`, `CandidateProfile`, `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
+- **Key models**: `CandidatePool`, `CandidateProfile`, `CandidateRoleRecommendation`, `RecruiterProfile`, `JobOpening`, `CandidateMatch`.
 - **Async engine**: Celery; see `apps/resume_processing/tasks/` for task orchestration and `docs/SCHEDULED_TASKS.md` for periodic jobs.
 - **Front-end stack**: Tailwind + DaisyUI, HTMX for interactivity.
 - **Python 3.12 typing conventions**: built-ins (`list`, `dict`) and `| None` instead of `Optional`.
@@ -81,14 +81,10 @@ Owns recruiter-managed candidate records and supporting metadata:
   - `CandidatePool`: Groups of resumes uploaded together or curated by a recruiter; tasks attach via a `GenericRelation` for processing status.
   - `CandidateProfile`: Unified candidate representation that merges parsed resume facts with AI-generated presentation content (currently staged for future adoption).
 - **Migrations**:
-  - `0001_initial`: Imports the legacy `CandidatePool` table without recreating it.
+  - `0001_initial`: Creates and tracks the shared `CandidatePool` table (database table name left as `job_seekers_candidatepool` for continuity).
   - `0002_candidateprofile`: Introduces the new consolidated candidate profile table.
 - **Future wiring**:
-  - Resume-processing flows now operate directly on `CandidateProfile`. The legacy `job_seekers` app remains solely so migrations can retire the superseded tables.
-
-### Job Seekers App (`apps/job_seekers`)
-
-Legacy container retained solely for historical migrations. All runtime code has moved to `apps.candidates`, and new deployments only need the job_seekers app so Django can apply the final cleanup migrations that drop the superseded tables.
+  - Resume-processing flows now operate directly on `CandidateProfile`. Historic tables with the `job_seekers_` prefix remain only as table names referenced by the candidates app.
 
 ### Recruiters App (`apps/recruiters`)
 
@@ -127,32 +123,27 @@ Manages recruiter-specific functionality:
 Manages candidate matching and embedding generation/storage:
 
 - **Models**:
-  - `CandidateMatch`: Matches between talent sheets and job openings
+  - `CandidateMatch`: Matches between candidate profiles and job openings
 - **Core**:
   - `matching.py`: Core matching algorithms using vector embeddings
   - `pinecone_client.py`: Interaction with Pinecone vector database
   - `retrieval.py`: Functions to retrieve section embeddings from Pinecone
   - `vector_operations.py`: Utility functions for vector math (e.g., averaging)
 - **Tasks**:
-  - `job_opening_tasks.py`: Asynchronous tasks for creating/removing job opening embeddings
-  - `talent_sheet_tasks.py`: Asynchronous tasks for creating/removing talent sheet embeddings
-  - `matching_tasks.py`: Tasks for handling match creation and analysis
+  - `create_candidate_embeddings.py`: Asynchronous tasks for embedding candidate profiles
+  - `create_job_opening_embeddings.py`: Asynchronous tasks for embedding job openings
+  - `create_candidate_matches.py`: Tasks for pairing candidates and jobs
   - `common.py`: Shared utilities for embedding tasks (e.g., Pinecone index access)
 - **Signals**:
-  - Signal handlers in `signals.py` trigger embedding tasks automatically when `JobOpening` or `TalentSheet` instances are saved or deleted.
+  - Signal handlers in `signals.py` trigger embedding tasks automatically when `JobOpening` or `CandidateProfile` instances are saved or deleted.
 - **Management/Commands**:
   - `create_candidate_matches.py`: Generates `CandidateMatch` objects based on vector similarity
-  - `rematch_all_jobs.py`: Rematch all active jobs after changes in the matching algorithm
-  - `match.py`: Manually triggers matching between a specific job/talent (for testing/debug)
-  - `analyze_job_match.py`: Generates match analysis for job/talent combinations
   - `refresh_match.py`: Updates an existing match with fresh data
   - `examine_vector_metadata.py`: Examines metadata stored in vectors
   - `list_pinecone_vectors.py`: Lists vectors by namespace with optional section filters
-  - `check_skill_match_with_section.py`: Tests matching with different section filter formats
   - `create_matching_index.py`: Creates a Pinecone index for matching
   - `delete_matching_index.py`: Deletes a Pinecone index
   - `flush_matches.py`: Removes all matches for cleanup
-  - `inspect_job_seeker.py`: Inspects a job seeker's data for debugging
 - **Views**:
   - `candidate_views.py`: Views for recruiters to see matched candidates for a job
   - `matching_views.py`: API endpoints for triggering matches
@@ -176,7 +167,7 @@ Dedicated background processing pipeline for PDF resumes.
   - `pipeline.py`: Orchestrates the resume-processing workflow
   - `extraction.py`: Extracts raw text from PDF files
   - `xml_error_reporting.py`: Utilities for XML error reporting
-  - `profile_updater.py`: Updates `JobSeekerProfile` with extracted data
+  - `profile_updater.py`: Updates `CandidateProfile` with extracted data
   - `llm_processor.py`: Handles AI-powered data extraction
   - `xml_parser.py`: Parses structured XML into model fields
 - **Tasks**:
@@ -186,17 +177,17 @@ Dedicated background processing pipeline for PDF resumes.
   - `ingest_resumes.py`: Batch ingest sample resumes
   - `diagnose_resume.py`: Diagnose resume parsing issues
 
-This separation lets the heavy lifting run in its own app while job-seeker views remain thin.
+This separation lets the heavy lifting run in its own app while recruiter-facing views stay lean.
 
 ## Key Relationships Between Apps
 
 The application has several important relationships between models across apps:
 
-1. **User to Profiles**: The `User` model in the authentication app has one-to-one relationships with `JobSeekerProfile` in the job_seekers app and `RecruiterProfile` in the recruiters app.
+1. **User to Profiles**: The `User` model in the authentication app has a one-to-one relationship with `RecruiterProfile` for recruiters. Candidate records live exclusively in `CandidateProfile`, which is linked to recruiter-owned `CandidatePool` rows rather than individual user accounts.
 
 2. **JobOpenings to Recruiters**: The `JobOpening` model in the recruiters app is linked to a `RecruiterProfile` via a foreign key.
 
-3. **CandidateMatches**: The `CandidateMatch` model in the matching app connects `JobOpening` instances with `TalentSheet` instances through foreign keys.
+3. **CandidateMatches**: The `CandidateMatch` model in the matching app connects `JobOpening` instances with `CandidateProfile` records through foreign keys.
 
 4. **Conversations**: The `Conversation` model links multiple `User` instances through a many-to-many relationship, while `Message` instances are linked to a specific `Conversation` and a `User` sender.
 
@@ -215,14 +206,14 @@ The service layer pattern separates business logic from presentation logic. Key 
   - Improved testability
   - Reusable business logic across different views
 
-Example services in the job_seekers app:
+Example services in the candidates app:
 
 - `ResumeProcessor`: Orchestrates background resume-processing jobs and exposes task helpers.
-- `TalentSheetService`: Provides safe create/update helpers that guard against concurrent talent-sheet writes.
+- `CandidateProfileService`: Provides safe create/update helpers for enrichment fields while guarding against concurrent writes.
 
 ### Mixin Pattern
 
-Mixins remain an available technique for sharing view behavior, though the job seeker–specific mixins were retired alongside the legacy UI. When new shared logic emerges, add lightweight mixins within the owning app to keep views focused and reusable.
+Mixins remain an available technique for sharing view behavior. When new shared logic emerges, add lightweight mixins within the owning app to keep views focused and reusable.
 
 ## Frontend Structure
 
@@ -338,7 +329,7 @@ The application uses Celery for background tasks:
 - **Candidate Profile Enrichment**: Asynchronous enhancement of candidate profiles using LLM via `create_candidate_embeddings`
 - **AI Analysis**: Background AI analysis for matching and recommendations
 - **Email Notifications**: Sending emails in the background
-- **Vector Generation**: Creating embeddings for jobs and talent sheets in the background
+- **Vector Generation**: Creating embeddings for both job openings and candidate profiles in the background
 - **Match Creation**: Finding and creating matches in the background
 
 ## Development Guidelines

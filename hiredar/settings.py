@@ -194,7 +194,6 @@ INSTALLED_APPS = [
     # Project apps
     "apps.authentication.apps.AuthenticationConfig",
     "apps.candidates.apps.CandidatesConfig",
-    "apps.job_seekers.apps.JobSeekersConfig",  # Legacy cleanup migrations only
     "apps.recruiters.apps.RecruitersConfig",
     "apps.matching.apps.MatchingConfig",
     "apps.core.apps.CoreConfig",

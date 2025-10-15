@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("job_seekers", "0001_initial"),
+        ("candidates", "0002_candidateprofile"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -44,12 +44,12 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "job_seeker_profile",
+                    "candidate_profile",
                     models.ForeignKey(
-                        help_text="Job seeker profile that was processed",
+                        help_text="Candidate profile that was processed",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="processing_jobs",
-                        to="job_seekers.jobseekerprofile",
+                        to="candidates.candidateprofile",
                     ),
                 ),
                 (

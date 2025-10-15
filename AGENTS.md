@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Django project settings live in `hiredar/`, while domain-specific apps sit under `apps/` (`authentication`, `candidates`, `recruiters`, `matching`, `resume_processing`, etc.). The legacy `job_seekers` package now exists only to host cleanup migrations.
+- Django project settings live in `hiredar/`, while domain-specific apps sit under `apps/` (`authentication`, `candidates`, `recruiters`, `matching`, `resume_processing`, etc.). Candidate data is owned entirely by the `candidates` app; the former `job_seekers` package has been retired.
 - Shared LLM tooling is in `hiredar/llm/`, and reusable scripts live in `scripts/` for linting and import hygiene.
 - Front-end assets start in `assets/` and are compiled into `static/`; collected runtime files land in `staticfiles/` and uploads in `media/`.
 - Product documentation and decision records reside in `docs/`—use them for architectural context before large changes.

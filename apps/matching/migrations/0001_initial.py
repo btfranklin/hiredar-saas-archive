@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("job_seekers", "0001_initial"),
+        ("candidates", "0002_candidateprofile"),
         ("recruiters", "0001_initial"),
     ]
 
