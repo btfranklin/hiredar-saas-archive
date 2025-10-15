@@ -11,8 +11,11 @@ class RecruiterProfileAdmin(admin.ModelAdmin):
         "user",
         "credits_available",
         "credits_total",
-        "total_interest_requests_sent",
-        "total_messages_sent",
+        "total_resumes_processed",
+        "total_bulk_uploads_performed",
+        "total_candidates_shortlisted",
+        "total_shortlist_csvs_generated",
+        "total_shortlist_pdfs_generated",
     )
     list_filter = ()
     search_fields = ("user__email", "user__name")

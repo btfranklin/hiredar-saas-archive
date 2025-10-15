@@ -44,14 +44,6 @@ class RecruiterProfile(models.Model):
         default=0,
         help_text="Total shortlist PDFs generated",
     )
-    total_interest_requests_sent = models.PositiveIntegerField(
-        default=0,
-        help_text="Total initial interest requests (new conversations) sent to candidates",
-    )
-    total_messages_sent = models.PositiveIntegerField(
-        default=0,
-        help_text="Total chat messages sent by the recruiter",
-    )
 
     def __str__(self) -> str:
         return f"Recruiter: {self.user.email}"
