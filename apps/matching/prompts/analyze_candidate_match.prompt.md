@@ -70,7 +70,7 @@ Please analyze the match between this candidate and job opening:
 <candidate>{candidate_name}</candidate>
 
 <candidate_details>
-{talent_details}
+{candidate_details}
 </candidate_details>
 
 <job_opening_details>

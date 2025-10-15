@@ -16,13 +16,13 @@ class CandidateMatchAdmin(admin.ModelAdmin):
     """
     Admin configuration for CandidateMatch model.
 
-    Configures the admin interface for managing matches between talent sheets
+    Configures the admin interface for managing matches between candidate profiles
     and job openings, including display fields and filtering options.
     """
 
     list_display = (
         "job_opening",
-        "talent_sheet",
+        "candidate_profile",
         "get_score_for_type",
         "status",
         "is_analyzed",
@@ -35,7 +35,7 @@ class CandidateMatchAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "job_opening__title",
-        "talent_sheet__job_seeker__user__email",
+        "candidate_profile__pool__recruiter__email",
         "match_summary",
     )
     readonly_fields = ("created_at", "updated_at")

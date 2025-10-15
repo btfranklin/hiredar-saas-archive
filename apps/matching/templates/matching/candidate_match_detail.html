@@ -2,7 +2,7 @@
 {% load matching_filters %}
 {% load resume_tags %}
 
-{% block title %}{% if job_seeker.user_owner %}{{ job_seeker.user_owner.get_full_name }}{% else %}{{ job_seeker.candidate_name }}{% endif %} | Match Details | Hiredar{% endblock %}
+{% block title %}{{ candidate_profile.display_name }} | Match Details | Hiredar{% endblock %}
 
 {% block content %}
 <style>
@@ -27,7 +27,7 @@
         </div>
         {% if request.user.user_type == 'recruiter' %}
             <div class="flex flex-wrap gap-2">
-                {% include 'matching/partials/contact_controls.html' with job_seeker_id=job_seeker.id %}
+                {% include 'matching/partials/contact_controls.html' with job_opening=job_opening is_shortlisted=is_shortlisted show_shortlist=show_shortlist candidate_id=candidate_profile.id %}
             </div>
         {% endif %}
     </div>
@@ -40,28 +40,25 @@
                 <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                     <div>
                         <h1 class="text-3xl font-bold">
-                            {% if job_seeker.user_owner %}
-                                {{ job_seeker.user_owner.get_full_name }}
-                            {% else %}
-                                {{ job_seeker.candidate_name }}
-                            {% endif %}
+                            {{ candidate_profile.display_name }}
                         </h1>
-                        <p class="text-lg text-base-content/80 mt-1 italic">{{ job_seeker.personal_tagline }}</p>
+                        <p class="text-lg text-base-content/80 mt-1 italic">
+                            {{ candidate_profile.personal_tagline }}
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Talent Sheet Sections -->
-            {% if job_seeker.candidate_pool and job_seeker.candidate_pool.recruiter == request.user %}
+            <!-- Candidate Profile Sections -->
             <div id="match-tabs-container">
               <div role="tablist" class="tabs tabs-box mb-6">
                 <a role="tab"
-                   class="tab tab-lg {% if tab == 'talent_sheet' %}tab-active{% endif %}"
-                   hx-get="?tab=talent_sheet"
+                   class="tab tab-lg {% if tab == 'profile' %}tab-active{% endif %}"
+                   hx-get="?tab=profile"
                    hx-target="#match-tabs-container"
                    hx-swap="outerHTML" hx-select="#match-tabs-container"
                    hx-push-url="true">
-                  Talent Sheet
+                  Candidate Profile
                 </a>
                 <a role="tab"
                    class="tab tab-lg {% if tab == 'resume' %}tab-active{% endif %}"
@@ -74,38 +71,40 @@
               </div>
               <div id="match-tab-content">
                 {% if tab == 'resume' %}
-                  {% include 'job_seekers/components/resume_detail.html' with profile=job_seeker %}
+                  {% include 'candidates/components/resume_detail.html' with profile=candidate_profile %}
                 {% else %}
                   <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                     <h2 class="text-xl font-bold mb-4">Promotional Summary</h2>
-                    <p class="prose max-w-none">
-                        {{ talent_sheet.promotional_blurb|bold_resume_labels|linebreaks }}
+                    <p class="prose max-w-none whitespace-pre-line">
+                        {{ candidate_profile.promotional_blurb|bold_resume_labels }}
                     </p>
                   </div>
 
+                  {% if candidate_profile.experience_overview %}
                   <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                     <h2 class="text-xl font-bold mb-4">Experience Overview</h2>
                     <div class="mt-2 whitespace-pre-line max-w-none">
-                        {{ talent_sheet.experience_overview|bold_resume_labels|linebreaks }}
-                    </div>
-                  </div>
-
-                  {% if talent_sheet.qualifications %}
-                  <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                    <h2 class="text-xl font-bold mb-4">Qualifications</h2>
-                    <div class="mt-2 whitespace-pre-line max-w-none">
-                        {{ talent_sheet.qualifications|bold_resume_labels|linebreaks }}
+                        {{ candidate_profile.experience_overview|bold_resume_labels }}
                     </div>
                   </div>
                   {% endif %}
 
-                  {% include 'job_seekers/components/skills_list.html' with skills_list=talent_sheet.job_seeker.skills_list %}
+                  {% if candidate_profile.qualifications %}
+                  <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
+                    <h2 class="text-xl font-bold mb-4">Qualifications</h2>
+                    <div class="mt-2 whitespace-pre-line max-w-none">
+                        {{ candidate_profile.qualifications|bold_resume_labels }}
+                    </div>
+                  </div>
+                  {% endif %}
 
-                  {% if talent_sheet.ideal_roles %}
+                  {% include 'candidates/components/skills_list.html' with skills_list=candidate_profile.skills_list %}
+
+                  {% if candidate_profile.ideal_roles %}
                   <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
                     <h2 class="text-xl font-bold mb-4">Ideal Roles</h2>
                     <div class="flex flex-wrap gap-2">
-                      {% for role in talent_sheet.ideal_roles_list %}
+                      {% for role in candidate_profile.ideal_roles_list %}
                       <div class="badge badge-lg">{{ role }}</div>
                       {% endfor %}
                     </div>
@@ -114,43 +113,6 @@
                 {% endif %}
               </div>
             </div>
-            {% else %}
-              <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-xl font-bold mb-4">Promotional Summary</h2>
-                <p class="prose max-w-none">
-                    {{ talent_sheet.promotional_blurb|bold_resume_labels|linebreaks }}
-                </p>
-              </div>
-
-              <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-xl font-bold mb-4">Experience Overview</h2>
-                <div class="mt-2 whitespace-pre-line max-w-none">
-                    {{ talent_sheet.experience_overview|bold_resume_labels|linebreaks }}
-                </div>
-              </div>
-
-              {% if talent_sheet.qualifications %}
-              <div class="bg-base-200 rounded-box p-6 shadow-md mb-8">
-                <h2 class="text-xl font-bold mb-4">Qualifications</h2>
-                <div class="mt-2 whitespace-pre-line max-w-none">
-                    {{ talent_sheet.qualifications|bold_resume_labels|linebreaks }}
-                </div>
-              </div>
-              {% endif %}
-
-              {% include 'job_seekers/components/skills_list.html' with skills_list=talent_sheet.job_seeker.skills_list %}
-
-              {% if talent_sheet.ideal_roles %}
-              <div class="bg-base-200 rounded-box p-6 shadow-md">
-                <h2 class="text-xl font-bold mb-4">Ideal Roles</h2>
-                <div class="flex flex-wrap gap-2">
-                  {% for role in talent_sheet.ideal_roles_list %}
-                  <div class="badge badge-lg">{{ role }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-              {% endif %}
-            {% endif %}
         </div>
 
         <!-- Sidebar -->
@@ -181,15 +143,6 @@
                 </div>
             </div>
             
-            {% if talent_sheet.salary_min %}
-            <div class="bg-base-200 rounded-box p-6 shadow-md">
-                <h2 class="text-xl font-bold mb-4">Salary Expectations</h2>
-                
-                <div class="space-y-4">
-                    <p class="text-base-content/70">Minimum salary expectation: <span class="font-semibold">${{ talent_sheet.salary_min|floatformat:0 }}</span></p>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>

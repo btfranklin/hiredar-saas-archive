@@ -3,12 +3,12 @@
     {# Shortlist Controls #}
     {% if show_shortlist %}
         {% if is_shortlisted %}
-            <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
+            <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id candidate_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-md btn-success"><i class="fas fa-check mr-2"></i> In Shortlist</button>
             </form>
         {% else %}
-            <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id job_seeker_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
+            <form hx-post="{% url 'matching:add_to_shortlist' job_opening.id candidate_id %}" hx-target="#contact-shortlist-container" hx-swap="outerHTML">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline"><i class="fas fa-plus mr-2"></i> Add to Shortlist</button>
             </form>

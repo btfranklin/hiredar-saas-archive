@@ -10,7 +10,6 @@ from django.test import TestCase
 
 from apps.authentication.models import User
 from apps.candidates.models import CandidatePool
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.recruiters.models import JobOpening, RecruiterProfile
 from apps.reports.services import generate_csv, generate_pdf, get_export_filename
@@ -47,18 +46,13 @@ class ReportsServiceTests(TestCase):
             recruiter=cls.recruiter_user,
             name="Primary Pool",
         )
-        cls.job_seeker_profile = JobSeekerProfile.objects.create(
-            candidate_pool=cls.candidate_pool,
+        cls.candidate_profile = CandidateProfile.objects.create(
+            pool=cls.candidate_pool,
             candidate_name="Test Candidate",
             most_recent_title="Python Developer",
             location="San Francisco, CA",
             years_of_experience=5,
             phone="555-123-4567",
-        )
-
-        # Create talent sheet
-        cls.talent_sheet = TalentSheet.objects.create(
-            job_seeker=cls.job_seeker_profile,
             promotional_blurb="Experienced Python developer with Django expertise",
             experience_overview="5 years of Python development experience",
             skills="Python\nDjango\nPostgreSQL\nReact",
@@ -69,7 +63,7 @@ class ReportsServiceTests(TestCase):
         # Ensure a candidate match exists (background tasks may create one already).
         cls.candidate_match, _ = CandidateMatch.objects.update_or_create(
             job_opening=cls.job_opening,
-            talent_sheet=cls.talent_sheet,
+            candidate_profile=cls.candidate_profile,
             defaults={
                 "holistic_score": 0.85,
                 "skills_score": 0.90,
@@ -104,20 +98,17 @@ class ReportsServiceTests(TestCase):
     def test_generate_csv_with_limit(self):
         """Test CSV generation respects limit parameter."""
         # Create another shortlisted candidate
-        job_seeker_2 = JobSeekerProfile.objects.create(
-            candidate_pool=self.candidate_pool,
+        candidate_profile_2 = CandidateProfile.objects.create(
+            pool=self.candidate_pool,
             candidate_name="Second Candidate",
             most_recent_title="Senior Developer",
-        )
-        talent_sheet_2 = TalentSheet.objects.create(
-            job_seeker=job_seeker_2,
             promotional_blurb="Another great candidate",
             experience_overview="Lots of experience",
             is_published=True,
         )
         match_2, _ = CandidateMatch.objects.update_or_create(
             job_opening=self.job_opening,
-            talent_sheet=talent_sheet_2,
+            candidate_profile=candidate_profile_2,
             defaults={
                 "holistic_score": 0.75,
             },
@@ -194,21 +185,18 @@ class ReportsServiceTests(TestCase):
             name="Test Pool",
         )
 
-        # Create a pool-owned job seeker with candidate_name
-        pool_job_seeker = JobSeekerProfile.objects.create(
-            candidate_pool=candidate_pool,
+        # Create a pool-owned candidate profile with candidate_name
+        pool_candidate = CandidateProfile.objects.create(
+            pool=candidate_pool,
             candidate_name="Jane Smith",  # This should be used in the report
             most_recent_title="Software Engineer",
-        )
-
-        talent_sheet_pool = TalentSheet.objects.create(
-            job_seeker=pool_job_seeker,
             promotional_blurb="Pool candidate with parsed name",
             is_published=True,
         )
+
         match_pool, _ = CandidateMatch.objects.update_or_create(
             job_opening=self.job_opening,
-            talent_sheet=talent_sheet_pool,
+            candidate_profile=pool_candidate,
             defaults={
                 "holistic_score": 0.75,
             },

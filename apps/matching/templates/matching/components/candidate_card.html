@@ -5,28 +5,28 @@
         <div>
             <div class="flex justify-between items-start">
                 <h3 class="card-title">
-                    {% if match.talent_sheet.job_seeker.user_owner %}
-                        {{ match.talent_sheet.job_seeker.user_owner.get_full_name }}
-                    {% else %}
-                        {{ match.talent_sheet.job_seeker.candidate_name }}
-                    {% endif %}
+                    {{ match.candidate_profile.display_name }}
                 </h3>
                 <div class="badge" data-lens="{{ match.match_type }}">{{ match.get_rating_for_type }}/10</div>
             </div>
 
             <div class="my-2">
-                {% if match.talent_sheet.job_seeker.personal_tagline %}
-                    <p class="text-base-content/70 italic">{{ match.talent_sheet.job_seeker.personal_tagline }}</p>
+                {% if match.candidate_profile.personal_tagline %}
+                    <p class="text-base-content/70 italic">{{ match.candidate_profile.personal_tagline }}</p>
                 {% endif %}
 
-                <div class="flex flex-wrap gap-1 mt-2">
-                    {% for skill in match.talent_sheet.skills.all|slice:":5" %}
-                        <span class="badge badge-outline">{{ skill.name }}</span>
-                    {% endfor %}
-                    {% if match.talent_sheet.skills.count > 5 %}
-                        <span class="badge badge-outline">...+{{ match.talent_sheet.skills.count|add:"-5" }}</span>
-                    {% endif %}
-                </div>
+                {% with skills=match.candidate_profile.skills_list %}
+                  {% if skills %}
+                  <div class="flex flex-wrap gap-1 mt-2">
+                      {% for skill in skills|slice:":5" %}
+                          <span class="badge badge-outline">{{ skill }}</span>
+                      {% endfor %}
+                      {% if skills|length > 5 %}
+                          <span class="badge badge-outline">...+{{ skills|length|add:"-5" }}</span>
+                      {% endif %}
+                  </div>
+                  {% endif %}
+                {% endwith %}
             </div>
 
             {% if match.match_summary %}
@@ -35,7 +35,7 @@
         </div>
 
         <div class="card-actions justify-end mt-4">
-            <a href="{% url 'matching:candidate_match_detail' job_opening.id match.talent_sheet.job_seeker.id %}" class="btn btn-primary">
+            <a href="{% url 'matching:candidate_match_detail' job_opening.id match.candidate_profile.id %}" class="btn btn-primary">
                 View Match Details
             </a>
         </div>

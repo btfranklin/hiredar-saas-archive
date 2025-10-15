@@ -23,7 +23,7 @@ def query_pinecone(
 
     Args:
         query_vector: The embedding vector to use as query
-        namespace: The Pinecone namespace to query ('job_openings' or 'talent_sheets')
+        namespace: The Pinecone namespace to query ('job_openings' or 'candidate_profiles')
         top_k: Number of results to return
         filter_dict: Optional metadata filter to apply
 

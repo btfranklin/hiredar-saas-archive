@@ -11,7 +11,7 @@ from django.conf import settings
 from django.db import transaction
 
 from apps.core.services.task_idempotency import IdempotentTaskManager
-from apps.matching.core.matching import match_job_to_talents
+from apps.matching.core.matching import match_job_to_candidates
 from apps.matching.core.retrieval import get_job_section_embedding
 from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.matching.tasks.common import logger
@@ -108,7 +108,7 @@ def create_candidate_matches(
                 # Proceed; matching will produce empty results
 
         # Run matching after ensuring embeddings exist (or re-attempted to create)
-        match_results = match_job_to_talents(job_id, top_k=20)
+        match_results = match_job_to_candidates(job_id, top_k=20)
 
         with transaction.atomic():
             match_type_mapping = {
@@ -119,61 +119,61 @@ def create_candidate_matches(
                 "qualifications_matches": "qualifications",
             }
 
-            all_matches_by_talent: dict[int, dict[str, float]] = defaultdict(dict)
+            all_matches_by_candidate: dict[int, dict[str, float]] = defaultdict(dict)
 
             for result_key, match_type in match_type_mapping.items():
                 matches = match_results.get(result_key, [])
 
                 for match in matches:
-                    raw_talent_sheet_id = match["metadata"].get("talent_sheet_id")
+                    raw_candidate_id = match["metadata"].get("candidate_profile_id")
                     try:
-                        talent_sheet_id = int(raw_talent_sheet_id)  # type: ignore[arg-type]
+                        candidate_profile_id = int(raw_candidate_id)  # type: ignore[arg-type]
                     except (TypeError, ValueError):
                         try:
-                            talent_sheet_id = int(float(raw_talent_sheet_id))  # type: ignore[arg-type]
+                            candidate_profile_id = int(float(raw_candidate_id))  # type: ignore[arg-type]
                         except (TypeError, ValueError):
                             logger.warning(
-                                "Skipping match with invalid talent_sheet_id=%s",
-                                raw_talent_sheet_id,
+                                "Skipping match with invalid candidate_profile_id=%s",
+                                raw_candidate_id,
                             )
                             continue
 
                     score = match["score"]
 
-                    all_matches_by_talent[talent_sheet_id][match_type] = score
+                    all_matches_by_candidate[candidate_profile_id][match_type] = score
 
-            TalentSheet = apps.get_model("job_seekers", "TalentSheet")
-            valid_talent_ids = set(
-                TalentSheet.objects.filter(
-                    id__in=all_matches_by_talent.keys()
+            CandidateProfile = apps.get_model("candidates", "CandidateProfile")
+            valid_candidate_ids = set(
+                CandidateProfile.objects.filter(
+                    id__in=all_matches_by_candidate.keys()
                 ).values_list("id", flat=True)
             )
 
             min_match_score = getattr(settings, "MATCHING_MIN_SCORE", 0.5)
 
-            for talent_sheet_id, talent_scores in all_matches_by_talent.items():
-                if talent_sheet_id not in valid_talent_ids:
+            for candidate_profile_id, candidate_scores in all_matches_by_candidate.items():
+                if candidate_profile_id not in valid_candidate_ids:
                     logger.warning(
-                        "Skipping match creation for missing TalentSheet %s",
-                        talent_sheet_id,
+                        "Skipping match creation for missing CandidateProfile %s",
+                        candidate_profile_id,
                     )
                     continue
 
-                if max(talent_scores.values(), default=0) < min_match_score:
+                if max(candidate_scores.values(), default=0) < min_match_score:
                     continue
 
                 try:
                     CandidateMatchService.safe_upsert_candidate_match(
                         job_opening_id=job.id,
-                        talent_sheet_id=talent_sheet_id,
-                        score_updates=talent_scores,
+                        candidate_profile_id=candidate_profile_id,
+                        score_updates=candidate_scores,
                         is_analyzed=False,
                     )
 
                 except Exception as e:
                     logger.error(
-                        "Error creating consolidated match for talent sheet %s: %s",
-                        talent_sheet_id,
+                        "Error creating consolidated match for candidate profile %s: %s",
+                        candidate_profile_id,
                         e,
                     )
 
@@ -182,7 +182,7 @@ def create_candidate_matches(
         return {
             "status": "success",
             "job_opening_id": job_id,
-            "matches_created": len(all_matches_by_talent),
+            "matches_created": len(all_matches_by_candidate),
         }
     except Exception as e:
         logger.error("Error creating matches for job opening %s: %s", job_id, e)

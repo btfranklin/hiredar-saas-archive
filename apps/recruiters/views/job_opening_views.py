@@ -251,13 +251,13 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 #   • n>0 ⇒  Restrict to a specific CandidatePool uploaded by the recruiter
                 # ------------------------------------------------------------------
                 matches = CandidateMatch.objects.filter(job_opening=job_opening).filter(
-                    talent_sheet__job_seeker__candidate_pool__recruiter=user
+                    candidate_profile__pool__recruiter=user
                 )
 
                 if selected_pool_id > 0:
                     # Specific candidate pool – restrict to that pool ID
                     matches = matches.filter(
-                        talent_sheet__job_seeker__candidate_pool_id=selected_pool_id
+                        candidate_profile__pool_id=selected_pool_id
                     )
                 # Determine matches for requested section
                 section = context["section"]
@@ -323,9 +323,8 @@ class JobOpeningDetailView(LoginRequiredMixin, DetailView):
                 # --- Shortlist -----------------------------------------------------------------
                 shortlist_qs = job_opening.shortlisted_matches.select_related(
                     "candidate_match",
-                    "candidate_match__talent_sheet",
-                    "candidate_match__talent_sheet__job_seeker",
-                    "candidate_match__talent_sheet__job_seeker__user_owner",
+                    "candidate_match__candidate_profile",
+                    "candidate_match__candidate_profile__pool",
                 ).order_by("-created_at")
 
                 context["shortlist"] = shortlist_qs

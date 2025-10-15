@@ -83,7 +83,7 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         return get_object_or_404(
             CandidateMatch,
             job_opening=self.job_opening,
-            talent_sheet__job_seeker__id=self.kwargs["candidate_id"],
+            candidate_profile__id=self.kwargs["candidate_id"],
         )
 
     def get_context_data(self, **kwargs):
@@ -98,10 +98,8 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         """
         context = super().get_context_data(**kwargs)
         context["job_opening"] = self.job_opening
-        context["talent_sheet"] = self.object.talent_sheet
-        context["job_seeker"] = self.object.talent_sheet.job_seeker
-        # Add selected tab from query parameters, default to 'talent_sheet'
-        context["tab"] = self.request.GET.get("tab", "talent_sheet")
+        context["candidate_profile"] = self.object.candidate_profile
+        context["tab"] = self.request.GET.get("tab", "profile")
 
         # Check if this candidate is already shortlisted for this job opening
         context["is_shortlisted"] = ShortlistedMatch.objects.filter(
@@ -134,7 +132,7 @@ def add_to_shortlist(request: HttpRequest, job_id: int, candidate_id: int):
     candidate_match = get_object_or_404(
         CandidateMatch,
         job_opening=job_opening,
-        talent_sheet__job_seeker__id=candidate_id,
+        candidate_profile__id=candidate_id,
     )
 
     # Toggle shortlist entry
@@ -241,7 +239,7 @@ def candidate_match_analysis_status(
     candidate_match = get_object_or_404(
         CandidateMatch,
         job_opening=job_opening,
-        talent_sheet__job_seeker__id=candidate_id,
+        candidate_profile__id=candidate_id,
     )
 
     # If not analyzed yet, trigger analysis and return loading state

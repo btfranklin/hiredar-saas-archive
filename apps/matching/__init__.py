@@ -4,17 +4,17 @@
 from apps.matching.core import (
     average_vectors,
     get_job_section_embedding,
-    get_talent_section_embedding,
-    match_job_to_talents,
-    match_talent_to_jobs,
+    get_candidate_section_embedding,
+    match_candidate_to_jobs,
+    match_job_to_candidates,
     query_pinecone,
 )
 
 __all__ = [
     "average_vectors",
     "get_job_section_embedding",
-    "get_talent_section_embedding",
-    "match_job_to_talents",
-    "match_talent_to_jobs",
+    "get_candidate_section_embedding",
+    "match_job_to_candidates",
+    "match_candidate_to_jobs",
     "query_pinecone",
 ]

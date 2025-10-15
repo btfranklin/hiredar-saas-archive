@@ -15,7 +15,7 @@ both initial page render and subsequent HTMX fragment updates.
       Created: {{ pool.created_at|date:"M j, Y H:i" }}
     </p>
     <p class="text-sm">
-      {{ pool.job_seeker_profiles.count }} candidate{{ pool.job_seeker_profiles.count|pluralize }} in pool
+      {{ pool.candidate_profiles.count }} candidate{{ pool.candidate_profiles.count|pluralize }} in pool
     </p>
 
     {% with summaries=pool.active_task_summary %}

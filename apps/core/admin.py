@@ -54,8 +54,8 @@ class CustomTaskResultAdmin(TaskResultAdmin):
         """
         Display only the final part of the task name (the actual task function name).
 
-        For example: 'apps.matching.tasks.remove_talent_sheet_embeddings'
-        becomes 'remove_talent_sheet_embeddings'
+        For example: 'apps.matching.tasks.remove_candidate_embeddings'
+        becomes 'remove_candidate_embeddings'
         """
         if not obj.task_name:
             return "-"
@@ -73,7 +73,7 @@ class CustomTaskResultAdmin(TaskResultAdmin):
         """
         Display the app name from the task name.
 
-        For example: 'apps.matching.tasks.remove_talent_sheet_embeddings'
+        For example: 'apps.matching.tasks.remove_candidate_embeddings'
         shows 'matching'
         """
         if not obj.task_name:

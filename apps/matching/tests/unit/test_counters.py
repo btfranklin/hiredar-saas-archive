@@ -2,8 +2,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.authentication.models import User
-from apps.candidates.models import CandidatePool
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet
+from apps.candidates.models import CandidatePool, CandidateProfile
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
@@ -22,28 +21,21 @@ class ShortlistCountersTests(TestCase):
             title="Test Job",
             description="Test description",
         )
-        # Create pool-owned candidate and talent sheet
+        # Create pool-owned candidate profile
         candidate_pool = CandidatePool.objects.create(
             recruiter=self.recruiter_user, name="Shortlist Pool"
         )
-        self.job_seeker_profile = JobSeekerProfile.objects.create(
-            candidate_pool=candidate_pool,
+        self.candidate_profile = CandidateProfile.objects.create(
+            pool=candidate_pool,
             candidate_name="Shortlist Candidate",
-        )
-        self.talent_sheet = TalentSheet.objects.create(
-            job_seeker=self.job_seeker_profile,
             promotional_blurb="",
             experience_overview="",
-            ideal_roles="",
-            skills="",
-            personal_tagline="",
-            salary_min=None,
-            is_published=False,
-            qualifications="",
+            skills="Python\nDjango",
+            is_published=True,
         )
         self.candidate_match = CandidateMatch.objects.create(
             job_opening=self.job_opening,
-            talent_sheet=self.talent_sheet,
+            candidate_profile=self.candidate_profile,
         )
         # Authenticate client
         self.client = Client()
@@ -55,7 +47,7 @@ class ShortlistCountersTests(TestCase):
         # Add to shortlist
         url_add = reverse(
             "matching:add_to_shortlist",
-            args=[self.job_opening.pk, self.job_seeker_profile.pk],
+            args=[self.job_opening.pk, self.candidate_profile.pk],
         )
         response_add = self.client.post(url_add)
         self.assertEqual(response_add.status_code, 200)

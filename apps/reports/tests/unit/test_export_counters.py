@@ -6,8 +6,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.authentication.models import User
-from apps.candidates.models import CandidatePool
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet
+from apps.candidates.models import CandidatePool, CandidateProfile
 from apps.matching.models import CandidateMatch, ShortlistedMatch
 from apps.recruiters.models import JobOpening, RecruiterProfile
 
@@ -30,24 +29,19 @@ class ExportCountersTests(TestCase):
         candidate_pool = CandidatePool.objects.create(
             recruiter=self.rec_user, name="Reporting Pool"
         )
-        job_seeker_profile = JobSeekerProfile.objects.create(
-            candidate_pool=candidate_pool,
+        candidate_profile = CandidateProfile.objects.create(
+            pool=candidate_pool,
             candidate_name="Reporting Candidate",
             most_recent_title="Data Analyst",
-        )
-        talent_sheet = TalentSheet.objects.create(
-            job_seeker=job_seeker_profile,
             promotional_blurb="",
             experience_overview="",
-            ideal_roles="",
             skills="",
             personal_tagline="",
-            is_published=False,
-            qualifications="",
+            is_published=True,
         )
         candidate_match = CandidateMatch.objects.create(
             job_opening=self.job_opening,
-            talent_sheet=talent_sheet,
+            candidate_profile=candidate_profile,
         )
         ShortlistedMatch.objects.create(
             job_opening=self.job_opening,

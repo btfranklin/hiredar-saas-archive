@@ -310,13 +310,12 @@ The job matching process is one of the key features of the application:
    - Text extraction from PDF files
    - Conversion to structured XML using LLM integration
    - Parsing XML to extract key information
-   - Updating JobSeekerProfile with extracted information
-4. **Talent Sheet Generation**:
-   - When a candidate is added to a talent pool, a basic placeholder talent sheet is created immediately
-   - An asynchronous task then enhances this talent sheet using LLM with a structured prompt
-   - The LLM-generated talent sheet includes a promotional blurb, skill overview, and ideal roles
-   - Recruiter-specified candidate preferences (e.g., role interests) are incorporated into the talent sheet when available
-5. **Vector Generation**: The system creates embeddings for both jobs and talent sheets.
+   - Updating `CandidateProfile` with extracted information
+4. **Candidate Profile Enrichment**:
+   - When a candidate is added to a pool, a basic profile record is created immediately
+   - Asynchronous tasks enhance that profile using LLM prompts (promotional blurb, experience overview, ideal roles)
+   - Recruiter-specified preferences are merged into the enriched profile when available
+5. **Vector Generation**: The system creates embeddings for both jobs and candidate profiles.
 6. **Matching Algorithm**: Vector similarity is used to match candidate profiles to job openings based on skills, experience, and other factors.
 7. **Match Presentation**: Recruiters are shown matching candidates for their job openings with rating scores out of 10.
 8. **Match Analysis**: AI analyzes why a match is suitable and provides detailed summaries.
@@ -363,7 +362,7 @@ The project uses custom linter rules to enforce consistent type annotations:
 The application uses Celery for background tasks:
 
 - **Resume Processing**: Asynchronous processing of uploaded resumes via the `process_resume` pipeline in `apps/resume_processing/utils/pipeline.py`
-- **Talent Sheet Generation**: Asynchronous enhancement of talent sheets using LLM via `generate_talent_sheet_task`
+- **Candidate Profile Enrichment**: Asynchronous enhancement of candidate profiles using LLM via `create_candidate_embeddings`
 - **AI Analysis**: Background AI analysis for matching and recommendations
 - **Email Notifications**: Sending emails in the background
 - **Vector Generation**: Creating embeddings for jobs and talent sheets in the background

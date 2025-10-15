@@ -16,18 +16,14 @@ from apps.matching.tasks.create_candidate_matches import create_candidate_matche
 from apps.matching.tasks.create_job_opening_embeddings import (
     create_job_opening_embeddings,
 )
-from apps.matching.tasks.create_talent_sheet_embeddings import (
-    create_talent_sheet_embeddings,
-)
-from apps.matching.tasks.match_talent_to_active_jobs import match_talent_to_active_jobs
+from apps.matching.tasks.create_candidate_embeddings import create_candidate_embeddings
+from apps.matching.tasks.match_candidate_to_active_jobs import match_candidate_to_active_jobs
 from apps.matching.tasks.remove_job_opening_embeddings import (
     remove_job_opening_embeddings,
 )
 from apps.matching.tasks.remove_job_opening_matches import remove_job_opening_matches
-from apps.matching.tasks.remove_talent_sheet_embeddings import (
-    remove_talent_sheet_embeddings,
-)
-from apps.matching.tasks.remove_talent_sheet_matches import remove_talent_sheet_matches
+from apps.matching.tasks.remove_candidate_embeddings import remove_candidate_embeddings
+from apps.matching.tasks.remove_candidate_matches import remove_candidate_matches
 
 async_task = safe_async_task
 
@@ -94,12 +90,12 @@ def handle_job_opening_delete(sender, instance, **kwargs):
     )
 
 
-@receiver(post_save, sender="job_seekers.TalentSheet")
-def handle_talent_sheet_save(sender, instance, created, **kwargs):
+@receiver(post_save, sender="candidates.CandidateProfile")
+def handle_candidate_profile_save(sender, instance, created, **kwargs):
     """
-    Handle TalentSheet save events.
+    Handle CandidateProfile save events.
 
-    Process published talent sheets and remove embeddings for withdrawn/inactive ones.
+    Process published candidate profiles and remove embeddings for withdrawn/inactive ones.
 
     Args:
         sender: The model class
@@ -111,14 +107,14 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
 
         def _cleanup_unpublished():
             async_task(
-                remove_talent_sheet_embeddings,
+                remove_candidate_embeddings,
                 instance.id,
-                task_name=f"remove_talent_embeddings_{instance.id}",
+                task_name=f"remove_candidate_embeddings_{instance.id}",
             )
             async_task(
-                remove_talent_sheet_matches,
+                remove_candidate_matches,
                 instance.id,
-                task_name=f"remove_talent_matches_{instance.id}",
+                task_name=f"remove_candidate_matches_{instance.id}",
             )
 
         transaction.on_commit(_cleanup_unpublished)
@@ -127,31 +123,30 @@ def handle_talent_sheet_save(sender, instance, created, **kwargs):
         # Create embeddings and then match to active jobs using Celery chain
         def _create_embeddings_and_match():
             chain(
-                create_talent_sheet_embeddings.si(instance.id), match_talent_to_active_jobs.s()  # type: ignore[misc]
+                create_candidate_embeddings.si(instance.id), match_candidate_to_active_jobs.s()  # type: ignore[misc]
             ).apply_async()
 
         transaction.on_commit(_create_embeddings_and_match)
 
 
-@receiver(post_delete, sender="job_seekers.TalentSheet")
-def handle_talent_sheet_delete(sender, instance, **kwargs):
+@receiver(post_delete, sender="candidates.CandidateProfile")
+def handle_candidate_profile_delete(sender, instance, **kwargs):
     """
-    Handle TalentSheet deletion events.
+    Handle CandidateProfile deletion events.
 
-    Remove embeddings when a talent sheet is deleted.
+    Remove embeddings when a candidate profile is deleted.
 
     Args:
         sender: The model class
         instance: The actual instance being deleted
     """
-    # On deletion, trigger removal of talent sheet embeddings
     async_task(
-        remove_talent_sheet_embeddings,
+        remove_candidate_embeddings,
         instance.id,
-        task_name=f"cleanup_talent_embeddings_{instance.id}",
+        task_name=f"cleanup_candidate_embeddings_{instance.id}",
     )
     async_task(
-        remove_talent_sheet_matches,
+        remove_candidate_matches,
         instance.id,
-        task_name=f"cleanup_talent_matches_{instance.id}",
+        task_name=f"cleanup_candidate_matches_{instance.id}",
     )

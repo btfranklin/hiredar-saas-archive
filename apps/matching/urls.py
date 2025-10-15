@@ -12,7 +12,7 @@ from apps.matching.views.candidate_views import (
     candidate_match_analysis_status,
     remove_from_shortlist,
 )
-from apps.matching.views.matching_views import match_job_api, match_talent_api
+from apps.matching.views.matching_views import match_candidate_api, match_job_api
 
 app_name = "matching"
 
@@ -40,9 +40,9 @@ urlpatterns = [
     ),
     # Matching API endpoints
     path(
-        "api/match/talent/<int:talent_id>/",
-        match_talent_api,
-        name="match_talent_api",
+        "api/match/candidate/<int:candidate_id>/",
+        match_candidate_api,
+        name="match_candidate_api",
     ),
     path(
         "api/match/job/<int:job_id>/",

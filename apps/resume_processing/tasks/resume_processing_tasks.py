@@ -1,5 +1,5 @@
 """
-Resume processing tasks for job seekers.
+Resume processing tasks for candidate profiles.
 
 This module contains Celery tasks for handling asynchronous processing of
 resume uploads and parsing.
@@ -13,9 +13,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 
-from apps.job_seekers.models import JobSeekerProfile
-
-# Removed top-level import to avoid circular dependency; import in function to defer loading
+from apps.candidates.models import CandidateProfile
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -46,36 +44,36 @@ def save_resume_file(resume_file: UploadedFile, filename: str) -> str:
 )
 def handle_resume_upload_task(
     uploaded_file_path: str,
-    job_seeker_profile_id: int,
+    candidate_profile_id: int,
     task_id: str | None = None,
 ) -> dict[str, Any]:
     """
-    Celery task to process a resume file asynchronously.
+    Celery task to process a resume file asynchronously for a ``CandidateProfile``.
 
     Args:
         uploaded_file_path: Path to the temporary uploaded file.
-        job_seeker_profile_id: ID of the JobSeekerProfile to update.
+        candidate_profile_id: ID of the CandidateProfile to update.
         task_id: The ID of the task for progress tracking.
 
     Returns:
         dict: Result of the processing operation with structured data for chaining.
     """
     try:
-        # Process the resume using the unified pipeline
+        # Process the resume using the unified candidate pipeline
         try:
-            profile = JobSeekerProfile.objects.get(id=job_seeker_profile_id)
-        except JobSeekerProfile.DoesNotExist:
-            error_msg = f"Profile not found: id={job_seeker_profile_id}"
+            profile = CandidateProfile.objects.get(id=candidate_profile_id)
+        except CandidateProfile.DoesNotExist:
+            error_msg = f"CandidateProfile not found: id={candidate_profile_id}"
             logger.error(error_msg)
             return {
                 "status": "error",
                 "message": error_msg,
-                "profile_id": job_seeker_profile_id,
+                "profile_id": candidate_profile_id,
             }
 
         # Process the resume with progress tracking
         # Deferred import to avoid circular import
-        from apps.resume_processing.services.pipeline import process_resume
+        from apps.candidates.services.resume_pipeline import process_resume
 
         result = process_resume(uploaded_file_path, profile, task_id=task_id)
 
@@ -83,7 +81,7 @@ def handle_resume_upload_task(
             "status": "success" if result.get("success", False) else "error",
             "message": result.get("message", ""),
             "profile_data": result.get("profile_data", {}),
-            "profile_id": job_seeker_profile_id,
+            "profile_id": candidate_profile_id,
             "file_path": uploaded_file_path,
             "processing_time": result.get("processing_time"),
             "pipeline_steps": result.get("pipeline_steps", []),
@@ -95,6 +93,6 @@ def handle_resume_upload_task(
         return {
             "status": "error",
             "message": f"Error processing resume: {str(e)}",
-            "profile_id": job_seeker_profile_id,
+            "profile_id": candidate_profile_id,
             "file_path": uploaded_file_path,
         }

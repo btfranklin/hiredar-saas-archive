@@ -8,13 +8,13 @@ Expected context:
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div>
       <p class="text-sm text-base-content/70">Created on: {{ pool.created_at|date:"M j, Y H:i" }}</p>
-      <p class="text-sm">Total Candidates: {{ pool.job_seeker_profiles.count }}</p>
+      <p class="text-sm">Total Candidates: {{ pool.candidate_profiles.count }}</p>
     </div>
   </div>
 </div>
 
 <h2 class="text-xl font-semibold mb-4">Candidates in this Pool</h2>
-{% if pool.job_seeker_profiles.all %}
+{% if pool.candidate_profiles.all %}
   <div class="overflow-x-auto">
     <table class="table w-full">
       <thead>
@@ -25,7 +25,7 @@ Expected context:
         </tr>
       </thead>
       <tbody>
-        {% for profile in pool.job_seeker_profiles.all %}
+        {% for profile in pool.candidate_profiles.all %}
           <tr>
             <td>
               {% if profile.candidate_name %}
@@ -51,7 +51,7 @@ Expected context:
               <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                 {# ---------------- Resume button / spinner ---------------- #}
                 {% if profile.resume_xml %}
-                  <a href="{% url 'job_seekers:resume_view' profile.id %}" class="btn btn-sm btn-primary whitespace-nowrap">View Resume</a>
+                  <a href="{% url 'candidates:resume_view' profile.id %}" class="btn btn-sm btn-primary whitespace-nowrap">View Resume</a>
                 {% else %}
                   <div class="flex items-center gap-1">
                     <span class="loading loading-spinner loading-xs text-primary"></span>
@@ -59,13 +59,13 @@ Expected context:
                   </div>
                 {% endif %}
 
-                {# ---------------- Talent-sheet button / spinner ---------------- #}
-                {% if profile.talent_sheet %}
-                  <a href="{% url 'recruiters:candidate_pool_profile_talent_sheet_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary whitespace-nowrap">View Talent Sheet</a>
+                {# ---------------- Profile summary button / spinner ---------------- #}
+                {% if profile.promotional_blurb %}
+                  <a href="{% url 'recruiters:candidate_pool_profile_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary whitespace-nowrap">View Profile Summary</a>
                 {% else %}
                   <div class="flex items-center gap-1">
                     <span class="loading loading-spinner loading-xs text-primary"></span>
-                    <span class="text-xs">Generating talent sheet&hellip;</span>
+                    <span class="text-xs">Generating profile summary&hellip;</span>
                   </div>
                 {% endif %}
               </div>

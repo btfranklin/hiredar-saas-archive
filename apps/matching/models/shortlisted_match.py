@@ -26,11 +26,7 @@ class ShortlistedMatch(models.Model):
 
     def __str__(self) -> str:
         job_title = self.job_opening.title
-        seeker_name = (
-            self.candidate_match.talent_sheet.job_seeker.user_owner.get_full_name()
-            if self.candidate_match.talent_sheet.job_seeker.user_owner
-            else f"Profile {self.candidate_match.talent_sheet.job_seeker.pk}"
-        )
+        seeker_name = self.candidate_match.candidate_profile.display_name
         return f"Shortlist • {seeker_name} for {job_title}"
 
     @property

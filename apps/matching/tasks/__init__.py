@@ -10,27 +10,23 @@ from apps.matching.tasks.create_candidate_matches import create_candidate_matche
 from apps.matching.tasks.create_job_opening_embeddings import (
     create_job_opening_embeddings,
 )
-from apps.matching.tasks.create_talent_sheet_embeddings import (
-    create_talent_sheet_embeddings,
-)
-from apps.matching.tasks.match_talent_to_active_jobs import match_talent_to_active_jobs
+from apps.matching.tasks.create_candidate_embeddings import create_candidate_embeddings
+from apps.matching.tasks.match_candidate_to_active_jobs import match_candidate_to_active_jobs
 from apps.matching.tasks.remove_job_opening_embeddings import (
     remove_job_opening_embeddings,
 )
 from apps.matching.tasks.remove_job_opening_matches import remove_job_opening_matches
-from apps.matching.tasks.remove_talent_sheet_embeddings import (
-    remove_talent_sheet_embeddings,
-)
-from apps.matching.tasks.remove_talent_sheet_matches import remove_talent_sheet_matches
+from apps.matching.tasks.remove_candidate_embeddings import remove_candidate_embeddings
+from apps.matching.tasks.remove_candidate_matches import remove_candidate_matches
 
 __all__ = [
     "analyze_candidate_match",
     "create_job_opening_embeddings",
     "remove_job_opening_embeddings",
-    "create_talent_sheet_embeddings",
-    "remove_talent_sheet_embeddings",
+    "create_candidate_embeddings",
+    "remove_candidate_embeddings",
     "create_candidate_matches",
     "remove_job_opening_matches",
-    "match_talent_to_active_jobs",
-    "remove_talent_sheet_matches",
+    "match_candidate_to_active_jobs",
+    "remove_candidate_matches",
 ]

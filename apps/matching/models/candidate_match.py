@@ -8,15 +8,15 @@ from django.db import models
 
 
 class CandidateMatch(models.Model):
-    """Match between a talent sheet and a job opening."""
+    """Match between a candidate profile and a job opening."""
 
     job_opening = models.ForeignKey(
         "recruiters.JobOpening",
         on_delete=models.CASCADE,
         related_name="candidate_matches",
     )
-    talent_sheet = models.ForeignKey(
-        "job_seekers.TalentSheet",
+    candidate_profile = models.ForeignKey(
+        "candidates.CandidateProfile",
         on_delete=models.CASCADE,
         related_name="job_matches",
     )
@@ -82,7 +82,7 @@ class CandidateMatch(models.Model):
 
     class Meta:
         app_label = "matching"
-        unique_together = ["job_opening", "talent_sheet"]
+        unique_together = ["job_opening", "candidate_profile"]
 
     def __str__(self) -> str:
         current_type = getattr(self, "match_type", "holistic")
@@ -95,15 +95,10 @@ class CandidateMatch(models.Model):
             "qualifications": "Qualifications Match",
         }.get(current_type, current_type)
 
-        job_seeker_profile = self.talent_sheet.job_seeker
-        job_owner = job_seeker_profile.user_owner
-        job_seeker_name = (
-            job_owner.get_full_name()
-            if job_owner
-            else f"Profile {job_seeker_profile.pk}"
-        )
+        profile = self.candidate_profile
+        candidate_name = profile.display_name
         return (
-            f"{job_seeker_name} - {self.job_opening} "
+            f"{candidate_name} - {self.job_opening} "
             f"({self.get_score_for_type():.2f}, {match_type_display})"
         )
 

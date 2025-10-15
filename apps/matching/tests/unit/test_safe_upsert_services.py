@@ -9,10 +9,8 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from apps.authentication.models import User
-from apps.candidates.models import CandidatePool
+from apps.candidates.models import CandidatePool, CandidateProfile
 from apps.core.services.task_idempotency import IdempotentTaskManager
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet
-from apps.job_seekers.services.talent_sheet_service import TalentSheetService
 from apps.matching.models import CandidateMatch
 from apps.matching.services.candidate_match_service import CandidateMatchService
 from apps.recruiters.models import JobOpening, RecruiterProfile
@@ -42,27 +40,19 @@ class RaceConditionTests(TestCase):
         cls.candidate_pool = CandidatePool.objects.create(
             recruiter=cls.recruiter_user, name="Race Condition Pool"
         )
-        cls.job_seeker_profile = JobSeekerProfile.objects.create(
-            candidate_pool=cls.candidate_pool,
+        cls.candidate_profile = CandidateProfile.objects.create(
+            pool=cls.candidate_pool,
             candidate_name="Race Condition Candidate",
-        )
-        cls.talent_sheet = TalentSheet.objects.create(
-            job_seeker=cls.job_seeker_profile,
             promotional_blurb="Initial blurb",
             experience_overview="Initial experience",
             is_published=True,
-        )
-
-        cls.secondary_job_seeker = JobSeekerProfile.objects.create(
-            candidate_pool=cls.candidate_pool,
-            candidate_name="Second Candidate",
         )
 
     def test_safe_upsert_candidate_match_creates_once_and_updates(self):
         """Repeated upserts should reuse the same CandidateMatch."""
         match, created = CandidateMatchService.safe_upsert_candidate_match(
             job_opening_id=self.job_opening.id,
-            talent_sheet_id=self.talent_sheet.id,
+            candidate_profile_id=self.candidate_profile.id,
             score_updates={
                 "holistic": 0.5,
                 "skills": 0.6,
@@ -76,7 +66,7 @@ class RaceConditionTests(TestCase):
 
         updated_match, updated_created = CandidateMatchService.safe_upsert_candidate_match(
             job_opening_id=self.job_opening.id,
-            talent_sheet_id=self.talent_sheet.id,
+            candidate_profile_id=self.candidate_profile.id,
             score_updates={
                 "holistic": 0.8,
                 "skills": 0.3,
@@ -105,7 +95,7 @@ class RaceConditionTests(TestCase):
                 created_flag["done"] = True
                 real_create(
                     job_opening=kwargs["job_opening"],
-                    talent_sheet=kwargs["talent_sheet"],
+                    candidate_profile=kwargs["candidate_profile"],
                     holistic_score=Decimal("0.1"),
                     skills_score=Decimal("0.1"),
                     experience_score=Decimal("0.1"),
@@ -121,7 +111,7 @@ class RaceConditionTests(TestCase):
         ):
             match, created = CandidateMatchService.safe_upsert_candidate_match(
                 job_opening_id=self.job_opening.id,
-                talent_sheet_id=self.talent_sheet.id,
+                candidate_profile_id=self.candidate_profile.id,
                 score_updates={
                     "holistic": 0.75,
                     "skills": 0.65,
@@ -137,73 +127,6 @@ class RaceConditionTests(TestCase):
         match.refresh_from_db()
         self.assertAlmostEqual(float(match.holistic_score), 0.75)
         self.assertFalse(match.is_analyzed)
-
-    def test_safe_upsert_talent_sheet_creates_once_and_updates(self):
-        """TalentSheet upserts should reuse the same record."""
-        sheet, created = TalentSheetService.safe_upsert_talent_sheet(
-            job_seeker_id=self.secondary_job_seeker.id,
-            talent_sheet_data={
-                "promotional_blurb": "Initial blurb",
-                "experience_overview": "Initial experience",
-                "is_published": True,
-            },
-        )
-        self.assertTrue(created)
-
-        updated_sheet, updated_created = TalentSheetService.safe_upsert_talent_sheet(
-            job_seeker_id=self.secondary_job_seeker.id,
-            talent_sheet_data={
-                "promotional_blurb": "Updated blurb",
-                "experience_overview": "Updated experience",
-                "ideal_roles": "Backend Engineer",
-                "is_published": False,
-            },
-        )
-
-        self.assertFalse(updated_created)
-        self.assertEqual(sheet.pk, updated_sheet.pk)
-        updated_sheet.refresh_from_db()
-        self.assertEqual(updated_sheet.promotional_blurb, "Updated blurb")
-        self.assertEqual(updated_sheet.ideal_roles, "Backend Engineer")
-        self.assertFalse(updated_sheet.is_published)
-
-    def test_safe_upsert_talent_sheet_handles_integrity_error(self):
-        """Simulate concurrent create for TalentSheet and ensure update occurs."""
-        TalentSheet.objects.filter(job_seeker=self.secondary_job_seeker).delete()
-        real_create = TalentSheet.objects.create
-        created_flag = {"done": False}
-
-        def fake_create(*args, **kwargs):
-            if not created_flag["done"]:
-                created_flag["done"] = True
-                real_create(
-                    job_seeker=kwargs["job_seeker"],
-                    promotional_blurb="Stale blurb",
-                    experience_overview="Stale experience",
-                    is_published=False,
-                )
-            raise IntegrityError("simulated concurrent talent sheet insert")
-
-        with patch(
-            "apps.job_seekers.models.talent_sheet.TalentSheet.objects.create",
-            side_effect=fake_create,
-        ):
-            sheet, created = TalentSheetService.safe_upsert_talent_sheet(
-                job_seeker_id=self.secondary_job_seeker.id,
-                talent_sheet_data={
-                    "promotional_blurb": "Fresh blurb",
-                    "experience_overview": "Fresh experience",
-                    "is_published": True,
-                },
-            )
-
-        self.assertFalse(created)
-        self.assertEqual(
-            TalentSheet.objects.filter(job_seeker=self.secondary_job_seeker).count(), 1
-        )
-        sheet.refresh_from_db()
-        self.assertEqual(sheet.promotional_blurb, "Fresh blurb")
-        self.assertTrue(sheet.is_published)
 
 
 class IdempotentTaskTests(TestCase):

@@ -17,8 +17,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 
 from apps.authentication.types import AuthenticatedUser
 from apps.core.tasks import safe_async_task
-from apps.candidates.models import CandidatePool
-from apps.job_seekers.models import JobSeekerProfile, TalentSheet
+from apps.candidates.models import CandidatePool, CandidateProfile
 from apps.recruiters.constants import RESUME_PROCESSING_CREDIT_COST
 from apps.recruiters.forms import BulkResumeUploadForm
 from apps.recruiters.models import BulkResumeUpload
@@ -240,10 +239,10 @@ class CandidatePoolDeleteView(LoginRequiredMixin, View):
         return redirect("recruiters:candidate_pool_list")
 
 
-class CandidatePoolTalentSheetDetailView(LoginRequiredMixin, TemplateView):
-    """Detail view for a talent sheet of a candidate in a candidate pool."""
+class CandidatePoolProfileDetailView(LoginRequiredMixin, TemplateView):
+    """Detail view for a candidate profile summary in a candidate pool."""
 
-    template_name = "recruiters/talent_sheet_detail.html"
+    template_name = "recruiters/candidate_profile_detail.html"
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
@@ -259,19 +258,12 @@ class CandidatePoolTalentSheetDetailView(LoginRequiredMixin, TemplateView):
         # Load the candidate profile ensuring it belongs to this recruiter's pool
         profile_id = self.kwargs.get("pk")
         profile = get_object_or_404(
-            JobSeekerProfile,
+            CandidateProfile,
             pk=profile_id,
-            candidate_pool__recruiter=self.request.user,  # type: ignore[attr-defined]
+            pool__recruiter=self.request.user,  # type: ignore[attr-defined]
         )
         context["profile"] = profile
-        # Include talent sheet if generated
-        try:
-            talent_sheet = TalentSheet.objects.get(job_seeker=profile)
-            context["talent_sheet"] = talent_sheet
-            context["has_talent_sheet"] = True
-        except TalentSheet.DoesNotExist:
-            context["talent_sheet"] = None
-            context["has_talent_sheet"] = False
+        context["has_profile_enrichment"] = bool(profile.promotional_blurb)
         # Include pool for navigation
-        context["pool"] = profile.candidate_pool
+        context["pool"] = profile.pool
         return context

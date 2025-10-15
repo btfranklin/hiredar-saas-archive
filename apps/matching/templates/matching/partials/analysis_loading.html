@@ -1,5 +1,5 @@
 <div id="match-analysis-section" 
-     hx-get="{% url 'matching:candidate_match_analysis_status' candidate_match.job_opening.id candidate_match.talent_sheet.job_seeker.id %}"
+     hx-get="{% url 'matching:candidate_match_analysis_status' candidate_match.job_opening.id candidate_match.candidate_profile.id %}"
      hx-trigger="every 3s"
      hx-target="#match-analysis-section"
      hx-swap="outerHTML">

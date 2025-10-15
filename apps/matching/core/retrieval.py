@@ -11,12 +11,14 @@ from apps.matching.tasks.common import get_index
 logger = logging.getLogger(__name__)
 
 
-def get_talent_section_embedding(talent_id: int, section: str) -> list[float] | None:
+def get_candidate_section_embedding(
+    candidate_id: int, section: str
+) -> list[float] | None:
     """
-    Retrieve the embedding for a specific section of a talent sheet.
+    Retrieve the embedding for a specific section of a candidate profile.
 
     Args:
-        talent_id: ID of the talent sheet
+        candidate_id: ID of the candidate profile
         section: Section name (e.g., 'Promotional Blurb', 'Skill Overview')
 
     Returns:
@@ -28,18 +30,19 @@ def get_talent_section_embedding(talent_id: int, section: str) -> list[float] | 
 
         # Convert section name to slug format (lowercase with underscores)
         section_slug = section.lower().replace(" ", "_")
-        vector_id = f"talent_{talent_id}_{section_slug}"
-        result = index.fetch(ids=[vector_id], namespace="talent_sheets")
+        vector_id = f"candidate_{candidate_id}_{section_slug}"
+        result = index.fetch(ids=[vector_id], namespace="candidate_profiles")
 
         if not result.vectors:
             logger.warning(
-                "Vector %s not found in Pinecone namespace 'talent_sheets'.", vector_id
+                "Vector %s not found in Pinecone namespace 'candidate_profiles'.",
+                vector_id,
             )
             return None
 
         return result.vectors[vector_id].values
     except Exception as e:
-        logger.error("Error fetching talent embedding: %s", e)
+        logger.error("Error fetching candidate embedding: %s", e)
         return None
 
 

@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 from django.views.generic import DetailView
 
 from apps.authentication.types import AuthenticatedUser
-from apps.job_seekers.models import JobSeekerProfile
+from apps.candidates.models import CandidateProfile
 
 
 class CandidateResumeView(LoginRequiredMixin, DetailView):
@@ -21,8 +21,8 @@ class CandidateResumeView(LoginRequiredMixin, DetailView):
     2. The profile belongs to one of the recruiter's candidate pools.
     """
 
-    model = JobSeekerProfile
-    template_name = "recruiters/candidate_resume.html"
+    model = CandidateProfile
+    template_name = "candidates/resume_view.html"
     context_object_name = "profile"
 
     def dispatch(
@@ -37,7 +37,7 @@ class CandidateResumeView(LoginRequiredMixin, DetailView):
 
         profile = self.get_object()
 
-        if profile.candidate_pool and profile.candidate_pool.recruiter == user:
+        if profile.pool and profile.pool.recruiter == user:
             return super().dispatch(request, *args, **kwargs)
 
         messages.error(

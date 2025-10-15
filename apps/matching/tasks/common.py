@@ -112,7 +112,7 @@ def ensure_namespaces_exist() -> None:
     This function checks if the namespaces used in the application exist,
     and creates them if they don't. This helps prevent "Namespace not found" errors.
     """
-    required_namespaces = ["job_openings", "talent_sheets"]
+    required_namespaces = ["job_openings", "candidate_profiles"]
 
     try:
         # Get the index, which might raise an exception if it doesn't exist

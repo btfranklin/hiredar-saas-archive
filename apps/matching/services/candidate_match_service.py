@@ -19,7 +19,7 @@ class CandidateMatchService:
     @transaction.atomic
     def safe_upsert_candidate_match(
         job_opening_id: int,
-        talent_sheet_id: int,
+        candidate_profile_id: int,
         score_updates: dict[str, float],
         **additional_defaults: Any,
     ) -> tuple[Any, bool]:
@@ -31,7 +31,7 @@ class CandidateMatchService:
 
         Args:
             job_opening_id: ID of the job opening
-            talent_sheet_id: ID of the talent sheet
+            candidate_profile_id: ID of the candidate profile
             score_updates: Dictionary of score field names to values
             **additional_defaults: Additional fields to update
 
@@ -43,15 +43,15 @@ class CandidateMatchService:
         """
         CandidateMatch = apps.get_model("matching", "CandidateMatch")
         JobOpening = apps.get_model("recruiters", "JobOpening")
-        TalentSheet = apps.get_model("job_seekers", "TalentSheet")
+        CandidateProfile = apps.get_model("candidates", "CandidateProfile")
 
         try:
             # Lock the related objects to prevent concurrent modifications
             job_opening = JobOpening.objects.select_for_update().get(id=job_opening_id)
-            talent_sheet = TalentSheet.objects.select_for_update().get(
-                id=talent_sheet_id
+            candidate_profile = CandidateProfile.objects.select_for_update().get(
+                id=candidate_profile_id
             )
-        except (JobOpening.DoesNotExist, TalentSheet.DoesNotExist) as e:
+        except (JobOpening.DoesNotExist, CandidateProfile.DoesNotExist) as e:
             raise ValueError(f"Required model not found: {e}")
 
         # Prepare the defaults dictionary
@@ -70,7 +70,7 @@ class CandidateMatchService:
         try:
             # First, try to get and lock existing match
             existing_match = CandidateMatch.objects.select_for_update().get(
-                job_opening=job_opening, talent_sheet=talent_sheet
+                job_opening=job_opening, candidate_profile=candidate_profile
             )
 
             # ---------------------------------------------------------------------
@@ -98,9 +98,9 @@ class CandidateMatchService:
             existing_match.save(update_fields=list(defaults.keys()))
 
             logger.debug(
-                "Updated existing CandidateMatch for job %s, talent %s",
+                "Updated existing CandidateMatch for job %s, candidate %s",
                 job_opening_id,
-                talent_sheet_id,
+                candidate_profile_id,
             )
             return existing_match, False
 
@@ -109,13 +109,13 @@ class CandidateMatchService:
             try:
                 new_match = CandidateMatch.objects.create(
                     job_opening=job_opening,
-                    talent_sheet=talent_sheet,
+                    candidate_profile=candidate_profile,
                     **defaults,
                 )
                 logger.debug(
-                    "Created new CandidateMatch for job %s, talent %s",
+                    "Created new CandidateMatch for job %s, candidate %s",
                     job_opening_id,
-                    talent_sheet_id,
+                    candidate_profile_id,
                 )
                 return new_match, True
 
@@ -123,12 +123,12 @@ class CandidateMatchService:
                 # Race condition: another process created the match
                 # between our check and create. Try to get it again.
                 logger.warning(
-                    "IntegrityError during CandidateMatch creation, retrying get for job %s, talent %s",
+                    "IntegrityError during CandidateMatch creation, retrying get for job %s, candidate %s",
                     job_opening_id,
-                    talent_sheet_id,
+                    candidate_profile_id,
                 )
                 existing_match = CandidateMatch.objects.select_for_update().get(
-                    job_opening=job_opening, talent_sheet=talent_sheet
+                    job_opening=job_opening, candidate_profile=candidate_profile
                 )
 
                 # Update with our values

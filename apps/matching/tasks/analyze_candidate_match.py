@@ -7,7 +7,7 @@ of why a candidate is a good match for a job opening.
 
 import logging
 import os
-from typing import Any, cast
+from typing import Any
 
 from celery import shared_task
 from django.apps import apps
@@ -42,7 +42,9 @@ def analyze_candidate_match(candidate_match_id: int) -> dict[str, Any]:
 
         try:
             candidate_match = CandidateMatch.objects.select_related(
-                "job_opening", "talent_sheet", "talent_sheet__job_seeker"
+                "job_opening",
+                "candidate_profile",
+                "candidate_profile__pool",
             ).get(id=candidate_match_id)
         except CandidateMatch.DoesNotExist:
             logger.error(
@@ -95,14 +97,8 @@ def analyze_candidate_match(candidate_match_id: int) -> dict[str, Any]:
 
             # Prepare the data for the prompt
             job_opening = candidate_match.job_opening
-            talent_sheet = candidate_match.talent_sheet
-            job_seeker = talent_sheet.job_seeker
-
-            # Get candidate name
-            if job_seeker.user_owner:
-                candidate_name = job_seeker.user_owner.get_full_name()
-            else:
-                candidate_name = job_seeker.candidate_name or "Candidate"
+            candidate_profile = candidate_match.candidate_profile
+            candidate_name = candidate_profile.display_name
 
             # Prepare job opening details
             job_details = f"""
@@ -123,26 +119,27 @@ Experience Required: {job_opening.experience_required or 'Not specified'}
 Salary Range: ${job_opening.salary_min or 0:,.0f} - ${job_opening.salary_max or 0:,.0f}
             """.strip()
 
-            # Prepare talent sheet details
-            talent_details = f"""
+            pool_name = candidate_profile.pool.name if candidate_profile.pool else "Unassigned Pool"
+
+            candidate_details = f"""
 Candidate Name: {candidate_name}
-Personal Tagline: {job_seeker.personal_tagline or 'Not specified'}
+Pool: {pool_name}
+Personal Tagline: {candidate_profile.personal_tagline or 'Not specified'}
 
 Promotional Summary:
-{talent_sheet.promotional_blurb or 'Not available'}
+{candidate_profile.promotional_blurb or 'Not available'}
 
 Experience Overview:
-{talent_sheet.experience_overview or 'Not available'}
+{candidate_profile.experience_overview or 'Not available'}
 
-Skills: {job_seeker.skills or 'Not specified'}
+Skills: {candidate_profile.skills or 'Not specified'}
 
 Qualifications:
-{talent_sheet.qualifications or 'Not available'}
+{candidate_profile.qualifications or 'Not available'}
 
-Ideal Roles: {talent_sheet.ideal_roles or 'Not specified'}
+Ideal Roles: {candidate_profile.ideal_roles or 'Not specified'}
 
-Years of Experience: {job_seeker.years_of_experience or 0}
-Salary Expectation: ${talent_sheet.salary_min or 0:,.0f} minimum
+Years of Experience: {candidate_profile.years_of_experience or 0}
             """.strip()
 
             # Apply template values
@@ -150,7 +147,7 @@ Salary Expectation: ${talent_sheet.salary_min or 0:,.0f} minimum
                 {
                     "candidate_name": candidate_name,
                     "job_details": job_details,
-                    "talent_details": talent_details,
+                    "candidate_details": candidate_details,
                 }
             )
 

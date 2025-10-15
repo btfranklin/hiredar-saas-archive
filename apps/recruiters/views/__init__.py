@@ -10,7 +10,7 @@ from apps.recruiters.views.bulk_upload_views import (
     CandidatePoolDeleteView,
     CandidatePoolDetailView,
     CandidatePoolListView,
-    CandidatePoolTalentSheetDetailView,
+    CandidatePoolProfileDetailView,
 )
 from apps.recruiters.views.dashboard_views import DashboardView, SettingsView
 from apps.recruiters.views.job_opening_processing_views import (
@@ -42,5 +42,5 @@ __all__ = [
     "CandidatePoolListView",
     "CandidatePoolDetailView",
     "CandidatePoolDeleteView",
-    "CandidatePoolTalentSheetDetailView",
+    "CandidatePoolProfileDetailView",
 ]

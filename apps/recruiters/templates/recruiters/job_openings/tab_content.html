@@ -30,7 +30,7 @@
             <div class="divide-y divide-base-content/10">
                 {% for item in shortlist %}
                     <div id="shortlist-row-{{ item.id }}" class="flex justify-between items-center py-4">
-                        <a href="{% url 'matching:candidate_match_detail' job_opening.id item.candidate_match.talent_sheet.job_seeker.id %}"
+                        <a href="{% url 'matching:candidate_match_detail' job_opening.id item.candidate_match.candidate_profile.id %}"
                            class="flex items-center gap-4 flex-1 hover:bg-base-200 p-2 rounded">
                             <div class="flex gap-2">
                                 {% for lens, label, rating in item.candidate_match.get_all_match_ratings %}
@@ -40,15 +40,11 @@
                                 {% endfor %}
                             </div>
                             <div>
-                                {% with seeker=item.candidate_match.talent_sheet.job_seeker %}
+                                {% with candidate=item.candidate_match.candidate_profile %}
                                     <div class="font-semibold">
-                                        {% if seeker.user_owner %}
-                                            {{ seeker.user_owner.get_full_name }}
-                                        {% else %}
-                                            {{ seeker.candidate_name }}
-                                        {% endif %}
+                                        {{ candidate.display_name }}
                                     </div>
-                                    <div class="text-base-content/70 text-sm">{{ seeker.personal_tagline }}</div>
+                                    <div class="text-base-content/70 text-sm">{{ candidate.personal_tagline }}</div>
                                 {% endwith %}
                             </div>
                         </a>
@@ -91,9 +87,9 @@
           </form>
         </div>
 
-        <div class="card bg-base-100 shadow-md mb-6">
-          <div class="card-body p-4">
-            {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
+            <div class="card bg-base-100 shadow-md mb-6">
+              <div class="card-body p-4">
+                {% include "matching/includes/candidate_match_list_content.html" with is_tab=True %}
           </div>
         </div>
     {% else %}

@@ -33,9 +33,8 @@ def generate_csv(job: JobOpening, limit: int | None = None) -> bytes:
         ShortlistedMatch.objects.filter(job_opening=job)
         .select_related(
             "candidate_match",
-            "candidate_match__talent_sheet",
-            "candidate_match__talent_sheet__job_seeker",
-            "candidate_match__talent_sheet__job_seeker__user_owner",
+            "candidate_match__candidate_profile",
+            "candidate_match__candidate_profile__pool",
         )
         .order_by("-created_at")
     )
@@ -71,43 +70,30 @@ def generate_csv(job: JobOpening, limit: int | None = None) -> bytes:
     # Write data rows
     for shortlisted_match in shortlisted_matches:
         match = shortlisted_match.candidate_match
-        talent_sheet = match.talent_sheet
-        job_seeker = talent_sheet.job_seeker
-        user = job_seeker.user_owner
+        candidate_profile = match.candidate_profile
 
-        # Get candidate name and contact info using the same logic as the UI
-        if user:
-            full_name = user.get_full_name()
-            email = user.email
-        else:
-            # For pool-owned candidates, use the parsed candidate_name
-            full_name = job_seeker.candidate_name or f"Candidate {job_seeker.pk}"
-            email = ""
+        full_name = candidate_profile.display_name
+        email = ""
 
-        # Convert skills from newline-separated to comma-separated
-        skills = ""
-        if talent_sheet.skills:
-            skills_list = [
-                s.strip() for s in talent_sheet.skills.splitlines() if s.strip()
-            ]
-            skills = ", ".join(skills_list)
+        skills_list = candidate_profile.skills_list
+        skills = ", ".join(skills_list) if skills_list else ""
 
         writer.writerow(
             [
-                job_seeker.pk,
+                candidate_profile.pk,
                 full_name,
                 email,
-                job_seeker.phone or "",
-                job_seeker.most_recent_title or "",
-                job_seeker.location or "",
-                job_seeker.years_of_experience or "",
+                candidate_profile.phone or "",
+                candidate_profile.most_recent_title or "",
+                candidate_profile.location or "",
+                candidate_profile.years_of_experience or "",
                 skills,
                 f"{float(match.holistic_score) * 100:.1f}%",
                 f"{float(match.skills_score) * 100:.1f}%",
                 f"{float(match.experience_score) * 100:.1f}%",
                 f"{float(match.qualifications_score) * 100:.1f}%",
                 f"{float(match.wildcard_score) * 100:.1f}%",
-                match.match_summary or "",
+                match.match_summary or candidate_profile.personal_tagline or "",
                 "",  # recruiter_notes - empty for now, could be added later
             ]
         )
@@ -120,22 +106,12 @@ def _build_candidate_entry(
 ) -> dict[str, Any]:
     """Construct the candidate payload used by the PDF export."""
     match = shortlisted_match.candidate_match
-    talent_sheet = match.talent_sheet
-    job_seeker = talent_sheet.job_seeker
-    user = job_seeker.user_owner
+    candidate_profile = match.candidate_profile
 
-    if user:
-        full_name = user.get_full_name()
-        email = user.email
-    else:
-        full_name = job_seeker.candidate_name or f"Candidate {job_seeker.pk}"
-        email = ""
+    full_name = candidate_profile.display_name
+    email = ""
 
-    skills_list: list[str] = []
-    if talent_sheet.skills:
-        skills_list = [
-            skill.strip() for skill in talent_sheet.skills.splitlines() if skill.strip()
-        ]
+    skills_list: list[str] = candidate_profile.skills_list
 
     required_skills = list(job.required_skills_list)
     skills_matrix = [
@@ -153,19 +129,19 @@ def _build_candidate_entry(
         "rank": rank,
         "name": full_name,
         "email": email,
-        "phone": job_seeker.phone or "",
-        "current_title": job_seeker.most_recent_title or "",
-        "location": job_seeker.location or "",
-        "years_experience": job_seeker.years_of_experience or "",
+        "phone": candidate_profile.phone or "",
+        "current_title": candidate_profile.most_recent_title or "",
+        "location": candidate_profile.location or "",
+        "years_experience": candidate_profile.years_of_experience or "",
         "holistic_score": match.holistic_rating,
         "skills_score": match.skills_rating,
         "experience_score": match.experience_rating,
         "qualifications_score": match.qualifications_rating,
         "wildcard_score": match.wildcard_rating,
-        "tagline": match.match_summary or talent_sheet.personal_tagline or "",
-        "promotional_blurb": talent_sheet.promotional_blurb,
-        "experience_overview": talent_sheet.experience_overview,
-        "qualifications": talent_sheet.qualifications,
+        "tagline": match.match_summary or candidate_profile.personal_tagline or "",
+        "promotional_blurb": candidate_profile.promotional_blurb,
+        "experience_overview": candidate_profile.experience_overview,
+        "qualifications": candidate_profile.qualifications,
         "skills_list": skills_list,
         "skills_matrix": skills_matrix,
         "match_analysis": match.match_analysis or "",
@@ -188,9 +164,8 @@ def generate_pdf(job: JobOpening, limit: int | None = None) -> bytes:
         ShortlistedMatch.objects.filter(job_opening=job)
         .select_related(
             "candidate_match",
-            "candidate_match__talent_sheet",
-            "candidate_match__talent_sheet__job_seeker",
-            "candidate_match__talent_sheet__job_seeker__user_owner",
+            "candidate_match__candidate_profile",
+            "candidate_match__candidate_profile__pool",
         )
         .order_by("-created_at")
     )

@@ -20,7 +20,7 @@ from apps.recruiters.views import (
 )
 from apps.recruiters.views.bulk_upload_views import (
     CandidatePoolDeleteView,
-    CandidatePoolTalentSheetDetailView,
+    CandidatePoolProfileDetailView,
 )
 from apps.recruiters.views.credit_views import (
     CheckoutSuccessView,
@@ -91,11 +91,11 @@ urlpatterns: list[URLPattern] = [
         CandidatePoolDetailView.as_view(),
         name="candidate_pool_detail",
     ),
-    # Talent sheet detail for a candidate in a resume pool
+    # Candidate profile summary detail for a candidate in a resume pool
     path(
-        "candidate-pools/<int:pool_pk>/profiles/<int:pk>/talent-sheet/",
-        CandidatePoolTalentSheetDetailView.as_view(),
-        name="candidate_pool_profile_talent_sheet_detail",
+        "candidate-pools/<int:pool_pk>/profiles/<int:pk>/",
+        CandidatePoolProfileDetailView.as_view(),
+        name="candidate_pool_profile_detail",
     ),
     # Delete view for processed resume pool
     path(

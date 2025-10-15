@@ -12,10 +12,10 @@ from django.test import TestCase
 
 from apps.matching import signals
 from apps.matching.signals import (
+    handle_candidate_profile_delete,
+    handle_candidate_profile_save,
     handle_job_opening_delete,
     handle_job_opening_save,
-    handle_talent_sheet_delete,
-    handle_talent_sheet_save,
 )
 
 # Monkey-patch transaction.on_commit to execute callbacks immediately in tests
@@ -70,6 +70,9 @@ class JobOpeningSignalTests(TestCase):
         mock_chain.assert_called_once()
         args = mock_chain.call_args[0]
         self.assertEqual(len(args), 2)  # Should have 2 tasks in chain
+        create_sig, match_sig = args
+        self.assertEqual(create_sig.task, "apps.matching.tasks.create_candidate_embeddings")
+        self.assertEqual(match_sig.task, "apps.matching.tasks.match_candidate_to_active_jobs")
 
         # Verify apply_async was called
         mock_chain_instance.apply_async.assert_called_once()
@@ -175,18 +178,15 @@ class JobOpeningSignalTests(TestCase):
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
 
 
-class TalentSheetSignalTests(TestCase):
-    """Test signal handlers for TalentSheet status transitions."""
+class CandidateProfileSignalTests(TestCase):
+    """Test signal handlers for CandidateProfile status transitions."""
 
     def setUp(self):
         """Set up test data."""
-        # Get the models dynamically to avoid circular imports
-        self.TalentSheet = apps.get_model("job_seekers", "TalentSheet")
-        self.User = apps.get_model("authentication", "User")
-        self.JobSeekerProfile = apps.get_model("job_seekers", "JobSeekerProfile")
+        self.CandidateProfile = apps.get_model("candidates", "CandidateProfile")
         self.CandidatePool = apps.get_model("candidates", "CandidatePool")
+        self.User = apps.get_model("authentication", "User")
 
-        # Pool-owned job seeker profiles now represent all candidates.
         pool_recruiter = self.User.objects.create_user(
             username="pool_recruiter",
             email="poolrecruiter@example.com",
@@ -194,34 +194,35 @@ class TalentSheetSignalTests(TestCase):
             user_type="recruiter",
             name="Pool Recruiter",
         )
-        candidate_pool = self.CandidatePool.objects.create(
+        self.candidate_pool = self.CandidatePool.objects.create(
             recruiter=pool_recruiter,
             name="Signal Pool",
         )
-        self.test_job_seeker = self.JobSeekerProfile.objects.create(
-            candidate_pool=candidate_pool,
+        self.test_candidate = self.CandidateProfile.objects.create(
+            pool=self.candidate_pool,
             candidate_name="Signal Candidate",
+            is_published=True,
         )
 
     @patch("apps.matching.signals.chain")
     @patch("apps.matching.signals.async_task")
-    def test_talent_sheet_save_handler(self, mock_async_task, mock_chain):
-        """Test the talent sheet save handler handles publish status correctly."""
+    def test_candidate_profile_save_handler(self, mock_async_task, mock_chain):
+        """Test the candidate profile save handler handles publish status correctly."""
         # Set up chain mock
         mock_chain_instance = Mock()
         mock_chain.return_value = mock_chain_instance
 
-        # Test with a published talent sheet
-        talent_published = self.TalentSheet(
-            id=1,  # Use a fixed ID for testing
-            job_seeker=self.test_job_seeker,
-            promotional_blurb="Test talent sheet",
+        candidate_published = self.CandidateProfile(
+            id=1,
+            pool=self.candidate_pool,
+            candidate_name="Published Candidate",
+            promotional_blurb="Test candidate profile",
             is_published=True,
         )
 
         # Call the signal handler directly
-        handle_talent_sheet_save(
-            sender=self.TalentSheet, instance=talent_published, created=True
+        handle_candidate_profile_save(
+            sender=self.CandidateProfile, instance=candidate_published, created=True
         )
 
         # Verify that chain was called with proper tasks
@@ -236,30 +237,30 @@ class TalentSheetSignalTests(TestCase):
         mock_async_task.reset_mock()
         mock_chain.reset_mock()
 
-        # Test with an unpublished talent sheet
-        talent_unpublished = self.TalentSheet(
-            id=2,  # Use a fixed ID for testing
-            job_seeker=self.test_job_seeker,
-            promotional_blurb="Test talent sheet",
+        candidate_unpublished = self.CandidateProfile(
+            id=2,
+            pool=self.candidate_pool,
+            candidate_name="Draft Candidate",
+            promotional_blurb="Test candidate profile",
             is_published=False,
         )
 
         # Call the signal handler directly
-        handle_talent_sheet_save(
-            sender=self.TalentSheet, instance=talent_unpublished, created=True
+        handle_candidate_profile_save(
+            sender=self.CandidateProfile, instance=candidate_unpublished, created=True
         )
 
-        # Verify both task calls for unpublished talent sheet
+        # Verify both task calls for unpublished candidate profile
         expected_calls = [
             call(
-                signals.remove_talent_sheet_embeddings,
-                talent_unpublished.id,
-                task_name=f"remove_talent_embeddings_{talent_unpublished.id}",
+                signals.remove_candidate_embeddings,
+                candidate_unpublished.id,
+                task_name=f"remove_candidate_embeddings_{candidate_unpublished.id}",
             ),
             call(
-                signals.remove_talent_sheet_matches,
-                talent_unpublished.id,
-                task_name=f"remove_talent_matches_{talent_unpublished.id}",
+                signals.remove_candidate_matches,
+                candidate_unpublished.id,
+                task_name=f"remove_candidate_matches_{candidate_unpublished.id}",
             ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
@@ -269,30 +270,32 @@ class TalentSheetSignalTests(TestCase):
         mock_chain.reset_mock()
 
     @patch("apps.matching.signals.async_task")
-    def test_talent_sheet_delete_handler(self, mock_async_task):
-        """Test the talent sheet delete handler."""
-        # Create a talent sheet instance
-        talent = self.TalentSheet(
-            id=3,  # Use a fixed ID for testing
-            job_seeker=self.test_job_seeker,
-            promotional_blurb="Test talent sheet",
+    def test_candidate_profile_delete_handler(self, mock_async_task):
+        """Test the candidate profile delete handler."""
+        candidate = self.CandidateProfile(
+            id=3,
+            pool=self.candidate_pool,
+            candidate_name="Deleted Candidate",
+            promotional_blurb="Test candidate profile",
             is_published=True,
         )
 
         # Call the delete handler directly
-        handle_talent_sheet_delete(sender=self.TalentSheet, instance=talent)
+        handle_candidate_profile_delete(
+            sender=self.CandidateProfile, instance=candidate
+        )
 
         # Verify both task calls for delete handler
         expected_calls = [
             call(
-                signals.remove_talent_sheet_embeddings,
-                talent.id,
-                task_name=f"cleanup_talent_embeddings_{talent.id}",
+                signals.remove_candidate_embeddings,
+                candidate.id,
+                task_name=f"cleanup_candidate_embeddings_{candidate.id}",
             ),
             call(
-                signals.remove_talent_sheet_matches,
-                talent.id,
-                task_name=f"cleanup_talent_matches_{talent.id}",
+                signals.remove_candidate_matches,
+                candidate.id,
+                task_name=f"cleanup_candidate_matches_{candidate.id}",
             ),
         ]
         mock_async_task.assert_has_calls(expected_calls, any_order=True)
