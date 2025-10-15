@@ -1,15 +1,15 @@
 """
 Profile update utilities for resume processing.
 
-This module contains functions for updating job seeker profiles with
+This module contains functions for updating candidate profiles with
 data extracted from resumes.
 """
 
 import logging
 from typing import Any
 
-from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.services.recommendation.llm_processor import (
+from apps.candidates.models import CandidateProfile
+from apps.candidates.services.recommendation.llm_processor import (
     generate_personal_tagline,
 )
 
@@ -42,7 +42,7 @@ def _truncate_string_fields(instance):
 
 
 def update_profile_fields(
-    profile: JobSeekerProfile, parsed_data: dict[str, Any]
+    profile: CandidateProfile, parsed_data: dict[str, Any]
 ) -> bool:
     """
     Update only the parsed data fields on the profile without generating a tagline.
@@ -66,7 +66,7 @@ def update_profile_fields(
 
 
 def generate_and_save_personal_tagline(
-    profile: JobSeekerProfile, xml_content: str, parsed_data: dict[str, Any]
+    profile: CandidateProfile, xml_content: str, parsed_data: dict[str, Any]
 ) -> bool:
     """
     Generate a personal tagline from XML, apply fallback logic, and save to profile.
@@ -87,7 +87,7 @@ def generate_and_save_personal_tagline(
                     f"Experienced {parsed_data['most_recent_title']}"
                 )
             else:
-                profile.personal_tagline = "Job Seeker"
+                profile.personal_tagline = "Candidate"
             logger.info("Fallback personal tagline: %s", profile.personal_tagline)
         # Ensure location not null/empty – handle None safely
         current_location = (getattr(profile, "location", None) or "").strip()
@@ -103,12 +103,12 @@ def generate_and_save_personal_tagline(
         return False
 
 
-def _update_profile_fields(profile: JobSeekerProfile, data: dict[str, Any]) -> None:
+def _update_profile_fields(profile: CandidateProfile, data: dict[str, Any]) -> None:
     """
-    Update specific fields on a JobSeekerProfile from parsed resume data.
+    Update specific fields on a CandidateProfile from parsed resume data.
 
     Args:
-        profile: JobSeekerProfile to update
+        profile: CandidateProfile to update
         data: Dictionary of parsed data from the resume
     """
 
@@ -156,9 +156,14 @@ def _update_profile_fields(profile: JobSeekerProfile, data: dict[str, Any]) -> N
         if "name" in personal_details and personal_details["name"] is not None:
             profile.candidate_name = personal_details["name"]
 
-        # For user-owned profiles, update the user's name
-        if profile.user_owner and "name" in personal_details and personal_details["name"] is not None:
-            profile.user_owner.name = personal_details["name"]
-            profile.user_owner.save()
+        # For legacy user-owned profiles, update the user's name when available.
+        user_owner = getattr(profile, "user_owner", None)
+        if (
+            user_owner is not None
+            and "name" in personal_details
+            and personal_details["name"] is not None
+        ):
+            user_owner.name = personal_details["name"]
+            user_owner.save()
 
     # The update_profile function will handle saving the profile

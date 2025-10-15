@@ -194,7 +194,7 @@ INSTALLED_APPS = [
     # Project apps
     "apps.authentication.apps.AuthenticationConfig",
     "apps.candidates.apps.CandidatesConfig",
-    "apps.job_seekers.apps.JobSeekersConfig",
+    "apps.job_seekers.apps.JobSeekersConfig",  # Legacy cleanup migrations only
     "apps.recruiters.apps.RecruitersConfig",
     "apps.matching.apps.MatchingConfig",
     "apps.core.apps.CoreConfig",
@@ -672,7 +672,7 @@ LOGGING = {
             "level": "WARNING",
             "propagate": True,
         },
-        "apps.job_seekers": {
+        "apps.candidates": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": True,
@@ -687,7 +687,7 @@ LOGGING = {
             "level": "INFO",
             "propagate": True,
         },
-        "apps.job_seekers.services.recommendation.llm_processor": {
+        "apps.candidates.services.recommendation.llm_processor": {
             "handlers": ["console_simple"],
             "level": "DEBUG",
             "propagate": False,
@@ -730,35 +730,50 @@ RECRUITERS_JOB_PROCESSING_REASONING_EFFORT = os.getenv(
     "RECRUITERS_JOB_PROCESSING_REASONING_EFFORT", "minimal"
 )
 
-# Resume Processing
-JOBSEEKERS_RESUME_PROCESSING_MODEL = os.getenv(
-    "JOBSEEKERS_RESUME_PROCESSING_MODEL", "gpt-5"
+# Candidate Resume Processing
+CANDIDATE_RESUME_PROCESSING_MODEL = os.getenv(
+    "CANDIDATE_RESUME_PROCESSING_MODEL",
+    os.getenv("JOBSEEKERS_RESUME_PROCESSING_MODEL", "gpt-5"),
 )
-JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT = os.getenv(
-    "JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT", "minimal"
-)
-
-# Job Seeker Role Recommendations
-JOBSEEKERS_ROLE_RECOMMENDATION_MODEL = os.getenv(
-    "JOBSEEKERS_ROLE_RECOMMENDATION_MODEL", "gpt-5"
-)
-JOBSEEKERS_ROLE_RECOMMENDATION_REASONING_EFFORT = os.getenv(
-    "JOBSEEKERS_ROLE_RECOMMENDATION_REASONING_EFFORT", "medium"
+CANDIDATE_RESUME_PROCESSING_REASONING_EFFORT = os.getenv(
+    "CANDIDATE_RESUME_PROCESSING_REASONING_EFFORT",
+    os.getenv("JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT", "minimal"),
 )
 
-# Job Seeker Tagline Generation
-JOBSEEKERS_TAGLINE_GENERATION_MODEL = os.getenv(
-    "JOBSEEKERS_TAGLINE_GENERATION_MODEL", "gpt-5"
+# Candidate Role Recommendations
+CANDIDATE_ROLE_RECOMMENDATION_MODEL = os.getenv(
+    "CANDIDATE_ROLE_RECOMMENDATION_MODEL",
+    os.getenv("JOBSEEKERS_ROLE_RECOMMENDATION_MODEL", "gpt-5"),
 )
-JOBSEEKERS_TAGLINE_GENERATION_REASONING_EFFORT = os.getenv(
-    "JOBSEEKERS_TAGLINE_GENERATION_REASONING_EFFORT", "minimal"
+CANDIDATE_ROLE_RECOMMENDATION_REASONING_EFFORT = os.getenv(
+    "CANDIDATE_ROLE_RECOMMENDATION_REASONING_EFFORT",
+    os.getenv("JOBSEEKERS_ROLE_RECOMMENDATION_REASONING_EFFORT", "medium"),
 )
-JOBSEEKERS_TAGLINE_MAX_ATTEMPTS = int(os.getenv("JOBSEEKERS_TAGLINE_MAX_ATTEMPTS", "3"))
 
-# Job Seeker Talent Sheet Generation
-JOBSEEKERS_TALENT_SHEET_MODEL = os.getenv("JOBSEEKERS_TALENT_SHEET_MODEL", "gpt-5")
-JOBSEEKERS_TALENT_SHEET_REASONING_EFFORT = os.getenv(
-    "JOBSEEKERS_TALENT_SHEET_REASONING_EFFORT", "low"
+# Candidate Tagline Generation
+CANDIDATE_TAGLINE_GENERATION_MODEL = os.getenv(
+    "CANDIDATE_TAGLINE_GENERATION_MODEL",
+    os.getenv("JOBSEEKERS_TAGLINE_GENERATION_MODEL", "gpt-5"),
+)
+CANDIDATE_TAGLINE_GENERATION_REASONING_EFFORT = os.getenv(
+    "CANDIDATE_TAGLINE_GENERATION_REASONING_EFFORT",
+    os.getenv("JOBSEEKERS_TAGLINE_GENERATION_REASONING_EFFORT", "minimal"),
+)
+CANDIDATE_TAGLINE_MAX_ATTEMPTS = int(
+    os.getenv(
+        "CANDIDATE_TAGLINE_MAX_ATTEMPTS",
+        os.getenv("JOBSEEKERS_TAGLINE_MAX_ATTEMPTS", "3"),
+    )
+)
+
+# Candidate Talent Sheet Generation
+CANDIDATE_TALENT_SHEET_MODEL = os.getenv(
+    "CANDIDATE_TALENT_SHEET_MODEL",
+    os.getenv("JOBSEEKERS_TALENT_SHEET_MODEL", "gpt-5"),
+)
+CANDIDATE_TALENT_SHEET_REASONING_EFFORT = os.getenv(
+    "CANDIDATE_TALENT_SHEET_REASONING_EFFORT",
+    os.getenv("JOBSEEKERS_TALENT_SHEET_REASONING_EFFORT", "low"),
 )
 
 # Matching Analysis
@@ -768,7 +783,12 @@ MATCHING_ANALYSIS_REASONING_EFFORT = os.getenv(
 )
 
 # AI Model Configuration (Tokens)
-JOBSEEKERS_TAGLINE_MAX_TOKENS = int(os.getenv("JOBSEEKERS_TAGLINE_MAX_TOKENS", "50"))
+CANDIDATE_TAGLINE_MAX_TOKENS = int(
+    os.getenv(
+        "CANDIDATE_TAGLINE_MAX_TOKENS",
+        os.getenv("JOBSEEKERS_TAGLINE_MAX_TOKENS", "50"),
+    )
+)
 
 # Pinecone Configuration (Configurable via .env, with defaults)
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "job-matcher")

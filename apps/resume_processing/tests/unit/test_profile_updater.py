@@ -1,7 +1,7 @@
 """
 Unit tests for the profile updater module.
 
-Tests the profile updater functionality used to update job seeker profiles
+Tests the profile updater functionality used to update candidate profiles
 with data parsed from resumes.
 """
 
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 
 import apps.resume_processing.services.profile_updater as pu
-from apps.job_seekers.models import JobSeekerProfile
+from apps.candidates.models import CandidateProfile
 from apps.resume_processing.services.profile_updater import (
     generate_and_save_personal_tagline,
     update_profile_fields,
@@ -33,7 +33,7 @@ class ProfileUpdaterTests(TestCase):
     Test cases for the profile updater functionality.
 
     Tests the update_profile function to ensure it properly updates
-    JobSeekerProfile instances with parsed resume data.
+    CandidateProfile instances with parsed resume data.
     """
 
     def setUp(self):
@@ -106,7 +106,7 @@ class ProfileUpdaterTests(TestCase):
 </resume>"""
 
         # Create mock profile
-        self.profile = MagicMock(spec=JobSeekerProfile)
+        self.profile = MagicMock(spec=CandidateProfile)
 
     def test_extract_skills(self):
         """Test extracting skills information from XML content."""

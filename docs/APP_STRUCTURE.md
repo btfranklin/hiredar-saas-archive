@@ -10,7 +10,7 @@ Hiredar is a recruiter-focused talent platform that ingests candidate résumés,
 
 ## Cheat Sheet (TL;DR)
 
-- **Core Django apps**: `authentication`, `candidates`, `job_seekers`, `recruiters`, `matching`, **new** `resume_processing` (background parsing of resumes).
+- **Core Django apps**: `authentication`, `candidates`, `recruiters`, `matching`, **new** `resume_processing` (background parsing of resumes), plus the legacy `job_seekers` app (migrations only).
 - **Shared LLM utilities**: `hiredar.llm` package (centralized OpenAI wrapper with retries, and XML sanitization/parsing helpers).
 - **Primary user types**: *recruiter* (self-service) and administrative staff. Job seeker data now lives solely as recruiter-managed candidate records (no direct login).
 - **Key models**: `CandidatePool`, `CandidateProfile`, `JobSeekerProfile`, `RecruiterProfile`, `JobOpening`, `TalentSheet`, `CandidateMatch`.
@@ -84,38 +84,11 @@ Owns recruiter-managed candidate records and supporting metadata:
   - `0001_initial`: Imports the legacy `CandidatePool` table without recreating it.
   - `0002_candidateprofile`: Introduces the new consolidated candidate profile table.
 - **Future wiring**:
-  - Existing resume-processing flows still populate `JobSeekerProfile`; forthcoming phases will pivot to the new `CandidateProfile` once compatibility layers are in place.
+  - Resume-processing flows now operate directly on `CandidateProfile`. The legacy `job_seekers` app remains solely so migrations can retire the superseded tables.
 
 ### Job Seekers App (`apps/job_seekers`)
 
-Stores and enriches candidate records generated from recruiter uploads:
-
-- **Models**:
-  - `JobSeekerProfile`: Structured candidate profile including skills, experience, education, certifications, and contact information
-  - `RoleRecommendation`: AI-generated role recommendations associated with a candidate profile
-  - `TalentSheet`: AI-generated talent sheet used for recruiter sharing and matching
-  - *(References)* `CandidatePool` from the `candidates` app via a foreign key; future work will transition these profiles to the new `CandidateProfile`.
-- **Views**:
-  - `job_seeker_profile_views.py`: Recruiter-only resume detail view (`ResumeView`)
-- **Services**:
-  - Business logic encapsulated in services:
-    - `talent_sheet_service.py`: Safe creation/update helpers for AI-generated talent sheets
-    - `recommendation/`: LLM-based recommendation processing (`llm_processor.py`, `xml_parser.py`)
-    - `prompts/`: AI prompt templates
-- **Tasks**:
-  - Asynchronous tasks in `apps/job_seekers/tasks`:
-    - `hooks.py`: Hook functions for task chaining
-    - `pool_tasks.py`: Pool processing tasks (`process_resume_for_pool`, `cleanup_temp_resume_file`)
-    - `personal_tagline_tasks.py`: Tasks for generating personal taglines
-    - `recommendation_tasks.py`: Tasks for generating role recommendations
-    - `talent_sheet_tasks.py`: Tasks for generating talent sheets
-    - Imports from `apps.resume_processing.tasks`: `cleanup_resume_processing_progress` (now scheduled via Celery Beat), `save_resume_file`, `handle_resume_upload_task`
-- **Templates**:
-  - Candidate resume/talent sheet partials consumed by recruiter and matching surfaces
-- **Signals**:
-  - Signal handlers for job seeker record lifecycle hooks
-- **URLs**:
-  - `/job-seekers/resume/<pk>/` – recruiter access to candidate resumes
+Legacy container retained solely for historical migrations. All runtime code has moved to `apps.candidates`, and new deployments only need the job_seekers app so Django can apply the final cleanup migrations that drop the superseded tables.
 
 ### Recruiters App (`apps/recruiters`)
 
@@ -326,7 +299,7 @@ The application uses namespaced URLs for each app:
 
 - `/`: Home page and core functionality (`core` namespace)
 - `/auth/`: User authentication and account management (`authentication` namespace)
-- `/job-seekers/`: Candidate record functionality (resume views, processing endpoints) (`job_seekers` namespace)
+- `/candidates/`: Candidate record functionality (resume views, processing endpoints) (`candidates` namespace)
 - `/recruiters/`: Recruiter-specific functionality, including job opening management (`recruiters` namespace)
 - `/matching/`: Candidate matching functionality (`matching` namespace)
 
@@ -402,7 +375,7 @@ user = User.objects.create_user(
 
 ## Working with Profiles
 
-Job seeker records are now managed by recruiters. Recruiter profiles remain tied to user accounts:
+Candidate records are now managed by recruiters. Recruiter profiles remain tied to user accounts:
 
 ```python
 # Accessing a recruiter profile
@@ -410,11 +383,10 @@ user = User.objects.get(email="recruiter@example.com")
 recruiter_profile = user.recruiter_profile
 
 # Accessing a candidate profile from a pool
-from apps.candidates.models import CandidatePool
-from apps.job_seekers.models import JobSeekerProfile
+from apps.candidates.models import CandidatePool, CandidateProfile
 
 pool = CandidatePool.objects.first()
-candidate_profile = JobSeekerProfile.objects.filter(candidate_pool=pool).first()
+candidate_profile = CandidateProfile.objects.filter(pool=pool).first()
 ```
 
 ## Using Service Classes
@@ -423,12 +395,12 @@ Service classes encapsulate business logic separately from views:
 
 ```python
 # Using a service class
-from apps.job_seekers.services.talent_sheet_service import TalentSheetService
+from apps.candidates.services.profile_service import CandidateProfileService
 
-# Safely upsert an AI-authored talent sheet for a parsed resume profile
-talent_sheet, created = TalentSheetService.safe_upsert_talent_sheet(
-    job_seeker_id=profile.id,
-    talent_sheet_data={
+# Safely store enrichment content generated for a parsed resume profile
+CandidateProfileService.safe_update_profile_enrichment(
+    profile_id=profile.id,
+    enrichment_data={
         "promotional_blurb": generated.promotional_blurb,
         "experience_overview": generated.experience_overview,
         "ideal_roles": generated.ideal_roles,

@@ -12,9 +12,11 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.authentication.models import User
+from apps.candidates.models import CandidatePool, CandidateProfile
+from apps.candidates.tasks.profile_enrichment_tasks import (
+    generate_profile_enrichment_task,
+)
 from apps.core.tasks import safe_async_task
-from apps.job_seekers.models import JobSeekerProfile
-from apps.job_seekers.tasks.talent_sheet_tasks import generate_talent_sheet_task
 from apps.resume_processing.services.pipeline import process_resume as run_resume_pipeline
 
 # Define a timeout for waiting for the task (e.g., 5 minutes)
@@ -39,7 +41,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--join_talent_pool",
             action="store_true",
-            help="Automatically add job seekers to the talent pool and generate talent sheets",
+            help="Automatically queue candidate profile enrichment tasks",
         )
 
         # Option to limit number of resumes processed
@@ -49,10 +51,25 @@ class Command(BaseCommand):
             help="Limit the number of resumes to process",
         )
 
-    def _profile_email(self, profile: JobSeekerProfile) -> str:
-        """Return a user email for logging while handling missing relationships."""
-        owner: User | None = getattr(profile, "user_owner", None)
-        return owner.email if owner else "unknown@example.com"
+    def _profile_label(self, profile: CandidateProfile) -> str:
+        """Return a descriptive label for logging about the candidate profile."""
+        candidate_name = getattr(profile, "candidate_name", "") or ""
+        if candidate_name:
+            return candidate_name
+
+        recent_title = getattr(profile, "most_recent_title", "") or ""
+        if recent_title:
+            return recent_title
+
+        try:
+            pool = profile.pool  # type: ignore[attr-defined]
+            recruiter = getattr(pool, "recruiter", None)
+            if recruiter and getattr(recruiter, "email", None):
+                return recruiter.email  # type: ignore[return-value]
+        except Exception:  # pragma: no cover - defensive
+            pass
+
+        return f"candidate-{getattr(profile, 'pk', 'unknown')}"
 
     def _persist_temp_resume(self, file_content: bytes) -> Path:
         """Write resume bytes to disk for downstream processing."""
@@ -179,7 +196,7 @@ class Command(BaseCommand):
         Args:
             directory_path: Path to directory containing resume files
             verbosity: Output verbosity level (0-3)
-            join_talent_pool: Whether to add job seekers to the talent pool
+            join_talent_pool: Whether to queue candidate enrichment tasks
             limit: Optional limit on number of resumes to process
         """
         resume_dir = Path(directory_path)
@@ -211,7 +228,7 @@ class Command(BaseCommand):
         # Process each resume
         success_count = 0
         failure_count = 0
-        talent_sheet_count = 0
+        enrichment_count = 0
 
         for i, resume_file in enumerate(resume_files, 1):
             # Always show which file we're processing
@@ -250,9 +267,9 @@ class Command(BaseCommand):
                         f"  - Most recent title: {profile.most_recent_title}"
                     )
 
-                # If requested, add the job seeker to the talent pool
+                # If requested, queue enrichment tasks for the candidate
                 if join_talent_pool and self.add_to_talent_pool(profile, verbosity):
-                    talent_sheet_count += 1
+                    enrichment_count += 1
             else:
                 failure_count += 1
                 self.stdout.write(
@@ -271,37 +288,42 @@ class Command(BaseCommand):
 
         if join_talent_pool:
             self.stdout.write(
-                self.style.SUCCESS(f"TALENT SHEETS CREATED: {talent_sheet_count}")
+                self.style.SUCCESS(
+                    f"PROFILE ENRICHMENTS QUEUED: {enrichment_count}"
+                )
             )
 
         self.stdout.write("=" * 50)
 
     def create_test_user(
         self, counter: int
-    ) -> tuple[User, JobSeekerProfile] | tuple[None, None]:
+    ) -> tuple[User, CandidateProfile] | tuple[None, None]:
         """
-        Create a test user and job seeker profile for testing purposes.
+        Create a test recruiter and candidate profile for testing purposes.
 
         Args:
             counter: A counter to ensure unique usernames/emails
 
         Returns:
-            A tuple containing the created user and job seeker profile, or (None, None) if creation fails
+            A tuple containing the created recruiter user and candidate profile, or (None, None) if creation fails
         """
         unique_id = f"{counter}_{uuid.uuid4().hex[:8]}"
-        email = f"test_user_{unique_id}@example.com"
+        email = f"test_recruiter_{unique_id}@example.com"
 
         try:
             # Use the UserManager's create_user method
             user = User.objects.create_user(  # type: ignore
                 email=email,
                 password="testpassword123",
-                name=f"Test{counter} User{counter}",
-                user_type="job_seeker",
+                name=f"Test Recruiter {counter}",
+                user_type="recruiter",
             )
 
-            # A JobSeekerProfile should be created automatically via signals
-            profile = JobSeekerProfile.objects.get(user_owner=user)
+            pool = CandidatePool.objects.create(
+                recruiter=user,
+                name=f"Dev Upload Pool {unique_id}",
+            )
+            profile = CandidateProfile.objects.create(pool=pool)
 
             return user, profile
         except Exception as e:
@@ -309,30 +331,32 @@ class Command(BaseCommand):
             traceback.print_exc()
             return None, None
 
-    def add_to_talent_pool(self, profile: JobSeekerProfile, verbosity: int) -> bool:
+    def add_to_talent_pool(self, profile: CandidateProfile, verbosity: int) -> bool:
         """
-        Add a job seeker to the talent pool by scheduling the task
+        Trigger profile enrichment for the candidate by scheduling the task
         and waiting for its completion.
 
         Args:
-            profile: The JobSeekerProfile to add to the talent pool
+            profile: The CandidateProfile to enrich
             verbosity: Output verbosity level (0-3)
 
         Returns:
-            True if talent sheet was created successfully, False otherwise
+            True if enrichment completed successfully, False otherwise
         """
         task_id: str | None = None
         try:
-            email = self._profile_email(profile)
+            profile_label = self._profile_label(profile)
             if verbosity >= 1:
-                self.stdout.write(f"  - Scheduling talent sheet generation for {email}")
+                self.stdout.write(
+                    f"  - Scheduling profile enrichment for {profile_label}"
+                )
 
             # Schedule the talent sheet generation task to run asynchronously
             profile_id = getattr(profile, "id")
             task_id = safe_async_task(
-                generate_talent_sheet_task,
+                generate_profile_enrichment_task,
                 profile_id,
-                task_name=f"generate_talent_sheet_{profile_id}",
+                task_name=f"generate_profile_enrichment_{profile_id}",
                 timeout=300,
             )
 
@@ -371,19 +395,25 @@ class Command(BaseCommand):
             if result_obj.successful():
                 if verbosity >= 1:
                     self.stdout.write(
-                        self.style.SUCCESS(f"  - Created talent sheet for {email}")
+                        self.style.SUCCESS(
+                            f"  - Generated profile enrichment for {profile_label}"
+                        )
                     )
                 return True
 
             error_message = self._extract_task_error(result_obj)
             self.stdout.write(
-                self.style.ERROR(f"  - Failed to create talent sheet: {error_message}")
+                self.style.ERROR(
+                    f"  - Failed to generate profile enrichment: {error_message}"
+                )
             )
             return False
 
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f"  - Error during talent pool processing: {str(e)}")
+                self.style.ERROR(
+                    f"  - Error during profile enrichment: {str(e)}"
+                )
             )
             # If an exception occurs *before* or *during* polling, log it
             if verbosity >= 2:
@@ -391,14 +421,14 @@ class Command(BaseCommand):
             return False
 
     def process_resume(
-        self, resume_path: str, profile: JobSeekerProfile, verbosity: int
+        self, resume_path: str, profile: CandidateProfile, verbosity: int
     ) -> bool:
         """
         Process a resume file and update the given profile with extracted information.
 
         Args:
             resume_path: Path to the resume file
-            profile: JobSeekerProfile to update
+            profile: CandidateProfile to update
             verbosity: Output verbosity level (0-3)
 
         Returns:

@@ -4,18 +4,24 @@ Common utilities for matching tasks.
 This module contains shared functions and utilities used by multiple task modules.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from collections import defaultdict
 from functools import lru_cache
 from types import SimpleNamespace
-from typing import Any, Iterable
+from typing import Any, Iterable, TYPE_CHECKING, cast
 
 from django.conf import settings  # Import Django settings
-from pinecone import Pinecone
-from pinecone.openapi_support.exceptions import NotFoundException, PineconeException
 
 from hiredar.llm import embed, get_client
+
+if TYPE_CHECKING:  # pragma: no cover - imported for typing only
+    from pinecone import Pinecone
+    from pinecone.openapi_support.exceptions import NotFoundException, PineconeException  # noqa: F401
+else:  # pragma: no cover - ensures names are available at runtime without importing early
+    NotFoundException = PineconeException = Exception  # type: ignore[misc]
 
 logger = logging.getLogger(__name__)
 
@@ -142,13 +148,19 @@ def get_openai_client():  # kept for backward compatibility within this module
 
 
 @lru_cache(maxsize=1)
-def get_pinecone_client() -> Pinecone | None:
+def get_pinecone_client() -> Any | None:
     """Return a singleton Pinecone client or *None* if the API key is absent."""
     api_key = os.getenv("PINECONE_API_KEY")
     if not api_key:
         logger.warning(
             "PINECONE_API_KEY is not set; Pinecone features are disabled during this run"
         )
+        return None
+
+    try:
+        from pinecone import Pinecone
+    except ImportError as exc:  # pragma: no cover - defensive
+        logger.error("pinecone package unavailable: %s", exc)
         return None
 
     return Pinecone(api_key=api_key, project_name=settings.PINECONE_PROJECT_NAME)
@@ -174,6 +186,8 @@ def get_index() -> Any:
         NotFoundException: If the index doesn't exist when this function is called
     """
     try:
+        from pinecone.openapi_support.exceptions import NotFoundException
+
         if _running_tests():
             return _FAKE_INDEX
 
@@ -181,10 +195,12 @@ def get_index() -> Any:
         if client is None:
             raise RuntimeError("Pinecone client unavailable; missing API key")
 
-        if index_host:
-            return client.Index(host=index_host)
+        pinecone_client = cast("Pinecone", client)
 
-        return client.Index(index_name)
+        if index_host:
+            return pinecone_client.Index(host=index_host)
+
+        return pinecone_client.Index(index_name)
     except NotFoundException:
         logger.warning(
             "Pinecone index '%s' not found. "

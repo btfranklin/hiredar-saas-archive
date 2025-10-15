@@ -57,8 +57,8 @@ def generate_role_recommendations(resume_xml: str) -> list[CandidateRoleRecommen
 
     response_content = get_llm_response(
         response_input=response_input,
-        model=settings.JOBSEEKERS_ROLE_RECOMMENDATION_MODEL,
-        reasoning_effort=settings.JOBSEEKERS_ROLE_RECOMMENDATION_REASONING_EFFORT,
+        model=settings.CANDIDATE_ROLE_RECOMMENDATION_MODEL,
+        reasoning_effort=settings.CANDIDATE_ROLE_RECOMMENDATION_REASONING_EFFORT,
     )
 
     if not response_content or not isinstance(response_content, str):
@@ -93,11 +93,11 @@ def generate_personal_tagline(resume_xml: str) -> str:
 
     tagline = get_llm_response(
         response_input=response_input,
-        model=settings.JOBSEEKERS_TAGLINE_GENERATION_MODEL,
-        max_tokens=settings.JOBSEEKERS_TAGLINE_MAX_TOKENS,
+        model=settings.CANDIDATE_TAGLINE_GENERATION_MODEL,
+        max_tokens=settings.CANDIDATE_TAGLINE_MAX_TOKENS,
         reasoning_effort=getattr(
             settings,
-            "JOBSEEKERS_TAGLINE_GENERATION_REASONING_EFFORT",
+            "CANDIDATE_TAGLINE_GENERATION_REASONING_EFFORT",
             "medium",
         ),
     )
@@ -140,11 +140,11 @@ def generate_profile_enrichment(
 
     xml_response = get_llm_response(
         response_input=response_input,
-        model=settings.JOBSEEKERS_TALENT_SHEET_MODEL,
+        model=settings.CANDIDATE_TALENT_SHEET_MODEL,
         timeout=60,
         reasoning_effort=getattr(
             settings,
-            "JOBSEEKERS_TALENT_SHEET_REASONING_EFFORT",
+            "CANDIDATE_TALENT_SHEET_REASONING_EFFORT",
             "medium",
         ),
     )
@@ -168,4 +168,3 @@ def generate_profile_enrichment(
 
     logger.info("Generated profile enrichment for CandidateProfile %s", candidate_profile.pk)
     return enrichment
-

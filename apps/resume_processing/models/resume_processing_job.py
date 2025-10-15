@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.authentication.models import User
-from apps.job_seekers.models import JobSeekerProfile
+from apps.candidates.models import CandidateProfile
 
 
 class ResumeProcessingJob(models.Model):
@@ -15,11 +15,11 @@ class ResumeProcessingJob(models.Model):
         related_name="resume_processing_jobs",
         help_text="User who initiated the resume processing",
     )
-    job_seeker_profile = models.ForeignKey(
-        JobSeekerProfile,
+    candidate_profile = models.ForeignKey(
+        CandidateProfile,
         on_delete=models.CASCADE,
         related_name="processing_jobs",
-        help_text="Job seeker profile that was processed",
+        help_text="Candidate profile that was processed",
     )
     processed_at = models.DateTimeField(
         auto_now_add=True,

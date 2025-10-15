@@ -62,8 +62,8 @@ def convert_text_to_xml(resume_text: str) -> str:
     try:
         xml_content = get_llm_response(
             response_input=response_input,
-            model=settings.JOBSEEKERS_RESUME_PROCESSING_MODEL,
-            reasoning_effort=settings.JOBSEEKERS_RESUME_PROCESSING_REASONING_EFFORT,
+            model=settings.CANDIDATE_RESUME_PROCESSING_MODEL,
+            reasoning_effort=settings.CANDIDATE_RESUME_PROCESSING_REASONING_EFFORT,
         )
 
         # Perform basic validation
