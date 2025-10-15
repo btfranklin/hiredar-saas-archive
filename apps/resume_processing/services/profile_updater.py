@@ -152,18 +152,8 @@ def _update_profile_fields(profile: CandidateProfile, data: dict[str, Any]) -> N
         if "phone" in personal_details and personal_details["phone"] is not None:
             profile.phone = personal_details["phone"]
 
-        # Update the candidate name, for both user-owned and pool-owned profiles
+        # Update the candidate name when available
         if "name" in personal_details and personal_details["name"] is not None:
             profile.candidate_name = personal_details["name"]
-
-        # For legacy user-owned profiles, update the user's name when available.
-        user_owner = getattr(profile, "user_owner", None)
-        if (
-            user_owner is not None
-            and "name" in personal_details
-            and personal_details["name"] is not None
-        ):
-            user_owner.name = personal_details["name"]
-            user_owner.save()
 
     # The update_profile function will handle saving the profile
