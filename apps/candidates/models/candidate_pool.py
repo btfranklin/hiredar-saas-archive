@@ -1,4 +1,4 @@
-"""Candidate pool model moved to the candidates app."""
+"""Candidate pool model for recruiter-managed resume uploads."""
 
 from __future__ import annotations
 
@@ -12,9 +12,8 @@ class CandidatePool(models.Model):
     """
     Represents a pool of candidates uploaded and managed by a recruiter.
 
-    This model was previously part of the job_seekers app; we keep the original
-    database table name so existing data remains intact while we transition to
-    the new candidates domain.
+    The database table name remains ``job_seekers_candidatepool`` so existing
+    data continues to map to this model.
     """
 
     recruiter = models.ForeignKey(
@@ -61,4 +60,3 @@ class CandidatePool(models.Model):
 
     class Meta:
         db_table = "job_seekers_candidatepool"
-

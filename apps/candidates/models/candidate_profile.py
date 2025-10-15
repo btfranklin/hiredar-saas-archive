@@ -8,7 +8,7 @@ from django.db import models
 
 class CandidateProfile(models.Model):
     """
-    Normalised candidate representation owned by a recruiter.
+    Normalized candidate representation owned by a recruiter.
 
     This model combines structured resume data with the AI-generated
     presentation content so downstream systems can work with a single
@@ -130,6 +130,41 @@ class CandidateProfile(models.Model):
         if not self.skills:
             return []
         return [skill.strip() for skill in self.skills.splitlines() if skill.strip()]
+
+    @staticmethod
+    def _initials_from_text(value: str | None) -> str:
+        """Return initials derived from a name-like string."""
+        if not value:
+            return ""
+
+        parts = [part for part in value.split() if part]
+        if len(parts) >= 2:
+            return f"{parts[0][0]}{parts[-1][0]}".upper()
+        if parts:
+            return parts[0][0].upper()
+        return ""
+
+    @property
+    def display_name(self) -> str:
+        """Prefer candidate_name, then most recent title, then ID fallback."""
+        if self.candidate_name:
+            return self.candidate_name
+        if self.most_recent_title:
+            return self.most_recent_title
+        return f"Candidate {self.pk}" if self.pk else "Candidate"
+
+    @property
+    def avatar_initials(self) -> str:
+        """Return initials suitable for compact avatar displays."""
+        name_initials = self._initials_from_text(self.candidate_name)
+        if name_initials:
+            return name_initials
+
+        title_initials = self._initials_from_text(self.most_recent_title)
+        if title_initials:
+            return title_initials
+
+        return "CP"
 
     @property
     def ideal_roles_list(self) -> list[str]:
