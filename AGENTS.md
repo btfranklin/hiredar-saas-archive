@@ -18,11 +18,13 @@
 - Keep Django apps modular: new views, services, and tasks belong in the matching subpackages that already exist in each app.
 - Follow template naming of `apps/<app>/templates/<app>/**` and keep HTMX partials in the same tree for clarity.
 - Run the linter locally before committing; unresolved pylint errors will block CI.
+- Use American English spelling in code comments, docstrings, and documentation (e.g., "specialized", "behavior").
 
 ## Testing Guidelines
 - Tests belong next to their modules (e.g., `apps/job_seekers/tests/`) with filenames starting `test_`, classes `Test*`, and functions `test_*` per `pyproject.toml`.
 - Cover new Celery tasks, LLM parsers, and services with deterministic fixtures; mock external APIs (OpenAI, Pinecone) to keep runs offline.
 - When adding migrations or async flows, include regression tests demonstrating both success and failure paths.
+- Execute the test suite with `pdm run pytest`; this command is available and should be used for local validation.
 
 ## Commit & Pull Request Guidelines
 - Git history favors concise, sentence-case summaries that explain both the change and the intent (e.g., `Refactor reasoning effort retrieval in LLM processing services …`).
