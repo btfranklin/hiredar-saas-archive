@@ -17,7 +17,7 @@ from apps.candidates.tasks.profile_enrichment_tasks import (
     generate_profile_enrichment_task,
 )
 from apps.core.tasks import safe_async_task
-from apps.resume_processing.services.pipeline import process_resume as run_resume_pipeline
+from apps.candidates.services.resume_pipeline import process_resume as run_resume_pipeline
 
 # Define a timeout for waiting for the task (e.g., 5 minutes)
 TASK_WAIT_TIMEOUT = 300  # seconds
