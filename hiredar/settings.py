@@ -290,7 +290,7 @@ CELERY_TASK_DEFAULT_QUEUE = "default"
 # Celery Beat schedule for periodic tasks
 CELERY_BEAT_SCHEDULE = {
     "cleanup-resume-processing-progress": {
-        "task": "apps.resume_processing.tasks.cleanup_tasks.cleanup_resume_processing_progress",
+        "task": "apps.candidates.tasks.resume_processing.cleanup.cleanup_resume_processing_progress",
         "schedule": 900.0,  # Every 15 minutes (900 seconds)
         "options": {
             "queue": "default",

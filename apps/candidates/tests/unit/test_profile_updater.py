@@ -15,7 +15,7 @@ from apps.candidates.services.profile_updater import (
     generate_and_save_personal_tagline,
     update_profile_fields,
 )
-from apps.resume_processing.services.resume_processing.xml_parser import (
+from apps.candidates.services.resume_processing.xml_parser import (
     calculate_years_experience,
     extract_education,
     extract_experience,

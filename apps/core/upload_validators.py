@@ -66,7 +66,7 @@ def _get_mime(
 # ---------------------------------------------------------------------------
 
 # Keep the full list in sync with *unstructured* integration layer
-from apps.resume_processing.services.resume_processing.extraction import (
+from apps.candidates.services.resume_processing.extraction import (
     SUPPORTED_RESUME_EXTENSIONS,
 )
 

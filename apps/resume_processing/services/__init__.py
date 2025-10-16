@@ -1,12 +1,15 @@
 """
-Service-layer helpers for the resume_processing app.
+Legacy facade for resume-processing services.
 
-Modules in this package orchestrate the resume ingestion pipeline, including
-raw text extraction, LLM conversions, and structured XML parsing.
+All concrete implementations now live under ``apps.candidates.services`` so we
+import and re-export that package here for backward compatibility while the
+``resume_processing`` app is phased out.
 """
 
-from . import resume_processing
+from importlib import import_module
+import sys
 
-__all__ = [
-    "resume_processing",
-]
+resume_processing = import_module("apps.candidates.services.resume_processing")
+sys.modules[__name__ + ".resume_processing"] = resume_processing
+
+__all__ = ["resume_processing"]

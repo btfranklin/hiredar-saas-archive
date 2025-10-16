@@ -158,23 +158,27 @@ Manages candidate matching and embedding generation/storage:
 
 ### Resume Processing App (`apps/resume_processing`)
 
-Dedicated background processing pipeline for PDF resumes.
+Dedicated background processing pipeline for PDF resumes (now colocated with the
+`candidates` app while the legacy `resume_processing` package remains as a thin
+shim):
 
-- **Models**:
+- **Models** (exported via `apps.candidates.models` but still using the historic
+  tables):
   - `ResumeProcessingTaskProgress`: Tracks progress of the resume processing workflow
   - `ResumeProcessingJob`: Tracks completed resume processing events for quota enforcement
-- **Services** (`services/resume_processing/`):
+- **Services** (`apps/candidates/services/resume_processing/`):
   - `extraction.py`: Extracts raw text from resume files
   - `llm_processor.py`: Handles AI-powered XML conversion using shared prompts
   - `xml_parser.py`: Parses structured XML into model fields
   - `xml_error_reporting.py`: Utilities for XML error reporting
-  - `resume_processor.py`: Orchestrates task tracking for the processing pipeline
+  - `resume_processor.py`: Orchestrates task and status management
   - `prompts/`: LLM prompt templates colocated with the service logic
-- **Tasks**:
-  - `cleanup_tasks.py`: Cleanup of old or completed progress records
-  - `resume_processing_tasks.py`: Tasks for saving and processing resume uploads (`save_resume_file`, `handle_resume_upload_task`)
+- **Tasks** (`apps/candidates/tasks/resume_processing/`):
+  - `processing.py`: Save uploads and queue the résumé pipeline (`save_resume_file`, `handle_resume_upload_task`)
+  - `cleanup.py`: Periodic cleanup of completed progress records
 
-This separation lets the heavy lifting run in its own app while recruiter-facing views stay lean.
+The `apps.resume_processing` package now re-exports these modules for backwards
+compatibility while we work toward fully removing the app.
 
 ## Key Relationships Between Apps
 

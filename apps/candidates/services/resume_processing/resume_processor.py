@@ -14,7 +14,7 @@ from celery.result import AsyncResult
 
 from apps.authentication.models import User
 from apps.core.tasks import safe_async_task
-from apps.resume_processing.models import ResumeProcessingTaskProgress
+from apps.candidates.models import ResumeProcessingTaskProgress
 
 __all__ = [
     "ResumeProcessor",

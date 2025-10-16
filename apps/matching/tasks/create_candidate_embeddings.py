@@ -12,7 +12,7 @@ from apps.matching.services.candidate_embeddings import (
     upsert_candidate_embeddings,
 )
 from apps.matching.tasks.common import get_embedding, logger
-from apps.resume_processing.services.resume_processing.xml_parser import (
+from apps.candidates.services.resume_processing.xml_parser import (
     extract_personal_details,
 )
 

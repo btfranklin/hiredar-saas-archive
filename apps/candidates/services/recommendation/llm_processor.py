@@ -77,7 +77,7 @@ def generate_personal_tagline(resume_xml: str) -> str:
     prompt_path = os.path.join(
         settings.BASE_DIR,
         "apps",
-        "resume_processing",
+        "candidates",
         "services",
         "resume_processing",
         "prompts",

@@ -1,36 +1,19 @@
-"""Resume-processing task package.
+"""
+Legacy facade for resume-processing Celery tasks.
 
-Celery's Django integration will automatically import ``apps.resume_processing.tasks``
-for task discovery.  When this directory lacked an ``__init__`` module the import
-worked thanks to Python's *namespace-package* semantics, but none of the actual
-task functions living in the sibling modules were brought into memory – which
-meant the Celery worker never registered them.
-
-To ensure every task is visible we explicitly import each sub-module here and
-re-export their public callables via ``__all__``.  Keep this list in sync when
-adding new task modules.
+All task implementations now live under ``apps.candidates.tasks`` while this
+module re-exports them to avoid breaking existing imports during the gradual
+deprecation of the ``resume_processing`` app.
 """
 
-# ---------------------------------------------------------------------------
-#  Public sub-modules
-# ---------------------------------------------------------------------------
-
-from apps.resume_processing.tasks.cleanup_tasks import (
-    cleanup_resume_processing_progress,  # noqa: F401 – re-export
-)
-from apps.resume_processing.tasks.resume_processing_tasks import (  # noqa: F401 – re-export
+from apps.candidates.tasks.resume_processing import (  # noqa: F401
+    cleanup_resume_processing_progress,
     handle_resume_upload_task,
     save_resume_file,
 )
 
-# The public names that are meant to be imported when users run
-# ``from apps.resume_processing import tasks`` or
-# ``from apps.resume_processing.tasks import *``.
-
 __all__ = [
-    # Resume-processing helpers
-    "save_resume_file",
-    "handle_resume_upload_task",
-    # Cleanup helpers
     "cleanup_resume_processing_progress",
+    "handle_resume_upload_task",
+    "save_resume_file",
 ]

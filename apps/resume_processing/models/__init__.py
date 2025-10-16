@@ -1,9 +1,8 @@
-"""Aggregate resume-processing models used across services and tasks."""
+"""Legacy facade for resume-processing models now living in candidates."""
 
-from .resume_processing_job import ResumeProcessingJob
-from .resume_processing_task_progress import ResumeProcessingTaskProgress
+from apps.candidates.models import (  # noqa: F401
+    ResumeProcessingJob,
+    ResumeProcessingTaskProgress,
+)
 
-__all__ = [
-    "ResumeProcessingTaskProgress",
-    "ResumeProcessingJob",
-]
+__all__ = ["ResumeProcessingTaskProgress", "ResumeProcessingJob"]

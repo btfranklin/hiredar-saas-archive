@@ -13,21 +13,20 @@ from typing import Any
 from django.conf import settings
 from django.core.files.storage import default_storage
 
-from apps.candidates.models import CandidateProfile
+from apps.candidates.models import CandidateProfile, ResumeProcessingTaskProgress
 from apps.candidates.services.profile_updater import (
     generate_and_save_personal_tagline,
     update_profile_fields,
 )
-from apps.resume_processing.models import ResumeProcessingTaskProgress
-from apps.resume_processing.services.resume_processing.extraction import extract_text
-from apps.resume_processing.services.resume_processing.llm_processor import (
+from apps.candidates.services.resume_processing.extraction import extract_text
+from apps.candidates.services.resume_processing.llm_processor import (
     convert_text_to_xml,
 )
-from apps.resume_processing.services.resume_processing.xml_error_reporting import (
+from apps.candidates.services.resume_processing.xml_error_reporting import (
     log_xml_error,
     save_diagnostic_xml,
 )
-from apps.resume_processing.services.resume_processing.xml_parser import (
+from apps.candidates.services.resume_processing.xml_parser import (
     parse_resume_xml,
 )
 

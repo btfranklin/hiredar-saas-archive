@@ -14,10 +14,10 @@ from apps.candidates.tasks.profile_enrichment_tasks import (
     generate_profile_enrichment_task,
 )
 from apps.candidates.tasks.recommendation_tasks import generate_role_recommendations
-from apps.core.tasks import safe_async_task
-from apps.resume_processing.tasks.cleanup_tasks import (
+from apps.candidates.tasks.resume_processing.cleanup import (
     cleanup_resume_processing_progress,
 )
+from apps.core.tasks import safe_async_task
 
 logger = logging.getLogger(__name__)
 async_task = safe_async_task
@@ -82,4 +82,3 @@ def resume_processing_completed(
         "message": "Candidate follow-up tasks queued",
         "profile_id": profile.pk,
     }
-
