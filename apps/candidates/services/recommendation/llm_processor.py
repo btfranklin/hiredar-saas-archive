@@ -78,6 +78,8 @@ def generate_personal_tagline(resume_xml: str) -> str:
         settings.BASE_DIR,
         "apps",
         "resume_processing",
+        "services",
+        "resume_processing",
         "prompts",
         "generate_personal_tagline_from_xml.prompt.md",
     )

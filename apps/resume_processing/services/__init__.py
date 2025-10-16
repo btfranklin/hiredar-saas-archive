@@ -1,5 +1,12 @@
-"""Service-layer helpers for resume processing."""
+"""
+Service-layer helpers for the resume_processing app.
 
-# Import concrete modules directly, e.g. ``from apps.resume_processing.services
-# import xml_parser``.  This package intentionally stays minimal to avoid
-# implicit cross-app wiring.
+Modules in this package orchestrate the resume ingestion pipeline, including
+raw text extraction, LLM conversions, and structured XML parsing.
+"""
+
+from . import resume_processing
+
+__all__ = [
+    "resume_processing",
+]

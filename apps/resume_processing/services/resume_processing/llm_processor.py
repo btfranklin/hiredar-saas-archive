@@ -15,7 +15,7 @@ from django.conf import settings
 from dotenv import load_dotenv
 from promptdown import StructuredPrompt
 
-from apps.resume_processing.services.xml_error_reporting import log_xml_error
+from .xml_error_reporting import log_xml_error
 from hiredar.llm import get_llm_response
 from hiredar.llm.xml_utils import sanitize_xml_response
 
@@ -43,7 +43,7 @@ def convert_text_to_xml(resume_text: str) -> str:
         Exception: For any other processing errors
     """
     prompt_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
+        os.path.dirname(__file__),
         "prompts",
         "convert_resume_to_xml.prompt.md",
     )

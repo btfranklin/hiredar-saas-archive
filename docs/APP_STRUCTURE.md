@@ -163,19 +163,16 @@ Dedicated background processing pipeline for PDF resumes.
 - **Models**:
   - `ResumeProcessingTaskProgress`: Tracks progress of the resume processing workflow
   - `ResumeProcessingJob`: Tracks completed resume processing events for quota enforcement
-- **Utils**:
-  - `pipeline.py`: Orchestrates the resume-processing workflow
-  - `extraction.py`: Extracts raw text from PDF files
-  - `xml_error_reporting.py`: Utilities for XML error reporting
-  - `profile_updater.py`: Updates `CandidateProfile` with extracted data
-  - `llm_processor.py`: Handles AI-powered data extraction
+- **Services** (`services/resume_processing/`):
+  - `extraction.py`: Extracts raw text from resume files
+  - `llm_processor.py`: Handles AI-powered XML conversion using shared prompts
   - `xml_parser.py`: Parses structured XML into model fields
+  - `xml_error_reporting.py`: Utilities for XML error reporting
+  - `resume_processor.py`: Orchestrates task tracking for the processing pipeline
+  - `prompts/`: LLM prompt templates colocated with the service logic
 - **Tasks**:
   - `cleanup_tasks.py`: Cleanup of old or completed progress records
   - `resume_processing_tasks.py`: Tasks for saving and processing resume uploads (`save_resume_file`, `handle_resume_upload_task`)
-- **Management/Commands**:
-  - `ingest_resumes.py`: Batch ingest sample resumes
-  - `diagnose_resume.py`: Diagnose resume parsing issues
 
 This separation lets the heavy lifting run in its own app while recruiter-facing views stay lean.
 

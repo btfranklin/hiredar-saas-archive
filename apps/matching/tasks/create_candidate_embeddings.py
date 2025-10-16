@@ -12,7 +12,9 @@ from apps.matching.services.candidate_embeddings import (
     upsert_candidate_embeddings,
 )
 from apps.matching.tasks.common import get_embedding, logger
-from apps.resume_processing.services.xml_parser import extract_personal_details
+from apps.resume_processing.services.resume_processing.xml_parser import (
+    extract_personal_details,
+)
 
 
 @shared_task(name="apps.matching.tasks.create_candidate_embeddings")
@@ -113,4 +115,3 @@ def create_candidate_embeddings(candidate_profile_id: int, **kwargs) -> dict[str
         "candidate_profile_id": candidate_profile.id,
         "sections_processed": len(batch_vectors),
     }
-
