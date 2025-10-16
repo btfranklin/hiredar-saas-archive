@@ -158,12 +158,10 @@ Manages candidate matching and embedding generation/storage:
 
 ### Resume Processing App (`apps/resume_processing`)
 
-Dedicated background processing pipeline for PDF resumes (now colocated with the
-`candidates` app while the legacy `resume_processing` package remains as a thin
-shim):
+Dedicated background processing pipeline for PDF resumes (fully colocated within the
+`candidates` app):
 
-- **Models** (exported via `apps.candidates.models` but still using the historic
-  tables):
+- **Models** (`apps/candidates/models/`):
   - `ResumeProcessingTaskProgress`: Tracks progress of the resume processing workflow
   - `ResumeProcessingJob`: Tracks completed resume processing events for quota enforcement
 - **Services** (`apps/candidates/services/resume_processing/`):
@@ -177,8 +175,8 @@ shim):
   - `processing.py`: Save uploads and queue the résumé pipeline (`save_resume_file`, `handle_resume_upload_task`)
   - `cleanup.py`: Periodic cleanup of completed progress records
 
-The `apps.resume_processing` package now re-exports these modules for backwards
-compatibility while we work toward fully removing the app.
+The legacy `resume_processing` app has been retired; all résumé ingestion code now
+lives directly under the candidates app.
 
 ## Key Relationships Between Apps
 

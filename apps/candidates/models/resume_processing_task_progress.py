@@ -12,7 +12,7 @@ class ResumeProcessingTaskProgress(models.Model):
     """Model to track progress of resume processing tasks"""
 
     class Meta:
-        app_label = "resume_processing"
+        db_table = "resume_processing_resumeprocessingtaskprogress"
         verbose_name = "Resume Processing Task Progress"
         verbose_name_plural = "Resume Processing Task Progress"
 

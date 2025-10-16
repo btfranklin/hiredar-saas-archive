@@ -199,7 +199,6 @@ INSTALLED_APPS = [
     "apps.core.apps.CoreConfig",
     "apps.reports.apps.ReportsConfig",
     # Resume processing subsystem
-    "apps.resume_processing.apps.ResumeProcessingConfig",
     "post_office",
 ]
 

@@ -33,7 +33,7 @@ class ResumeProcessingJob(models.Model):
     )
 
     class Meta:
-        app_label = "resume_processing"
+        db_table = "resume_processing_resumeprocessingjob"
         ordering = ["-processed_at"]
         verbose_name = "Résumé Processing Job"
         verbose_name_plural = "Résumé Processing Jobs"
