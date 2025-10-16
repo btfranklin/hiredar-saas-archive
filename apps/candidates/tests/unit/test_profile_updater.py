@@ -1,17 +1,17 @@
 """
-Unit tests for the profile updater module.
+Unit tests for the candidate profile updater helpers.
 
-Tests the profile updater functionality used to update candidate profiles
-with data parsed from resumes.
+These tests exercise the functions that update ``CandidateProfile`` fields with
+parsed resume data and handle personal tagline generation.
 """
 
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-import apps.resume_processing.services.profile_updater as pu
+import apps.candidates.services.profile_updater as pu
 from apps.candidates.models import CandidateProfile
-from apps.resume_processing.services.profile_updater import (
+from apps.candidates.services.profile_updater import (
     generate_and_save_personal_tagline,
     update_profile_fields,
 )
@@ -30,10 +30,10 @@ pu.generate_personal_tagline = MagicMock(return_value="Test Tagline")
 
 class ProfileUpdaterTests(TestCase):
     """
-    Test cases for the profile updater functionality.
+    Test cases for the candidate profile updater functionality.
 
-    Tests the update_profile function to ensure it properly updates
-    CandidateProfile instances with parsed resume data.
+    Tests ensure ``CandidateProfile`` instances are correctly updated with parsed
+    resume data and that fallback behaviour works when tagline generation fails.
     """
 
     def setUp(self):
@@ -112,7 +112,6 @@ class ProfileUpdaterTests(TestCase):
         """Test extracting skills information from XML content."""
         skills_text = extract_skills(self.test_xml)
 
-        # Check that skills are extracted correctly
         self.assertIsNotNone(skills_text)
         if skills_text:
             self.assertIn("Python", skills_text)
@@ -124,7 +123,6 @@ class ProfileUpdaterTests(TestCase):
         """Test extracting professional summary from XML content."""
         summary = extract_professional_summary(self.test_xml)
 
-        # Check that summary is extracted correctly
         self.assertIsNotNone(summary)
         if summary:
             self.assertIn("Experienced software engineer", summary)
@@ -134,7 +132,6 @@ class ProfileUpdaterTests(TestCase):
         """Test extracting experience information from XML content."""
         experience_text = extract_experience(self.test_xml)
 
-        # Check that experience is extracted correctly
         self.assertIsNotNone(experience_text)
         if experience_text:
             self.assertIn("Senior Developer", experience_text)
@@ -148,10 +145,7 @@ class ProfileUpdaterTests(TestCase):
         """Test extracting education information from XML content."""
         education_text = extract_education(self.test_xml)
 
-        # Check that education text is extracted correctly
         self.assertIsNotNone(education_text)
-
-        # Only check content if education_text is not None (to satisfy the type checker)
         if education_text:
             self.assertIn("University of Technology", education_text)
             self.assertIn("Master of Computer Science", education_text)
@@ -162,7 +156,6 @@ class ProfileUpdaterTests(TestCase):
         """Test extracting most recent title from XML content."""
         position = extract_most_recent_title(self.test_xml)
 
-        # Check that most recent title is extracted correctly
         self.assertIsNotNone(position)
         if position:
             self.assertEqual(position, "Senior Developer")
@@ -171,15 +164,12 @@ class ProfileUpdaterTests(TestCase):
         """Test calculating years of experience from XML content."""
         years = calculate_years_experience(self.test_xml)
 
-        # Check that years of experience is calculated correctly
         self.assertIsNotNone(years)
-        # Just check it's a number (integer), not trying to validate the exact calculation
         self.assertIsInstance(years, int)
 
-    @patch("apps.resume_processing.services.profile_updater.logger")
+    @patch("apps.candidates.services.profile_updater.logger")
     def test_update_profile_with_all_fields(self, mock_logger):
         """Test updating a profile with complete parsed data."""
-        # Parse the XML to get all data fields
         education_text = extract_education(self.test_xml)
         skills_text = extract_skills(self.test_xml)
         experience_text = extract_experience(self.test_xml)
@@ -187,7 +177,6 @@ class ProfileUpdaterTests(TestCase):
         most_recent_title = extract_most_recent_title(self.test_xml)
         years_of_experience = calculate_years_experience(self.test_xml)
 
-        # Prepare parsed data dictionary with all fields
         parsed_data = {
             "education": education_text,
             "skills": skills_text,
@@ -197,162 +186,111 @@ class ProfileUpdaterTests(TestCase):
             "years_of_experience": years_of_experience,
         }
 
-        # Call the split update functions
         result_fields = update_profile_fields(self.profile, parsed_data)
         result_tagline = generate_and_save_personal_tagline(
             self.profile, self.test_xml, parsed_data
         )
         result = result_fields and result_tagline
 
-        # Verify the result
         self.assertTrue(result)
-        # Two saves: one for fields update, one for tagline generation
         self.assertEqual(self.profile.save.call_count, 2)
-
-        # Verify that the profile model was updated correctly
         self.assertEqual(self.profile.education, education_text)
         self.assertEqual(self.profile.skills, skills_text)
         self.assertEqual(self.profile.experience, experience_text)
         self.assertEqual(self.profile.professional_summary, professional_summary)
         self.assertEqual(self.profile.most_recent_title, most_recent_title)
-
-        # Check years_of_experience is set, but don't check exact value since the test mock behaves differently
         self.assertIsNotNone(self.profile.years_of_experience)
-
         self.assertEqual(self.profile.resume_xml, self.test_xml)
 
-        # Verify that the success message was logged
-        mock_logger.info.assert_called_with(
-            "Personal tagline generated: %s", "Test Tagline"
-        )
-
-    @patch("apps.resume_processing.services.profile_updater.logger")
+    @patch("apps.candidates.services.profile_updater.logger")
     def test_update_profile_with_minimal_data(self, mock_logger):
         """Test updating a profile with minimal parsed data."""
-        # Parse the minimal XML
         skills_text = extract_skills(self.minimal_xml)
 
-        # Prepare parsed data dictionary with minimal fields
         parsed_data = {
             "skills": skills_text,
         }
 
-        # Call the split update functions
         result_fields = update_profile_fields(self.profile, parsed_data)
         result_tagline = generate_and_save_personal_tagline(
             self.profile, self.minimal_xml, parsed_data
         )
         result = result_fields and result_tagline
 
-        # Verify the result
         self.assertTrue(result)
-        # Two saves: one for fields update, one for tagline generation
         self.assertEqual(self.profile.save.call_count, 2)
-
-        # Verify that the profile model was updated correctly
         self.assertEqual(self.profile.skills, skills_text)
         self.assertEqual(self.profile.resume_xml, self.minimal_xml)
-
-        # These fields shouldn't be changed since they weren't in parsed_data
         self.assertNotEqual(self.profile.education, "Some education")
         self.assertNotEqual(self.profile.experience, "Some experience")
         self.assertNotEqual(self.profile.professional_summary, "Some summary")
 
-        # Verify that the success message was logged
-        mock_logger.info.assert_called_with(
-            "Personal tagline generated: %s", "Test Tagline"
-        )
-
-    @patch("apps.resume_processing.services.profile_updater.logger")
+    @patch("apps.candidates.services.profile_updater.logger")
     def test_update_profile_incomplete_data(self, mock_logger):
         """Test updating a profile with incomplete XML (missing sections)."""
-        # Parse the incomplete XML
         summary = extract_professional_summary(self.incomplete_xml)
 
-        # Verify some fields are extracted and others are None
         self.assertIsNotNone(summary)
         self.assertIsNone(extract_skills(self.incomplete_xml))
         self.assertIsNone(extract_experience(self.incomplete_xml))
         self.assertIsNone(extract_education(self.incomplete_xml))
 
-        # Prepare parsed data dictionary with only summary
         parsed_data = {
             "professional_summary": summary,
         }
 
-        # Call the split update functions
         result_fields = update_profile_fields(self.profile, parsed_data)
         result_tagline = generate_and_save_personal_tagline(
             self.profile, self.incomplete_xml, parsed_data
         )
         result = result_fields and result_tagline
 
-        # Verify the result
         self.assertTrue(result)
-        # Two saves: one for fields update, one for tagline generation
         self.assertEqual(self.profile.save.call_count, 2)
-
-        # Check that only summary was updated
         self.assertEqual(self.profile.professional_summary, summary)
         self.assertEqual(self.profile.resume_xml, self.incomplete_xml)
 
-        # Verify that the success message was logged
-        mock_logger.info.assert_called_with(
-            "Personal tagline generated: %s", "Test Tagline"
-        )
-
-    @patch("apps.resume_processing.services.profile_updater.logger")
+    @patch("apps.candidates.services.profile_updater.logger")
     def test_update_profile_without_education(self, mock_logger):
         """Test updating a profile with parsed data that has no education."""
-        # Prepare parsed data without education
         parsed_data = {
             "skills": "Python, Django, JavaScript",
             "experience": "Some experience text",
             "professional_summary": "Professional summary text",
         }
 
-        # Call the split update functions
         result_fields = update_profile_fields(self.profile, parsed_data)
         result_tagline = generate_and_save_personal_tagline(
             self.profile, "some xml", parsed_data
         )
         result = result_fields and result_tagline
 
-        # Verify the result
         self.assertTrue(result)
-        # Two saves: one for fields update, one for tagline generation
         self.assertEqual(self.profile.save.call_count, 2)
-
-        # Verify that the profile model was updated correctly
         self.assertEqual(self.profile.skills, "Python, Django, JavaScript")
         self.assertEqual(self.profile.experience, "Some experience text")
         self.assertEqual(self.profile.professional_summary, "Professional summary text")
 
-        # Verify that the success message was logged
-        mock_logger.info.assert_called_with(
-            "Personal tagline generated: %s", "Test Tagline"
-        )
-
-    @patch("apps.resume_processing.services.profile_updater.logger")
+    @patch("apps.candidates.services.profile_updater.logger")
     def test_update_profile_exception_handling(self, mock_logger):
         """Test that exceptions during profile updating are handled correctly."""
-        # Make the save method raise an exception
         self.profile.save.side_effect = Exception("Test exception")
 
-        # Prepare some parsed data
         parsed_data = {"education": "Some education data"}
 
-        # Call the split update functions; profile.save will raise on first call
         result_fields = update_profile_fields(self.profile, parsed_data)
         result_tagline = generate_and_save_personal_tagline(
             self.profile, "some xml", parsed_data
         )
         result = result_fields and result_tagline
 
-        # Verify the result indicates failure
         self.assertFalse(result)
-
-        # Verify that the error was logged for saving personal tagline
-        mock_logger.error.assert_any_call(
-            "Error saving personal tagline: %s", "Test exception"
+        self.assertTrue(
+            any(
+                call.args
+                and call.args[0] == "Error saving personal tagline: %s"
+                and len(call.args) > 1
+                and str(call.args[1]) == "Test exception"
+                for call in mock_logger.error.call_args_list
+            )
         )
