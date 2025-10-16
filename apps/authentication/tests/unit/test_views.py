@@ -92,3 +92,56 @@ class AuthenticationViewTests(TestCase):
         self.assertEqual(response.status_code, 200)  # Form re-rendered with errors
         self.assertFalse(response.wsgi_request.user.is_authenticated)
         self.assertContains(response, "This account type is no longer supported")
+
+    def test_settings_marks_email_verified_case_insensitive(self) -> None:
+        """Account settings treat verified e-mails case-insensitively."""
+        user_manager = cast(UserManager, User.objects)
+        user = user_manager.create_user(
+            email="Recruiter@Example.com",
+            password="testpass123",
+            name="Recruiter User",
+            user_type="recruiter",
+        )
+        EmailAddress.objects.create(
+            user=user,
+            email="recruiter@example.com",
+            primary=True,
+            verified=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("authentication:settings"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("email_verified", response.context)
+        self.assertTrue(response.context["email_verified"])
+        self.assertNotContains(
+            response,
+            "Your email address has not been verified.",
+        )
+
+    def test_settings_considers_any_verified_email(self) -> None:
+        """Account settings treat users as verified if any address is confirmed."""
+        user_manager = cast(UserManager, User.objects)
+        user = user_manager.create_user(
+            email="primary@example.com",
+            password="testpass123",
+            name="Recruiter User",
+            user_type="recruiter",
+        )
+        EmailAddress.objects.create(
+            user=user,
+            email="alternate@example.com",
+            primary=False,
+            verified=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("authentication:settings"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["email_verified"])
+        self.assertNotContains(
+            response,
+            "Your email address has not been verified.",
+        )

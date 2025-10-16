@@ -37,7 +37,8 @@ class UpdateAccountView(LoginRequiredMixin, View):
         user = cast(AuthenticatedUser, request.user)
         template_name = self.get_template_name(user)
         email_verified = EmailAddress.objects.filter(
-            user=user, email=user.email, verified=True
+            user=user,
+            verified=True,
         ).exists()
         return render(
             request, template_name, {"user": user, "email_verified": email_verified}

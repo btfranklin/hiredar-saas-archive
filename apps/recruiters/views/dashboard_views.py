@@ -6,6 +6,7 @@ This module contains views for the recruiter dashboard and settings.
 
 from typing import Any, cast
 
+from allauth.account.models import EmailAddress
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import CharField, Value
 from django.http import HttpRequest, HttpResponseBase
@@ -88,3 +89,13 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         if user.user_type != "recruiter":
             return redirect("core:home")
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """Inject email verification state for the active recruiter."""
+        context = super().get_context_data(**kwargs)
+        user = cast(AuthenticatedUser, self.request.user)
+        context["email_verified"] = EmailAddress.objects.filter(
+            user=user,
+            verified=True,
+        ).exists()
+        return context
