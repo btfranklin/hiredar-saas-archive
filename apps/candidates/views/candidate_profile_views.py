@@ -17,7 +17,7 @@ from apps.candidates.models import CandidateProfile
 
 
 class ResumeView(LoginRequiredMixin, DetailView):
-    """Allow recruiters to view the parsed resume for a candidate profile."""
+    """Allow recruiters to view the parsed résumé for a candidate profile."""
 
     model = CandidateProfile
     template_name = "candidates/resume_view.html"
@@ -33,7 +33,7 @@ class ResumeView(LoginRequiredMixin, DetailView):
         user = cast(AuthenticatedUser, request.user)
 
         if user.user_type != "recruiter":
-            messages.error(request, "Only recruiters can view candidate resumes.")
+            messages.error(request, "Only recruiters can view candidate résumés.")
             return redirect("core:home")
 
         profile = self.get_object()
@@ -42,7 +42,7 @@ class ResumeView(LoginRequiredMixin, DetailView):
 
         messages.error(
             request,
-            "This resume is not available outside of your candidate pools.",
+            "This résumé is not available outside of your candidate pools.",
         )
         return redirect("recruiters:dashboard")
 
@@ -52,4 +52,3 @@ class ResumeView(LoginRequiredMixin, DetailView):
         context["conversation"] = None
         context["job_opening"] = None
         return context
-

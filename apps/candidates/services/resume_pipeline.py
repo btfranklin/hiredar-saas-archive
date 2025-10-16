@@ -36,7 +36,7 @@ def process_resume(
     task_id: str | None = None,
 ) -> dict[str, Any]:
     """
-    Process a resume file and enrich a CandidateProfile with the result.
+    Process a résumé file and enrich a CandidateProfile with the result.
     """
     pipeline_steps: list[str] = []
     resume_text: str | None = None
@@ -49,7 +49,7 @@ def process_resume(
     if profile.pool:
         profile_identifier += f" (Pool: {profile.pool.name})"
 
-    logger.info("Starting candidate resume processing for %s", profile_identifier)
+    logger.info("Starting candidate résumé processing for %s", profile_identifier)
 
     progress_tracker = None
     if task_id:
@@ -57,7 +57,7 @@ def process_resume(
             progress_tracker = ResumeProcessingTaskProgress.objects.get(task_id=task_id)
             if progress_tracker.status == "pending":
                 progress_tracker.status = "running"
-                progress_tracker.message = "Processing resume..."
+                progress_tracker.message = "Processing résumé..."
                 progress_tracker.save(update_fields=["status", "message"])
         except ResumeProcessingTaskProgress.DoesNotExist:
             logger.warning("Progress tracker not found for task_id: %s", task_id)
@@ -100,7 +100,7 @@ def process_resume(
 
         resume_text = extract_text(abs_file_path)
         if not resume_text:
-            error_msg = "Failed to extract any text from resume"
+            error_msg = "Failed to extract any text from résumé"
             if progress_tracker:
                 progress_tracker.status = "failed"
                 progress_tracker.message = error_msg
@@ -173,18 +173,18 @@ def process_resume(
         if progress_tracker:
             progress_tracker.mark_step_complete("profile_updated")
             progress_tracker.status = "success"
-            progress_tracker.message = "Resume processed successfully"
+            progress_tracker.message = "Résumé processed successfully"
             progress_tracker.save(update_fields=["status", "message"])
 
         elapsed = time.time() - start_time
         logger.info(
-            "Completed candidate resume processing for %s in %.2fs",
+            "Completed candidate résumé processing for %s in %.2fs",
             profile_identifier,
             elapsed,
         )
         return {
             "success": True,
-            "message": "Resume processed successfully",
+            "message": "Résumé processed successfully",
             "profile_id": profile.pk,
             "pipeline_steps": pipeline_steps,
             "profile_data": parsed_data,

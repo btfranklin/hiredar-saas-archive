@@ -57,7 +57,7 @@ class ResumeProcessingTaskProgress(models.Model):
         {
             "id": "file_path_resolved",
             "name": "Preparing File",
-            "description": "Locating and preparing the resume file",
+            "description": "Locating and preparing the résumé file",
             "weight": 5,
         },
         {
@@ -68,8 +68,8 @@ class ResumeProcessingTaskProgress(models.Model):
         },
         {
             "id": "xml_generated",
-            "name": "Analyzing Resume",
-            "description": "Analyzing resume with AI to extract structured data",
+            "name": "Analyzing Résumé",
+            "description": "Analyzing résumé with AI to extract structured data",
             "weight": 35,
         },
         {
@@ -136,7 +136,7 @@ class ResumeProcessingTaskProgress(models.Model):
                 self.current_step = step_ids[idx + 1]
             else:
                 self.status = "completed"
-                self.message = "Resume processing completed successfully"
+                self.message = "Résumé processing completed successfully"
         except ValueError:
             pass
 

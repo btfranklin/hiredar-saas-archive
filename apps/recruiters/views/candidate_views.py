@@ -14,7 +14,7 @@ from apps.candidates.models import CandidateProfile
 
 class CandidateResumeView(LoginRequiredMixin, DetailView):
     """
-    Allow recruiters to view the full resume for a candidate profile.
+    Allow recruiters to view the full résumé for a candidate profile.
 
     Access is granted when:
     1. The requesting user is a recruiter.
@@ -32,7 +32,7 @@ class CandidateResumeView(LoginRequiredMixin, DetailView):
         user = cast(AuthenticatedUser, request.user)
 
         if user.user_type != "recruiter":
-            messages.error(request, "Only recruiters can view candidate resumes.")
+            messages.error(request, "Only recruiters can view candidate résumés.")
             return redirect("core:home")
 
         profile = self.get_object()
@@ -42,7 +42,7 @@ class CandidateResumeView(LoginRequiredMixin, DetailView):
 
         messages.error(
             request,
-            "This resume is not available outside of your candidate pools.",
+            "This résumé is not available outside of your candidate pools.",
         )
         return redirect("recruiters:dashboard")
 

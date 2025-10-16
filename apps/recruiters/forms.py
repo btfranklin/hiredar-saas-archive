@@ -4,7 +4,7 @@ from apps.recruiters.models import BulkResumeUpload
 
 
 class BulkResumeUploadForm(forms.ModelForm):
-    """Form to upload a named pool of resumes."""
+    """Form to upload a named pool of résumés."""
 
     class Meta:
         model = BulkResumeUpload
@@ -24,5 +24,5 @@ class BulkResumeUploadForm(forms.ModelForm):
         }
         labels = {
             "name": "Pool Name",
-            "zip_file": "ZIP file of resumes (PDF, DOCX, RTF, ODT, TXT)",
+            "zip_file": "ZIP file of résumés (PDF, DOCX, RTF, ODT, TXT)",
         }

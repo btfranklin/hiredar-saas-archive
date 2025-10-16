@@ -24,12 +24,12 @@ class CandidateProfile(models.Model):
     candidate_name = models.CharField(
         max_length=150,
         blank=True,
-        help_text="Full name parsed from the resume or provided by a recruiter",
+        help_text="Full name parsed from the résumé or provided by a recruiter",
     )
     most_recent_title = models.CharField(
         max_length=150,
         blank=True,
-        help_text="Most recent job title extracted from the resume",
+        help_text="Most recent job title extracted from the résumé",
     )
     desired_role = models.CharField(
         max_length=150,
@@ -49,7 +49,7 @@ class CandidateProfile(models.Model):
     phone = models.CharField(
         max_length=30,
         blank=True,
-        help_text="Phone number if provided in the resume",
+        help_text="Phone number if provided in the résumé",
     )
     linkedin_url = models.URLField(blank=True)
     github_url = models.URLField(blank=True)
@@ -57,24 +57,24 @@ class CandidateProfile(models.Model):
 
     resume_xml = models.TextField(
         blank=True,
-        help_text="Structured XML representation of the candidate resume",
+        help_text="Structured XML representation of the candidate résumé",
     )
 
     skills = models.TextField(
         blank=True,
-        help_text="Line-separated list of skills extracted from the resume",
+        help_text="Line-separated list of skills extracted from the résumé",
     )
     experience = models.TextField(
         blank=True,
-        help_text="Detailed experience content extracted from the resume",
+        help_text="Detailed experience content extracted from the résumé",
     )
     education = models.TextField(
         blank=True,
-        help_text="Education history extracted from the resume",
+        help_text="Education history extracted from the résumé",
     )
     certifications = models.TextField(
         blank=True,
-        help_text="Certifications extracted from the resume",
+        help_text="Certifications extracted from the résumé",
     )
     professional_summary = models.TextField(
         blank=True,

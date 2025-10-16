@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load resume_tags %}
 
-{% block title %}Candidate Resume | Hiredar{% endblock %}
+{% block title %}Candidate Résumé | Hiredar{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -11,7 +11,7 @@
                 {% url 'recruiters:dashboard' as back_url %}
                 {% include 'core/components/back_button.html' with href=back_url label='Back to Dashboard' %}
 
-                <h1 class="text-3xl font-bold">Candidate Resume</h1>
+                <h1 class="text-3xl font-bold">Candidate Résumé</h1>
                 <p class="text-lg text-base-content/70">
                     {{ profile.display_name }}
                     {% if profile.pool %}

@@ -11,17 +11,17 @@ from apps.core.upload_validators import DEFAULT_ZIP_VALIDATORS
 
 
 def default_pool_name() -> str:
-    """Generate a default name for a resume pool based on current date/time."""
+    """Generate a default name for a résumé pool based on current date/time."""
     return timezone.now().strftime("%Y-%m-%d %H:%M")
 
 
 class BulkResumeUpload(models.Model):
-    """An uploaded named pool of many resumes."""
+    """An uploaded named pool of many résumés."""
 
     name = models.CharField(
         max_length=255,
         default=default_pool_name,
-        help_text="Name of this resume pool",
+        help_text="Name of this résumé pool",
     )
     recruiter = models.ForeignKey(
         "recruiters.RecruiterProfile",
@@ -30,7 +30,7 @@ class BulkResumeUpload(models.Model):
     )
     zip_file = models.FileField(
         upload_to="bulk_resumes/zips/",
-        help_text="ZIP archive containing resumes (PDF, DOCX, etc.)",
+        help_text="ZIP archive containing résumés (PDF, DOCX, etc.)",
         validators=DEFAULT_ZIP_VALIDATORS,
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,8 +41,8 @@ class BulkResumeUpload(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Bulk Resume Upload"
-        verbose_name_plural = "Bulk Resume Uploads"
+        verbose_name = "Bulk Résumé Upload"
+        verbose_name_plural = "Bulk Résumé Uploads"
 
     def __str__(self) -> str:
         return (

@@ -59,7 +59,7 @@ class ResumeProcessor:  # noqa: D401 – Service class, not data‑class
             user=user,
             task_type="resume_processing",
             status="pending",
-            message="Preparing to process resume",
+            message="Preparing to process résumé",
             current_step="file_path_resolved",
             progress_percent=0,
         )

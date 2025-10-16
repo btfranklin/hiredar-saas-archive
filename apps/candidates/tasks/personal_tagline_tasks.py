@@ -33,11 +33,11 @@ def generate_personal_tagline(candidate_profile_id: int) -> dict[str, Any]:
 
     if not profile.resume_xml:
         logger.warning(
-            "No resume XML available for CandidateProfile %s", candidate_profile_id
+            "No résumé XML available for CandidateProfile %s", candidate_profile_id
         )
         return {
             "status": "error",
-            "message": "Cannot generate tagline: No resume data available",
+            "message": "Cannot generate tagline: No résumé data available",
             "profile_id": candidate_profile_id,
         }
 
@@ -70,4 +70,3 @@ def generate_personal_tagline(candidate_profile_id: int) -> dict[str, Any]:
             "message": f"Error generating tagline: {exc}",
             "profile_id": candidate_profile_id,
         }
-

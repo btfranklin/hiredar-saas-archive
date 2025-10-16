@@ -121,7 +121,7 @@ class CandidateProfileAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Resume Data", {"fields": ("resume_xml",), "classes": ("collapse",)}),
+        ("Résumé Data", {"fields": ("resume_xml",), "classes": ("collapse",)}),
     )
 
 

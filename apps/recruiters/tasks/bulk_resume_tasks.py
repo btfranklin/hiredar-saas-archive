@@ -137,7 +137,7 @@ def unpack_and_process_zip(
 
                 meta = TaskMeta.objects.create(
                     queue_id=task_id,
-                    name="Processing resume",  # could include filename if desired
+                    name="Processing résumé",  # could include filename if desired
                     owner=bulk.recruiter.user,
                     content_object=candidate_pool,
                     state=TaskMeta.State.PENDING,

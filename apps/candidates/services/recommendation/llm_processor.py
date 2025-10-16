@@ -35,7 +35,7 @@ def _require_api_key() -> str:
 
 
 def generate_role_recommendations(resume_xml: str) -> list[CandidateRoleRecommendation]:
-    """Return unsaved CandidateRoleRecommendation objects from resume XML."""
+    """Return unsaved CandidateRoleRecommendation objects from résumé XML."""
     _require_api_key()
     if not resume_xml:
         error_msg = "Unable to generate role recommendations: resume_xml is empty"
@@ -71,8 +71,8 @@ def generate_personal_tagline(resume_xml: str) -> str:
     """Return a short personal tagline for recruiter-facing contexts."""
     _require_api_key()
     if not resume_xml:
-        logger.error("Resume XML is empty or None")
-        return "Unable to generate tagline: No resume data provided"
+        logger.error("Résumé XML is empty or None")
+        return "Unable to generate tagline: No résumé data provided"
 
     prompt_path = os.path.join(
         settings.BASE_DIR,

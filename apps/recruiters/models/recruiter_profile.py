@@ -18,19 +18,19 @@ class RecruiterProfile(models.Model):
     )
     credits_total = models.IntegerField(
         default=100,
-        help_text="Total resume processing credits for the recruiter",
+        help_text="Total résumé processing credits for the recruiter",
     )
     credits_available = models.IntegerField(
         default=100,
-        help_text="Remaining resume processing credits available",
+        help_text="Remaining résumé processing credits available",
     )
     total_resumes_processed = models.PositiveIntegerField(
         default=0,
-        help_text="Total resumes ever processed",
+        help_text="Total résumés ever processed",
     )
     total_bulk_uploads_performed = models.PositiveIntegerField(
         default=0,
-        help_text="Total bulk resume uploads performed",
+        help_text="Total bulk résumé uploads performed",
     )
     total_candidates_shortlisted = models.PositiveIntegerField(
         default=0,

@@ -44,7 +44,7 @@ both initial page render and subsequent HTMX fragment updates.
 <dialog id="delete-pool-{{ pool.pk }}" class="modal">
   <div class="modal-box">
     <h3 class="font-bold text-lg">Confirm Deletion</h3>
-    <p class="py-4">Are you sure you want to delete the candidate pool &quot;{{ pool.name }}&quot;? All associated resumes will be removed.</p>
+    <p class="py-4">Are you sure you want to delete the candidate pool &quot;{{ pool.name }}&quot;? All associated résumés will be removed.</p>
     <div class="modal-action">
       <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button>
       <form method="post" action="{% url 'recruiters:candidate_pool_delete' pool.pk %}" class="inline">

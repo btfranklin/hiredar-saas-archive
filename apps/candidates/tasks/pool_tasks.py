@@ -29,7 +29,7 @@ def process_resume_for_pool(
     meta_pk: str | None = None,
 ) -> dict[str, Any]:
     """
-    Process an uploaded resume and create a CandidateProfile in the specified pool.
+    Process an uploaded résumé and create a CandidateProfile in the specified pool.
     """
     try:
         candidate_pool = CandidatePool.objects.get(pk=pool_id)
@@ -59,7 +59,7 @@ def process_resume_for_pool(
             )
             return {
                 "status": "error",
-                "message": result.get("message", "Failed to process resume"),
+                "message": result.get("message", "Failed to process résumé"),
                 "file_path": file_path,
             }
 
@@ -77,7 +77,7 @@ def process_resume_for_pool(
             )
             return {
                 "status": "error",
-                "message": "Insufficient data extracted from resume (no name or skills)",
+                "message": "Insufficient data extracted from résumé (no name or skills)",
                 "file_path": file_path,
             }
 
@@ -143,7 +143,7 @@ def process_resume_for_pool(
 
 @shared_task(name="apps.candidates.tasks.pool_tasks.cleanup_temp_resume_file")
 def cleanup_temp_resume_file(result: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Delete the temporary resume file created during processing."""
+    """Delete the temporary résumé file created during processing."""
     if not result or not isinstance(result, dict):
         return {"status": "error", "message": "No result provided for cleanup"}
 
@@ -171,4 +171,3 @@ def cleanup_temp_resume_file(result: dict[str, Any] | None = None) -> dict[str, 
         "message": f"File {file_path} does not exist (already cleaned up?)",
         "file_path": file_path,
     }
-

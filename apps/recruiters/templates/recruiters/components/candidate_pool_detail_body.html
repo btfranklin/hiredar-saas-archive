@@ -51,17 +51,17 @@ Expected context:
               <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                 {# ---------------- Resume button / spinner ---------------- #}
                 {% if profile.resume_xml %}
-                  <a href="{% url 'candidates:resume_view' profile.id %}" class="btn btn-sm btn-primary whitespace-nowrap">View Resume</a>
+                  <a href="{% url 'candidates:resume_view' profile.id %}" class="btn btn-sm btn-primary whitespace-nowrap">View Résumé</a>
                 {% else %}
                   <div class="flex items-center gap-1">
                     <span class="loading loading-spinner loading-xs text-primary"></span>
-                    <span class="text-xs">Processing resume&hellip;</span>
+                    <span class="text-xs">Processing résumé&hellip;</span>
                   </div>
                 {% endif %}
 
                 {# ---------------- Profile summary button / spinner ---------------- #}
                 {% if profile.promotional_blurb %}
-                  <a href="{% url 'recruiters:candidate_pool_profile_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary whitespace-nowrap">View Profile Summary</a>
+                  <a href="{% url 'recruiters:candidate_pool_profile_detail' pool_pk=pool.pk pk=profile.id %}" class="btn btn-sm btn-secondary whitespace-nowrap">View Candidate Overview</a>
                 {% else %}
                   <div class="flex items-center gap-1">
                     <span class="loading loading-spinner loading-xs text-primary"></span>

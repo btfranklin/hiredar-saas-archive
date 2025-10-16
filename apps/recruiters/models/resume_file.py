@@ -31,8 +31,8 @@ class ResumeFile(models.Model):
 
     class Meta:
         ordering = ["-uploaded_at"]
-        verbose_name = "Resume File"
-        verbose_name_plural = "Resume Files"
+        verbose_name = "Résumé File"
+        verbose_name_plural = "Résumé Files"
         unique_together = ["bulk_upload", "original_filename"]
 
     def __str__(self) -> str:

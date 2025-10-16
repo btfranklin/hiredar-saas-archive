@@ -27,7 +27,7 @@ async_task = safe_async_task
 
 
 class BulkResumeUploadView(LoginRequiredMixin, CreateView):
-    """Allow recruiters to upload a ZIP of resumes."""
+    """Allow recruiters to upload a ZIP of résumés."""
 
     model = BulkResumeUpload
     form_class = BulkResumeUploadForm
@@ -73,7 +73,7 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
         if credits_needed > credits_available:
             error_message = (
                 f"Insufficient credits: you have {credits_available} credits but "
-                f"need {credits_needed} to process {pdf_count} resumes."
+                f"need {credits_needed} to process {pdf_count} résumés."
             )
             # If HTMX request, return an error fragment with Buy More Credits button
             if self.request.headers.get("HX-Request"):
@@ -116,7 +116,7 @@ class BulkResumeUploadView(LoginRequiredMixin, CreateView):
 
         placeholder_meta = TaskMeta.objects.create(
             queue_id=f"import-{bulk.pk}",
-            name="Importing resumes",
+            name="Importing résumés",
             owner=bulk.recruiter.user,
             content_object=candidate_pool,
             state=TaskMeta.State.PENDING,
