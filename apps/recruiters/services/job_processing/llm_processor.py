@@ -68,6 +68,9 @@ def convert_text_to_xml(job_title: str, job_description: str) -> str:
             reasoning_effort=settings.RECRUITERS_JOB_PROCESSING_REASONING_EFFORT,
         )
 
+        if settings.DEBUG:
+            logger.info("LLM raw XML response:\n%s", xml_content)
+
         # Perform basic validation
         if not xml_content or not isinstance(xml_content, str):
             error_msg = "LLM response content is None or not a string"
