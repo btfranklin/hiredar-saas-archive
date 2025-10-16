@@ -15,18 +15,6 @@
                     <p class="text-base-content/70 italic">{{ match.candidate_profile.personal_tagline }}</p>
                 {% endif %}
 
-                {% with skills=match.candidate_profile.skills_list %}
-                  {% if skills %}
-                  <div class="flex flex-wrap gap-1 mt-2">
-                      {% for skill in skills|slice:":5" %}
-                          <span class="badge badge-outline">{{ skill }}</span>
-                      {% endfor %}
-                      {% if skills|length > 5 %}
-                          <span class="badge badge-outline">...+{{ skills|length|add:"-5" }}</span>
-                      {% endif %}
-                  </div>
-                  {% endif %}
-                {% endwith %}
             </div>
 
             {% if match.match_summary %}
