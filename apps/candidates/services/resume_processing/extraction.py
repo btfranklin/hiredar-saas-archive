@@ -1,12 +1,20 @@
 """
-PDF text extraction utilities.
+Resume text extraction helpers.
 
-This module contains functions for extracting text content from resume PDFs and other
-supported resume formats, deferring heavy imports until needed to avoid forking issues.
+Provides utilities for extracting text from PDF and other document formats while
+isolating heavy native dependencies inside standalone Python subprocesses. This
+keeps Celery workers stable even when third-party libraries use unsafe globals.
 """
 
+from __future__ import annotations
+
+import json
 import logging
 import os
+import subprocess
+import sys
+
+from apps.candidates.extraction_worker.core import extract_pdf_text
 
 # Supported resume extensions (keep in sync with validators)
 SUPPORTED_RESUME_EXTENSIONS: set[str] = {
@@ -19,76 +27,142 @@ SUPPORTED_RESUME_EXTENSIONS: set[str] = {
 }
 
 logger = logging.getLogger(__name__)
+EXTRACTION_TIMEOUT_SECONDS: int = int(
+    os.getenv("RESUME_EXTRACTION_TIMEOUT_SECONDS", "90")
+)
+SUBPROCESS_MODULE = "apps.candidates.extraction_worker.worker"
+
+
+def _run_subprocess_extractor(
+    mode: str,
+    file_path: str,
+    timeout: int | float | None = None,
+) -> tuple[str | None, str | None]:
+    """
+    Execute the extractor subprocess and return (text, error).
+    """
+    timeout_seconds = timeout or EXTRACTION_TIMEOUT_SECONDS
+    python_executable = sys.executable or "python"
+
+    cmd = [
+        python_executable,
+        "-m",
+        SUBPROCESS_MODULE,
+        mode,
+        file_path,
+    ]
+
+    try:
+        completed = subprocess.run(  # noqa: S603 - trusted command
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        message = f"Extractor subprocess timed out after {timeout_seconds}s"
+        logger.error("%s for %s (mode=%s)", message, file_path, mode)
+        return None, message
+    except Exception as exc:  # pragma: no cover - defensive
+        message = f"Failed to start extractor subprocess: {exc}"
+        logger.error(message, exc_info=True)
+        return None, message
+
+    raw_output = (completed.stdout or "").strip()
+    if not raw_output:
+        raw_output = (completed.stderr or "").strip()
+
+    try:
+        payload = json.loads(raw_output or "{}")
+    except json.JSONDecodeError:
+        message = (
+            f"Extractor subprocess returned invalid JSON (code={completed.returncode})"
+        )
+        logger.error("%s: %s", message, raw_output)
+        return None, message
+
+    status = payload.get("status")
+    text = payload.get("text")
+    error = payload.get("error")
+
+    if status == "success" and isinstance(text, str) and text.strip():
+        return text.strip(), None
+
+    if completed.returncode != 0:
+        logger.debug(
+            "Extractor subprocess exited with code %s for %s (mode=%s): %s",
+            completed.returncode,
+            file_path,
+            mode,
+            error or raw_output,
+        )
+
+    if not error:
+        error = f"Extractor returned status '{status}'"
+    return None, error
+
+
+def _extract_text_with_unstructured(file_path: str) -> str | None:
+    """
+    Extract text for non-PDF resumes using the unstructured subprocess helper.
+    """
+    text, error = _run_subprocess_extractor("unstructured", file_path)
+    if text:
+        return text
+
+    logger.debug("Unstructured extractor returned no text for %s: %s", file_path, error)
+    if file_path.lower().endswith(".pdf"):
+        logger.debug("Falling back to PDF extractor for %s", file_path)
+        return extract_text_from_pdf(file_path)
+    return None
 
 
 def extract_text_from_pdf(file_path: str) -> str | None:
     """
-    Extract text content from a PDF file using pdfplumber.
-
-    Args:
-        file_path: Path to the PDF file
-
-    Returns:
-        The extracted text content or None if extraction fails
+    Extract text content from a PDF file using an isolated subprocess.
     """
-    try:
-        import pdfplumber
+    text, error = _run_subprocess_extractor("pdf", file_path)
+    if text:
+        return text
 
-        for _name in ("pdfminer", "pdfminer.pdfpage"):
-            logging.getLogger(_name).setLevel(logging.ERROR)
-
-        if not os.path.exists(file_path) or not os.access(file_path, os.R_OK):
-            logger.error("Cannot extract text; file inaccessible: %s", file_path)
-            return None
-
-        file_size = os.path.getsize(file_path) / 1024
-        logger.info("Extracting text from PDF: %s (%.1f KB)", file_path, file_size)
-        text_content: list[str] = []
-
-        with pdfplumber.open(file_path) as pdf:
-            logger.info("PDF has %d pages", len(pdf.pages))
-            for i, page in enumerate(pdf.pages, start=1):
-                text = page.extract_text()
-                if text:
-                    text_content.append(text)
-                    logger.debug("Extracted %d characters from page %d", len(text), i)
-                else:
-                    logger.warning("No text extracted from page %d", i)
-
-        result = "\n".join(text_content)
-        logger.info("Extracted %d characters total", len(result))
-        return result
-    except Exception as exc:
-        logger.error("Error extracting text from PDF: %s", exc, exc_info=True)
-        return None
+    logger.error("PDF extractor failed for %s: %s", file_path, error)
+    # As a last resort, attempt inline extraction to avoid losing data entirely.
+    inline_text, inline_error = extract_pdf_text(file_path)
+    if inline_text:
+        return inline_text
+    if inline_error:
+        logger.error(
+            "Inline PDF extraction also failed for %s: %s", file_path, inline_error
+        )
+    return None
 
 
 def extract_text(file_path: str) -> str | None:
     """
     Extract plain text from a supported resume file.
 
-    Attempts to use the 'unstructured' library for non-PDFs if available,
+    Attempts to use a subprocess-backed extractor for non-PDF documents,
     falling back to PDF extraction when applicable.
     Returns None on failure.
     """
-    if file_path.lower().endswith(".pdf"):
+    normalized_path = file_path.lower()
+    if normalized_path.endswith(".pdf"):
         return extract_text_from_pdf(file_path)
 
-    try:
-        from unstructured.partition.auto import partition  # type: ignore
+    if normalized_path.endswith(".txt"):
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as handle:
+                content = handle.read().strip()
+                if content:
+                    return content
+        except Exception as exc:
+            logger.error(
+                "Error reading text file %s: %s", file_path, exc, exc_info=True
+            )
+            return None
 
-        elements = partition(filename=file_path)  # type: ignore[assignment]
-        text_blocks = [el.text.strip() for el in elements if getattr(el, "text", None)]
-        joined = "\n".join(text_blocks).strip()
-        if joined:
-            return joined
-    except Exception:
-        logger.debug("Unstructured extractor unavailable or failed for: %s", file_path)
-        if file_path.lower().endswith(".pdf"):
-            return extract_text_from_pdf(file_path)
-
-    logger.error("No extractor available for file type: %s", file_path)
-    return None
+    return _extract_text_with_unstructured(file_path)
 
 
 __all__ = [
