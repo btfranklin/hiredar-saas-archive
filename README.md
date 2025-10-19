@@ -1,17 +1,17 @@
 # Hiredar
 
-Our AI-powered job matching platform revolutionizes hiring by eliminating the noise and inefficiencies of traditional job searching. Job seekers create rich, detailed profiles for free, while recruiters pay for access to curated candidate lists tailored to their job postings. Unlike other platforms, our AI engine doesn't just rank candidates—it explains why they're a great fit, providing recruiters with clear, data-backed insights. We also introduce *multiple candidate views*, including top matches and wildcard selections, ensuring hidden talent isn't overlooked. With *no ghost jobs* and *AI-driven transparency*, we streamline the hiring process for both sides, making recruitment faster, smarter, and fairer.
+Hiredar is an AI-assisted recruiting workspace built for in-house and agency teams that already own rich résumé backlogs. Recruiters upload folders or ZIPs of résumés, our Django/Celery pipeline structures every profile, and the matching engine ranks candidates with explainable AI so shortlists, wildcard pools, and reports stay current without manual spreadsheet work.
+
+With a transparent, credit-based pricing model (100 free credits on day one, then pay-as-you-go), recruiters decide exactly when to spend budget. No subscriptions.
 
 Elevator Pitch:
 
-Finding the right job—or the right hire—shouldn't feel like a broken system. Our AI-driven recruitment platform levels the playing field by allowing job seekers to create rich, free profiles, while recruiters gain access to curated, data-driven candidate lists. Unlike traditional job boards, we don't just show résumés; we explain why candidates are a great fit, offering *multiple match views* that surface both top talent and hidden gems. No more endless applications. No more ghost jobs. Just smarter, fairer hiring for everyone.
+Recruiting teams shouldn't lose track of talent they've already sourced. Hiredar turns dormant résumé libraries into ranked, explainable shortlists, ready to export or share with hiring managers. Process resumes when you need to, review AI-backed rationale you can trust, and keep the entire workflow inside a recruiter-controlled dashboard.
 
-## Example User Flows
-
-### Recruiter User Flow
+## Example User Flow
 
 1. Onboarding & Sign-Up:
-   - The recruiter visits the Welcome & Sign-Up Screen, selects "Sign Up as Recruiter," and enters their email and basic details.
+   - The recruiter visits the Welcome & Sign-Up Screen, selects "Sign Up," and enters their email and basic details.
    - After account creation, they are directed to the Recruiter Dashboard.
 2. Job Opening Creation:
    - From the dashboard, the recruiter clicks "Create New Job Opening."
@@ -39,21 +39,6 @@ Finding the right job—or the right hire—shouldn't feel like a broken system.
    - The recruiter accesses the Account & Settings Screen to update billing information or modify notification settings as needed.
    - Export match results as CSV or PDF for external outreach if desired.
 
-### Job Seeker User Flow
-
-1. Onboarding & Sign-Up:
-   - The job seeker lands on the Welcome & Sign-Up Screen and selects "Sign Up as Job Seeker."
-   - They create an account using their email (or social login) and are then guided to the Profile Creation Screen.
-2. Profile Creation:
-   - On the Profile Creation Screen, the job seeker uploads a PDF of a résumé, which is used to extract all the relevant information about them.
-   - After the PDF has processed, they are taken to the Job Seeker Dashboard.
-3. Dashboard & Role Recommendations:
-   - Here, they see a summary of their profile and an AI-generated personal tagline, and a list of role recommendations with brief AI-generated explanations (e.g., "Your 5 years in project management align well with a Project Manager role"). These are conceptual roles, not specific job listings.
-   - They can click on a role card to view more details about that type of role.
-4. Profile Updates & Notifications:
-   - The job seeker can return to the Dashboard at any time to check notifications, such as messages sent by recruiters in response to matches.
-   - They can also visit the Profile & Settings Screen to update their information or adjust notification preferences.
-
 ## Core Features
 
 - **Bulk Resume Ingestion**
@@ -73,11 +58,6 @@ Finding the right job—or the right hire—shouldn't feel like a broken system.
   - View upload history and processing status.
   - Drill into individual candidate profiles.
   - Export match results as CSV or PDF.
-- **Job Seeker Dashboard**
-  - View and update profile, see AI-generated taglines and role recommendations.
-  - Receive notifications and manage settings.
-- **In-App Messaging & Scheduling**
-  - Recruiters and candidates can communicate and schedule interviews directly through the platform.
 - **Multiple Candidate Views**
   - Top matches, wildcard candidates, and other AI-driven segmentations.
 
@@ -113,14 +93,3 @@ Finding the right job—or the right hire—shouldn't feel like a broken system.
 - **Tailwind CSS** with **DaisyUI** for UI styling
 - **Celery** for asynchronous task processing and background jobs
 - **OpenAI APIs** for XML conversion and AI features
-
-## Going Forward
-
-After validating the core recruiter and job seeker workflows, future versions will:
-
-- Introduce expanded in-app candidate profiles and communication tools
-- Add more advanced job-seeker self-service features
-- Support interview scheduling and feedback loops
-- Expand matching filters and analytics dashboards
-- Integrate with additional sourcing and HR tools
-- Enhance AI explanations and transparency for both sides

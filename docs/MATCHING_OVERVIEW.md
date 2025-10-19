@@ -15,7 +15,7 @@
 | ------------- | ----- | ------------ |
 | **Candidate Profile** | `candidates.CandidateProfile` | Resume ingestion pipeline (LLM-enriched sections) |
 | **Job Opening** | `recruiters.JobOpening` | Recruiter form on the web app |
-| **Candidate Match** | `matching.CandidateMatch` | Background task `create_candidate_matches` |
+| **Candidate Match** | `matching.CandidateMatch` | Background tasks `create_candidate_matches` / `match_candidate_to_active_jobs` |
 
 ---
 
@@ -32,7 +32,7 @@ The following _strings_ are pulled from each published `CandidateProfile`, prepe
 | Experience Overview           | `experience_overview`                             | `"Section: Experience Overview | {text}"` |
 | Qualifications                | `qualifications` (concatenated education + certifications) | `"Section: Qualifications | {text}"` |
 
-Vector ID pattern: `candidate_{candidate_profile_id}_{section_slug}` where `section_slug` is the lowercase section name with spaces → underscores (e.g. `career_direction`).  Vectors live in the Pinecone namespace **`candidate_profiles`** with metadata (candidate id, pool id, preview snippet, etc.).
+Vector ID pattern: `candidate_{candidate_profile_id}_{section_slug}` where `section_slug` is the lowercase section name with spaces → underscores (e.g. `career_direction`).  Empty sections are skipped.  Vectors live in the Pinecone namespace **`candidate_profiles`** with metadata including `candidate_profile_id`, a `pool_id` fallback of `0`, `candidate_name` sourced from resume XML (or `display_name`), and a 100-character `content_preview`.
 
 ### 2.2 Job Opening Sections
 
@@ -41,27 +41,58 @@ For every *active* job opening we embed the following:
 | Section            | Raw field(s) concatenated                                     | Enriched text |
 | ------------------ | ------------------------------------------------------------- | ------------- |
 | Job Overview       | `title + "\n" + description`                                | `"Section: Job Overview | {text}"` |
-| Required Skills    | `required_skills + soft_skills`                                | `"Section: Required Skills | {text}"` |
-| Responsibilities   | `responsibilities + daily_tasks + performance_expectations`   | `"Section: Responsibilities | {text}"` |
+| Required Skills    | `" ".join(filter(None, [required_skills, soft_skills]))`                                | `"Section: Required Skills | {text}"` |
+| Responsibilities   | `" ".join(filter(None, [responsibilities, daily_tasks, performance_expectations]))`   | `"Section: Responsibilities | {text}"` |
 | Qualifications     | `required_qualifications`                                     | `"Section: Qualifications | {text}"` |
 
-Vector ID pattern: `job_{job_id}_{section_slug}` (namespace **`job_openings`**).
+Vector ID pattern: `job_{job_id}_{section_slug}` (namespace **`job_openings`**).  Metadata captured per vector includes `job_opening_id`, `title`, `section`, `company`, `job_level`, `employment_type`, optional `salary_range`, `location`, and a `content_preview`.
 
 ---
 
 ## 3. Matching Perspectives
 
-The matcher (`apps/matching/core/matching.py`) queries Pinecone five times per job⇄talent pair:
+`apps/matching/core/matching.py` exposes two orchestration helpers:
 
-| Perspective           | Query Vector                                        | Filter (namespace / section) | Stored as `match_type` |
-| --------------------- | --------------------------------------------------- | ----------------------------- | ---------------------- |
-| Holistic              | Mean of **Skills + Experience Overview + Career Direction + Qualifications** vectors | Entire opposite namespace | `holistic` |
-| Skills                | Candidate **Skills**                               | Job **Required Skills**      | `skills` |
-| Relevant Experience   | Candidate **Experience Overview**                  | Job **Responsibilities**     | `experience` |
-| Wildcard              | Candidate **Career Direction**                     | Job **Job Overview**         | `wildcard` |
-| Qualifications        | Candidate **Qualifications**                        | Job **Qualifications**       | `qualifications` |
+* `match_candidate_to_jobs(candidate_id, top_k)` — used by the matching API and ad-hoc tools.
+* `match_job_to_candidates(job_id, top_k)` — used by the background tasks to persist matches.
 
-Matches returned by Pinecone include a cosine-similarity **score 0-1**.  For each perspective the background task writes/updates one `CandidateMatch` row and copies all five raw scores into the model.  UI methods convert scores to a 1-10 rating.
+Both functions gather up to five similarity perspectives.  A perspective is skipped if its source embedding is missing.
+
+### 3.1 Candidate → Job opening queries
+
+| Perspective           | Query Vector (candidate namespace)                                | Pinecone target (namespace / filter) | `CandidateMatch` field |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------ | ---------------------- |
+| Holistic              | Mean of available **Skills / Experience Overview / Career Direction / Qualifications** vectors | `job_openings` / no filter | `holistic_score` |
+| Skills                | **Skills** (falls back to **Experience Overview** if needed)      | `job_openings` / `section == "Required Skills"` | `skills_score` |
+| Relevant Experience   | **Experience Overview**                                           | `job_openings` / `section == "Responsibilities"` | `experience_score` |
+| Wildcard              | **Career Direction**                                              | `job_openings` / `section == "Job Overview"` | `wildcard_score` |
+| Qualifications        | **Qualifications**                                                | `job_openings` / `section == "Qualifications"` | `qualifications_score` |
+
+### 3.2 Job → Candidate queries
+
+Background tasks call `match_job_to_candidates(job_id, top_k=20)` to evaluate newly embedded jobs and to refresh candidate-triggered matches.  The queries mirror the table above but swap roles:
+
+| Perspective           | Query Vector (job namespace)                                      | Pinecone target (namespace / filter) | `CandidateMatch` field |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------ | ---------------------- |
+| Holistic              | Mean of available **Job Overview / Required Skills / Responsibilities / Qualifications** vectors | `candidate_profiles` / no filter | `holistic_score` |
+| Skills                | **Required Skills** (reruns against candidate **Experience Overview** when the Skills query returns zero matches) | `candidate_profiles` / `section == "Skills"` | `skills_score` |
+| Relevant Experience   | **Responsibilities**                                              | `candidate_profiles` / `section == "Experience Overview"` | `experience_score` |
+| Wildcard              | **Job Overview**                                                  | `candidate_profiles` / `section == "Career Direction"` | `wildcard_score` |
+| Qualifications        | **Qualifications**                                                | `candidate_profiles` / `section == "Qualifications"` | `qualifications_score` |
+
+### 3.3 Persisting `CandidateMatch` rows
+
+`create_candidate_matches` ensures a job has embeddings (generating them on the fly if needed), then calls `match_job_to_candidates` and aggregates scores by `candidate_profile_id`.  `match_candidate_to_active_jobs` reuses the same helper for each active job and filters the results down to the single candidate being processed.  Only candidates with a max score ≥ `MATCHING_MIN_SCORE` (defaults to `0.5`) are persisted.
+
+All persistence flows call `CandidateMatchService.safe_upsert_candidate_match`, which:
+
+- Stores one row per `(job_opening, candidate_profile)` pair (see `CandidateMatch.Meta.unique_together`).
+- Updates the five decimal score fields (`holistic_score`, `skills_score`, etc.).
+- Leaves `is_analyzed=True` untouched unless a caller explicitly sets it back.
+
+Front-end views add a transient `match_type` annotation when they need to display a single lens; it is not stored in the database.
+
+Matches returned by Pinecone include a cosine-similarity **score 0-1**.  UI helpers such as `CandidateMatch.holistic_rating` convert each decimal score to a 1–10 scale via `CandidateMatch._score_to_rating`.
 
 ---
 
@@ -79,19 +110,23 @@ JobOpening 1 – Chief Medical Research Scientist
   Required Skills   : "Strategic leadership | Team management | Mentoring | Scientific research project planning and execution | Grant writing…"
 ```
 
-During matching, five similarity searches are issued.  Suppose Pinecone returns a holistic score of `0.83` for this pair; the stored row would be:
+During matching, up to five similarity searches are issued.  Suppose Pinecone returns the scores below; the consolidated row would look like:
 
 ```text
-CandidateMatch(job_opening_id=1, candidate_profile_id=137,
-               match_type='holistic',
-               holistic_score=0.83,
-               skills_score=0.76,
-               experience_score=0.68,
-               wildcard_score=0.54,
-               qualifications_score=0.72)
+CandidateMatch(
+    job_opening_id=1,
+    candidate_profile_id=137,
+    holistic_score=Decimal("0.8300"),
+    skills_score=Decimal("0.7600"),
+    experience_score=Decimal("0.6800"),
+    wildcard_score=Decimal("0.5400"),
+    qualifications_score=Decimal("0.7200"),
+    status="identified",
+    is_analyzed=False,
+)
 ```
 
-The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
+`CandidateMatch.holistic_rating` would render `0.83 → 8/10` using the tiered rounding in `_score_to_rating`.
 
 ---
 
@@ -101,8 +136,7 @@ The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
   ```python
   from apps.matching.models import CandidateMatch
   match = CandidateMatch.objects.filter(job_opening_id=1,
-                                        candidate_profile_id=137,
-                                        match_type='holistic').first()
+                                        candidate_profile_id=137).first()
   print(match.holistic_score, match.holistic_rating)
   ```
 
@@ -112,7 +146,7 @@ The recruiter UI rounds these to `/10` ratings (e.g., `0.83 → 9/10`).
 
 * **New Sections?** Add them to the `fields` dict in the corresponding task module (`create_job_opening_embeddings.py` or `create_candidate_embeddings.py`) and update this doc.
 * **Weighting** Adjust `average_vectors` or introduce weighting before calculating the holistic vector.
-* **Thresholds** Matches are kept when any score ≥ `MATCHING_MIN_SCORE` (default `0.5`, configurable via env). Adjust it in `create_candidate_matches` / `match_candidate_to_active_jobs` if you need stricter/looser matching.
+* **Thresholds** Matches are kept when any score ≥ `MATCHING_MIN_SCORE` (default `0.5`, configurable via env). Adjust it in `create_candidate_matches` / `match_candidate_to_active_jobs` if you need stricter/looser matching.  If you add new score columns, extend `CandidateMatchService.safe_upsert_candidate_match` so the upsert stays atomic.
 
 ---
 
