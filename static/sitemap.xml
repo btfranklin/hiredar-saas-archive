@@ -9,12 +9,7 @@
 
     <!-- Marketing & Info pages (publicly accessible) -->
     <url>
-        <loc>https://hiredar.com/features/recruiters/</loc>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://hiredar.com/features/job-seekers/</loc>
+        <loc>https://hiredar.com/features/</loc>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -33,6 +28,7 @@
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
+    <!-- Policy pages -->
     <url>
         <loc>https://hiredar.com/privacy/</loc>
         <changefreq>yearly</changefreq>
@@ -43,9 +39,16 @@
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>
     </url>
+
+    <!-- Authentication entry points -->
     <url>
-        <loc>https://hiredar.com/manifesto/</loc>
-        <changefreq>yearly</changefreq>
-        <priority>0.3</priority>
+        <loc>https://hiredar.com/auth/signup/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
     </url>
-</urlset> 
+    <url>
+        <loc>https://hiredar.com/auth/login/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>
+</urlset>

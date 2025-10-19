@@ -12,10 +12,9 @@ from apps.core.views.index import HomeView
 from apps.core.views.info import (
     AboutView,
     ContactView,
-    ManifestoView,
+    FeaturesView,
+    PricingSignupView,
     PrivacyPolicyView,
-    RecruiterFeaturesView,
-    RecruiterPricingSignupView,
     TermsOfServiceView,
 )
 
@@ -38,15 +37,14 @@ def test_view(request: HttpRequest) -> HttpResponse:
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path(
-        "features/recruiters/",
-        RecruiterFeaturesView.as_view(),
-        name="features_recruiters",
+        "features/",
+        FeaturesView.as_view(),
+        name="features",
     ),
-    path("pricing/", RecruiterPricingSignupView.as_view(), name="pricing"),
+    path("pricing/", PricingSignupView.as_view(), name="pricing"),
     path("about/", AboutView.as_view(), name="about"),
     path("contact/", ContactView.as_view(), name="contact"),
     path("privacy/", PrivacyPolicyView.as_view(), name="privacy"),
-    path("manifesto/", ManifestoView.as_view(), name="manifesto"),
     path("terms/", TermsOfServiceView.as_view(), name="terms"),
     path("test/", test_view, name="test"),
 ]

@@ -25,19 +25,13 @@ class TermsOfServiceView(TemplateView):
     template_name = "core/terms.html"
 
 
-class RecruiterFeaturesView(TemplateView):
-    """Display the recruiter-focused Features marketing page."""
+class FeaturesView(TemplateView):
+    """Display the Features marketing page."""
 
-    template_name = "core/recruiters/features.html"
+    template_name = "core/features.html"
 
 
-class RecruiterPricingSignupView(TemplateView):
+class PricingSignupView(TemplateView):
     """Display the Pricing & Signup marketing page."""
 
-    template_name = "core/recruiters/pricing.html"
-
-
-class ManifestoView(TemplateView):
-    """Display the Manifesto page."""
-
-    template_name = "core/manifesto.html"
+    template_name = "core/pricing.html"
