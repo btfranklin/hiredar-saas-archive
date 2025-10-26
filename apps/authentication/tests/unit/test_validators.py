@@ -36,6 +36,18 @@ def test_validate_recruiter_name_accepts_human_like_names(name: str) -> None:
             "GET READY—YOUR GIFT UP TO $100,000.77 IS HERE "
             "https://telegra.ph/Get-a-gift-worth-up-to-10000077-10-24-73244?33323764"
         ),
+        (
+            "Your Generous Gift Up to $100,000.77 Awaits "
+            "https://telegra.ph/Get-a-gift-worth-up-to-10000077-10-24-51104?42877718"
+        ),
+        (
+            "Unlock a Bonus Gift Worth Up to $100,000.77 "
+            "https://telegra.ph/Get-a-gift-worth-up-to-10000077-10-24-29848?71546857"
+        ),
+        (
+            "A Free Gift Up to $100,000.77 Is Our Pleasure "
+            "https://telegra.ph/Get-a-gift-worth-up-to-10000077-10-24-73798?96609870"
+        ),
     ],
 )
 def test_validate_recruiter_name_rejects_spammy_inputs(name: str) -> None:
