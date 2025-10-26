@@ -18,6 +18,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from apps.authentication.validators import validate_recruiter_name
+
 T = TypeVar("T", bound="User")
 
 
@@ -102,7 +104,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     username = models.CharField(_("username"), max_length=150, unique=True)
     email = models.EmailField(_("email address"), unique=True)
-    name = models.CharField(_("name"), max_length=255, default="New User")
+    name = models.CharField(
+        _("name"),
+        max_length=255,
+        default="New User",
+        validators=[validate_recruiter_name],
+    )
     user_type = models.CharField(
         _("user type"),
         max_length=20,

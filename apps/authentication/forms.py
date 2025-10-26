@@ -14,6 +14,7 @@ from django.contrib.auth.forms import (
 from django.http import HttpRequest
 
 from apps.authentication.models import User
+from apps.authentication.validators import validate_recruiter_name
 
 
 class CustomUserCreationForm(UserCreationForm):  # pylint: disable=too-many-ancestors
@@ -100,6 +101,15 @@ class CustomSignupForm(forms.Form):
         user.save(update_fields=["name", "email", "user_type"])
         return user
 
+    def clean_name(self) -> str:
+        """Validate optional name field when provided."""
+        name = self.cleaned_data.get("name", "")
+        if not name:
+            return ""
+        stripped_name = name.strip()
+        validate_recruiter_name(stripped_name)
+        return stripped_name
+
 
 class RecruiterSignupForm(AllAuthSignupForm):
     """
@@ -130,6 +140,7 @@ class RecruiterSignupForm(AllAuthSignupForm):
         name = self.cleaned_data.get("name", "").strip()
         if not name or name == "New User":
             raise forms.ValidationError("Please provide your name")
+        validate_recruiter_name(name)
         return name
 
     def save(self, request: HttpRequest) -> User:
@@ -189,3 +200,12 @@ class SocialAccountSignupForm(SocialSignupForm):
         user.save()
 
         return user
+
+    def clean_name(self) -> str:
+        """Validate optional name when present."""
+        name = self.cleaned_data.get("name", "")
+        if not name:
+            return ""
+        stripped_name = name.strip()
+        validate_recruiter_name(stripped_name)
+        return stripped_name

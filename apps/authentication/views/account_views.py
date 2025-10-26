@@ -12,11 +12,13 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AbstractBaseUser
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.generic import View
 
 from apps.authentication.types import AuthenticatedUser
+from apps.authentication.validators import validate_recruiter_name
 
 
 class UpdateAccountView(LoginRequiredMixin, View):
@@ -48,18 +50,25 @@ class UpdateAccountView(LoginRequiredMixin, View):
         self, request: HttpRequest, *_args: Any, **_kwargs: Any
     ) -> HttpResponse:
         """Handle POST requests for updating account information."""
+        user = cast(AuthenticatedUser, request.user)
+        submitted_name = (request.POST.get("name") or "").strip()
+        try:
+            validate_recruiter_name(submitted_name)
+        except ValidationError as exc:
+            error_message = exc.messages[0] if exc.messages else str(exc)
+            messages.error(request, error_message)
+            return redirect("recruiters:settings")
+
         try:
             # Update User model fields
-            user = cast(AuthenticatedUser, request.user)
-            user.name = request.POST.get("name", "")
-            user.save()
+            user.name = submitted_name
+            user.save(update_fields=["name"])
 
             messages.success(request, "Account information updated successfully.")
             return redirect("recruiters:settings")
 
         except Exception as e:
             messages.error(request, f"Error updating account: {str(e)}")
-            user = cast(AuthenticatedUser, request.user)
             return redirect("recruiters:settings")
 
 
