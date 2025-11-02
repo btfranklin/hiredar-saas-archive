@@ -9,12 +9,7 @@
 
     <!-- Marketing & Info pages (publicly accessible) -->
     <url>
-        <loc>https://hiredar.com/features/</loc>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://hiredar.com/pricing/</loc>
+        <loc>https://hiredar.com/how-it-works/</loc>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>

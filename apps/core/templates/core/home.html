@@ -200,10 +200,20 @@
 
 <!-- FINAL CTA -->
 <section class="py-20 bg-base-100">
-  <div class="container mx-auto px-4 text-center max-w-3xl">
-    <h2 class="text-4xl font-bold mb-6">Spin up your recruiter workspace in minutes</h2>
-    <p class="text-xl mb-8 opacity-80">Upload a batch today and deliver an explainable shortlist tomorrow.</p>
-    <a href="{% url 'authentication:signup' %}" class="btn btn-secondary btn-lg">Start&nbsp;For&nbsp;Free</a>
+  <div class="container mx-auto px-4 max-w-6xl">
+    <div class="grid gap-12 items-center md:grid-cols-2">
+      <div class="text-center md:text-left max-w-xl md:mx-0 mx-auto">
+        <h2 class="text-4xl font-bold mb-6">Spin up your recruiter workspace in minutes</h2>
+        <p class="text-xl mb-8 opacity-80">Upload a batch today and deliver an explainable shortlist tomorrow.</p>
+        <a href="{% url 'authentication:signup' %}" class="btn btn-secondary btn-lg">Start&nbsp;For&nbsp;Free</a>
+      </div>
+      <div class="flex justify-center md:justify-end">
+        <picture>
+          <source srcset="{% static 'img/no-subscriptions.webp' %}" type="image/webp">
+          <img src="{% static 'img/no-subscriptions.png' %}" alt="Ping the bat getting recruiters ready to launch." class="max-w-sm w-full" />
+        </picture>
+      </div>
+    </div>
   </div>
 </section>
 

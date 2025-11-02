@@ -7,8 +7,7 @@ Hiredar communications highlight our recruiter-centric model, credit-based prici
 ## Essential Content
 
 - [Home](https://hiredar.com/): Overview of our platform and value proposition
-- [Features](https://hiredar.com/features/): Full feature set for recruiters, including candidate pools, job postings, and AI-powered matching
-- [Pricing](https://hiredar.com/pricing/): Clear, up-to-date subscription tiers and credit packages
+- [How It Works](https://hiredar.com/how-it-works/): Technical walkthrough of ingestion, matching, and reporting flows for recruiters
 - [About](https://hiredar.com/about/): Company background, mission, and leadership
 - [Privacy Policy](https://hiredar.com/privacy/): Data usage, retention, and security practices
 - [Terms of Service](https://hiredar.com/terms/): Legal terms governing the use of our platform

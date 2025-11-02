@@ -7,13 +7,13 @@ including the home page and test endpoints.
 
 from django.http import HttpRequest, HttpResponse
 from django.urls import path
+from django.views.generic import RedirectView
 
 from apps.core.views.index import HomeView
 from apps.core.views.info import (
     AboutView,
     ContactView,
-    FeaturesView,
-    PricingSignupView,
+    HowItWorksView,
     PrivacyPolicyView,
     TermsOfServiceView,
 )
@@ -37,11 +37,15 @@ def test_view(request: HttpRequest) -> HttpResponse:
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path(
-        "features/",
-        FeaturesView.as_view(),
-        name="features",
+        "how-it-works/",
+        HowItWorksView.as_view(),
+        name="how_it_works",
     ),
-    path("pricing/", PricingSignupView.as_view(), name="pricing"),
+    path(
+        "features/",
+        RedirectView.as_view(pattern_name="core:how_it_works", permanent=True),
+        name="features_redirect",
+    ),
     path("about/", AboutView.as_view(), name="about"),
     path("contact/", ContactView.as_view(), name="contact"),
     path("privacy/", PrivacyPolicyView.as_view(), name="privacy"),

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}How It Works | Hiredar{% endblock %}
+
+{% block content %}
+<section class="py-20 hero-gradient text-white">
+  <div class="container mx-auto px-4 text-center max-w-4xl">
+    <h1 class="text-4xl md:text-5xl font-bold mb-6">
+      How Hiredar Works for Recruiters
+    </h1>
+    <p class="text-lg opacity-90">
+      An under-the-hood look at the ingestion, matching, and reporting stack.
+    </p>
+    <p class="text-base opacity-80">
+      A transparent, practical overview—no buzzwords, just how it actually works.
+    </p>
+  </div>
+</section>
+
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <picture>
+        <source srcset="{% static 'img/upload-ui.webp' %}" type="image/webp">
+        <img src="{% static 'img/upload-ui.png' %}" alt="Résumé intake interface" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div>
+      <p class="uppercase tracking-widest text-sm font-semibold text-secondary mb-2">Step&nbsp;1</p>
+      <h2 class="text-2xl font-bold mb-4">Bulk Intake and Validation</h2>
+      <p class="mb-4">
+        You can drag-and-drop individual files or upload a ZIP. We place the resumes into a named pool you control and screen out system artifacts and unsupported file types before processing.
+      </p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Uploads are checked for size and format so bad files don’t waste your time.</li>
+        <li>Background workers process each resume so you can keep working while it runs.</li>
+        <li>We never alter your originals; temporary working copies are removed after processing.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="py-16 bg-base-200">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div class="order-2 md:order-1">
+      <picture>
+        <source srcset="{% static 'img/matches-view.webp' %}" type="image/webp">
+        <img src="{% static 'img/matches-view.png' %}" alt="Structured candidate profile view" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div class="order-1 md:order-2">
+      <p class="uppercase tracking-widest text-sm font-semibold text-secondary mb-2">Step&nbsp;2</p>
+      <h2 class="text-2xl font-bold mb-4">From Resume to Structured Profile</h2>
+      <p class="mb-4">
+        We extract the text from each resume and turn it into a structured candidate profile—skills, experience summary, qualifications, and basic contact details—so you can scan and compare consistently.
+      </p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Text is pulled from PDFs and Word files and standardized to reduce formatting noise.</li>
+        <li>Key details are organized into fields you can search and sort.</li>
+        <li>A concise, recruiter-facing tagline summarizes strengths for quick triage.</li>
+        <li>If a resume lacks basic signals (like a name or skills), we skip it rather than clutter your pool.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="py-16 bg-base-100">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <picture>
+        <source srcset="{% static 'img/candidate-profile.webp' %}" type="image/webp">
+        <img src="{% static 'img/candidate-profile.png' %}" alt="Candidate match explanation screen" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div>
+      <p class="uppercase tracking-widest text-sm font-semibold text-secondary mb-2">Step&nbsp;3</p>
+      <h2 class="text-2xl font-bold mb-4">Matching and Ranking Across Multiple Lenses</h2>
+      <p class="mb-4">
+        When a job is active, we compare its requirements to your candidate pools and calculate scores from several angles, not just keywords.
+      </p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Separate lenses highlight skills fit, relevant experience, qualifications, wildcard alignment, and an overall “holistic” score.</li>
+        <li>Low-signal results are filtered out by threshold so your list stays focused.</li>
+        <li>Open a match to see a plain‑English explanation of why the candidate fits that role.</li>
+        <li>As you add resumes or activate jobs, rankings refresh automatically in the background.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="py-16 bg-base-200">
+  <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+    <div class="order-2 md:order-1">
+      <picture>
+        <source srcset="{% static 'img/export-view.webp' %}" type="image/webp">
+        <img src="{% static 'img/export-view.png' %}" alt="Shortlist export controls" class="rounded-lg shadow-lg w-full h-auto" />
+      </picture>
+    </div>
+    <div class="order-1 md:order-2">
+      <p class="uppercase tracking-widest text-sm font-semibold text-secondary mb-2">Step&nbsp;4</p>
+      <h2 class="text-2xl font-bold mb-4">Shortlisting and Shareable Reports</h2>
+      <p class="mb-4">
+        Add candidates to a shortlist with a click, then export clean CSVs or presentation‑ready PDFs when you’re ready to share with hiring managers.
+      </p>
+      <ul class="list-disc ml-6 space-y-2">
+        <li>Shortlists show the headline, scores by lens, and key details at a glance.</li>
+        <li>CSV exports make it easy to analyze in spreadsheets; PDFs are formatted for manager review.</li>
+        <li>Credits are checked and deducted on export, so usage stays predictable and transparent.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 bg-base-100">
+  <div class="container mx-auto px-4 text-center max-w-3xl">
+    <h2 class="text-4xl font-bold mb-6">
+      Build Trust With a Transparent Hiring Engine
+    </h2>
+    <p class="text-lg mb-8">
+      Push your résumé backlog through the stack, inspect the queues, and validate every shortlist before you share it.
+    </p>
+    <a href="{% url 'authentication:signup' %}" class="btn btn-secondary btn-lg">Start Your Pilot</a>
+  </div>
+</section>
+{% endblock %}
