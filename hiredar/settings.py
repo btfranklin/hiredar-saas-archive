@@ -310,6 +310,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "apps.core.middleware.page_view_middleware.PageViewCountMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "apps.core.middleware.timezone_middleware.UserTimezoneMiddleware",
@@ -318,6 +319,9 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
+
+PAGE_VIEW_COUNT_ALLOWED_NAMESPACES = ("core",)
+PAGE_VIEW_COUNT_ALLOWED_VIEW_NAMES = ("authentication:signup",)
 
 ROOT_URLCONF = "hiredar.urls"
 

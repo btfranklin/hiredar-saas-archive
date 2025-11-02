@@ -6,6 +6,8 @@ from django.contrib import admin
 from django_celery_results.admin import TaskResultAdmin
 from django_celery_results.models import TaskResult
 
+from apps.core.models import PageViewCount
+
 
 class CustomTaskResultAdmin(TaskResultAdmin):
     """
@@ -107,3 +109,14 @@ class CustomTaskResultAdmin(TaskResultAdmin):
 # Unregister the default admin and register our custom one
 admin.site.unregister(TaskResult)
 admin.site.register(TaskResult, CustomTaskResultAdmin)
+
+
+@admin.register(PageViewCount)
+class PageViewCountAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for simple page view counts.
+    """
+
+    list_display = ["path", "view_count", "last_viewed_at", "updated_at"]
+    search_fields = ["path"]
+    ordering = ["-view_count", "path"]
