@@ -44,22 +44,34 @@ class Command(BaseCommand):
             celery_command.extend(["--broker", broker_url])
 
         # Subcommand and worker options
-        celery_command.extend(
-            [
-                "worker",
-                "--beat",
-                "--loglevel",
-                "info",
-                "--queues",
-                "default,high",
-                "--concurrency",
-                os.getenv("CELERY_CONCURRENCY", "2"),
-                "--optimization",
-                "fair",
-                "--max-tasks-per-child",
-                os.getenv("CELERY_MAX_TASKS_PER_CHILD", "20"),
-            ]
-        )
+        pool_override = os.getenv("CELERY_POOL")
+        pool_name = pool_override or ("solo" if sys.platform == "darwin" else None)
+
+        worker_args = [
+            "worker",
+            "--beat",
+            "--loglevel",
+            "info",
+            "--queues",
+            "default,high",
+            "--optimization",
+            "fair",
+        ]
+
+        if pool_name:
+            worker_args.extend(["--pool", pool_name])
+
+        if pool_name != "solo":
+            worker_args.extend(
+                [
+                    "--concurrency",
+                    os.getenv("CELERY_CONCURRENCY", "2"),
+                    "--max-tasks-per-child",
+                    os.getenv("CELERY_MAX_TASKS_PER_CHILD", "20"),
+                ]
+            )
+
+        celery_command.extend(worker_args)
 
         if options["dry_run"]:
             self.stdout.write(
@@ -72,6 +84,14 @@ class Command(BaseCommand):
                 self.style.SUCCESS("Starting Celery worker with beat scheduler...")
             )
             self.stdout.write(f"Command: {' '.join(celery_command)}")
+
+            if not pool_override and pool_name == "solo":
+                self.stdout.write(
+                    self.style.WARNING(
+                        "Detected macOS – forcing Celery to use the 'solo' pool to avoid fork crashes. "
+                        "Set CELERY_POOL to override this behavior."
+                    )
+                )
 
             # Execute the celery command
             subprocess.run(celery_command, check=True)
