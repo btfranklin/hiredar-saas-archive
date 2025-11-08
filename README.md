@@ -18,6 +18,27 @@ Recruiting teams shouldn't lose track of talent they've already sourced. Hiredar
 
 ![Export view for shortlist downloads](static/img/export-view.png)
 
+## Architecture Overview
+
+```mermaid
+graph LR
+    Recruiter[Web browser / dashboard]
+    Django[Django web app]
+    Celery[Celery worker pool]
+    Broker[(Redis / message broker)]
+    OpenAI[OpenAI APIs]
+    Pinecone[Pinecone vector index]
+
+    Recruiter --> Django
+    Django --> Broker
+    Django --> Celery
+    Celery --> Broker
+    Celery --> OpenAI
+    Celery --> Pinecone
+```
+
+The Django application serves the HTMX-driven UI and schedules background work. Celery workers consume tasks from the broker, call OpenAI for résumé parsing and matching intelligence, and persist embeddings in the Pinecone index.
+
 ## Example User Flow
 
 1. Onboarding & Sign-Up:
