@@ -1,5 +1,7 @@
 # Hiredar
 
+> Project status: Sunset (open-sourced under MIT). Hiredar is no longer under active development. It was a fully-functioning SaaS used in production, and the author has open‑sourced the codebase so others can learn from it and so the author can use it as a portfolio project. No hosted service or production support is provided. See `LICENSE` for terms.
+
 Hiredar is an AI-assisted recruiting workspace built for in-house and agency teams that already own rich résumé backlogs. Recruiters upload folders or ZIPs of résumés, our Django/Celery pipeline structures every profile, and the matching engine ranks candidates with explainable AI so shortlists, wildcard pools, and reports stay current without manual spreadsheet work.
 
 With a transparent, credit-based pricing model (100 free credits on day one, then pay-as-you-go), recruiters decide exactly when to spend budget. No subscriptions.
