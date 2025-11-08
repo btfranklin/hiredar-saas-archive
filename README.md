@@ -10,6 +10,14 @@ Elevator Pitch:
 
 Recruiting teams shouldn't lose track of talent they've already sourced. Hiredar turns dormant résumé libraries into ranked, explainable shortlists, ready to export or share with hiring managers. Process resumes when you need to, review AI-backed rationale you can trust, and keep the entire workflow inside a recruiter-controlled dashboard.
 
+## Screenshots
+
+![Candidate profile detail](static/img/candidate-profile.png)
+
+![Matches view showing ranked candidates](static/img/matches-view.png)
+
+![Export view for shortlist downloads](static/img/export-view.png)
+
 ## Example User Flow
 
 1. Onboarding & Sign-Up:
